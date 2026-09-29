@@ -40,14 +40,15 @@ Tooling notes:
 - [x] Cost check: Cloudflare Free, GitHub Free (public repo), no payment method
 - [x] **PR 1 (`docs/record-decisions`)**: this docs update, the first PR through the whole flow (PR, CI, Cloudflare preview, squash merge, production deploy)
 - [x] Verify the gate: open a throwaway PR that fails CI (e.g. a lint error) and confirm it cannot be merged; then close it without merging
-- [ ] Add the Impressum build variables in Cloudflare, Production only (`IMPRESSUM_STREET`, `IMPRESSUM_ZIP`, `IMPRESSUM_CITY`); never commit them. The production build now fails if they are missing
-- [ ] Set up the `hello@leonkrix.dev` mailbox at IONOS and send/receive a test mail (check SPF/DKIM/DMARC pass)
-- [ ] Cloudflare security settings: Bot Fight Mode, AI bot blocking, email address obfuscation; DNSSEC (optional)
+- [x] Add the Impressum build variables in Cloudflare, Production only (`IMPRESSUM_STREET`, `IMPRESSUM_ZIP`, `IMPRESSUM_CITY`); never commit them. The production build now fails if they are missing
+- [x] `hello@leonkrix.dev` mailbox at IONOS works (send and receive tested)
+- [x] Cloudflare security baseline (Full strict, Always HTTPS, min TLS 1.2, Bot Fight Mode, AI bot blocking; Web Analytics and Rocket Loader stay off). DNSSEC and HSTS deliberately skipped (low value, .dev is HSTS-preloaded)
 
 ## Phase 1b - Security and CI extras (one branch per item, all via PR)
 
-- [ ] `actionlint` job in CI (lint the workflow files), added to `needs` of `ci-ok`
-- [ ] `dependency-review` job on pull requests, added to `needs` of `ci-ok`
+- [x] `actionlint` job in CI (lint the workflow files), added to `needs` of `ci-ok`
+- [x] `dependency-review` job on pull requests, added to `needs` of `ci-ok`
+- [ ] Security headers in `public/_headers` (nosniff, referrer policy, frame protection, permissions policy, COOP; CSP via Astro), a CI check for them, target A+ on securityheaders.com
 - [ ] `.github/workflows/codeql.yml` (`javascript-typescript`; PRs, `main`, weekly), pinned actions
 - [ ] `SECURITY.md` and private vulnerability reporting enabled
 - [ ] Optionally: PR title check (Conventional Commit format, since PR titles become squash commits)

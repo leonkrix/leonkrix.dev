@@ -56,12 +56,50 @@ jobs:
       # Checks the build output: metadata, legal pages, footer links, contact data not in plain text
       - run: pnpm test:dist
 
+  actionlint:
+    name: Lint workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      ACTIONLINT_VERSION: 1.7.12
+      # SHA-256 of actionlint_1.7.12_linux_amd64.tar.gz (from the official release checksums).
+      # Update version and checksum together when bumping.
+      ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install actionlint (pinned and checksum verified)
+        run: |
+          curl -fsSL -o actionlint.tar.gz \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "${ACTIONLINT_SHA256}  actionlint.tar.gz" | sha256sum --check
+          tar -xzf actionlint.tar.gz actionlint
+      - name: Lint workflow files
+        run: ./actionlint -color
+
+  # Blocks pull requests that introduce dependencies with known vulnerabilities.
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: never
+
   # Single required status check for branch protection.
   # Add new jobs to `needs` and this gate covers them without touching the repository settings.
+  # Skipped jobs (dependency-review outside pull requests) do not fail the gate.
   ci-ok:
     name: CI passed
     if: always()
-    needs: [quality, test, build]
+    needs: [quality, test, build, actionlint, dependency-review]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:

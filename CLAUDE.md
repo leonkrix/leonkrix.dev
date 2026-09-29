@@ -61,11 +61,11 @@ Jobs (existing = live in the workflow; planned = added in the phase noted in PLA
 1. `quality` (live): `pnpm lint`, `pnpm format:check`, `pnpm typecheck` (`astro check`)
 2. `test` (live): `pnpm test` (Vitest)
 3. `build` (live): `pnpm build`
-4. `site-checks` (planned, phase 2): Vitest checks against the build output in `dist/` (see Testing strategy)
+4. `site-checks` (live, part of the `build` job): `pnpm test:dist` runs Vitest checks against the build output in `dist/` (see Testing strategy)
 5. `e2e` (planned, phase 3): Playwright smoke tests plus axe accessibility scans against the built site
 6. `lighthouse` (planned, phase 3): Lighthouse CI with budgets (mobile performance, accessibility, best practices, SEO >= 95)
-7. `actionlint` (planned, next branch): lint the workflow files themselves
-8. `dependency-review` (planned, next branch): GitHub dependency review action on PRs (blocks vulnerable or license-critical new dependencies)
+7. `actionlint` (live): lints the workflow files; the binary is pinned by version and SHA-256 checksum (bump both together, Dependabot cannot update it)
+8. `dependency-review` (live, pull requests only, fails on high severity; skipped on pushes, which does not fail the gate)
 9. `security` (planned, phase 3): `pnpm audit` (high severity)
 
 Separate workflows (not part of the `ci-ok` gate at first, findings show as PR checks): **CodeQL** (`javascript-typescript`, on PRs, `main` and weekly) in `.github/workflows/codeql.yml`, and later **OpenSSF Scorecard**. `SECURITY.md` and private vulnerability reporting are enabled.
@@ -157,6 +157,7 @@ Not legal advice; have the final texts checked (e.g. eRecht24 / IT-Recht Kanzlei
 - No analytics initially. If added later: privacy-friendly and self-hosted (Plausible/Umami) and documented in the privacy policy.
 - `robots.txt`: disallow known AI crawlers (GPTBot, CCBot, ClaudeBot, Google-Extended, ...). This is a request, not protection. Real bot protection comes from Cloudflare settings.
 - Games: only use word lists and assets whose license permits it; record sources in `THIRD_PARTY.md`.
+- **Revisit the legal texts whenever the site changes**: games (localStorage for game state, word lists), a contact form (data processing, processor agreement, Turnstile), analytics, embeds, or any new third-party service. The privacy policy must always match what the site actually does.
 
 ## Games (after MVP)
 
@@ -184,6 +185,7 @@ Command palette (Cmd/Ctrl+K), terminal-style easter egg, `/uses` page, blog (MDX
 - **CodeQL yes, SonarQube Cloud no**: CodeQL is free, GitHub-native and useful once games handle user input; Sonar would duplicate ESLint/TypeScript/CodeQL findings and adds an external service and a secret.
 - **Single required check `CI passed`**: an aggregate job so new CI jobs never require changing the ruleset.
 - **Private address in the Impressum, obfuscated**: see Legal. Legal pages come right after Phase 1, before design work.
+- **Cloudflare baseline, not more**: Full (strict), Always HTTPS, min TLS 1.2, Bot Fight Mode, AI bot blocking. **Keep off**: Web Analytics (third-party script, breaks the privacy promise), Rocket Loader (rewrites scripts, conflicts with CSP), managed robots.txt (robots.txt lives in the repo). DNSSEC and HSTS are deliberately not enabled (small benefit, outage risk; `.dev` is HSTS-preloaded). Security headers live in the repo (`public/_headers`), not in the dashboard.
 - **Workflow actions are pinned to full commit SHAs**: IDE inspections may flag their inputs as undefined (false positive, the IDE cannot resolve metadata for SHA refs).
 
 ## Conventions
