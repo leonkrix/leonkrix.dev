@@ -48,7 +48,8 @@ Tooling notes:
 
 - [x] `actionlint` job in CI (lint the workflow files), added to `needs` of `ci-ok`
 - [x] `dependency-review` job on pull requests, added to `needs` of `ci-ok`
-- [ ] Security headers in `public/_headers` (nosniff, referrer policy, frame protection, permissions policy, COOP; CSP via Astro), a CI check for them, target A+ on securityheaders.com
+- [x] Security headers in `public/_headers` plus a strict CSP via Astro (`security.csp`), covered by `tests/build-output/security.test.ts`
+- [ ] After the merge: check the live response headers (`curl -I https://leonkrix.dev/`) and run securityheaders.com (target A or better)
 - [x] `.github/workflows/codeql.yml` (`javascript-typescript`; PRs, `main`, weekly), pinned actions
 - [x] `SECURITY.md` (private vulnerability reporting must be enabled in the GitHub repo settings)
 - [ ] Optionally: PR title check (Conventional Commit format, since PR titles become squash commits)
@@ -78,7 +79,7 @@ Start with the legal pages (the site is already live): they come before design a
 ## Phase 3 - Design polish and quality gates
 
 - [ ] Animated background (grain / glow / grid), cursor glow
-- [ ] Scroll reveals, hero text animation, View Transitions
+- [ ] Scroll reveals, hero text animation, page transitions with the native CSS View Transition API (`@view-transition`), NOT Astro's `<ClientRouter />` (not supported with the CSP)
 - [ ] Reduced-motion handling, accessibility pass (keyboard, contrast, focus)
 - [ ] OG image
 - [ ] CI job `e2e`: Playwright smoke tests (anchors, mobile viewport, keyboard, reduced motion, no console errors)
