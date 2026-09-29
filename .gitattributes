@@ -1,0 +1,14 @@
+# Normalize line endings to LF on every OS (Windows + Debian + CI)
+* text=auto eol=lf
+
+# Binary files must never be touched
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary

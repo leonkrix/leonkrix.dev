@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.astro/
+.wrangler/
+
+# Environment (real values, e.g. Impressum address, must never be committed)
+.env
+.env.*
+!.env.example
+
+# Tests and coverage
+coverage/
+playwright-report/
+test-results/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*

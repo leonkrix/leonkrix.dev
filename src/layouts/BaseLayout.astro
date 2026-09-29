@@ -1,0 +1,25 @@
+---
+import '@/styles/global.css';
+
+import Seo from '@/components/Seo.astro';
+
+interface Props {
+  title?: string | undefined;
+  description?: string | undefined;
+  image?: string | undefined;
+}
+
+const { title, description, image } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <Seo title={title} description={description} image={image} />
+  </head>
+  <body class="min-h-dvh">
+    <slot />
+  </body>
+</html>

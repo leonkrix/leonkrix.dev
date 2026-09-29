@@ -1,0 +1,32 @@
+---
+import { siteConfig } from '@/lib/site';
+
+interface Props {
+  title?: string | undefined;
+  description?: string | undefined;
+  image?: string | undefined;
+}
+
+const { title = siteConfig.title, description = siteConfig.description, image } = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? siteConfig.url);
+const imageUrl = image ? new URL(image, canonical) : undefined;
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+<meta name="theme-color" content="#0a0d12" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={siteConfig.name} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+{imageUrl && <meta property="og:image" content={imageUrl} />}
+
+<meta name="twitter:card" content={imageUrl ? 'summary_large_image' : 'summary'} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+{imageUrl && <meta name="twitter:image" content={imageUrl} />}
