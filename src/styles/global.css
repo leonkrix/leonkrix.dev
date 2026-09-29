@@ -45,7 +45,7 @@
 
   /* Text rendered from a CSS custom property (see ObfuscatedText.astro) */
   .ob::before {
-    content: var(--t);
+    content: var(--t, '');
   }
 
   @media (prefers-reduced-motion: reduce) {
