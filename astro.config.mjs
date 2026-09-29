@@ -25,6 +25,33 @@ export default defineConfig({
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],
+    build: {
+      // Never inline assets as data: URIs or inline scripts, so the CSP can stay strict
+      assetsInlineLimit: 0,
+    },
+  },
+  security: {
+    // Content Security Policy as <meta> element. Astro adds script-src and style-src with hashes.
+    csp: {
+      directives: [
+        "default-src 'self'",
+        "img-src 'self' data:",
+        "font-src 'self'",
+        "connect-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-src 'none'",
+        "manifest-src 'self'",
+      ],
+      styleDirective: {
+        resources: [
+          "'self'",
+          // The obfuscated contact text is set through inline style attributes (custom property)
+          { resource: "'unsafe-inline'", kind: 'attribute' },
+        ],
+      },
+    },
   },
   env: {
     schema: {

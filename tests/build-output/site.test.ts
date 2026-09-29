@@ -1,41 +1,19 @@
 import { existsSync } from 'node:fs';
-import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { ADDRESS_PLACEHOLDERS } from '../../src/lib/legal';
 import { siteConfig } from '../../src/lib/site';
+import { distDir, type Page, readPages } from './helpers';
 
 /**
  * Checks against the production build in dist/. Run `pnpm build` first (pnpm test:dist).
  */
-const distDir = join(import.meta.dirname, '..', '..', 'dist');
-
-async function findHtmlFiles(directory: string): Promise<string[]> {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const nested = await Promise.all(
-    entries.map(async (entry) => {
-      const path = join(directory, entry.name);
-      if (entry.isDirectory()) {
-        return findHtmlFiles(path);
-      }
-      return entry.name.endsWith('.html') ? [path] : [];
-    }),
-  );
-  return nested.flat();
-}
-
-let pages: { file: string; html: string }[] = [];
+let pages: Page[] = [];
 
 beforeAll(async () => {
-  if (!existsSync(distDir)) {
-    throw new Error('dist/ not found. Run "pnpm build" before "pnpm test:dist".');
-  }
-  const files = await findHtmlFiles(distDir);
-  pages = await Promise.all(
-    files.map(async (file) => ({ file, html: await readFile(file, 'utf8') })),
-  );
+  pages = await readPages();
 });
 
 describe('every page', () => {
