@@ -1,0 +1,35 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      # One PR per week for non-breaking updates keeps preview builds and review effort low
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # typescript-eslint and `astro check` do not support TypeScript 7 yet
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+      # eslint-plugin-jsx-a11y and others are only verified up to the current ESLint major
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      - dependency-name: '@eslint/js'
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: 'chore(ci)'
+    groups:
+      actions:
+        patterns: ['*']
