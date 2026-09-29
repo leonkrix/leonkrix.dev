@@ -12,6 +12,6 @@ describe('siteConfig', () => {
   });
 
   it('keeps the meta description short enough for search results', () => {
-    expect(siteConfig.description.length).toBeLessThanOrEqual(160);
+    expect(siteConfig.description.length).toBeLessThanOrEqual(10);
   });
 });
