@@ -1,0 +1,53 @@
+---
+import ObfuscatedText from '@/components/ObfuscatedText.astro';
+import ProtectedEmail from '@/components/ProtectedEmail.astro';
+import LegalLayout from '@/layouts/LegalLayout.astro';
+import { address } from '@/lib/legal-address';
+import { siteConfig } from '@/lib/site';
+---
+
+<LegalLayout title="Impressum" description="Impressum und Anbieterkennzeichnung von Leon Krix.">
+  <p class="notice" lang="en">
+    Legal notice: this page is in German because German law applies to this website. In short, the
+    website is operated by Leon Krix, contact details are listed below.
+  </p>
+
+  <h2>Angaben gemäß § 5 DDG</h2>
+  <address>
+    {siteConfig.name}
+    <br />
+    <ObfuscatedText text={address.street} />
+    <br />
+    <ObfuscatedText text={`${address.zip} ${address.city}`} />
+  </address>
+
+  <h2>Kontakt</h2>
+  <p>
+    E-Mail: <ProtectedEmail address={siteConfig.email} />
+  </p>
+
+  <h2>Haftung für Inhalte</h2>
+  <p>
+    Die Inhalte dieser Website wurden mit größtmöglicher Sorgfalt erstellt. Für die Richtigkeit,
+    Vollständigkeit und Aktualität der Inhalte kann jedoch keine Gewähr übernommen werden. Als
+    Diensteanbieter bin ich für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen
+    verantwortlich. Bei Bekanntwerden von Rechtsverletzungen werde ich entsprechende Inhalte
+    umgehend entfernen.
+  </p>
+
+  <h2>Haftung für Links</h2>
+  <p>
+    Diese Website enthält Links zu externen Websites Dritter, auf deren Inhalte ich keinen Einfluss
+    habe. Für diese fremden Inhalte kann ich keine Gewähr übernehmen. Für die Inhalte der verlinkten
+    Seiten ist stets der jeweilige Anbieter oder Betreiber verantwortlich. Bei Bekanntwerden von
+    Rechtsverletzungen werde ich derartige Links umgehend entfernen.
+  </p>
+
+  <h2>Urheberrecht</h2>
+  <p>
+    Die durch den Seitenbetreiber erstellten Inhalte und Werke auf dieser Website (Texte, Bilder,
+    Gestaltung und Quellcode) unterliegen dem deutschen Urheberrecht. Alle Rechte vorbehalten.
+    Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des
+    Urheberrechts bedürfen der schriftlichen Zustimmung.
+  </p>
+</LegalLayout>

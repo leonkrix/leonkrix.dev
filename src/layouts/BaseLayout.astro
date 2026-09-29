@@ -1,6 +1,7 @@
 ---
 import '@/styles/global.css';
 
+import Footer from '@/components/Footer.astro';
 import Seo from '@/components/Seo.astro';
 import { siteConfig } from '@/lib/site';
 
@@ -8,9 +9,10 @@ interface Props {
   title?: string | undefined;
   description?: string | undefined;
   image?: string | undefined;
+  noindex?: boolean | undefined;
 }
 
-const { title = siteConfig.title, description, image } = Astro.props;
+const { title = siteConfig.title, description, image, noindex } = Astro.props;
 ---
 
 <!doctype html>
@@ -19,9 +21,10 @@ const { title = siteConfig.title, description, image } = Astro.props;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
-    <Seo title={title} description={description} image={image} />
+    <Seo title={title} description={description} image={image} noindex={noindex} />
   </head>
-  <body class="min-h-dvh">
+  <body class="flex min-h-dvh flex-col">
     <slot />
+    <Footer />
   </body>
 </html>

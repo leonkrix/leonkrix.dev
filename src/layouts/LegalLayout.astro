@@ -1,0 +1,22 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<BaseLayout title={`${title} | Leon Krix`} description={description} noindex>
+  <main class="mx-auto w-full max-w-3xl flex-1 px-6 py-16 sm:py-24">
+    <a class="text-sm text-accent underline-offset-4 hover:underline" href="/">
+      &larr; Back to home
+    </a>
+    <div class="legal mt-8">
+      <h1>{title}</h1>
+      <slot />
+    </div>
+  </main>
+</BaseLayout>
