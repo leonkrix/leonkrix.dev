@@ -2,18 +2,17 @@
 import { siteConfig } from '@/lib/site';
 
 interface Props {
-  title?: string | undefined;
+  title: string;
   description?: string | undefined;
   image?: string | undefined;
 }
 
-const { title = siteConfig.title, description = siteConfig.description, image } = Astro.props;
+const { title, description = siteConfig.description, image } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? siteConfig.url);
 const imageUrl = image ? new URL(image, canonical) : undefined;
 ---
 
-<title>{title}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonical} />
 <meta name="theme-color" content="#0a0d12" />
