@@ -42,14 +42,14 @@ Tooling notes:
 - [x] Verify the gate: open a throwaway PR that fails CI (e.g. a lint error) and confirm it cannot be merged; then close it without merging
 - [x] Add the Impressum build variables in Cloudflare, Production only (`IMPRESSUM_STREET`, `IMPRESSUM_ZIP`, `IMPRESSUM_CITY`); never commit them. The production build now fails if they are missing
 - [x] `hello@leonkrix.dev` mailbox at IONOS works (send and receive tested)
-- [x] Cloudflare security baseline (Full strict, Always HTTPS, min TLS 1.2, Bot Fight Mode, AI bot blocking; Web Analytics and Rocket Loader stay off). DNSSEC and HSTS deliberately skipped (low value, .dev is HSTS-preloaded)
+- [x] Cloudflare security baseline (Full strict, Always HTTPS, min TLS 1.2, Bot Fight Mode, AI bot blocking; Web Analytics and Rocket Loader stay off). DNSSEC deliberately skipped (small benefit, outage risk); HSTS is sent via `public/_headers`
 
 ## Phase 1b - Security and CI extras (one branch per item, all via PR)
 
 - [x] `actionlint` job in CI (lint the workflow files), added to `needs` of `ci-ok`
 - [x] `dependency-review` job on pull requests, added to `needs` of `ci-ok`
 - [x] Security headers in `public/_headers` plus a strict CSP via Astro (`security.csp`), covered by `tests/build-output/security.test.ts`
-- [ ] After the merge: check the live response headers (`curl -I https://leonkrix.dev/`) and run securityheaders.com (target A or better)
+- [x] Live headers checked: securityheaders.com grade A (A+ expected with HSTS from the wrap-up PR)
 - [x] `.github/workflows/codeql.yml` (`javascript-typescript`; PRs, `main`, weekly), pinned actions
 - [x] `SECURITY.md` (private vulnerability reporting must be enabled in the GitHub repo settings)
 - [ ] Optionally: PR title check (Conventional Commit format, since PR titles become squash commits)
