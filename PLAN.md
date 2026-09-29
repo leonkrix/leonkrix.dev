@@ -49,8 +49,8 @@ Tooling notes:
 - [x] `actionlint` job in CI (lint the workflow files), added to `needs` of `ci-ok`
 - [x] `dependency-review` job on pull requests, added to `needs` of `ci-ok`
 - [ ] Security headers in `public/_headers` (nosniff, referrer policy, frame protection, permissions policy, COOP; CSP via Astro), a CI check for them, target A+ on securityheaders.com
-- [ ] `.github/workflows/codeql.yml` (`javascript-typescript`; PRs, `main`, weekly), pinned actions
-- [ ] `SECURITY.md` and private vulnerability reporting enabled
+- [x] `.github/workflows/codeql.yml` (`javascript-typescript`; PRs, `main`, weekly), pinned actions
+- [x] `SECURITY.md` (private vulnerability reporting must be enabled in the GitHub repo settings)
 - [ ] Optionally: PR title check (Conventional Commit format, since PR titles become squash commits)
 - [ ] Later (Phase 3): OpenSSF Scorecard workflow and badge
 
