@@ -4,22 +4,29 @@ Check items off as they are done. Each phase should end in a deployable state. C
 
 ## Phase 0 - Foundation and tooling
 
-- [ ] Move to Debian (native or WSL2); repo on the Linux filesystem
-- [ ] Install Node LTS and pnpm; add `.nvmrc`, `packageManager` field
-- [ ] Scaffold Astro (TypeScript strict) + React integration + Tailwind v4
-- [ ] `.gitattributes` (LF), `.editorconfig`, `.gitignore`
-- [ ] ESLint 9 flat config: typescript-eslint strict (type-aware), astro, react, react-hooks, jsx-a11y, import sorting
-- [ ] Prettier + astro and tailwind plugins, `eslint-config-prettier`
-- [ ] `tsconfig` strict + `noUncheckedIndexedAccess`; `astro check`
-- [ ] Scripts: `lint`, `lint:fix`, `format`, `format:check`, `typecheck`, `test`, `check`
-- [ ] Husky + lint-staged pre-commit hooks (optional: commitlint)
-- [ ] VS Code settings/extensions recommendations
-- [ ] Vitest set up with a first test
-- [ ] Self-hosted fonts (Fontsource), design tokens (colors, type scale, spacing) in global CSS
-- [ ] Base layout, SEO component (meta, OG), favicon
-- [ ] `LICENSE` (All rights reserved, (c) 2026 Leon Krix), short `README.md`
-- [ ] `.env.example` (Impressum placeholders), `.env` gitignored, typed env access in Astro
-- [ ] GitHub repo `leonkrix/leonkrix.dev` (public), first push (auth via `gh auth login` or SSH key)
+- [x] Dev environment: Windows native (WebStorm) for now, Debian later; both must work
+- [x] Install Node LTS and pnpm; add `.nvmrc`, `packageManager` field
+- [x] Scaffold Astro (TypeScript strict) + React integration + Tailwind v4
+- [x] `.gitattributes` (LF), `.editorconfig`, `.gitignore`
+- [x] ESLint flat config: typescript-eslint strict (type-aware), astro, react, react-hooks, jsx-a11y, import sorting
+- [x] Prettier + astro and tailwind plugins, `eslint-config-prettier`
+- [x] `tsconfig` strictest; `astro check`
+- [x] Scripts: `lint`, `lint:fix`, `format`, `format:check`, `typecheck`, `test`, `check`
+- [x] Husky + lint-staged pre-commit hooks (commitlint still undecided)
+- [x] Vitest set up with a first test
+- [x] Self-hosted fonts (Fontsource), design tokens (colors, fonts) in global CSS
+- [x] Base layout, SEO component (meta, OG), favicon
+- [x] `LICENSE` (All rights reserved, (c) 2026 Leon Krix), short `README.md`
+- [x] `.env.example` (Impressum placeholders), `.env` gitignored
+- [ ] Verify pre-commit hook runs on the first commit (from WebStorm)
+- [ ] Commit and push Phase 0 to `main` (bootstrap: no branch protection yet)
+- [ ] Typed env access in Astro (`astro:env`), done together with the Impressum page in Phase 2
+
+Tooling notes:
+
+- TypeScript is pinned to **6.x** (`typescript@6`). TS 7 is not yet supported by typescript-eslint and `astro check`. Renovate/Dependabot must ignore TS major 7 until both support it.
+- ESLint is **10.x**. `eslint-plugin-react` crashes on ESLint 10 (`getFilename is not a function`), so React linting uses `@eslint-react/eslint-plugin` plus `eslint-plugin-react-hooks` and `eslint-plugin-jsx-a11y`. Do not re-add `eslint-plugin-react`.
+- `pnpm peers check` still shows one known, harmless warning: `eslint-plugin-jsx-a11y` declares peer support only up to ESLint 9, but it works on 10 (verified with test files).
 
 ## Phase 1 - CI and first deploy
 

@@ -1,6 +1,6 @@
 # leonkrix.dev
 
-Personal portfolio of Leon Krix, Software Engineer. Live at <https://leonkrix.dev>.
+Personal portfolio. Live at <https://leonkrix.dev>.
 
 Built with Astro, TypeScript, React islands and Tailwind CSS. Static site, hosted on Cloudflare.
 
@@ -24,8 +24,6 @@ pnpm check      # lint + format check + typecheck + tests + build (same as CI)
 | `pnpm typecheck`    | `astro check` (TypeScript)  |
 | `pnpm test`         | Unit tests (Vitest)         |
 | `pnpm check`        | Everything above, as in CI  |
-
-Project conventions and the roadmap live in [CLAUDE.md](CLAUDE.md) and [PLAN.md](PLAN.md).
 
 ## License
 
