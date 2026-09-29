@@ -1,11 +1,12 @@
 ---
 import ExternalLink from '@/components/ExternalLink.astro';
+import ProtectedEmail from '@/components/ProtectedEmail.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { siteConfig } from '@/lib/site';
 ---
 
 <BaseLayout>
-  <main class="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center gap-6 px-6">
+  <main class="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-6 px-6">
     <p class="font-mono text-sm text-accent-2">Hello, I'm</p>
     <h1 class="text-5xl font-semibold tracking-tight sm:text-7xl">{siteConfig.name}</h1>
     <p class="text-xl text-muted sm:text-2xl">{siteConfig.role}</p>
@@ -14,9 +15,10 @@ import { siteConfig } from '@/lib/site';
       <ExternalLink class="text-accent underline-offset-4 hover:underline" href={siteConfig.github}>
         GitHub
       </ExternalLink>
-      <a class="text-accent underline-offset-4 hover:underline" href={`mailto:${siteConfig.email}`}>
-        Email
-      </a>
+      <ProtectedEmail
+        class="text-accent underline-offset-4 hover:underline"
+        address={siteConfig.email}
+      />
     </nav>
   </main>
 </BaseLayout>

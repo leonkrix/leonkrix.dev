@@ -44,7 +44,7 @@ jobs:
       - run: pnpm test
 
   build:
-    name: Build
+    name: Build and site checks
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -53,6 +53,8 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup
       - run: pnpm build
+      # Checks the build output: metadata, legal pages, footer links, contact data not in plain text
+      - run: pnpm test:dist
 
   # Single required status check for branch protection.
   # Add new jobs to `needs` and this gate covers them without touching the repository settings.

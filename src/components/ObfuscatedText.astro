@@ -1,0 +1,21 @@
+---
+import { cssEscape } from '@/lib/obfuscate';
+
+interface Props {
+  text: string;
+}
+
+// The text is rendered by CSS (`.ob::before { content: var(--t) }`), so it is not part of the HTML
+// text. It works without JavaScript and is read by screen readers, but it cannot be copied.
+const { text } = Astro.props;
+const words = text.split(' ');
+---
+
+<span>
+  {words.map((word, index) => (
+    <Fragment>
+      {index > 0 && ' '}
+      <span class="ob" style={`--t:'${cssEscape(word)}'`} />
+    </Fragment>
+  ))}
+</span>

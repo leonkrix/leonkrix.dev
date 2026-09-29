@@ -5,15 +5,17 @@ interface Props {
   title: string;
   description?: string | undefined;
   image?: string | undefined;
+  noindex?: boolean | undefined;
 }
 
-const { title, description = siteConfig.description, image } = Astro.props;
+const { title, description = siteConfig.description, image, noindex = false } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? siteConfig.url);
 const imageUrl = image ? new URL(image, canonical) : undefined;
 ---
 
 <meta name="description" content={description} />
+{noindex && <meta name="robots" content="noindex" />}
 <link rel="canonical" href={canonical} />
 <meta name="theme-color" content="#0a0d12" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

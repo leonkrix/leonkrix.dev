@@ -1,0 +1,27 @@
+---
+import { siteConfig } from '@/lib/site';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-border px-6 py-8 text-sm text-muted">
+  <div class="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-4">
+    <p>
+      &copy; {year} {siteConfig.name}
+    </p>
+    <nav aria-label="Legal">
+      <ul class="flex gap-6">
+        <li>
+          <a class="underline-offset-4 hover:text-fg hover:underline" href="/impressum">
+            Impressum
+          </a>
+        </li>
+        <li>
+          <a class="underline-offset-4 hover:text-fg hover:underline" href="/datenschutz">
+            Datenschutz
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</footer>

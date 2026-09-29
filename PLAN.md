@@ -20,7 +20,7 @@ Check items off as they are done. Each phase should end in a deployable state. C
 - [x] `.env.example` (Impressum placeholders), `.env` gitignored
 - [x] Verify pre-commit hook runs on the first commit (from WebStorm)
 - [x] Commit and push Phase 0 to `main` (bootstrap: no branch protection yet)
-- [ ] Typed env access in Astro (`astro:env`), done together with the Impressum page in Phase 2
+- [x] Typed env access in Astro (`astro:env`) for the Impressum variables (done with the legal pages)
 
 Tooling notes:
 
@@ -38,12 +38,11 @@ Tooling notes:
 - [x] Cloudflare project via Git integration; placeholder page deployed
 - [x] Domain: DNS moved to Cloudflare (mail records kept), `leonkrix.dev` and `www` attached, `www` redirects to apex, HTTPS works
 - [x] Cost check: Cloudflare Free, GitHub Free (public repo), no payment method
-- [ ] **PR 1 (`docs/record-decisions`)**: this docs update, the first PR through the whole flow (PR, CI, Cloudflare preview, squash merge, production deploy)
-- [ ] Verify the gate: open a throwaway PR that fails CI (e.g. a lint error) and confirm it cannot be merged; then close it without merging
-- [ ] Add Impressum build variables in Cloudflare (`IMPRESSUM_STREET`, `IMPRESSUM_ZIP`, `IMPRESSUM_CITY`, and phone if used); never commit them
+- [x] **PR 1 (`docs/record-decisions`)**: this docs update, the first PR through the whole flow (PR, CI, Cloudflare preview, squash merge, production deploy)
+- [x] Verify the gate: open a throwaway PR that fails CI (e.g. a lint error) and confirm it cannot be merged; then close it without merging
+- [ ] Add the Impressum build variables in Cloudflare, Production only (`IMPRESSUM_STREET`, `IMPRESSUM_ZIP`, `IMPRESSUM_CITY`); never commit them. The production build now fails if they are missing
 - [ ] Set up the `hello@leonkrix.dev` mailbox at IONOS and send/receive a test mail (check SPF/DKIM/DMARC pass)
 - [ ] Cloudflare security settings: Bot Fight Mode, AI bot blocking, email address obfuscation; DNSSEC (optional)
-- [ ] Interim: whole site `noindex` until the legal pages are live (small PR)
 
 ## Phase 1b - Security and CI extras (one branch per item, all via PR)
 
@@ -58,11 +57,11 @@ Tooling notes:
 
 Start with the legal pages (the site is already live): they come before design and content.
 
-- [ ] Typed env access (`astro:env`) for the Impressum variables, with placeholders when unset (CI)
-- [ ] Shared obfuscated-contact component (CSS-rendered address/phone, assembled email, works without JS); used by Impressum and Datenschutz
-- [ ] `/impressum` and `/datenschutz` with real texts (generator + review), `noindex`, linked in the footer of every page
-- [ ] Test: the address is not present as plain text in `dist/`
-- [ ] Remove the interim site-wide `noindex` once the real site is ready to be found
+- [x] Typed env access (`astro:env`) for the Impressum variables, placeholders when unset, production build fails when missing
+- [x] Shared obfuscated-contact component (CSS-rendered address/phone, assembled email, works without JS); used by Impressum and Datenschutz
+- [x] `/impressum` and `/datenschutz` drafted in German with English notice, `noindex`, linked in the footer of every page
+- [ ] Review the legal texts against a generator (eRecht24 / IT-Recht Kanzlei) and adjust; add the state supervisory authority if desired
+- [x] Test: address, placeholders and email are not present as plain text in `dist/`; no mailto link in the HTML (CI job `build` runs `pnpm test:dist`)
 - [ ] Header with anchor navigation + scroll-spy, footer
 - [ ] Hero (Leon Krix, Software Engineer, CTA)
 - [ ] About section
@@ -100,6 +99,7 @@ Start with the legal pages (the site is already live): they come before design a
 
 - [ ] Command palette (Cmd/Ctrl+K)
 - [ ] Terminal easter egg
+- [ ] Contact form (optional, second contact channel): Cloudflare Worker/Pages Function + email sending service + Turnstile spam protection, secrets as Cloudflare secrets, update the privacy policy (data processing, processor agreement)
 - [ ] `/uses` page, optional blog (MDX)
 - [ ] Periodic legal review
 
