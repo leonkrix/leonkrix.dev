@@ -68,7 +68,7 @@ Jobs (existing = live in the workflow; planned = added in the phase noted in PLA
 8. `dependency-review` (live, pull requests only, fails on high severity; skipped on pushes, which does not fail the gate)
 9. `security` (planned, phase 3): `pnpm audit` (high severity)
 
-Separate workflows (not part of the `ci-ok` gate at first, findings show as PR checks): **CodeQL** (`javascript-typescript`, on PRs, `main` and weekly) in `.github/workflows/codeql.yml`, and later **OpenSSF Scorecard**. `SECURITY.md` and private vulnerability reporting are enabled.
+Separate workflows (not part of the `ci-ok` gate at first, findings show as PR checks and in the Security tab): **CodeQL** (live: `codeql.yml`, requires that the repo setting "Code scanning default setup" is NOT enabled, otherwise the two conflict) (`javascript-typescript`, on PRs, `main` and weekly) in `.github/workflows/codeql.yml`, and later **OpenSSF Scorecard**. `SECURITY.md` and private vulnerability reporting are enabled.
 **SonarQube Cloud is deliberately not used**: it overlaps almost entirely with ESLint, strict TypeScript and CodeQL, does not create PRs, and needs an external account plus a token secret. Revisit only as an experiment.
 
 ### Testing strategy
