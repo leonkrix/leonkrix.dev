@@ -18,8 +18,8 @@ Check items off as they are done. Each phase should end in a deployable state. C
 - [x] Base layout, SEO component (meta, OG), favicon
 - [x] `LICENSE` (All rights reserved, (c) 2026 Leon Krix), short `README.md`
 - [x] `.env.example` (Impressum placeholders), `.env` gitignored
-- [ ] Verify pre-commit hook runs on the first commit (from WebStorm)
-- [ ] Commit and push Phase 0 to `main` (bootstrap: no branch protection yet)
+- [x] Verify pre-commit hook runs on the first commit (from WebStorm)
+- [x] Commit and push Phase 0 to `main` (bootstrap: no branch protection yet)
 - [ ] Typed env access in Astro (`astro:env`), done together with the Impressum page in Phase 2
 
 Tooling notes:
@@ -30,19 +30,39 @@ Tooling notes:
 
 ## Phase 1 - CI and first deploy
 
-- [ ] `.github/workflows/ci.yml`: install (frozen lockfile), lint, format check, typecheck, test, build
-- [ ] Workflow hygiene: minimal `permissions`, actions pinned to SHA, concurrency, pnpm cache
-- [ ] Renovate or Dependabot (npm + GitHub Actions)
-- [ ] Branch protection on `main`: PR required, required status checks, up to date, no force push
-- [ ] Cloudflare project via Git integration (`main` -> production, PRs -> preview; build `pnpm build`, output `dist`). No API token needed
-- [ ] Deploy the placeholder page through this pipeline
-- [ ] Domain: switch DNS (copy IONOS MX records first!), attach `leonkrix.dev`, `www` redirect
-- [ ] Add Impressum build variables in Cloudflare (and local `.env`); never commit them
-- [ ] Verify HTTPS, set up `inquiries@leonkrix.dev` mailbox
-- [ ] Verify the gate: a PR with a failing check must not be mergeable or deployable
+- [x] `.github/workflows/ci.yml`: parallel jobs `quality`, `test`, `build` plus aggregate gate `ci-ok`; reusable setup action. First run green
+- [x] Workflow hygiene: minimal `permissions`, actions pinned to SHA, concurrency, pnpm cache
+- [x] Dependabot (npm + GitHub Actions), grouped weekly, ignoring TypeScript 7 and ESLint 11 majors
+- [x] Repo settings: squash merge only, auto-delete head branches, secret scanning + push protection
+- [x] Ruleset `protect-main`: PR required, required check **`CI passed`**, up to date, no force push, no deletion
+- [x] Cloudflare project via Git integration; placeholder page deployed
+- [x] Domain: DNS moved to Cloudflare (mail records kept), `leonkrix.dev` and `www` attached, `www` redirects to apex, HTTPS works
+- [x] Cost check: Cloudflare Free, GitHub Free (public repo), no payment method
+- [ ] **PR 1 (`docs/record-decisions`)**: this docs update, the first PR through the whole flow (PR, CI, Cloudflare preview, squash merge, production deploy)
+- [ ] Verify the gate: open a throwaway PR that fails CI (e.g. a lint error) and confirm it cannot be merged; then close it without merging
+- [ ] Add Impressum build variables in Cloudflare (`IMPRESSUM_STREET`, `IMPRESSUM_ZIP`, `IMPRESSUM_CITY`, and phone if used); never commit them
+- [ ] Set up the `hello@leonkrix.dev` mailbox at IONOS and send/receive a test mail (check SPF/DKIM/DMARC pass)
+- [ ] Cloudflare security settings: Bot Fight Mode, AI bot blocking, email address obfuscation; DNSSEC (optional)
+- [ ] Interim: whole site `noindex` until the legal pages are live (small PR)
+
+## Phase 1b - Security and CI extras (one branch per item, all via PR)
+
+- [ ] `actionlint` job in CI (lint the workflow files), added to `needs` of `ci-ok`
+- [ ] `dependency-review` job on pull requests, added to `needs` of `ci-ok`
+- [ ] `.github/workflows/codeql.yml` (`javascript-typescript`; PRs, `main`, weekly), pinned actions
+- [ ] `SECURITY.md` and private vulnerability reporting enabled
+- [ ] Optionally: PR title check (Conventional Commit format, since PR titles become squash commits)
+- [ ] Later (Phase 3): OpenSSF Scorecard workflow and badge
 
 ## Phase 2 - MVP content
 
+Start with the legal pages (the site is already live): they come before design and content.
+
+- [ ] Typed env access (`astro:env`) for the Impressum variables, with placeholders when unset (CI)
+- [ ] Shared obfuscated-contact component (CSS-rendered address/phone, assembled email, works without JS); used by Impressum and Datenschutz
+- [ ] `/impressum` and `/datenschutz` with real texts (generator + review), `noindex`, linked in the footer of every page
+- [ ] Test: the address is not present as plain text in `dist/`
+- [ ] Remove the interim site-wide `noindex` once the real site is ready to be found
 - [ ] Header with anchor navigation + scroll-spy, footer
 - [ ] Hero (Leon Krix, Software Engineer, CTA)
 - [ ] About section
@@ -50,9 +70,10 @@ Tooling notes:
 - [ ] Featured projects section
 - [ ] Experience timeline + CV PDF download
 - [ ] Contact section (mailto, GitHub, LinkedIn)
-- [ ] `/impressum` and `/datenschutz` (placeholders first, then real texts)
-- [ ] `robots.txt`, `sitemap.xml`, JSON-LD
+- [ ] `robots.txt` (with AI crawler disallows), `sitemap.xml`, JSON-LD
 - [ ] `/404`
+- [ ] Zod schemas for content collections (private projects must not carry a repo link)
+- [ ] CI job `site-checks`: Vitest over `dist/` (title/description/canonical/lang on every page, Impressum and Datenschutz present and linked, robots/sitemap, no broken internal links, no `http://` resources, no leftover Impressum placeholders in production)
 
 ## Phase 3 - Design polish and quality gates
 
@@ -60,9 +81,12 @@ Tooling notes:
 - [ ] Scroll reveals, hero text animation, View Transitions
 - [ ] Reduced-motion handling, accessibility pass (keyboard, contrast, focus)
 - [ ] OG image
-- [ ] Playwright smoke/e2e tests added to CI
-- [ ] Lighthouse CI added to CI with score assertions (95+ mobile)
-- [ ] `pnpm audit` (and optionally CodeQL) added to CI
+- [ ] CI job `e2e`: Playwright smoke tests (anchors, mobile viewport, keyboard, reduced motion, no console errors)
+- [ ] Privacy guard test: only same-origin requests, no cookies set
+- [ ] Accessibility: `@axe-core/playwright` scan of every page, fail on violations
+- [ ] CI job `lighthouse`: Lighthouse CI with budgets (95+ mobile) and a JS bundle size budget
+- [ ] CI job `security`: `pnpm audit` (high); OpenSSF Scorecard
+- [ ] Add the new jobs to `needs` of `ci-ok` (no branch protection change needed)
 
 ## Phase 4 - Games
 
@@ -81,8 +105,8 @@ Tooling notes:
 
 ## Open decisions
 
-- Impressum address: private address vs. paid Impressum service
-- Cloudflare Pages vs. Workers Static Assets (check at setup)
+- Decided: private address in the Impressum (obfuscated), Cloudflare Git integration, CodeQL yes, SonarQube Cloud no
 - Final palette tuning (see CLAUDE.md tokens)
 - Real content: projects, CV, About text
-- Commitlint yes/no
+- Commitlint yes/no (PR title check is the lighter alternative because of squash merges)
+- Lower-priority Phase 0 leftover: none

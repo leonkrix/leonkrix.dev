@@ -9,7 +9,8 @@ The roadmap lives in [PLAN.md](PLAN.md). Work through it phase by phase; do not 
 
 - GitHub: `leonkrix/leonkrix.dev` (owner `@leonkrix`), **public**.
 - License: **All rights reserved** (`LICENSE` file). Code, texts, images and design are not licensed for reuse. Third-party dependencies keep their own licenses (see `THIRD_PARTY.md` for assets/word lists).
-- Default branch `main`, protected (see CI/CD). Work only on feature branches and PRs.
+- Default branch `main`, protected by the GitHub ruleset `protect-main`: pull request required (0 approvals, solo project), squash merge only, required status check **`CI passed`**, branch must be up to date, no force pushes, no deletions, no bypass. Work only on feature branches and PRs; head branches are deleted automatically after merge.
+- Dependabot (weekly, grouped), secret scanning and push protection are enabled.
 - Because the repo is public and git history is permanent: **never commit** the private postal address, phone number, personal documents, tokens, or `.env` files.
 
 ## Language
@@ -20,8 +21,9 @@ The roadmap lives in [PLAN.md](PLAN.md). Work through it phase by phase; do not 
 
 ## Development environment
 
-- Primary dev environment: **Debian Linux** (native or WSL2). Repo lives on the Linux filesystem, not under `/mnt/c`.
-- Same OS family as CI and Cloudflare builds, so behavior matches production (case-sensitive paths, LF line endings).
+- Currently developed on **native Windows** with WebStorm (Node 24 LTS, pnpm via Corepack/npm). Debian (native or WSL2, repo on the Linux filesystem) is also supported; both must keep working.
+- CI and Cloudflare builds run on Linux, so avoid Windows-only assumptions (case-sensitive paths, LF line endings, no `rm -rf`/bash-only npm scripts).
+- Toolchain pins: **TypeScript 6.x** (typescript-eslint and `astro check` do not support TS 7 yet), **ESLint 10.x**. Do not re-add `eslint-plugin-react` (crashes on ESLint 10); React linting uses `@eslint-react/eslint-plugin`, `eslint-plugin-react-hooks` and `eslint-plugin-jsx-a11y` (one known harmless peer warning for jsx-a11y).
 - Pin the toolchain: `.nvmrc` (Node LTS) and the `packageManager` field in `package.json` (pnpm). CI reads the same versions.
 - `.gitattributes`: `* text=auto eol=lf`. `.editorconfig` for basic editor settings.
 
@@ -52,17 +54,36 @@ We always use **GitHub Actions**. **Nothing is deployed unless CI is green.** Th
 
 ### CI (`.github/workflows/ci.yml`)
 
-Runs on every push and every pull request:
+Runs on every pull request and on pushes to `main`. Structure: a reusable composite action `.github/actions/setup` (pnpm + Node from `package.json`/`.nvmrc`, cached, `pnpm install --frozen-lockfile`, `HUSKY=0`), parallel jobs, and one aggregate job `ci-ok` ("CI passed") that `needs` all others. **Branch protection requires only `ci-ok`**, so new jobs are added to its `needs` list without touching repository settings.
 
-1. Checkout, set up Node (from `.nvmrc`) and pnpm, restore cache, `pnpm install --frozen-lockfile`
-2. `pnpm lint`
-3. `pnpm format:check`
-4. `pnpm typecheck` (`astro check`)
-5. `pnpm test` (Vitest unit tests, game logic)
-6. `pnpm build`
-7. Playwright smoke/e2e tests against the built site (page loads, navigation, games start, no console errors)
-8. Lighthouse CI against the built site with assertions (mobile performance, accessibility, best practices, SEO >= 95; fail the check below the budget)
-9. `pnpm audit` (fail on high severity), and optionally CodeQL
+Jobs (existing = live in the workflow; planned = added in the phase noted in PLAN.md):
+
+1. `quality` (live): `pnpm lint`, `pnpm format:check`, `pnpm typecheck` (`astro check`)
+2. `test` (live): `pnpm test` (Vitest)
+3. `build` (live): `pnpm build`
+4. `site-checks` (planned, phase 2): Vitest checks against the build output in `dist/` (see Testing strategy)
+5. `e2e` (planned, phase 3): Playwright smoke tests plus axe accessibility scans against the built site
+6. `lighthouse` (planned, phase 3): Lighthouse CI with budgets (mobile performance, accessibility, best practices, SEO >= 95)
+7. `actionlint` (planned, next branch): lint the workflow files themselves
+8. `dependency-review` (planned, next branch): GitHub dependency review action on PRs (blocks vulnerable or license-critical new dependencies)
+9. `security` (planned, phase 3): `pnpm audit` (high severity)
+
+Separate workflows (not part of the `ci-ok` gate at first, findings show as PR checks): **CodeQL** (`javascript-typescript`, on PRs, `main` and weekly) in `.github/workflows/codeql.yml`, and later **OpenSSF Scorecard**. `SECURITY.md` and private vulnerability reporting are enabled.
+**SonarQube Cloud is deliberately not used**: it overlaps almost entirely with ESLint, strict TypeScript and CodeQL, does not create PRs, and needs an external account plus a token secret. Revisit only as an experiment.
+
+### Testing strategy
+
+Tests exist to protect what would actually hurt: broken pages, legal pages missing, accessibility/performance regressions, privacy leaks, and broken game logic. Not to hit coverage numbers.
+
+- **Unit (Vitest)**: pure game logic (Wordle evaluation, daily word from date, dictionary validation, Clueless ranking), utilities, content schemas. Word lists get data tests (length, lowercase, no duplicates, valid characters).
+- **Content validation**: Zod schemas on content collections so bad data fails the build (e.g. private projects must not carry a repo link).
+- **Build-output checks (Vitest over `dist/`)**: every page has `<title>`, meta description, canonical, `lang`; `/impressum` and `/datenschutz` exist and are linked from the footer of every page; `robots.txt` and `sitemap.xml` exist; no broken internal links; no `http://` resources; Impressum placeholders are not left in production output.
+- **Privacy guard (Playwright)**: assert that page loads make requests only to our own origin (no third-party fonts/scripts/embeds), and set no cookies. This protects the "no cookie banner" decision.
+- **E2E smoke (Playwright)**: home loads, header anchors scroll to sections, mobile viewport, games start and the language toggle works, keyboard navigation, reduced-motion respected, no console errors.
+- **Accessibility**: `@axe-core/playwright` scan of every page, fail on violations.
+- **Performance/SEO**: Lighthouse CI budgets plus a JS bundle size budget.
+- **Security hygiene**: `pnpm audit`, dependency review, CodeQL, secret scanning (public repo, so GitHub secret scanning and push protection are enabled).
+- Not planned: visual regression snapshots (high maintenance for low value on a personal site), coverage thresholds.
 
 ### Gating deployment behind CI
 
@@ -71,6 +92,8 @@ Decision: **Cloudflare's Git integration deploys, GitHub Actions runs CI in para
 - Cloudflare deploys only `main` to production and builds pull requests as (non-public) preview deployments.
 - **Branch protection on `main`** is what enforces the rule: pull requests required, all CI status checks required and green, branch must be up to date before merge, no force pushes, no direct pushes. Since only CI-verified code can reach `main`, production is effectively gated by CI.
 - Preview builds run in parallel with CI; that is fine, previews are not production. The CI checks still block the merge.
+- **Build budget**: production builds happen only when a PR is merged into `main`. Preview builds are triggered by pushes to branches/PRs and count against Cloudflare's free build allowance. So: commit as often as you like locally, but **push a feature branch when the feature is complete** (or open a draft PR), one branch per complete feature. Restrict preview builds in the Cloudflare project's branch control if needed. GitHub Actions minutes are unlimited for public repos, so CI runs are not a concern.
+- Dependabot PRs are grouped weekly to limit preview builds.
 - No Cloudflare API token or other deploy secrets are needed. Never commit secrets or tokens.
 - Workflow hygiene: minimal `permissions:` per workflow/job, pin third-party actions to a full commit SHA (Renovate/Dependabot keeps them updated), `concurrency` groups to cancel superseded runs, cache pnpm store.
 - **Dependency updates**: Renovate or Dependabot opens PRs (npm and GitHub Actions); CI validates them before merge.
@@ -78,15 +101,17 @@ Decision: **Cloudflare's Git integration deploys, GitHub Actions runs CI in para
 ## Hosting
 
 - Code on GitHub (repo `leonkrix.dev`), `main` is production.
-- Hosting: **Cloudflare** (Pages or Workers Static Assets; check which is currently recommended at setup). Free tier, automatic SSL, global CDN. Fallback: Vercel (same setup: Git integration plus branch protection).
-- Domain `leonkrix.dev` is registered at IONOS. Mail (`inquiries@leonkrix.dev`) stays at IONOS: **keep the MX records** when changing DNS/nameservers. `.dev` requires HTTPS (HSTS preload).
+- Hosting: **Cloudflare** via its Git integration (project connected to `leonkrix/leonkrix.dev`, production branch `main`). Free plan, no payment method on file, automatic SSL, global CDN. Fallback: Vercel (same setup: Git integration plus branch protection).
+- DNS is managed at Cloudflare (nameservers switched); the domain stays registered at IONOS. `leonkrix.dev` and `www` are attached to the project, `www` redirects to the apex domain. Mail DNS records (MX, SPF, DKIM, `autodiscover`, `_dmarc`) must stay untouched and set to "DNS only".
+- Costs: Cloudflare Free and GitHub Free (public repo) are not usage-billed. Only the IONOS domain and mailbox cost money (watch renewal price).
+- Domain `leonkrix.dev` is registered at IONOS. Mail (`hello@leonkrix.dev`) stays at IONOS: **keep the MX records** when changing DNS/nameservers. `.dev` requires HTTPS (HSTS preload).
 - Build: `pnpm build` (`astro build`), output `dist/`.
 
 ## Site structure
 
 - `/` one-page scroll layout: Hero, About, Featured Projects, Experience (CV timeline), Games teaser, Contact, Footer. Sticky header with anchor links and scroll-spy.
 - `/games`, `/games/<game>`: one route per game (code-split, SEO friendly).
-- `/impressum`, `/datenschutz`: linked in the footer, never blocked in robots.txt.
+- `/impressum`, `/datenschutz`: linked in the footer of every page, not disallowed in robots.txt, but with `noindex` meta (so search engines do not list them yet crawlers can still read the tag).
 - `/404`: creative (terminal style).
 
 ## Content model
@@ -122,7 +147,9 @@ Decision: **Cloudflare's Git integration deploys, GitHub Actions runs CI in para
 
 Not legal advice; have the final texts checked (e.g. eRecht24 / IT-Recht Kanzlei generator).
 
-- **Impressum**: full name, ladungsfaehige Anschrift (no P.O. box), email. Phone is not mandatory if a second fast contact channel exists. Do not cite outdated law (TMG); the current law is DDG. Address may be obfuscated against simple bots but must stay human-readable. Address decision pending (private address vs. paid Impressum service). Use a clearly marked placeholder until decided.
+- **Impressum**: full name, ladungsfaehige Anschrift (no P.O. box), email. Phone is not mandatory if a second fast contact channel exists. Do not cite outdated law (TMG); the current law is DDG. Decision: the **private postal address** is used. It is obfuscated against simple bots as far as possible while staying legally correct (human-readable, no JavaScript required, screen-reader friendly).
+  - **Obfuscation approach** (one shared component used by Impressum and Datenschutz): address and phone are never emitted as continuous text in the HTML; they are split into parts and rendered via CSS (`::before { content: attr(data-...) }`), which works without JS and is read by screen readers. The email is assembled from parts (small progressive-enhancement script makes it a clickable link; without JS it stays visible through the CSS output). No images of text (accessibility). A build-output test asserts that the address does not appear as plain text in `dist/`. Additional protection at the edge: Cloudflare Bot Fight Mode, AI-bot blocking and email address obfuscation. Honest limit: a scraper that renders CSS/JS can still read it; this only stops simple crawlers and harvesters.
+  - Until the real Impressum is live, the whole site is `noindex` (interim measure, remove when the real site launches; it does not replace the legal duties).
   - **The postal address is never committed to the repo** (public repo, permanent git history). The repo only contains placeholders plus `.env.example` (`IMPRESSUM_STREET`, `IMPRESSUM_ZIP`, `IMPRESSUM_CITY`, ...). Real values are set as **Cloudflare build variables** and in a local, gitignored `.env`, and are injected into the Impressum page at build time (typed/validated env access via Astro). CI builds use the placeholders. These are not secrets (the address is visible on the live page); the goal is only to keep it out of git history. Name and email may live in the repo.
 - **Datenschutzerklaerung**: controller, hosting provider (Cloudflare, including third-country transfer note), server logs / IP addresses, contact by email, localStorage for game state (technically necessary), user rights.
 - **No cookie banner** as long as there are no non-essential cookies, trackers, embeds (YouTube, maps, social widgets) or third-party CDN resources. Adding any of these requires revisiting the privacy policy first.
@@ -153,6 +180,10 @@ Command palette (Cmd/Ctrl+K), terminal-style easter egg, `/uses` page, blog (MDX
 - **Impressum address kept out of git**: injected via build variables; alternatives to a private address are a paid Impressum/c-o service (roughly 5-20 EUR/month); a fully anonymous Impressum is not legally possible (name and serviceable address are mandatory).
 - **Mail stays at IONOS, DNS moves to Cloudflare**: copy the IONOS MX records before switching nameservers.
 - **Games are optional fun, not the core**: MVP first.
+- **CodeQL yes, SonarQube Cloud no**: CodeQL is free, GitHub-native and useful once games handle user input; Sonar would duplicate ESLint/TypeScript/CodeQL findings and adds an external service and a secret.
+- **Single required check `CI passed`**: an aggregate job so new CI jobs never require changing the ruleset.
+- **Private address in the Impressum, obfuscated**: see Legal. Legal pages come right after Phase 1, before design work.
+- **Workflow actions are pinned to full commit SHAs**: IDE inspections may flag their inputs as undefined (false positive, the IDE cannot resolve metadata for SHA refs).
 
 ## Conventions
 
@@ -161,3 +192,7 @@ Command palette (Cmd/Ctrl+K), terminal-style easter egg, `/uses` page, blog (MDX
 - Prefer editing existing components over adding new abstractions. Keep components small and typed.
 - Do not add third-party scripts, fonts, or embeds without checking the legal section above.
 - Before opening a PR run `pnpm check` locally.
+- The PR title becomes the squash commit message: write it as a Conventional Commit (`feat: ...`, `fix: ...`, `chore: ...`, `docs: ...`, `ci: ...`).
+- Commit locally as often as you like, but push a branch only when the feature is complete (each push builds a Cloudflare preview).
+- New external links use the `ExternalLink` component (`target="_blank"`, `rel="noopener noreferrer"`).
+- In the WebStorm commit dialog, "Analyze code" is off (lint-staged and CI already cover it); `dist/` and `.astro/` are marked as excluded.
