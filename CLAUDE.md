@@ -183,7 +183,7 @@ Not legal advice; have the final texts checked (e.g. eRecht24 / IT-Recht Kanzlei
 - Fields: name, email, message. Requires JavaScript; without it the section shows the obfuscated email. The Contact section uses the form plus a uniform row of icon buttons (Email, GitHub, LinkedIn).
 - Validation rules live in one shared module used by browser and server; the server is authoritative. Limits: name 2-80, email valid and at most 254, message 20-2000, no control characters.
 - Abuse protection: honeypot, HMAC-signed timing token, rate limiting, body size limit, Origin check, no CORS, fixed recipient and sender, header injection prevention, no message content in logs, generic errors. No Turnstile at first (it loads a third-party script); add only if spam appears.
-- Secrets only as Cloudflare secrets (production), local development via `wrangler pages dev` and a gitignored `.dev.vars`. Never commit credentials.
+- Secrets: Cloudflare **Secrets** (runtime, encrypted), not build variables (Functions cannot read build variables). Local development via `wrangler pages dev` and the gitignored `.dev.vars`. The IONOS plan has one mailbox, so `hello@leonkrix.dev` is sender and recipient and its password gives access to the whole mailbox: long unique password, never logged, rotated if leaked. Never commit credentials.
 - Legal: the privacy policy must be updated before the form goes live (data, purpose, legal basis, processors, retention). A form plus the email address are two contact channels for the Impressum.
 - Tests: unit tests for the shared rules with boundary cases, Function tests with a mocked mailer, Playwright and axe tests for the UI, all part of CI.
 
