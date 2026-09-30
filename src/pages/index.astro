@@ -1,9 +1,15 @@
 ---
+import { getCollection } from 'astro:content';
+
 import Hero from '@/components/Hero.astro';
+import ProjectCard from '@/components/ProjectCard.astro';
 import Section from '@/components/Section.astro';
 import TechList from '@/components/TechList.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatPeriod, sortProjects } from '@/lib/projects';
 import { technologyGroups } from '@/lib/technologies';
+
+const projects = sortProjects((await getCollection('projects')).map((entry) => entry.data));
 ---
 
 <BaseLayout>
@@ -22,7 +28,7 @@ import { technologyGroups } from '@/lib/technologies';
           I care about clean, maintainable code, sensible tooling and the details that make software
           pleasant to use: accessibility, performance and privacy included. This website is a small
           example. It is static, loads no third-party scripts or fonts, and every change passes
-          automated checks before it goes live.
+          automated checks before it goes live. My IDEs of choice are PyCharm, WebStorm and CLion.
         </p>
         <p>
           Outside of work I like building things for fun. Some games are on their way to this site.
@@ -39,7 +45,20 @@ import { technologyGroups } from '@/lib/technologies';
       </div>
     </Section>
     <Section id="projects" index="02" title="Projects">
-      <p class="max-w-2xl text-muted">Coming soon.</p>
+      <ol class="border-l border-border">
+        {projects.map((project) => (
+          <li class="relative pb-12 pl-8 last:pb-0 sm:pl-10">
+            <span
+              aria-hidden="true"
+              class="absolute top-1.5 -left-px size-2.5 -translate-x-1/2 rounded-full bg-accent ring-4 ring-bg"
+            />
+            <p class="font-mono text-sm text-accent-2">{formatPeriod(project)}</p>
+            <div class="mt-3">
+              <ProjectCard project={project} />
+            </div>
+          </li>
+        ))}
+      </ol>
     </Section>
     <Section id="experience" index="03" title="Experience">
       <p class="max-w-2xl text-muted">Coming soon.</p>

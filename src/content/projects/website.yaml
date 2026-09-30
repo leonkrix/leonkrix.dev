@@ -1,0 +1,19 @@
+title: leonkrix.dev
+subtitle: This portfolio website
+kind: project
+start: 2026
+stats:
+  - value: 'A+'
+    label: security headers grade (securityheaders.com)
+  - value: '0'
+    label: third-party scripts, fonts or trackers
+highlights:
+  - Static portfolio built with Astro, TypeScript, React islands and Tailwind CSS, hosted on Cloudflare.
+  - Every change goes through a pull request and automated gates before it goes live, from linting and type checks to unit tests, build-output checks (security headers, CSP, legal pages), CodeQL and dependency review.
+  - Privacy and security by design with a strict content security policy, HSTS, no cookies of its own, self-hosted fonts and obfuscated contact data.
+  - Content such as this list is typed YAML validated at build time, so a typo fails the build instead of shipping.
+technologies:
+  [typescript, astro, react, tailwindcss, cloudflare, cicd, eslint, prettier, vitest, git]
+code:
+  status: public
+  url: https://github.com/leonkrix/leonkrix.dev
