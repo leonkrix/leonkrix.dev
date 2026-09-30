@@ -1,0 +1,25 @@
+---
+import ExternalLink from '@/components/ExternalLink.astro';
+import Icon from '@/components/Icon.astro';
+import { socialLinks } from '@/lib/site';
+
+interface Props {
+  class?: string | undefined;
+}
+
+const { class: className } = Astro.props;
+---
+
+<ul class:list={['flex flex-wrap items-center gap-3', className]} aria-label="Profiles">
+  {socialLinks.map((link) => (
+    <li>
+      <ExternalLink
+        href={link.href}
+        class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm text-muted transition-colors hover:border-accent hover:text-fg"
+      >
+        <Icon name={link.icon} class="size-4" />
+        {link.label}
+      </ExternalLink>
+    </li>
+  ))}
+</ul>

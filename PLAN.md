@@ -67,8 +67,9 @@ Start with the legal pages (the site is already live): they come before design a
       Order of the Phase 2 PRs (one branch each):
 
 - [ ] PR 1 Layout: wordmark logo, sticky header with anchor navigation, scroll-spy and JS-free mobile menu, section scaffold, skip link, header tests
-- [ ] PR 2 Icons + Hero + About: `Icon.astro` (lucide + simple-icons), hero with calls to action, About draft (to be refined by Leon)
-- [ ] PR 3 Content collections (Zod) + Projects section: this website, MERN full-stack project, Android app (private); icons and GitHub links
+- [x] PR 2 Icons + Hero + About: `Icon.astro` (lucide + simple-icons), hero with calls to action, About draft (to be refined by Leon)
+- [ ] Refine the About text and check the technology list together with Leon after the first live version
+- [ ] PR 3 Content collections (Zod) + Projects section: this website, MERN full-stack project, Android app (private), Bachelor thesis and Master thesis (private until pushed to GitHub); each project lists its technologies from the registry; `kind` and `visibility` fields; icons and GitHub links
 - [ ] PR 4 Experience timeline (education, work); no CV download, no certificates
 - [ ] PR 5 Contact section (email, GitHub, LinkedIn) + `robots.txt`, `sitemap.xml`, JSON-LD, `/404`
 - [ ] Zod schemas for content collections (private projects must not carry a repo link)
