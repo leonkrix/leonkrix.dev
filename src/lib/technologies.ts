@@ -56,6 +56,8 @@ export const technologies = {
   eslint: { label: 'ESLint', icon: 'simple-icons:eslint' },
   prettier: { label: 'Prettier', icon: 'simple-icons:prettier' },
   vitest: { label: 'Vitest', icon: 'simple-icons:vitest' },
+  playwright: { label: 'Playwright', icon: 'simple-icons:playwright' },
+  axe: { label: 'axe-core', icon: 'lucide:accessibility' },
 } as const satisfies Record<string, Technology>;
 
 export type TechnologyId = keyof typeof technologies;
@@ -100,6 +102,6 @@ export const technologyGroups: readonly TechnologyGroup[] = [
   },
   {
     title: 'Code Quality',
-    items: ['eslint', 'prettier', 'vitest'],
+    items: ['eslint', 'prettier', 'vitest', 'playwright', 'axe'],
   },
 ];

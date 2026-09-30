@@ -13,7 +13,20 @@ highlights:
   - Privacy and security by design with a strict content security policy, HSTS, no cookies of its own, self-hosted fonts and obfuscated contact data.
   - Content such as this list is typed YAML validated at build time, so a typo fails the build instead of shipping.
 technologies:
-  [typescript, astro, react, tailwindcss, cloudflare, cicd, eslint, prettier, vitest, git]
+  [
+    typescript,
+    astro,
+    react,
+    tailwindcss,
+    cloudflare,
+    cicd,
+    eslint,
+    prettier,
+    vitest,
+    playwright,
+    axe,
+    git,
+  ]
 code:
   status: public
   url: https://github.com/leonkrix/leonkrix.dev

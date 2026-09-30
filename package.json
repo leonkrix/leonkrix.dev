@@ -19,15 +19,18 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:dist": "vitest run --config vitest.dist.config.ts",
+    "test:e2e": "pnpm build && playwright test",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build && pnpm test:dist",
     "prepare": "husky"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@axe-core/playwright": "^4.13.0",
     "@eslint-react/eslint-plugin": "^5.21.1",
     "@eslint/js": "^10.0.1",
     "@iconify-json/lucide": "^1.2.137",
     "@iconify-json/simple-icons": "^1.2.98",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^24.19.0",
     "@types/react": "^19.3.0",
