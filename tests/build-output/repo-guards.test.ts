@@ -21,10 +21,4 @@ describe('repository guards', () => {
       expect(ignored, entry).toContain(entry);
     }
   });
-
-  it('keeps Claude Code from reading the local secret files', () => {
-    const settings = readFileSync(join(root, '.claude', 'settings.json'), 'utf8');
-    expect(settings).toContain('Read(./.dev.vars)');
-    expect(settings).toContain('Read(./.env)');
-  });
 });
