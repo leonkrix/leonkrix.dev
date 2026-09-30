@@ -30,6 +30,8 @@ export default defineConfig({
       assetsInlineLimit: 0,
     },
   },
+  // The site has no Markdown content, and Shiki's inline styles would conflict with the CSP
+  markdown: { syntaxHighlight: false },
   security: {
     // Content Security Policy as <meta> element. Astro adds script-src and style-src with hashes.
     csp: {
@@ -46,7 +48,8 @@ export default defineConfig({
       ],
       styleDirective: {
         resources: [
-          "'self'",
+          // Style elements (our stylesheet link) may only come from this origin
+          { resource: "'self'", kind: 'element' },
           // The obfuscated contact text is set through inline style attributes (custom property)
           { resource: "'unsafe-inline'", kind: 'attribute' },
         ],
