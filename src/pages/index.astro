@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 
+import Contact from '@/components/Contact.astro';
 import ExperienceEntry from '@/components/ExperienceEntry.astro';
 import Hero from '@/components/Hero.astro';
 import Icon from '@/components/Icon.astro';
@@ -10,6 +11,7 @@ import TechList from '@/components/TechList.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { experienceGroups, sortExperience } from '@/lib/experience';
 import { formatPeriod, sortProjects } from '@/lib/projects';
+import { personJsonLd } from '@/lib/site';
 import { technologyGroups } from '@/lib/technologies';
 
 const projects = sortProjects(
@@ -21,6 +23,7 @@ const experience = sortExperience((await getCollection('experience')).map((entry
 ---
 
 <BaseLayout>
+  <script type="application/ld+json" slot="head" set:html={JSON.stringify(personJsonLd)} />
   <main id="main" class="flex-1">
     <Hero />
 
@@ -97,7 +100,7 @@ const experience = sortExperience((await getCollection('experience')).map((entry
       </div>
     </Section>
     <Section id="contact" index="04" title="Contact">
-      <p class="max-w-2xl text-muted">Coming soon.</p>
+      <Contact />
     </Section>
   </main>
 </BaseLayout>

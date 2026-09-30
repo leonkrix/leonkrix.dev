@@ -120,7 +120,7 @@ Decision: **Cloudflare's Git integration deploys, GitHub Actions runs CI in para
 - `/` one-page scroll layout: Hero, About, Featured Projects, Experience (CV timeline), Games teaser, Contact, Footer. Sticky header with anchor links and scroll-spy.
 - `/games`, `/games/<game>`: one route per game (code-split, SEO friendly).
 - `/impressum`, `/datenschutz`: linked in the footer of every page, not disallowed in robots.txt, but with `noindex` meta (so search engines do not list them yet crawlers can still read the tag).
-- `/404`: creative (terminal style).
+- `/404`: terminal style, `noindex`. Also generated: `/robots.txt` (search engines allowed, AI training crawlers blocked, points to the sitemap) and `/sitemap.xml` (from `src/pages/**/*.astro`, dynamic routes and noindex pages excluded; games pages are picked up automatically once they exist as static pages, dynamic game routes need explicit handling).
 
 ## Content model
 
@@ -137,7 +137,7 @@ Decision: **Cloudflare's Git integration deploys, GitHub Actions runs CI in para
 - Technologies live in one registry (`src/lib/technologies.ts`, id -> label + icon). The About section shows them in six groups (Languages, Web & Mobile, Machine Learning, Networking, Tooling, Code Quality); every technology must be in exactly one group (tested). Projects and theses reference the same ids to list the technologies they used. Topics without a brand icon (deep learning, GNNs, reinforcement learning) use lucide icons.
 - Navigation: sticky header with the wordmark, anchor links (About, Projects, Experience, Contact), scroll-spy and a JS-free mobile menu (native `popover`). Links use `/#section` so they also work from the legal pages.
 - Brand: wordmark derived from the favicon (terminal chevron `>` plus `leonkrix` and a blinking `_` cursor). Open Graph preview image (link card): dark background, wordmark, "Leon Krix, Software Engineer", generated at build time (Phase 3).
-- Contact: `mailto:` only, no contact form (avoids data processing). Links: GitHub, LinkedIn, email. More links can be added later.
+- Contact: currently `mailto:` only. A **contact form is planned** (Phase 3B, see PLAN.md) and would need privacy policy updates; until it exists there is no form. The Contact section shows the obfuscated email (same component as the Impressum), a sentence that follows the `availability` flag, and the profile links. JSON-LD (`Person`) in the home page head never contains email or address. Links: GitHub, LinkedIn, email. More links can be added later.
 - No photo for now.
 
 ## Design guidelines
@@ -174,6 +174,17 @@ Not legal advice; have the final texts checked (e.g. eRecht24 / IT-Recht Kanzlei
 - `robots.txt`: disallow known AI crawlers (GPTBot, CCBot, ClaudeBot, Google-Extended, ...). This is a request, not protection. Real bot protection comes from Cloudflare settings.
 - Games: only use word lists and assets whose license permits it; record sources in `THIRD_PARTY.md`.
 - **Revisit the legal texts whenever the site changes**: games (localStorage for game state, word lists), a contact form (data processing, processor agreement, Turnstile), analytics, embeds, or any new third-party service. The privacy policy must always match what the site actually does.
+
+## Contact form (planned, Phase 3B)
+
+- Free, no new paid service. Cloudflare Pages Function `POST /api/contact` plus an SMTP or API mailer. Preferred mailer: the existing **IONOS mailbox via SMTP** (Workers TCP sockets, port 587 or 465), verified first in a spike. Fallback: Brevo or Resend behind the same mailer interface.
+- Cloudflare Email Routing is NOT an option: it would take over the MX records and break the IONOS mailbox.
+- Fields: name, email, message. Requires JavaScript; without it the section shows the obfuscated email. The Contact section uses the form plus a uniform row of icon buttons (Email, GitHub, LinkedIn).
+- Validation rules live in one shared module used by browser and server; the server is authoritative. Limits: name 2-80, email valid and at most 254, message 20-2000, no control characters.
+- Abuse protection: honeypot, HMAC-signed timing token, rate limiting, body size limit, Origin check, no CORS, fixed recipient and sender, header injection prevention, no message content in logs, generic errors. No Turnstile at first (it loads a third-party script); add only if spam appears.
+- Secrets only as Cloudflare secrets (production), local development via `wrangler pages dev` and a gitignored `.dev.vars`. Never commit credentials.
+- Legal: the privacy policy must be updated before the form goes live (data, purpose, legal basis, processors, retention). A form plus the email address are two contact channels for the Impressum.
+- Tests: unit tests for the shared rules with boundary cases, Function tests with a mocked mailer, Playwright and axe tests for the UI, all part of CI.
 
 ## Games (after MVP)
 

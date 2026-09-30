@@ -1,0 +1,35 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Page not found | Leon Krix" noindex>
+  <main id="main" class="flex flex-1 items-center">
+    <div class="mx-auto w-full max-w-3xl px-6 py-24">
+      <p class="font-mono text-sm text-accent-2">404</p>
+      <h1 class="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Page not found</h1>
+      <p class="mt-4 max-w-xl text-lg text-muted">
+        The page you are looking for does not exist or has moved.
+      </p>
+
+      <div
+        class="mt-10 overflow-x-auto rounded-xl border border-border bg-surface/60 p-5 font-mono text-sm leading-relaxed"
+        aria-hidden="true"
+      >
+        <p>
+          <span class="text-accent">$</span> cd /this-page
+        </p>
+        <p class="text-muted">bash: cd: /this-page: No such file or directory</p>
+        <p class="mt-2">
+          <span class="text-accent">$</span> cd ~<span class="cursor text-accent-2">_</span>
+        </p>
+      </div>
+
+      <a
+        href="/"
+        class="mt-8 inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-3 text-sm font-medium text-bg transition hover:brightness-110"
+      >
+        Back to home
+      </a>
+    </div>
+  </main>
+</BaseLayout>

@@ -23,6 +23,7 @@ const { title = siteConfig.title, description, image, noindex } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <Seo title={title} description={description} image={image} noindex={noindex} />
+    <slot name="head" />
   </head>
   <body class="flex min-h-dvh flex-col">
     <a
