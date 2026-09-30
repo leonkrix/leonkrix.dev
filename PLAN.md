@@ -57,27 +57,36 @@ Tooling notes:
 
 ## Phase 2 - MVP content
 
-Start with the legal pages (the site is already live): they come before design and content.
+Legal pages first (the site was already live), then the page content in small PRs.
 
 - [x] Typed env access (`astro:env`) for the Impressum variables, placeholders when unset, production build fails when missing
 - [x] Shared obfuscated-contact component (CSS-rendered address/phone, assembled email, works without JS); used by Impressum and Datenschutz
 - [x] `/impressum` and `/datenschutz` drafted in German with English notice, `noindex`, linked in the footer of every page
-- [ ] Review the legal texts against a generator (eRecht24 / IT-Recht Kanzlei) and adjust; add the state supervisory authority if desired
 - [x] Test: address, placeholders and email are not present as plain text in `dist/`; no mailto link in the HTML (CI job `build` runs `pnpm test:dist`)
-      Order of the Phase 2 PRs (one branch each):
+- [ ] Review the legal texts against a generator (eRecht24 / IT-Recht Kanzlei) and adjust; add the state supervisory authority if desired
 
-- [ ] PR 1 Layout: wordmark logo, sticky header with anchor navigation, scroll-spy and JS-free mobile menu, section scaffold, skip link, header tests
-- [x] PR 2 Icons + Hero + About: `Icon.astro` (lucide + simple-icons), hero with calls to action, About draft (to be refined by Leon)
-- [ ] Refine the About text and check the technology list together with Leon after the first live version
-- [x] PR 3 Content collections (Zod) + Projects section: this website, MERN full-stack project, Android app (private), Bachelor thesis and Master thesis (private until pushed to GitHub); each project lists its technologies from the registry; `kind` and `visibility` fields; icons and GitHub links
-- [ ] PR 4 Experience timeline (education, work); no CV download, no certificates. Needs from Leon: education and work entries (institution, role/degree, period, 1-3 bullets)
-- [ ] PR 5 Contact section (email, GitHub, LinkedIn) + `robots.txt`, `sitemap.xml`, JSON-LD, `/404`
-- [ ] Zod schemas for content collections (private projects must not carry a repo link)
-- [ ] CI job `site-checks`: Vitest over `dist/` (title/description/canonical/lang on every page, Impressum and Datenschutz present and linked, robots/sitemap, no broken internal links, no `http://` resources, no leftover Impressum placeholders in production)
+Content PRs (one branch each):
+
+- [x] PR 1 Layout: wordmark logo, sticky header with anchor navigation, scroll-spy and JS-free mobile menu, section scaffold, skip link, header tests
+- [x] PR 2 Icons, hero and About: `Icon.astro` (lucide + simple-icons), hero with calls to action, About with technology groups
+- [x] PR 3 Content collection `projects` (Zod) and the projects timeline: this website, Defuze, Master thesis, Bachelor thesis, Grade & Study Tracker; fields `kind`, `institution`, `grade`, `stats`, `code` (public, planned, none), technologies from the registry
+- [x] PR 4 Content collection `experience` (Zod), Experience section (Education and Work as a compact list with icons, coursework, link to the related thesis) and the "Open to opportunities" availability badge in the hero
+- [ ] PR 5 Contact section (email, GitHub, LinkedIn, mention availability), `robots.txt` (AI crawler disallows), `sitemap.xml`, JSON-LD (`Person`), `/404`, build check for broken internal links
+
+Content decisions (done): no CV download, no certificates, no school (Abitur), no final degree grades (thesis grades 1.0 are shown on the project cards), no non-dev jobs, no Impressum-relevant private data.
+
+Open content follow-ups:
+
+- [ ] Refine the About text together with Leon after the first live version
+- [ ] Optional: concrete evaluation numbers for the Bachelor thesis as key figures
+- [ ] When the thesis repositories are public: switch `code` from `planned` to `public` (with URL) in the two thesis files
+- [ ] Update the availability badge (`availability` in `src/lib/site.ts`) when Leon is no longer looking
 
 ## Phase 3 - Design polish and quality gates
 
-- [ ] Animated background (grain / glow / grid), cursor glow
+- [ ] Animated background: fine grid with a soft glow that follows the cursor (decided), disabled for reduced motion
+- [ ] Richer animation for the availability badge (a CSS pulse exists already)
+- [ ] Optional highlight: a small horizontal timeline strip (2018 to 2026) that shows B.Sc., the teaching assistant job and the M.Sc. overlapping, animated on scroll; the list stays as the mobile fallback
 - [ ] Scroll reveals, hero text animation, page transitions with the native CSS View Transition API (`@view-transition`), NOT Astro's `<ClientRouter />` (not supported with the CSP)
 - [ ] Reduced-motion handling, accessibility pass (keyboard, contrast, focus)
 - [ ] OG image
@@ -87,6 +96,7 @@ Start with the legal pages (the site is already live): they come before design a
 - [ ] CI job `lighthouse`: Lighthouse CI with budgets (95+ mobile) and a JS bundle size budget
 - [ ] CI job `security`: `pnpm audit` (high); OpenSSF Scorecard
 - [ ] Add the new jobs to `needs` of `ci-ok` (no branch protection change needed)
+- [ ] Keep the portfolio in sync: add Playwright, axe and Lighthouse CI to the "Code Quality" group and to `src/content/projects/website.yaml`; add a verifiable Lighthouse score as a key figure of the website project
 
 ## Phase 4 - Games
 
@@ -106,8 +116,6 @@ Start with the legal pages (the site is already live): they come before design a
 
 ## Open decisions
 
-- Decided: private address in the Impressum (obfuscated), Cloudflare Git integration, CodeQL yes, SonarQube Cloud no
-- Final palette tuning (see CLAUDE.md tokens)
-- Real content: projects, CV, About text
+- Decided: private address in the Impressum (obfuscated), Cloudflare Git integration, CodeQL yes, SonarQube Cloud no, availability badge "Open to opportunities" (no start date), experience as a compact list unlike the projects timeline
+- Final palette tuning (see CLAUDE.md tokens; status green `#34d399` was added for the availability dot)
 - Commitlint yes/no (PR title check is the lighter alternative because of squash merges)
-- Lower-priority Phase 0 leftover: none

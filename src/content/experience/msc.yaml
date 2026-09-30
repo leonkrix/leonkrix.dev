@@ -1,0 +1,15 @@
+type: education
+title: M.Sc. Information Systems
+organization: Technical University of Munich (TUM)
+start: 2024-04
+end: 2026-09
+highlights:
+  - Specialization in machine learning, software development and engineering, and network systems.
+coursework:
+  - Advanced Software Engineering
+  - Software Testing
+  - Systems Programming
+  - Web Application Engineering
+  - Network Planning
+  - Cloud Information Systems
+relatedProject: master-thesis

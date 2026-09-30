@@ -22,3 +22,9 @@ export const socialLinks: readonly SocialLink[] = [
   { label: 'GitHub', href: siteConfig.github, icon: 'simple-icons:github' },
   { label: 'LinkedIn', href: siteConfig.linkedin, icon: 'simple-icons:linkedin' },
 ];
+
+/** Availability status shown as a badge in the hero. Set `open` to false to hide it. */
+export const availability = {
+  open: true,
+  label: 'Open to opportunities',
+} as const;
