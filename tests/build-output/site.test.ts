@@ -68,6 +68,16 @@ describe('navigation', () => {
   });
 });
 
+describe('external links', () => {
+  it('open in a new tab only with noopener noreferrer', () => {
+    for (const { file, html } of pages) {
+      for (const tag of html.match(/<a\b[^>]*target="_blank"[^>]*>/g) ?? []) {
+        expect(tag, file).toContain('rel="noopener noreferrer"');
+      }
+    }
+  });
+});
+
 describe('legal pages', () => {
   it('exist', () => {
     expect(existsSync(join(distDir, 'impressum', 'index.html'))).toBe(true);

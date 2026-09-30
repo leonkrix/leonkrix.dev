@@ -1,0 +1,20 @@
+---
+import Icon from '@/components/Icon.astro';
+import { technologies, type TechnologyId } from '@/lib/technologies';
+
+interface Props {
+  items: readonly TechnologyId[];
+  class?: string | undefined;
+}
+
+const { items, class: className } = Astro.props;
+---
+
+<ul class:list={['flex flex-wrap gap-2', className]} aria-label="Technologies">
+  {items.map((id) => (
+    <li class="inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-3 py-1.5 text-sm text-muted">
+      <Icon name={technologies[id].icon} class="size-4 text-fg" />
+      {technologies[id].label}
+    </li>
+  ))}
+</ul>

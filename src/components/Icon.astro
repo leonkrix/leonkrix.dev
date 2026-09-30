@@ -1,0 +1,30 @@
+---
+import lucide from '@iconify-json/lucide/icons.json';
+import simpleIcons from '@iconify-json/simple-icons/icons.json';
+
+import { type IconSet, resolveIcon } from '@/lib/icons';
+
+interface Props {
+  /** "<set>:<name>", e.g. "lucide:arrow-up-right" or "simple-icons:github" */
+  name: string;
+  class?: string | undefined;
+  /** Accessible name. Without it the icon is decorative and hidden from screen readers. */
+  label?: string | undefined;
+}
+
+// Inline SVG from local icon data at build time: no icon font, no CDN, no runtime JavaScript.
+const sets = { lucide, 'simple-icons': simpleIcons } as unknown as Record<string, IconSet>;
+
+const { name, class: className = 'size-5', label } = Astro.props;
+const icon = resolveIcon(sets, name);
+---
+
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox={`0 0 ${icon.width} ${icon.height}`}
+  class={className}
+  role={label === undefined ? undefined : 'img'}
+  aria-label={label}
+  aria-hidden={label === undefined ? 'true' : undefined}
+  set:html={icon.body}
+/>

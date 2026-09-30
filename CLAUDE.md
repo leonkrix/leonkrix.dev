@@ -132,7 +132,9 @@ Decision: **Cloudflare's Git integration deploys, GitHub Actions runs CI in para
 - Initial featured projects: this website (public), the MERN full-stack project (public), the Android app (private). Each with a few bullet points, main technologies and, for public ones, a GitHub link. Adding a project later must only need a new content entry.
 - Icons: build-time inline SVG from `@iconify-json/lucide` (general symbols) and `@iconify-json/simple-icons` (brands such as GitHub) through our own `Icon.astro`. No icon fonts, no CDN, no runtime JS. Icons appear next to external links (GitHub, LinkedIn, project links).
 - Hero: short "who I am / what I have done" intro with calls to action "View projects" and "Contact" (no CV download).
-- Links for now: GitHub and LinkedIn (more later).
+- Links: GitHub and LinkedIn (`socialLinks` in `src/lib/site.ts`), more later.
+- Technologies live in one registry (`src/lib/technologies.ts`, id -> label + icon). The About section shows them in four groups (Languages, Web & Mobile, Machine Learning, Tooling); every technology must be in exactly one group (tested). Projects and theses reference the same ids to list the technologies they used. Topics without a brand icon (deep learning, GNNs, reinforcement learning) use lucide icons.
+- Projects also include the **Bachelor and Master theses** (not yet on GitHub): they are shown as `private` until the repository is public, then switched to `public` with a link. A project has a `kind` (project, bachelor-thesis, master-thesis) in addition to its `visibility`.
 - Navigation: sticky header with the wordmark, anchor links (About, Projects, Experience, Contact), scroll-spy and a JS-free mobile menu (native `popover`). Links use `/#section` so they also work from the legal pages.
 - Brand: wordmark derived from the favicon (terminal chevron `>` plus `leonkrix` and a blinking `_` cursor). Open Graph preview image (link card): dark background, wordmark, "Leon Krix, Software Engineer", generated at build time (Phase 3).
 - Contact: `mailto:` only, no contact form (avoids data processing). Links: GitHub, LinkedIn, email. More links can be added later.

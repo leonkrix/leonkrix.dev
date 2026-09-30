@@ -1,34 +1,42 @@
 ---
-import ExternalLink from '@/components/ExternalLink.astro';
-import ProtectedEmail from '@/components/ProtectedEmail.astro';
+import Hero from '@/components/Hero.astro';
 import Section from '@/components/Section.astro';
+import TechList from '@/components/TechList.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { siteConfig } from '@/lib/site';
+import { technologyGroups } from '@/lib/technologies';
 ---
 
 <BaseLayout>
   <main id="main" class="flex-1">
-    <div class="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-5xl flex-col justify-center gap-6 px-6">
-      <p class="font-mono text-sm text-accent-2">Hello, I'm</p>
-      <h1 class="text-5xl font-semibold tracking-tight sm:text-7xl">{siteConfig.name}</h1>
-      <p class="text-xl text-muted sm:text-2xl">{siteConfig.role}</p>
-      <p class="font-mono text-sm text-muted">Portfolio under construction.</p>
-      <nav class="flex gap-6 text-sm" aria-label="Contact">
-        <ExternalLink
-          class="text-accent underline-offset-4 hover:underline"
-          href={siteConfig.github}
-        >
-          GitHub
-        </ExternalLink>
-        <ProtectedEmail
-          class="text-accent underline-offset-4 hover:underline"
-          address={siteConfig.email}
-        />
-      </nav>
-    </div>
+    <Hero />
 
     <Section id="about" index="01" title="About">
-      <p class="max-w-2xl text-muted">Coming soon.</p>
+      <div class="max-w-2xl space-y-5 text-lg leading-relaxed text-muted">
+        <p>
+          I'm a software engineer who enjoys turning ideas into fast, reliable and well-designed
+          software. My work spans the stack and beyond: from low-level code in C and C++ and machine
+          learning with Python and PyTorch to full-stack web and mobile applications with
+          TypeScript, React, Node.js and Android.
+        </p>
+        <p>
+          I care about clean, maintainable code, sensible tooling and the details that make software
+          pleasant to use: accessibility, performance and privacy included. This website is a small
+          example. It is static, loads no third-party scripts or fonts, and every change passes
+          automated checks before it goes live.
+        </p>
+        <p>
+          Outside of work I like building things for fun. Some games are on their way to this site.
+        </p>
+      </div>
+      <h3 class="mt-14 font-mono text-sm text-accent-2">Technologies I work with</h3>
+      <div class="mt-6 grid gap-x-10 gap-y-8 sm:grid-cols-2">
+        {technologyGroups.map((group) => (
+          <div>
+            <h4 class="mb-3 text-sm font-medium text-fg">{group.title}</h4>
+            <TechList items={group.items} />
+          </div>
+        ))}
+      </div>
     </Section>
     <Section id="projects" index="02" title="Projects">
       <p class="max-w-2xl text-muted">Coming soon.</p>
