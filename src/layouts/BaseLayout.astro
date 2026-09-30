@@ -2,6 +2,7 @@
 import '@/styles/global.css';
 
 import Footer from '@/components/Footer.astro';
+import Header from '@/components/Header.astro';
 import Seo from '@/components/Seo.astro';
 import { siteConfig } from '@/lib/site';
 
@@ -24,6 +25,13 @@ const { title = siteConfig.title, description, image, noindex } = Astro.props;
     <Seo title={title} description={description} image={image} noindex={noindex} />
   </head>
   <body class="flex min-h-dvh flex-col">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-fg"
+    >
+      Skip to content
+    </a>
+    <Header />
     <slot />
     <Footer />
   </body>

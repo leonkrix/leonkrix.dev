@@ -64,15 +64,13 @@ Start with the legal pages (the site is already live): they come before design a
 - [x] `/impressum` and `/datenschutz` drafted in German with English notice, `noindex`, linked in the footer of every page
 - [ ] Review the legal texts against a generator (eRecht24 / IT-Recht Kanzlei) and adjust; add the state supervisory authority if desired
 - [x] Test: address, placeholders and email are not present as plain text in `dist/`; no mailto link in the HTML (CI job `build` runs `pnpm test:dist`)
-- [ ] Header with anchor navigation + scroll-spy, footer
-- [ ] Hero (Leon Krix, Software Engineer, CTA)
-- [ ] About section
-- [ ] Content collections: `projects` (public/private), `experience` (education/work/other)
-- [ ] Featured projects section
-- [ ] Experience timeline + CV PDF download
-- [ ] Contact section (mailto, GitHub, LinkedIn)
-- [ ] `robots.txt` (with AI crawler disallows), `sitemap.xml`, JSON-LD
-- [ ] `/404`
+      Order of the Phase 2 PRs (one branch each):
+
+- [ ] PR 1 Layout: wordmark logo, sticky header with anchor navigation, scroll-spy and JS-free mobile menu, section scaffold, skip link, header tests
+- [ ] PR 2 Icons + Hero + About: `Icon.astro` (lucide + simple-icons), hero with calls to action, About draft (to be refined by Leon)
+- [ ] PR 3 Content collections (Zod) + Projects section: this website, MERN full-stack project, Android app (private); icons and GitHub links
+- [ ] PR 4 Experience timeline (education, work); no CV download, no certificates
+- [ ] PR 5 Contact section (email, GitHub, LinkedIn) + `robots.txt`, `sitemap.xml`, JSON-LD, `/404`
 - [ ] Zod schemas for content collections (private projects must not carry a repo link)
 - [ ] CI job `site-checks`: Vitest over `dist/` (title/description/canonical/lang on every page, Impressum and Datenschutz present and linked, robots/sitemap, no broken internal links, no `http://` resources, no leftover Impressum placeholders in production)
 

@@ -1,0 +1,115 @@
+---
+import Logo from '@/components/Logo.astro';
+import { navLinks } from '@/lib/navigation';
+---
+
+<header class="sticky top-0 z-40 border-b border-border/60 bg-bg/70 backdrop-blur-md">
+  <div class="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
+    <a href="/" aria-label="leonkrix, home" class="rounded-md">
+      <Logo />
+    </a>
+
+    <nav aria-label="Primary" class="hidden md:block">
+      <ul class="flex items-center gap-8">
+        {navLinks.map((link) => (
+          <li>
+            <a
+              data-nav-link
+              href={link.href}
+              class="text-sm text-muted transition-colors hover:text-fg aria-[current=true]:text-accent"
+            >
+              {link.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <!-- Native popover: opens and closes without JavaScript -->
+    <button
+      type="button"
+      popovertarget="mobile-menu"
+      aria-label="Menu"
+      class="-mr-2 inline-flex size-10 items-center justify-center rounded-md text-muted transition-colors hover:text-fg md:hidden"
+    >
+      <svg
+        aria-hidden="true"
+        class="size-6"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+      >
+        <path d="M4 7h16M4 12h16M4 17h16"></path>
+      </svg>
+    </button>
+  </div>
+
+  <nav id="mobile-menu" popover aria-label="Primary" class="mobile-menu md:hidden">
+    <ul class="flex flex-col">
+      {navLinks.map((link) => (
+        <li>
+          <a
+            data-nav-link
+            href={link.href}
+            class="block rounded-md px-4 py-3 text-base text-muted transition-colors hover:bg-border/40 hover:text-fg aria-[current=true]:text-accent"
+          >
+            {link.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+</header>
+
+<script>
+  const links = document.querySelectorAll<HTMLAnchorElement>('[data-nav-link]');
+  const menu = document.getElementById('mobile-menu');
+
+  // Close the mobile menu after choosing a link
+  for (const link of links) {
+    link.addEventListener('click', () => {
+      menu?.hidePopover();
+    });
+  }
+
+  // Scroll-spy: highlight the link of the section that crosses the middle of the viewport
+  const sectionIds = new Set(
+    Array.from(links, (link) => link.hash.slice(1)).filter((id) => id !== ''),
+  );
+  const sections = Array.from(sectionIds, (id) => document.getElementById(id)).filter(
+    (section): section is HTMLElement => section !== null,
+  );
+
+  function setCurrent(id: string | null): void {
+    for (const link of links) {
+      if (id !== null && link.hash === `#${id}`) {
+        link.setAttribute('aria-current', 'true');
+      } else {
+        link.removeAttribute('aria-current');
+      }
+    }
+  }
+
+  if (sections.length > 0) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setCurrent(entry.target.id);
+          } else if (
+            entry.target.id ===
+            document.querySelector<HTMLAnchorElement>('[aria-current]')?.hash.slice(1)
+          ) {
+            setCurrent(null);
+          }
+        }
+      },
+      { rootMargin: '-45% 0px -50% 0px' },
+    );
+    for (const section of sections) {
+      observer.observe(section);
+    }
+  }
+</script>

@@ -128,3 +128,28 @@
     margin-bottom: 2rem;
   }
 }
+
+/* Header: mobile menu (native popover) and blinking cursor of the wordmark */
+@layer components {
+  .mobile-menu {
+    inset: 4.25rem 1rem auto 1rem;
+    width: auto;
+    margin: 0;
+    padding: 0.5rem;
+    color: inherit;
+    background-color: color-mix(in srgb, var(--color-surface) 92%, transparent);
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    backdrop-filter: blur(12px);
+  }
+
+  .cursor {
+    animation: cursor-blink 1.1s steps(1) infinite;
+  }
+
+  @keyframes cursor-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+}
