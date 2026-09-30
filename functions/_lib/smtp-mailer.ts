@@ -2,10 +2,10 @@ import { WorkerMailer } from 'worker-mailer';
 
 /** Settings for the SMTP server. The password is a secret, the rest is plain configuration. */
 export interface SmtpEnv {
-  SMTP_HOST?: string;
-  SMTP_PORT?: string;
-  SMTP_USER?: string;
-  SMTP_PASSWORD?: string;
+  SMTP_HOST?: string | undefined;
+  SMTP_PORT?: string | undefined;
+  SMTP_USER?: string | undefined;
+  SMTP_PASSWORD?: string | undefined;
 }
 
 export interface OutgoingMail {

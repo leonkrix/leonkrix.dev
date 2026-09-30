@@ -179,10 +179,31 @@ Not legal advice; have the final texts checked (e.g. eRecht24 / IT-Recht Kanzlei
 
 - The site is static, the only server code is the contact form API, in Cloudflare Pages Functions (`functions/api/contact.ts`, helpers in `functions/_lib/`). The Pages project is `leonkrix-dev`.
 - `functions/` has its own `tsconfig.json` with the Workers types (they conflict with the DOM types of the Astro project), and is excluded from the root `tsconfig.json`. `pnpm typecheck` runs `astro check` and `tsc -p functions/tsconfig.json`. ESLint and Vitest cover the folder (tests next to the code, `*.test.ts`). CI checks that the Functions bundle (`pnpm build:functions`, needs at least one route, otherwise Wrangler fails with "No routes found").
-- `wrangler.jsonc` holds the compatibility date, the flag `nodejs_compat` (needed by `worker-mailer`) and non-secret `vars` (SMTP host, port, user, sender, recipient). It must never contain passwords or the Impressum address.
-- Secrets are Cloudflare Secrets per environment; for preview deployments use `pnpm exec wrangler pages secret put NAME --project-name leonkrix-dev --env preview` (value typed hidden), and a new deployment is needed afterwards. Locally they live in `.dev.vars` (gitignored, protected from Claude Code by a Read deny rule in `.claude/settings.json`); `.dev.vars.example` lists the names.
+- **There must be NO Wrangler configuration file** (`wrangler.json`, `wrangler.jsonc`, `wrangler.toml`) in the repository: with one, Cloudflare Pages uses it as the only source of settings and ignores the dashboard variables at build time, including the Impressum address, so the production build fails (a repository guard test checks this; we learned it the hard way, the failed production build left the live site on the last good deployment). Compatibility settings are passed on the command line in the `dev:functions` and `build:functions` scripts, and set in the dashboard for the deployed project. Non-secret mail settings (SMTP host, port, account, sender and recipient) are constants in `functions/_lib/config.ts`; the only secret is `SMTP_PASSWORD`.
+- Secrets are Cloudflare Secrets per environment; for preview deployments use `pnpm exec wrangler pages secret put NAME --project-name leonkrix-dev --env preview` (value typed hidden), and a new deployment is needed afterwards. Locally they live in `.dev.vars` (gitignored, protected from Claude Code by a Read deny rule in the personal, untracked `.claude/settings.json`, see "Secrets and Claude Code" below); `.dev.vars.example` lists the names.
 - Local run: `pnpm dev:functions` (builds, then `wrangler pages dev ./dist --port 8788`). The code that talks SMTP (`worker-mailer`) needs the Workers runtime, so unit tests mock it; the real round trip was verified against IONOS locally and on a Cloudflare preview.
-- Before the first merge of `wrangler.jsonc` to `main`, check that the production build still gets the Impressum variables (see PLAN.md).
+- In the Cloudflare dashboard (Settings, Runtime or Functions, compatibility flags) the flag `nodejs_compat` and the compatibility date (2026-09-29, the newest date the dashboard allowed) must be set for **both** Production and Preview before an endpoint that imports `worker-mailer` is deployed.
+
+## Secrets and Claude Code
+
+- Never read, print or ask for the content of `.dev.vars`, `.env` and similar files, and never put a password, token or the private postal address into chat, commits, logs or tests. Secrets are typed by Leon directly into Cloudflare or into these local files.
+- The protection is a personal setting, not part of the repository (`.claude` is in `.gitignore`, so CI cannot check it). On a new machine create `.claude/settings.json` with this content:
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Read(./.dev.vars)",
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./.env.production)",
+      "Read(./.env.development)"
+    ]
+  }
+}
+```
+
+- The rule blocks Claude's file tools and shell commands that name the file (verified: even `ls -l .dev.vars` is refused). It is not an operating system level sandbox. Testing or debugging a secret is done by Leon running a command that reads the file himself and pasting only the non-secret result.
 
 ## Contact form (planned, Phase 3B)
 
