@@ -1,0 +1,17 @@
+{
+  // Cloudflare Pages configuration: the project name must match the Pages project in the dashboard.
+  "name": "leonkrix-dev",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-09-30",
+  // Needed by the SMTP library (worker-mailer)
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Not secret. The password and tokens are Cloudflare Secrets (and in .dev.vars locally).
+  "vars": {
+    "SMTP_HOST": "smtp.ionos.de",
+    "SMTP_PORT": "587",
+    "SMTP_USER": "hello@leonkrix.dev",
+    "MAIL_FROM": "hello@leonkrix.dev",
+    "MAIL_TO": "hello@leonkrix.dev"
+  }
+}
