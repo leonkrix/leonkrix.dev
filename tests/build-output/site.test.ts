@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { ADDRESS_PLACEHOLDERS } from '../../src/lib/legal';
+import { navLinks } from '../../src/lib/navigation';
 import { siteConfig } from '../../src/lib/site';
 import { distDir, type Page, readPages } from './helpers';
 
@@ -37,6 +38,32 @@ describe('every page', () => {
   it('loads no insecure http:// resources', () => {
     for (const { file, html } of pages) {
       expect(html, file).not.toMatch(/(?:src|href)="http:\/\//);
+    }
+  });
+});
+
+describe('navigation', () => {
+  it('shows every navigation link in the header of every page', () => {
+    for (const { file, html } of pages) {
+      for (const link of navLinks) {
+        expect(html, file).toContain(`href="${link.href}"`);
+      }
+    }
+  });
+
+  it('points every navigation link to an existing section on the home page', () => {
+    const home = pages.find(({ file }) => file.endsWith(join('dist', 'index.html')));
+    expect(home, 'home page').toBeDefined();
+    for (const link of navLinks) {
+      const id = link.href.slice(2);
+      expect(home?.html, link.href).toContain(`<section id="${id}"`);
+    }
+  });
+
+  it('offers a skip link to the main content and every page has a main landmark', () => {
+    for (const { file, html } of pages) {
+      expect(html, file).toContain('href="#main"');
+      expect(html, file).toContain('<main id="main"');
     }
   });
 });

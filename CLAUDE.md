@@ -124,11 +124,17 @@ Decision: **Cloudflare's Git integration deploys, GitHub Actions runs CI in para
 
 ## Content model
 
-- **Experience timeline** (CV): education, work, internships, certificates. Also downloadable as CV PDF.
+- **Experience timeline** (CV): education and work (internships as work). No certificates section. **No CV/PDF download**: the timeline and projects are the CV. Never publish a document with personal contact data.
 - **Featured projects**: separate from the timeline. Each has `visibility: "public" | "private"`.
   - public: GitHub link, description, stack.
   - private: description, screenshots, stack, no code link.
 - Start with placeholder data; real content is swapped in later via the collections only.
+- Initial featured projects: this website (public), the MERN full-stack project (public), the Android app (private). Each with a few bullet points, main technologies and, for public ones, a GitHub link. Adding a project later must only need a new content entry.
+- Icons: build-time inline SVG from `@iconify-json/lucide` (general symbols) and `@iconify-json/simple-icons` (brands such as GitHub) through our own `Icon.astro`. No icon fonts, no CDN, no runtime JS. Icons appear next to external links (GitHub, LinkedIn, project links).
+- Hero: short "who I am / what I have done" intro with calls to action "View projects" and "Contact" (no CV download).
+- Links for now: GitHub and LinkedIn (more later).
+- Navigation: sticky header with the wordmark, anchor links (About, Projects, Experience, Contact), scroll-spy and a JS-free mobile menu (native `popover`). Links use `/#section` so they also work from the legal pages.
+- Brand: wordmark derived from the favicon (terminal chevron `>` plus `leonkrix` and a blinking `_` cursor). Open Graph preview image (link card): dark background, wordmark, "Leon Krix, Software Engineer", generated at build time (Phase 3).
 - Contact: `mailto:` only, no contact form (avoids data processing). Links: GitHub, LinkedIn, email. More links can be added later.
 - No photo for now.
 
@@ -139,7 +145,7 @@ Decision: **Cloudflare's Git integration deploys, GitHub Actions runs CI in para
   - bg `#0a0d12`, surface `#11161d`, border `#1e2632`
   - text `#e6edf3`, muted `#8b98a9`
   - accent `#4f8cff`, accent-2 `#22d3ee`, contrast `#f5b642`
-- Subtle animation: background (grain/noise, slow gradient glow or fine grid, cursor-following glow), scroll reveals, hero text animation. Keep it lightweight (CSS/canvas), must not hurt Lighthouse.
+- Subtle animation: background (decided: fine grid with a soft glow that follows the cursor, disabled for reduced motion), scroll reveals, hero text animation. Keep it lightweight (CSS/canvas), must not hurt Lighthouse.
 - Mobile-first, responsive, WCAG AA contrast, full keyboard navigation, visible focus styles.
 - Use design tokens; no magic colors or spacing values in components.
 
