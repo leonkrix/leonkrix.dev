@@ -63,7 +63,7 @@ Jobs (existing = live in the workflow; planned = added in the phase noted in PLA
 3. `build` (live): `pnpm build`
 4. `site-checks` (live, part of the `build` job): `pnpm test:dist` runs Vitest checks against the build output in `dist/` (see Testing strategy)
 5. `e2e` (live): Playwright against the production build (desktop and mobile), see `tests/e2e/`: smoke tests, privacy guard (same-origin only, no cookies) and axe accessibility scans. The shared fixture fails every test on console errors, CSP violations and HTTP errors. On failure the HTML report is uploaded as an artifact
-6. `lighthouse` (planned, phase 3): Lighthouse CI with budgets (mobile performance, accessibility, best practices, SEO >= 95)
+6. `lighthouse` (live): `pnpm lighthouse` runs `scripts/lighthouse.mjs`: Lighthouse (mobile) three times against the production build, median, every category at least 95, transfer budgets (scripts 10 KB, stylesheets 20 KB, total 200 KB, measured with the uncompressed preview server) and no request to another origin. Needs a Chrome (set `CHROME_PATH` if it is not found); the CI uses the runner's preinstalled one. Lower a limit only with a reason, raise the budgets only deliberately
 7. `actionlint` (live): lints the workflow files; the binary is pinned by version and SHA-256 checksum (bump both together, Dependabot cannot update it)
 8. `dependency-review` (live, pull requests only, fails on high severity; skipped on pushes, which does not fail the gate)
 9. `security` (planned, phase 3): `pnpm audit` (high severity)

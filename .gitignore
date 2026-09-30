@@ -14,6 +14,7 @@ dist/
 # Tests and coverage
 coverage/
 playwright-report/
+lighthouse-report/
 test-results/
 
 # IDE / OS

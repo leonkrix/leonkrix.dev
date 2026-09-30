@@ -19,6 +19,7 @@ export default defineConfig([
     'node_modules/',
     'coverage/',
     'playwright-report/',
+    'lighthouse-report/',
     'test-results/',
     '.wrangler/',
   ]),
