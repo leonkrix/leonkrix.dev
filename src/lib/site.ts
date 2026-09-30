@@ -28,3 +28,20 @@ export const availability = {
   open: true,
   label: 'Open to opportunities',
 } as const;
+
+/**
+ * Structured data (schema.org Person) for search engines.
+ * Deliberately without email or address: those stay obfuscated.
+ */
+export const personJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: siteConfig.name,
+  jobTitle: siteConfig.role,
+  url: siteConfig.url,
+  sameAs: [siteConfig.github, siteConfig.linkedin],
+  alumniOf: {
+    '@type': 'CollegeOrUniversity',
+    name: 'Technical University of Munich',
+  },
+} as const;

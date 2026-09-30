@@ -5,8 +5,8 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import { ADDRESS_PLACEHOLDERS } from '../../src/lib/legal';
 import { navLinks } from '../../src/lib/navigation';
-import { availability, siteConfig } from '../../src/lib/site';
-import { distDir, type Page, readPages } from './helpers';
+import { availability, siteConfig, socialLinks } from '../../src/lib/site';
+import { distDir, type Page, readDistFile, readPages } from './helpers';
 
 /**
  * Checks against the production build in dist/. Run `pnpm build` first (pnpm test:dist).
@@ -149,6 +149,95 @@ describe('availability badge', () => {
     expect(availability.open).toBe(true);
     expect(home?.html).toContain(availability.label);
     expect(home?.html).toMatch(/<a[^>]*href="#contact"[^>]*>[\s\S]*?Open to opportunities/);
+  });
+});
+
+describe('contact section', () => {
+  it('shows the protected email and the profile links', () => {
+    const home = pages.find(({ file }) => file.endsWith(join('dist', 'index.html')));
+    const start = home?.html.indexOf('<section id="contact"') ?? -1;
+    const section = home?.html.slice(start, home.html.indexOf('</section>', start)) ?? '';
+    expect(section).toContain('data-protected-email');
+    for (const link of socialLinks) {
+      expect(section, link.label).toContain(`href="${link.href}"`);
+    }
+  });
+});
+
+describe('search engine files', () => {
+  it('robots.txt allows search engines, blocks AI training crawlers and points to the sitemap', async () => {
+    const robots = await readDistFile('robots.txt');
+    expect(robots).toMatch(/User-agent: \*\s+Allow: \//);
+    for (const bot of ['GPTBot', 'ClaudeBot', 'CCBot', 'Google-Extended']) {
+      expect(robots, bot).toMatch(new RegExp(`User-agent: ${bot}\\s+Disallow: /`));
+    }
+    expect(robots).toContain(`Sitemap: ${siteConfig.url}/sitemap.xml`);
+  });
+
+  it('sitemap lists the home page but not the noindex pages', async () => {
+    const sitemap = await readDistFile('sitemap.xml');
+    expect(sitemap).toContain(`<loc>${siteConfig.url}/</loc>`);
+    for (const hidden of ['impressum', 'datenschutz', '404']) {
+      expect(sitemap, hidden).not.toContain(hidden);
+    }
+  });
+
+  it('has structured data for the person, without email or address', () => {
+    const home = pages.find(({ file }) => file.endsWith(join('dist', 'index.html')));
+    const json = /<script type="application\/ld\+json">([^<]+)<\/script>/.exec(
+      home?.html ?? '',
+    )?.[1];
+    expect(json).toBeDefined();
+    const data = JSON.parse(json ?? '{}') as Record<string, unknown>;
+    expect(data['@type']).toBe('Person');
+    expect(data.name).toBe(siteConfig.name);
+    expect(json).not.toMatch(/@leonkrix|mailto|street|postalCode/i);
+  });
+});
+
+describe('404 page', () => {
+  it('exists and is not indexed', () => {
+    const page = pages.find(({ file }) => file.endsWith('404.html'));
+    expect(page).toBeDefined();
+    expect(page?.html).toContain('<meta name="robots" content="noindex">');
+  });
+});
+
+describe('internal links', () => {
+  const home = (): Page | undefined =>
+    pages.find(({ file }) => file.endsWith(join('dist', 'index.html')));
+
+  function attributeValues(html: string): string[] {
+    return [...html.matchAll(/\s(?:href|src)="([^"]+)"/g)].flatMap((match) => match[1] ?? []);
+  }
+
+  it('point to files that exist in the build', () => {
+    for (const { file, html } of pages) {
+      for (const value of attributeValues(html)) {
+        if (!value.startsWith('/') || value.startsWith('//')) {
+          continue;
+        }
+        const path = value.split('#')[0]?.split('?')[0] ?? '';
+        if (path === '' || path === '/') {
+          continue;
+        }
+        const exists = existsSync(join(distDir, path)) || existsSync(join(distDir, `${path}.html`));
+        expect(exists, `${file} links to missing ${value}`).toBe(true);
+      }
+    }
+  });
+
+  it('point to anchors that exist on the target page', () => {
+    for (const { file, html } of pages) {
+      for (const value of attributeValues(html)) {
+        const match = /^(\/?)#(.+)$/.exec(value);
+        if (match === null) {
+          continue;
+        }
+        const target = match[1] === '/' ? home()?.html : html;
+        expect(target, `${file} links to ${value}`).toContain(`id="${match[2] ?? ''}"`);
+      }
+    }
   });
 });
 
