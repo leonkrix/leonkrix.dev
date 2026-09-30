@@ -125,16 +125,15 @@ Decision: **Cloudflare's Git integration deploys, GitHub Actions runs CI in para
 ## Content model
 
 - **Experience timeline** (CV): education and work (internships as work). No certificates section. **No CV/PDF download**: the timeline and projects are the CV. Never publish a document with personal contact data.
-- **Featured projects**: separate from the timeline. Each has `visibility: "public" | "private"`.
-  - public: GitHub link, description, stack.
-  - private: description, screenshots, stack, no code link.
+- **Projects** (content collection `projects`, one YAML file per project in `src/content/projects/`, schema in `src/lib/projects.ts`), shown as a vertical timeline, newest first (by end year, then start year). Fields: `title`, `subtitle`, `kind` (project, bachelor-thesis, master-thesis), optional `institution` (shown next to the kind, e.g. a university), optional `grade` (small badge at the top right of the card, e.g. "1.0", explained as best possible in the German system for screen readers), `start`/`end` year, optional `stats` (1-4 project key figures such as "-47% mean delay", shown as a strip; a grade is not a key figure), `highlights` (1-5 bullets), `technologies` (ids from the registry), `code` and an optional `note`.
+  - `code.status` is `public` (GitHub URL required and shown), `planned` ("Code coming soon") or `none` ("Private project"). A link is impossible for planned/none (the schema strips it), and a public project needs a github.com URL.
+  - To publish a thesis later: change its `code` to `status: public` with the URL.
 - Start with placeholder data; real content is swapped in later via the collections only.
-- Initial featured projects: this website (public), the MERN full-stack project (public), the Android app (private). Each with a few bullet points, main technologies and, for public ones, a GitHub link. Adding a project later must only need a new content entry.
+- Current projects: this website (public), Defuze (MERN + ML, public), Master thesis (GNN + RL for airborne networks, code planned), Bachelor thesis (Tetrys FEC protocol in C++, code planned), Grade & Study Tracker (2019 Android app, no longer available). Adding a project only needs a new YAML file.
 - Icons: build-time inline SVG from `@iconify-json/lucide` (general symbols) and `@iconify-json/simple-icons` (brands such as GitHub) through our own `Icon.astro`. No icon fonts, no CDN, no runtime JS. Icons appear next to external links (GitHub, LinkedIn, project links).
 - Hero: short "who I am / what I have done" intro with calls to action "View projects" and "Contact" (no CV download).
 - Links: GitHub and LinkedIn (`socialLinks` in `src/lib/site.ts`), more later.
-- Technologies live in one registry (`src/lib/technologies.ts`, id -> label + icon). The About section shows them in four groups (Languages, Web & Mobile, Machine Learning, Tooling); every technology must be in exactly one group (tested). Projects and theses reference the same ids to list the technologies they used. Topics without a brand icon (deep learning, GNNs, reinforcement learning) use lucide icons.
-- Projects also include the **Bachelor and Master theses** (not yet on GitHub): they are shown as `private` until the repository is public, then switched to `public` with a link. A project has a `kind` (project, bachelor-thesis, master-thesis) in addition to its `visibility`.
+- Technologies live in one registry (`src/lib/technologies.ts`, id -> label + icon). The About section shows them in six groups (Languages, Web & Mobile, Machine Learning, Networking, Tooling, Code Quality); every technology must be in exactly one group (tested). Projects and theses reference the same ids to list the technologies they used. Topics without a brand icon (deep learning, GNNs, reinforcement learning) use lucide icons.
 - Navigation: sticky header with the wordmark, anchor links (About, Projects, Experience, Contact), scroll-spy and a JS-free mobile menu (native `popover`). Links use `/#section` so they also work from the legal pages.
 - Brand: wordmark derived from the favicon (terminal chevron `>` plus `leonkrix` and a blinking `_` cursor). Open Graph preview image (link card): dark background, wordmark, "Leon Krix, Software Engineer", generated at build time (Phase 3).
 - Contact: `mailto:` only, no contact form (avoids data processing). Links: GitHub, LinkedIn, email. More links can be added later.
@@ -215,3 +214,4 @@ Command palette (Cmd/Ctrl+K), terminal-style easter egg, `/uses` page, blog (MDX
 - Commit locally as often as you like, but push a branch only when the feature is complete (each push builds a Cloudflare preview).
 - New external links use the `ExternalLink` component (`target="_blank"`, `rel="noopener noreferrer"`).
 - In the WebStorm commit dialog, "Analyze code" is off (lint-staged and CI already cover it); `dist/` and `.astro/` are marked as excluded.
+- **Keep the portfolio in sync with the tooling:** when a new test or quality tool is added to this site (e.g. Playwright, axe, Lighthouse CI), add it to the technology registry in the "Code Quality" group and to the `technologies` of `src/content/projects/website.yaml`. Update the website project highlights or key figures when they become verifiable (e.g. a Lighthouse score).

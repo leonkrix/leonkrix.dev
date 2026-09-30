@@ -1,0 +1,12 @@
+title: Grade & Study Tracker
+subtitle: Android app for university students
+kind: project
+start: 2019
+highlights:
+  - Built a tool to calculate university grades and track study progress.
+  - Developed in Java with Android Studio.
+  - Published on the Google Play Store.
+technologies: [java, android, androidstudio]
+code:
+  status: none
+note: The app and its source code are no longer available.

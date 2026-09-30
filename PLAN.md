@@ -69,8 +69,8 @@ Start with the legal pages (the site is already live): they come before design a
 - [ ] PR 1 Layout: wordmark logo, sticky header with anchor navigation, scroll-spy and JS-free mobile menu, section scaffold, skip link, header tests
 - [x] PR 2 Icons + Hero + About: `Icon.astro` (lucide + simple-icons), hero with calls to action, About draft (to be refined by Leon)
 - [ ] Refine the About text and check the technology list together with Leon after the first live version
-- [ ] PR 3 Content collections (Zod) + Projects section: this website, MERN full-stack project, Android app (private), Bachelor thesis and Master thesis (private until pushed to GitHub); each project lists its technologies from the registry; `kind` and `visibility` fields; icons and GitHub links
-- [ ] PR 4 Experience timeline (education, work); no CV download, no certificates
+- [x] PR 3 Content collections (Zod) + Projects section: this website, MERN full-stack project, Android app (private), Bachelor thesis and Master thesis (private until pushed to GitHub); each project lists its technologies from the registry; `kind` and `visibility` fields; icons and GitHub links
+- [ ] PR 4 Experience timeline (education, work); no CV download, no certificates. Needs from Leon: education and work entries (institution, role/degree, period, 1-3 bullets)
 - [ ] PR 5 Contact section (email, GitHub, LinkedIn) + `robots.txt`, `sitemap.xml`, JSON-LD, `/404`
 - [ ] Zod schemas for content collections (private projects must not carry a repo link)
 - [ ] CI job `site-checks`: Vitest over `dist/` (title/description/canonical/lang on every page, Impressum and Datenschutz present and linked, robots/sitemap, no broken internal links, no `http://` resources, no leftover Impressum placeholders in production)

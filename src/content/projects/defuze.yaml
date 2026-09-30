@@ -1,0 +1,31 @@
+title: Defuze
+subtitle: Counter-Strike 2 demo analysis and match replay with machine learning predictions
+kind: project
+start: 2024
+end: 2025
+highlights:
+  - Built a full-stack web application (MERN stack) for analyzing CS2 demos, extended together with a partner from a graded university group project far beyond its original scope.
+  - Trained a feedforward neural network (PyTorch) on CS2 round data that predicts the round win probability at round start and at the bomb plant, served by a separate Python FastAPI service.
+  - Developed an interactive canvas-based replay viewer with timeline controls and map visualization, plus a match analytics dashboard.
+  - Implemented demo upload and processing, user accounts with authentication and profiles, and subscriptions via Stripe (test mode).
+  - Runs as three services (React frontend, Express API, FastAPI AI service) with MongoDB, orchestrated with Docker Compose. Code style is enforced with the Airbnb style guide through ESLint and Prettier.
+technologies:
+  [
+    mongodb,
+    express,
+    react,
+    nodejs,
+    javascript,
+    python,
+    fastapi,
+    pytorch,
+    deeplearning,
+    stripe,
+    docker,
+    eslint,
+    prettier,
+    git,
+  ]
+code:
+  status: public
+  url: https://github.com/leonkrix/defuze

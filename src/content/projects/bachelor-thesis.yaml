@@ -1,0 +1,23 @@
+title: On-The-Fly Network Erasure Coding Protocol for Delay and Loss-Sensitive Data
+subtitle: Tetrys, a forward error correction protocol
+kind: bachelor-thesis
+institution: TUM
+grade: '1.0'
+start: 2023
+end: 2024
+stats:
+  - value: '< 1 RTT'
+    label: delay at full reliability
+  - value: '100%'
+    label: recovery of lost packets at reasonable loss rates
+  - value: '0'
+    label: retransmissions needed
+highlights:
+  - Implemented Tetrys, an on-the-fly network erasure code based on a research paper (sliding window with built-in feedback), as a C++ client-server application over UDP, using efficient coding libraries.
+  - Targets real-time applications, where existing erasure codes either lose packets or add a delay that depends heavily on the round-trip time.
+  - Evaluated on a dedicated testbed in a real network. Reached full reliability in almost all scenarios without retransmissions and outperformed earlier simulation results and standard FEC block codes, with better reliability at lower delay.
+  - Identified and analyzed a sender-side limit, since encoding time grows quickly with the sliding window size. This defines two use cases, low-latency networks for real-time applications and high-latency networks for non-critical data.
+  - Used Wireshark, debuggers and performance analysis tools.
+technologies: [cpp, c, networking, wireshark, profiling, git]
+code:
+  status: planned

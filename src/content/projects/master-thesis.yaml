@@ -1,0 +1,24 @@
+title: Graph Neural Network-Based Reinforcement Learning for Multi-Flow Allocation in Airborne Networks
+subtitle: Route allocation in flying ad hoc networks (FANETs)
+kind: master-thesis
+institution: TUM
+grade: '1.0'
+start: 2025
+end: 2026
+stats:
+  - value: '−47%'
+    label: mean delay vs. shortest path routing
+  - value: '−52%'
+    label: mean packet loss vs. shortest path routing
+  - value: '~48 ms'
+    label: routing time for a batch of flows
+highlights:
+  - Designed a centralized GNN-based reinforcement learning approach that jointly allocates multiple concurrent flows, with a novel soft demand mechanism that estimates link load.
+  - Trained the policy model-based with a supervised GNN world model as a differentiable surrogate environment, and systematically compared several RL algorithms from policy gradient to actor-critic.
+  - Built a custom simulation environment that combines a realistic physical layer model with ns-3 to evaluate diverse FANET topologies.
+  - Consistently outperformed shortest path, load-balanced and non-graph MLP baselines, still 13% lower delay and 6% lower packet loss (statistically significant) than the stronger load-balanced heuristic.
+  - Generalized to larger networks not seen during training.
+technologies:
+  [python, cpp, pytorch, gnn, rl, raytune, deeplearning, tensorboard, ns3, networking, git]
+code:
+  status: planned

@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -75,6 +75,37 @@ describe('external links', () => {
         expect(tag, file).toContain('rel="noopener noreferrer"');
       }
     }
+  });
+});
+
+describe('projects section', () => {
+  const contentDir = join(distDir, '..', 'src', 'content', 'projects');
+  const sources = readdirSync(contentDir)
+    .filter((name) => name.endsWith('.yaml'))
+    .map((name) => readFileSync(join(contentDir, name), 'utf8'));
+
+  function projectsHtml(): string {
+    const home = pages.find(({ file }) => file.endsWith(join('dist', 'index.html')));
+    const html = home?.html ?? '';
+    const start = html.indexOf('<section id="projects"');
+    return html.slice(start, html.indexOf('</section>', start));
+  }
+
+  it('renders one card per project entry', () => {
+    expect(sources.length).toBeGreaterThan(0);
+    expect(projectsHtml().match(/<article\b/g)?.length).toBe(sources.length);
+  });
+
+  it('links to GitHub only for public projects', () => {
+    const publicCount = sources.filter((source) => /^\s+status: public$/m.test(source)).length;
+    const githubLinks = projectsHtml().match(/href="https:\/\/github\.com\//g)?.length ?? 0;
+    expect(githubLinks).toBe(publicCount);
+  });
+
+  it('lists the projects newest first', () => {
+    const titles = [...projectsHtml().matchAll(/<h3[^>]*>([^<]+)<\/h3>/g)].map((match) => match[1]);
+    expect(titles[0]).toBe('leonkrix.dev');
+    expect(titles.at(-1)).toBe('Grade &amp; Study Tracker');
   });
 });
 
