@@ -90,13 +90,13 @@ Order (decided): 3A quality gates first, then 3B the contact form (so its browse
 
 ### 3A Quality gates
 
-- [ ] CI job `e2e`: Playwright smoke tests (anchors, mobile viewport, keyboard, reduced motion, no console errors)
-- [ ] Privacy guard test: only same-origin requests, no cookies set (Cloudflare's security cookie `__cf_bm` is the only allowed exception)
-- [ ] Accessibility: `@axe-core/playwright` scan of every page, fail on violations
+- [x] CI job `e2e` (part of `CI passed`): Playwright against the production build on desktop and mobile; smoke tests for navigation, mobile menu, skip link, email link, external links, legal pages, 404, no horizontal scrolling, reduced motion; every test also fails on console errors, CSP violations and HTTP errors
+- [x] Privacy guard test (Playwright): only same-origin requests and no cookies on every page, including the 404 page (Cloudflare's `__cf_bm` only appears in production with bot protection; if it ever shows up in a test, allow exactly that cookie)
+- [x] Accessibility: `@axe-core/playwright` scan of every page against WCAG 2.2 AA and best practices, currently no violations
 - [ ] CI job `lighthouse`: Lighthouse CI with budgets (95+ mobile) and a JS bundle size budget
 - [ ] CI job `security`: `pnpm audit` (high); OpenSSF Scorecard
 - [ ] Add the new jobs to `needs` of `ci-ok` (no branch protection change needed)
-- [ ] Keep the portfolio in sync: add Playwright, axe and Lighthouse CI to the "Code Quality" group and to `src/content/projects/website.yaml`; add a verifiable Lighthouse score as a key figure of the website project
+- [ ] Keep the portfolio in sync: Playwright and axe are in the registry and the website project (done); still to add: Lighthouse CI, and a verifiable Lighthouse score as a key figure of the website project
 
 ### 3B Contact form (decided: yes, free, with JavaScript)
 

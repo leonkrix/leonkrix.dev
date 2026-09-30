@@ -46,7 +46,7 @@ The same checks run locally, in pre-commit hooks and in CI. If a check fails loc
 - **TypeScript**: `astro check` / `tsc --noEmit` with `strict` (plus `noUncheckedIndexedAccess`).
 - **Pre-commit hooks**: Husky + lint-staged (eslint --fix, prettier --write on staged files). Optional commit message lint (commitlint, Conventional Commits).
 - **Editor**: `.vscode/settings.json` / recommended extensions committed for format-on-save and ESLint.
-- **Scripts** (`package.json`): `dev`, `build`, `preview`, `lint`, `lint:fix`, `format`, `format:check`, `typecheck`, `test`, `test:e2e`, `check` (runs lint + format:check + typecheck + test + build, the same as CI).
+- **Scripts** (`package.json`): `dev`, `build`, `preview`, `lint`, `lint:fix`, `format`, `format:check`, `typecheck`, `test`, `test:dist`, `test:e2e`, `check`. `check` (lint, format, typecheck, unit tests, build, build-output tests) does not include `test:e2e` because that needs the Playwright browser (`pnpm exec playwright install chromium` once); run `pnpm test:e2e` before opening a PR that changes pages or styles (runs lint + format:check + typecheck + test + build, the same as CI).
 
 ## CI/CD (GitHub Actions is mandatory)
 
@@ -62,7 +62,7 @@ Jobs (existing = live in the workflow; planned = added in the phase noted in PLA
 2. `test` (live): `pnpm test` (Vitest)
 3. `build` (live): `pnpm build`
 4. `site-checks` (live, part of the `build` job): `pnpm test:dist` runs Vitest checks against the build output in `dist/` (see Testing strategy)
-5. `e2e` (planned, phase 3): Playwright smoke tests plus axe accessibility scans against the built site
+5. `e2e` (live): Playwright against the production build (desktop and mobile), see `tests/e2e/`: smoke tests, privacy guard (same-origin only, no cookies) and axe accessibility scans. The shared fixture fails every test on console errors, CSP violations and HTTP errors. On failure the HTML report is uploaded as an artifact
 6. `lighthouse` (planned, phase 3): Lighthouse CI with budgets (mobile performance, accessibility, best practices, SEO >= 95)
 7. `actionlint` (live): lints the workflow files; the binary is pinned by version and SHA-256 checksum (bump both together, Dependabot cannot update it)
 8. `dependency-review` (live, pull requests only, fails on high severity; skipped on pushes, which does not fail the gate)
