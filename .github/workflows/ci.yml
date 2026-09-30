@@ -55,6 +55,8 @@ jobs:
       - run: pnpm build
       # Checks the build output: metadata, legal pages, footer links, contact data not in plain text
       - run: pnpm test:dist
+      # The Cloudflare Functions must bundle with the Workers runtime settings (nodejs_compat)
+      - run: pnpm build:functions
 
   e2e:
     name: End-to-end tests

@@ -44,19 +44,21 @@ pnpm test:e2e     # browser tests (first time: pnpm exec playwright install chro
 pnpm lighthouse   # performance, accessibility, best practices and SEO budgets
 ```
 
-| Script              | Purpose                                                              |
-| ------------------- | -------------------------------------------------------------------- |
-| `pnpm dev`          | Start the dev server                                                 |
-| `pnpm build`        | Production build to `dist/`                                          |
-| `pnpm preview`      | Serve the production build                                           |
-| `pnpm lint`         | ESLint (generates the Astro types first)                             |
-| `pnpm format:check` | Prettier check                                                       |
-| `pnpm typecheck`    | `astro check` (TypeScript)                                           |
-| `pnpm test`         | Unit tests (Vitest)                                                  |
-| `pnpm test:dist`    | Checks against the production build in `dist/`                       |
-| `pnpm check`        | Lint, format check, types, unit tests, build and build-output checks |
-| `pnpm test:e2e`     | Playwright end-to-end tests (builds first)                           |
-| `pnpm lighthouse`   | Lighthouse quality gate (builds first, needs Chrome)                 |
+| Script                 | Purpose                                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| `pnpm dev`             | Start the dev server                                                                           |
+| `pnpm build`           | Production build to `dist/`                                                                    |
+| `pnpm preview`         | Serve the production build                                                                     |
+| `pnpm lint`            | ESLint (generates the Astro types first)                                                       |
+| `pnpm format:check`    | Prettier check                                                                                 |
+| `pnpm typecheck`       | `astro check` for the site and `tsc` for the Cloudflare Functions                              |
+| `pnpm test`            | Unit tests (Vitest)                                                                            |
+| `pnpm test:dist`       | Checks against the production build in `dist/`                                                 |
+| `pnpm check`           | Lint, format check, types, unit tests, build and build-output checks                           |
+| `pnpm test:e2e`        | Playwright end-to-end tests (builds first)                                                     |
+| `pnpm lighthouse`      | Lighthouse quality gate (builds first, needs Chrome)                                           |
+| `pnpm dev:functions`   | Build, then run site and Cloudflare Functions locally (Wrangler, port 8788), needs `.dev.vars` |
+| `pnpm build:functions` | Check that the Cloudflare Functions bundle                                                     |
 
 Copy `.env.example` to `.env` to try the Impressum address locally. Real values are never committed; in production they are Cloudflare build variables.
 
@@ -70,6 +72,7 @@ src/
   lib/          Plain TypeScript: schemas, helpers, site configuration, with unit tests
   pages/        Routes: home, Impressum, Datenschutz, 404, sitemap
   styles/       Design tokens and global styles
+functions/      Cloudflare Pages Functions (contact form API) with their own tsconfig
 public/         robots.txt, favicon, security headers (_headers)
 tests/          Build-output checks (Vitest) and end-to-end tests (Playwright)
 scripts/        Lighthouse quality gate

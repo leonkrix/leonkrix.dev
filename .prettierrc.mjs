@@ -8,6 +8,10 @@ export default {
   tailwindStylesheet: './src/styles/global.css',
   overrides: [
     {
+      files: '*.jsonc',
+      options: { trailingComma: 'none' },
+    },
+    {
       files: '*.astro',
       options: { parser: 'astro' },
     },

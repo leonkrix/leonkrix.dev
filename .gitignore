@@ -21,6 +21,7 @@ test-results/
 
 # IDE / OS
 .idea/
+.claude
 .vscode/
 .DS_Store
 Thumbs.db

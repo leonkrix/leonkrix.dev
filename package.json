@@ -15,7 +15,9 @@
     "lint:fix": "astro sync && eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "astro check",
+    "typecheck": "astro check && tsc -p functions/tsconfig.json",
+    "build:functions": "wrangler pages functions build functions --outfile .wrangler/functions-worker.js",
+    "dev:functions": "pnpm build && wrangler pages dev ./dist --port 8788",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:dist": "vitest run --config vitest.dist.config.ts",
@@ -27,6 +29,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@axe-core/playwright": "^4.13.0",
+    "@cloudflare/workers-types": "^5.20260929.1",
     "@eslint-react/eslint-plugin": "^5.21.1",
     "@eslint/js": "^10.0.1",
     "@iconify-json/lucide": "^1.2.137",
@@ -53,7 +56,8 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.1",
-    "vitest": "^5.0.2"
+    "vitest": "^5.0.2",
+    "wrangler": "^4.144.0"
   },
   "dependencies": {
     "@astrojs/react": "^7.0.0",
@@ -61,6 +65,7 @@
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "astro": "^7.3.5",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "worker-mailer": "^1.2.1"
   }
 }
