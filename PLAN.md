@@ -98,6 +98,10 @@ Order (decided): 3A quality gates first, then 3B the contact form (so its browse
 - [ ] Add the new jobs to `needs` of `ci-ok` (no branch protection change needed)
 - [ ] Keep the portfolio in sync: Playwright and axe are in the registry and the website project (done); still to add: Lighthouse CI, and a verifiable Lighthouse score as a key figure of the website project
 
+- [x] Stronger pre-commit hook: project-wide type check and related unit tests when code is staged (a type error slipped past the old hook to CI once); build warnings about Shiki and the CSP style directive removed (`markdown.syntaxHighlight: false`, style elements scoped with `kind: element`)
+- [ ] Improve the README (small docs PR after Lighthouse): short description, link to the live site, a few badges (GitHub Actions status for `ci.yml` and `codeql.yml`, OpenSSF Scorecard once it exists, "all rights reserved"), the script table. Badges belong in the README only: embedding badge images on the website would be third-party requests (privacy guard, CSP)
+- [x] The e2e job no longer hangs after the tests on GitHub (first runs hung inside `pnpm test:e2e` before the summary was printed, most likely while stopping the web server). Fixes: the server is a single process (`astro preview` directly), the build runs before Playwright, `gracefulShutdown`, an 8 minute global timeout, an 8 minute step timeout and the list reporter. Verified green. Plan B if it returns: start the preview server in the workflow as a background process with its output redirected to a file
+
 ### 3B Contact form (decided: yes, free, with JavaScript)
 
 Decisions: fields name, email and message; requires JavaScript (progressive enhancement is not worth the extra surface); without JavaScript the section shows the obfuscated email instead. The Contact section becomes: short text, the form as the main element, and a uniform row of icon buttons (Email, GitHub, LinkedIn); the large email card goes away. Terminal or calm card styling that matches the site, with clear states (empty, error, sending, sent).
