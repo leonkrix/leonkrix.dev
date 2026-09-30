@@ -1,15 +1,23 @@
 ---
 import { getCollection } from 'astro:content';
 
+import ExperienceEntry from '@/components/ExperienceEntry.astro';
 import Hero from '@/components/Hero.astro';
+import Icon from '@/components/Icon.astro';
 import ProjectCard from '@/components/ProjectCard.astro';
 import Section from '@/components/Section.astro';
 import TechList from '@/components/TechList.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { experienceGroups, sortExperience } from '@/lib/experience';
 import { formatPeriod, sortProjects } from '@/lib/projects';
 import { technologyGroups } from '@/lib/technologies';
 
-const projects = sortProjects((await getCollection('projects')).map((entry) => entry.data));
+const projects = sortProjects(
+  (await getCollection('projects')).map((entry) => ({ id: entry.id, ...entry.data })),
+);
+const projectTitles = new Map(projects.map((project) => [project.id, project.title]));
+
+const experience = sortExperience((await getCollection('experience')).map((entry) => entry.data));
 ---
 
 <BaseLayout>
@@ -47,7 +55,10 @@ const projects = sortProjects((await getCollection('projects')).map((entry) => e
     <Section id="projects" index="02" title="Projects">
       <ol class="border-l border-border">
         {projects.map((project) => (
-          <li class="relative pb-12 pl-8 last:pb-0 sm:pl-10">
+          <li
+            id={`project-${project.id}`}
+            class="relative scroll-mt-24 pb-12 pl-8 last:pb-0 sm:pl-10"
+          >
             <span
               aria-hidden="true"
               class="absolute top-1.5 -left-px size-2.5 -translate-x-1/2 rounded-full bg-accent ring-4 ring-bg"
@@ -61,7 +72,29 @@ const projects = sortProjects((await getCollection('projects')).map((entry) => e
       </ol>
     </Section>
     <Section id="experience" index="03" title="Experience">
-      <p class="max-w-2xl text-muted">Coming soon.</p>
+      <div class="space-y-14">
+        {experienceGroups.map((group) => (
+          <div>
+            <h3 class="flex items-center gap-2 font-mono text-sm text-accent-2">
+              <Icon name={group.icon} class="size-4" />
+              {group.title}
+            </h3>
+            <ul class="mt-6 divide-y divide-border">
+              {experience
+                .filter((entry) => entry.type === group.type)
+                .map((entry) => (
+                  <ExperienceEntry
+                    entry={entry}
+                    icon={group.icon}
+                    relatedProjectTitle={
+                      entry.relatedProject ? projectTitles.get(entry.relatedProject) : undefined
+                    }
+                  />
+                ))}
+            </ul>
+          </div>
+        ))}
+      </div>
     </Section>
     <Section id="contact" index="04" title="Contact">
       <p class="max-w-2xl text-muted">Coming soon.</p>
