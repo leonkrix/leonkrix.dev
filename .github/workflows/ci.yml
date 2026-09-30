@@ -71,9 +71,7 @@ jobs:
         run: pnpm exec playwright --version
       # Builds the site, serves it and runs the browser tests: smoke, privacy guard, accessibility
       - run: pnpm test:e2e
-        env:
-          # Temporary diagnosis: log browser start-up. Remove once the job is stable.
-          DEBUG: pw:browser
+        timeout-minutes: 8
       - name: Upload the Playwright report when tests failed
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

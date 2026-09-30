@@ -9,7 +9,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   // Never hang: stop the whole run after 8 minutes (a local run takes about 20 seconds)
-  globalTimeout: isCI ? 8 * 60_000 : undefined,
+  ...(isCI ? { globalTimeout: 8 * 60_000 } : {}),
   retries: isCI ? 1 : 0,
   // `list` prints every test as it finishes, so a stuck run is visible in the CI log
   reporter: isCI ? [['list'], ['github'], ['html', { open: 'never' }]] : [['list']],
@@ -23,11 +23,14 @@ export default defineConfig({
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
     { name: 'mobile', use: { ...devices['Pixel 7'] } },
   ],
-  // Tests run against the production build, exactly what is deployed
+  // Tests run against the production build, exactly what is deployed. The build happens first
+  // (see the test:e2e script). The server is a single process, without pnpm or shell wrappers
+  // around it, so Playwright can always stop it (wrappers left the CI run hanging at the end).
   webServer: {
-    command: `pnpm build && pnpm preview --port ${String(port)}`,
+    command: `node node_modules/astro/bin/astro.mjs preview --port ${String(port)}`,
     url: `http://localhost:${String(port)}`,
     reuseExistingServer: !isCI,
     timeout: 120_000,
+    gracefulShutdown: { signal: 'SIGTERM', timeout: 5_000 },
   },
 });
