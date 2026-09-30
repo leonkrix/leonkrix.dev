@@ -1,10 +1,8 @@
 # Copy this file to `.dev.vars` (gitignored). It is read by `wrangler pages dev` and holds the
 # secrets of the Cloudflare Pages Functions for local development.
-# In production these are Cloudflare Secrets (Settings > Variables and Secrets, type Secret).
+# In production these are Cloudflare Secrets (type Secret, per environment: production and preview).
 # NEVER put real values into this example file: the repository is public.
 
-# Password of the IONOS mailbox hello@leonkrix.dev (gives access to the whole mailbox)
+# Password of the IONOS mailbox hello@leonkrix.dev (gives access to the whole mailbox).
+# Put the value in double quotes if it contains #, spaces or quotes.
 SMTP_PASSWORD=
-
-# Token that protects the temporary spike endpoint: a long random string (at least 24 characters)
-SPIKE_TOKEN=

@@ -175,6 +175,15 @@ Not legal advice; have the final texts checked (e.g. eRecht24 / IT-Recht Kanzlei
 - Games: only use word lists and assets whose license permits it; record sources in `THIRD_PARTY.md`.
 - **Revisit the legal texts whenever the site changes**: games (localStorage for game state, word lists), a contact form (data processing, processor agreement, Turnstile), analytics, embeds, or any new third-party service. The privacy policy must always match what the site actually does.
 
+## Cloudflare Functions (`functions/`)
+
+- The site is static, the only server code is the contact form API, in Cloudflare Pages Functions (`functions/api/contact.ts`, helpers in `functions/_lib/`). The Pages project is `leonkrix-dev`.
+- `functions/` has its own `tsconfig.json` with the Workers types (they conflict with the DOM types of the Astro project), and is excluded from the root `tsconfig.json`. `pnpm typecheck` runs `astro check` and `tsc -p functions/tsconfig.json`. ESLint and Vitest cover the folder (tests next to the code, `*.test.ts`). CI checks that the Functions bundle (`pnpm build:functions`, needs at least one route, otherwise Wrangler fails with "No routes found").
+- `wrangler.jsonc` holds the compatibility date, the flag `nodejs_compat` (needed by `worker-mailer`) and non-secret `vars` (SMTP host, port, user, sender, recipient). It must never contain passwords or the Impressum address.
+- Secrets are Cloudflare Secrets per environment; for preview deployments use `pnpm exec wrangler pages secret put NAME --project-name leonkrix-dev --env preview` (value typed hidden), and a new deployment is needed afterwards. Locally they live in `.dev.vars` (gitignored, protected from Claude Code by a Read deny rule in `.claude/settings.json`); `.dev.vars.example` lists the names.
+- Local run: `pnpm dev:functions` (builds, then `wrangler pages dev ./dist --port 8788`). The code that talks SMTP (`worker-mailer`) needs the Workers runtime, so unit tests mock it; the real round trip was verified against IONOS locally and on a Cloudflare preview.
+- Before the first merge of `wrangler.jsonc` to `main`, check that the production build still gets the Impressum variables (see PLAN.md).
+
 ## Contact form (planned, Phase 3B)
 
 - Free, no new paid service. Cloudflare Pages Function `POST /api/contact` plus an SMTP or API mailer. Preferred mailer: the existing **IONOS mailbox via SMTP** (Workers TCP sockets, port 587 or 465), verified first in a spike. Fallback: Brevo or Resend behind the same mailer interface.
