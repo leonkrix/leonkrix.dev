@@ -58,6 +58,12 @@ export default defineConfig({
   },
   env: {
     schema: {
+      // Build-time switch for the contact form (see Contact.astro). Off unless set to true.
+      PUBLIC_CONTACT_FORM: envField.boolean({
+        context: 'client',
+        access: 'public',
+        default: false,
+      }),
       IMPRESSUM_STREET: envField.string({ context: 'server', access: 'secret', optional: true }),
       IMPRESSUM_ZIP: envField.string({ context: 'server', access: 'secret', optional: true }),
       IMPRESSUM_CITY: envField.string({ context: 'server', access: 'secret', optional: true }),

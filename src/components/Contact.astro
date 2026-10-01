@@ -1,33 +1,26 @@
 ---
-import Icon from '@/components/Icon.astro';
-import ProtectedEmail from '@/components/ProtectedEmail.astro';
+import { PUBLIC_CONTACT_FORM } from 'astro:env/client';
+
+import ContactForm from '@/components/ContactForm.astro';
 import SocialLinks from '@/components/SocialLinks.astro';
-import { availability, siteConfig } from '@/lib/site';
+import { availability } from '@/lib/site';
 ---
 
 <div class="max-w-2xl">
   <p class="text-lg leading-relaxed text-muted">
     {availability.open
-      ? "I'm currently open to new opportunities as a software engineer. Whether you have a role, a project or just a question, the easiest way to reach me is by email."
-      : 'Whether you have a project or just a question, the easiest way to reach me is by email.'}
+      ? "I'm currently open to new opportunities as a software engineer. Whether you have a role, a project or just a question, I'd be happy to hear from you."
+      : "Whether you have a project or just a question, I'd be happy to hear from you."}
   </p>
 
-  <div class="mt-8 flex items-center gap-4 rounded-xl border border-border bg-surface/50 p-5 sm:p-6">
-    <div
-      aria-hidden="true"
-      class="grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-bg/60 text-accent"
-    >
-      <Icon name="lucide:mail" class="size-5" />
+  {PUBLIC_CONTACT_FORM && (
+    <div class="mt-8">
+      <ContactForm />
     </div>
-    <div class="min-w-0">
-      <p class="text-sm text-muted">Email</p>
-      <ProtectedEmail
-        class="text-lg font-medium break-all text-fg underline-offset-4 hover:text-accent hover:underline sm:text-xl"
-        address={siteConfig.email}
-      />
-    </div>
-  </div>
+  )}
 
-  <p class="mt-8 mb-3 text-sm text-muted">You can also find me here</p>
-  <SocialLinks />
+  <p class="mt-8 mb-3 text-sm text-muted">
+    {PUBLIC_CONTACT_FORM ? 'Or reach me directly' : 'You can reach me here'}
+  </p>
+  <SocialLinks withEmail />
 </div>
