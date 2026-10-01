@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { MAIL_SETTINGS, smtpEnv } from './config';
+import { activeFormSecret, MAIL_SETTINGS, smtpEnv } from './config';
 
 describe('MAIL_SETTINGS', () => {
   it('uses the IONOS submission port with STARTTLS (587) and valid addresses', () => {
@@ -13,6 +13,20 @@ describe('MAIL_SETTINGS', () => {
 
   it('contains no secret: no password or token like fields', () => {
     expect(Object.keys(MAIL_SETTINGS).join(' ')).not.toMatch(/pass|secret|token/i);
+  });
+});
+
+describe('activeFormSecret', () => {
+  const secret = 'x'.repeat(32);
+
+  it('returns the secret only when the form is switched on and the secret is long enough', () => {
+    expect(activeFormSecret({ FORM_SECRET: secret, CONTACT_ENABLED: 'true' })).toBe(secret);
+    expect(activeFormSecret({ FORM_SECRET: secret })).toBeUndefined();
+    expect(activeFormSecret({ FORM_SECRET: secret, CONTACT_ENABLED: 'yes' })).toBeUndefined();
+    expect(activeFormSecret({ CONTACT_ENABLED: 'true' })).toBeUndefined();
+    expect(
+      activeFormSecret({ FORM_SECRET: 'x'.repeat(31), CONTACT_ENABLED: 'true' }),
+    ).toBeUndefined();
   });
 });
 
