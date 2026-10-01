@@ -1,4 +1,6 @@
 ---
+import { PUBLIC_CONTACT_FORM } from 'astro:env/client';
+
 import ObfuscatedText from '@/components/ObfuscatedText.astro';
 import ProtectedEmail from '@/components/ProtectedEmail.astro';
 import LegalLayout from '@/layouts/LegalLayout.astro';
@@ -25,6 +27,12 @@ import { siteConfig } from '@/lib/site';
   <p>
     E-Mail: <ProtectedEmail address={siteConfig.email} />
   </p>
+  {PUBLIC_CONTACT_FORM && (
+    <p>
+      Außerdem erreichen Sie mich über das <a href="/#contact">Kontaktformular</a> auf der
+      Startseite.
+    </p>
+  )}
 
   <h2>Haftung für Inhalte</h2>
   <p>
