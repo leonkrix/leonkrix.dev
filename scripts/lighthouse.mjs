@@ -24,7 +24,7 @@ const CATEGORIES = ['performance', 'accessibility', 'best-practices', 'seo'];
 
 /**
  * Budgets in bytes of transferred data. The preview server does not compress, so these are
- * conservative. Measured on 2026-09-30: scripts 1.5 KB, stylesheets 6.8 KB, total 129 KB.
+ * conservative. Measured on 2026-10-01 (with the contact form): scripts 4.5 KB, stylesheets 7.1 KB, total 134 KB.
  */
 const BUDGETS = {
   script: 10 * 1024,
