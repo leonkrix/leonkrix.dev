@@ -1,0 +1,371 @@
+---
+import Icon from '@/components/Icon.astro';
+import { LIMITS } from '@/lib/contact';
+
+const fieldClass =
+  'mt-2 block w-full rounded-lg border border-border bg-bg/60 px-3.5 py-2.5 text-base text-fg placeholder:text-muted/70 transition-colors hover:border-muted/50 focus-visible:border-accent focus-visible:outline-none aria-invalid:border-danger';
+const labelClass = 'block text-sm font-medium text-fg';
+const errorClass = 'mt-1.5 text-sm text-danger';
+---
+
+<!--
+  The form needs JavaScript (it sends JSON to /api/contact). It starts hidden, the script shows
+  it. Without JavaScript only the email button next to it is available.
+-->
+<div data-contact hidden>
+  <form
+    data-contact-form
+    novalidate
+    class="rounded-xl border border-border bg-surface/50 p-5 sm:p-6"
+    aria-labelledby="contact-form-title"
+  >
+    <h3 id="contact-form-title" class="font-mono text-sm text-accent-2">
+      $ send-message
+    </h3>
+
+    <div class="mt-5 grid gap-5 sm:grid-cols-2">
+      <div>
+        <label for="contact-name" class={labelClass}>
+          Name
+        </label>
+        <input
+          id="contact-name"
+          name="name"
+          type="text"
+          autocomplete="name"
+          required
+          aria-describedby="contact-name-error"
+          class={fieldClass}
+        />
+        <p id="contact-name-error" data-error-for="name" class={errorClass}></p>
+      </div>
+      <div>
+        <label for="contact-email" class={labelClass}>
+          Email
+        </label>
+        <input
+          id="contact-email"
+          name="email"
+          type="email"
+          autocomplete="email"
+          inputmode="email"
+          spellcheck="false"
+          required
+          aria-describedby="contact-email-error"
+          class={fieldClass}
+        />
+        <p id="contact-email-error" data-error-for="email" class={errorClass}></p>
+      </div>
+    </div>
+
+    <div class="mt-5">
+      <label for="contact-message" class={labelClass}>
+        Message
+      </label>
+      <textarea
+        id="contact-message"
+        name="message"
+        rows="6"
+        required
+        aria-describedby="contact-message-count contact-message-error"
+        class:list={[fieldClass, 'resize-y']}
+      ></textarea>
+      <div class="mt-1.5 flex items-start justify-between gap-4">
+        <p id="contact-message-error" data-error-for="message" class={errorClass}></p>
+        <p
+          id="contact-message-count"
+          data-message-count
+          data-max={LIMITS.message.max}
+          class="ml-auto shrink-0 font-mono text-xs text-muted"
+        >
+          0 / {LIMITS.message.max}
+        </p>
+      </div>
+    </div>
+
+    <!-- Honeypot: invisible for people, bots fill it. Not reachable by keyboard. -->
+    <div class="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+      <label for="contact-website">Website (leave this empty)</label>
+      <input id="contact-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+    </div>
+
+    <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+      <button
+        type="submit"
+        data-submit
+        class="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-3 text-sm font-medium text-bg transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <span data-submit-label>Send message</span>
+        <Icon name="lucide:send" class="size-4" />
+      </button>
+      <p class="text-sm text-muted">
+        Used only to answer you.
+        <a href="/datenschutz/" class="text-fg underline underline-offset-4 hover:text-accent">
+          Privacy policy
+        </a>
+      </p>
+    </div>
+
+    <!-- Problems with sending (not tied to one field): announced immediately -->
+    <p
+      role="alert"
+      data-alert
+      class="mt-4 rounded-lg border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-fg empty:hidden"
+    ></p>
+    <!-- Progress: announced politely -->
+    <p role="status" data-status class="mt-4 text-sm text-muted empty:hidden"></p>
+  </form>
+
+  <div
+    data-success
+    hidden
+    tabindex="-1"
+    class="rounded-xl border border-status/40 bg-status/10 p-5 sm:p-6"
+  >
+    <p class="flex items-center gap-2 font-medium text-fg">
+      <Icon name="lucide:check" class="size-5 text-status" />
+      Message sent
+    </p>
+    <p class="mt-2 text-muted">
+      Thank you! I'll reply to{' '}
+      <strong class="font-medium break-all text-fg" data-success-email></strong> as soon as I can.
+    </p>
+  </div>
+</div>
+
+<script>
+  import {
+    countCharacters,
+    type ContactErrors,
+    type ContactField,
+    validateContact,
+  } from '@/lib/contact';
+  import {
+    type ContactValues,
+    fetchToken,
+    MESSAGES,
+    sendContact,
+    type TokenResult,
+    tokenWaitTime,
+  } from '@/lib/contact-client';
+
+  const FIELDS: readonly ContactField[] = ['name', 'email', 'message'];
+
+  const root = document.querySelector<HTMLElement>('[data-contact]');
+  const form = root?.querySelector<HTMLFormElement>('[data-contact-form]');
+  if (root && form) {
+    setup(root, form);
+  }
+
+  function setup(wrapper: HTMLElement, formElement: HTMLFormElement): void {
+    const inputs = {
+      name: formElement.querySelector<HTMLInputElement>('[name="name"]'),
+      email: formElement.querySelector<HTMLInputElement>('[name="email"]'),
+      message: formElement.querySelector<HTMLTextAreaElement>('[name="message"]'),
+    };
+    const website = formElement.querySelector<HTMLInputElement>('[name="website"]');
+    const submit = formElement.querySelector<HTMLButtonElement>('[data-submit]');
+    const label = formElement.querySelector<HTMLElement>('[data-submit-label]');
+    const alert = formElement.querySelector<HTMLElement>('[data-alert]');
+    const status = formElement.querySelector<HTMLElement>('[data-status]');
+    const counter = formElement.querySelector<HTMLElement>('[data-message-count]');
+    const success = wrapper.querySelector<HTMLElement>('[data-success]');
+    const successEmail = wrapper.querySelector<HTMLElement>('[data-success-email]');
+    if (
+      !inputs.name ||
+      !inputs.email ||
+      !inputs.message ||
+      !website ||
+      !submit ||
+      !label ||
+      !alert ||
+      !status ||
+      !counter ||
+      !success ||
+      !successEmail
+    ) {
+      return;
+    }
+    const fields = { name: inputs.name, email: inputs.email, message: inputs.message };
+
+    const showError = (field: ContactField, text: string | undefined): void => {
+      const element = formElement.querySelector<HTMLElement>(`[data-error-for="${field}"]`);
+      if (element) {
+        element.textContent = text ?? '';
+      }
+      if (text === undefined) {
+        fields[field].removeAttribute('aria-invalid');
+      } else {
+        fields[field].setAttribute('aria-invalid', 'true');
+      }
+    };
+
+    const showErrors = (errors: ContactErrors): ContactField | undefined => {
+      let first: ContactField | undefined;
+      for (const field of FIELDS) {
+        showError(field, errors[field]?.message);
+        if (errors[field] && first === undefined) {
+          first = field;
+        }
+      }
+      return first;
+    };
+
+    const readValues = (): ContactValues => ({
+      name: fields.name.value,
+      email: fields.email.value,
+      message: fields.message.value,
+      website: website.value,
+    });
+
+    const currentErrors = (): ContactErrors => {
+      const result = validateContact(readValues());
+      return result.ok ? {} : result.errors;
+    };
+
+    const updateCounter = (): void => {
+      const max = Number(counter.dataset['max']);
+      const used = countCharacters(fields.message.value);
+      counter.textContent = `${String(used)} / ${String(max)}`;
+      counter.classList.toggle('text-danger', used > max);
+    };
+
+    // The time token is requested when the visitor starts to interact, not when the page loads
+    // (no request, and no Function call, for visitors who only read).
+    let tokenRequest: Promise<TokenResult> | undefined;
+    const ensureToken = (): Promise<TokenResult> => {
+      tokenRequest ??= fetchToken(
+        (input, init) => fetch(input, init),
+        () => Date.now(),
+      );
+      return tokenRequest;
+    };
+
+    let sending = false;
+    let unavailable = false;
+
+    const setSending = (value: boolean): void => {
+      sending = value;
+      submit.disabled = value || unavailable;
+      label.textContent = value ? 'Sending…' : 'Send message';
+      formElement.setAttribute('aria-busy', String(value));
+    };
+
+    const showAlert = (text: string): void => {
+      status.textContent = '';
+      alert.textContent = text;
+    };
+
+    const markUnavailable = (text: string): void => {
+      unavailable = true;
+      submit.disabled = true;
+      showAlert(text);
+    };
+
+    formElement.addEventListener('focusin', () => {
+      void ensureToken().then((result) => {
+        if (!result.ok && result.reason === 'unavailable') {
+          markUnavailable(MESSAGES.unavailable);
+        }
+      });
+    });
+
+    // Show a field's problem when the visitor leaves it, and clear it as soon as it is fixed
+    for (const field of FIELDS) {
+      fields[field].addEventListener('blur', () => {
+        if (fields[field].value !== '') {
+          showError(field, currentErrors()[field]?.message);
+        }
+      });
+      fields[field].addEventListener('input', () => {
+        if (fields[field].hasAttribute('aria-invalid')) {
+          showError(field, currentErrors()[field]?.message);
+        }
+        if (field === 'message') {
+          updateCounter();
+        }
+      });
+    }
+
+    const send = async (): Promise<void> => {
+      setSending(true);
+      status.textContent = 'Sending your message…';
+
+      const token = await ensureToken();
+      if (!token.ok) {
+        tokenRequest = undefined;
+        setSending(false);
+        status.textContent = '';
+        if (token.reason === 'unavailable') {
+          markUnavailable(MESSAGES.unavailable);
+        } else {
+          showAlert(MESSAGES.failed);
+        }
+        return;
+      }
+
+      // A token must be a few seconds old; this only matters for very fast submissions
+      const wait = tokenWaitTime(token.info, Date.now());
+      if (wait > 0) {
+        await new Promise((resolve) => setTimeout(resolve, wait));
+      }
+
+      const values = readValues();
+      const outcome = await sendContact(
+        (input, init) => fetch(input, init),
+        values,
+        token.info.token,
+      );
+      setSending(false);
+      status.textContent = '';
+
+      switch (outcome.status) {
+        case 'sent':
+          formElement.reset();
+          updateCounter();
+          successEmail.textContent = values.email.trim();
+          formElement.hidden = true;
+          success.hidden = false;
+          success.focus();
+          break;
+        case 'invalid': {
+          const first = showErrors(outcome.errors);
+          if (first) {
+            fields[first].focus();
+          }
+          break;
+        }
+        case 'token':
+          tokenRequest = undefined;
+          showAlert(MESSAGES.token);
+          break;
+        case 'unavailable':
+          markUnavailable(outcome.message);
+          break;
+        default:
+          showAlert(outcome.message);
+      }
+    };
+
+    formElement.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (sending || unavailable) {
+        return;
+      }
+      alert.textContent = '';
+
+      const result = validateContact(readValues());
+      if (!result.ok) {
+        const first = showErrors(result.errors);
+        if (first) {
+          fields[first].focus();
+        }
+        return;
+      }
+      showErrors({});
+      void send();
+    });
+
+    wrapper.hidden = false;
+  }
+</script>

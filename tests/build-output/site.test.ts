@@ -164,6 +164,42 @@ describe('contact section', () => {
   });
 });
 
+describe('contact form switch', () => {
+  // PUBLIC_CONTACT_FORM=true builds the form in (pnpm build:form). Without it, the form must not
+  // exist yet: production gets it only after the privacy policy covers it.
+  const enabled = process.env.PUBLIC_CONTACT_FORM === 'true';
+  const section = (): string => {
+    const home = pages.find(({ file }) => file.endsWith(join('dist', 'index.html')));
+    const start = home?.html.indexOf('<section id="contact"') ?? -1;
+    return home?.html.slice(start, home.html.indexOf('</section>', start)) ?? '';
+  };
+
+  it(enabled ? 'contains the form' : 'does not contain the form', () => {
+    if (enabled) {
+      expect(section()).toContain('data-contact-form');
+    } else {
+      expect(section()).not.toContain('data-contact-form');
+    }
+  });
+
+  it.skipIf(!enabled)('starts hidden and cannot send without JavaScript', () => {
+    const html = section();
+    expect(html).toMatch(/<div data-contact[^>]*\shidden/);
+    const form = /<form[^>]*>/.exec(html)?.[0] ?? '';
+    // No action or method: without JavaScript a submit would put the message into the URL
+    expect(form).not.toMatch(/\saction=/);
+    expect(form).not.toMatch(/\smethod=/);
+    expect(form).toContain('novalidate');
+    expect(html).toContain('name="website"');
+  });
+
+  it('never loads anything from another origin', () => {
+    for (const { file, html } of pages) {
+      expect(html, file).not.toMatch(/\b(?:src|action)="https?:\/\//);
+    }
+  });
+});
+
 describe('search engine files', () => {
   it('robots.txt allows search engines, blocks AI training crawlers and points to the sitemap', async () => {
     const robots = await readDistFile('robots.txt');

@@ -1,20 +1,30 @@
 ---
+import Icon from '@/components/Icon.astro';
 import ObfuscatedText from '@/components/ObfuscatedText.astro';
 import { encodeBase64 } from '@/lib/obfuscate';
 
 interface Props {
   address: string;
   class?: string | undefined;
+  /** Renders a button-like link with this icon (see Icon.astro) instead of a plain text link */
+  icon?: string | undefined;
 }
 
 // Without JavaScript the address is visible (rendered by CSS) but not clickable.
 // With JavaScript it becomes a normal mailto link. No plain address or mailto link exists in the HTML.
-const { address, class: className } = Astro.props;
+const { address, class: className, icon } = Astro.props;
 ---
 
-<span data-protected-email={encodeBase64(address)} class={className}>
-  <ObfuscatedText text={address} />
-</span>
+{icon ? (
+  <span data-protected-email={encodeBase64(address)} class={className}>
+    <Icon name={icon} class="size-4" />
+    <ObfuscatedText text={address} />
+  </span>
+) : (
+  <span data-protected-email={encodeBase64(address)} class={className}>
+    <ObfuscatedText text={address} />
+  </span>
+)}
 
 <script>
   for (const placeholder of document.querySelectorAll<HTMLElement>('[data-protected-email]')) {
@@ -24,7 +34,13 @@ const { address, class: className } = Astro.props;
     }
     const link = document.createElement('a');
     link.href = `mailto:${address}`;
-    link.textContent = address;
+    // The visible text becomes real text, so assistive technology and copy and paste work
+    const icon = placeholder.querySelector('svg');
+    if (icon) {
+      link.append(icon, address);
+    } else {
+      link.textContent = address;
+    }
     link.className = placeholder.className;
     placeholder.replaceWith(link);
   }
