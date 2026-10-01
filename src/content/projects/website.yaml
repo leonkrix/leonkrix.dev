@@ -7,11 +7,14 @@ stats:
     label: security headers grade (securityheaders.com)
   - value: '95+'
     label: Lighthouse score in every category (mobile, enforced in CI)
+  - value: '400+'
+    label: automated tests (unit, build output, browser, accessibility)
   - value: '0'
     label: third-party scripts, fonts or trackers
 highlights:
   - Static portfolio built with Astro, TypeScript, React islands and Tailwind CSS, hosted on Cloudflare.
-  - Every change goes through a pull request and automated gates before it goes live, from linting, type checks and unit tests to build-output checks (security headers, CSP, legal pages), end-to-end tests with accessibility scans, Lighthouse budgets, CodeQL and dependency review.
+  - Every change goes through a pull request and automated gates before it goes live, from linting, type checks and unit tests to build-output checks (security headers, CSP, legal pages), end-to-end tests with accessibility scans, Lighthouse budgets, CodeQL, dependency review and OpenSSF Scorecard.
+  - A contact form without any third-party service. A Cloudflare Function validates the message with the same rules as the browser, checks origin, a signed time token, a honeypot and a rate limit, and hands it to my own mailbox over SMTP.
   - Privacy and security by design with a strict content security policy, HSTS, no cookies of its own, self-hosted fonts and obfuscated contact data.
   - Content such as this list is typed YAML validated at build time, so a typo fails the build instead of shipping.
 technologies:
@@ -27,6 +30,7 @@ technologies:
     vitest,
     playwright,
     axe,
+    lighthouse,
     git,
   ]
 code:

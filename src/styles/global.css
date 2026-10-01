@@ -113,13 +113,15 @@
     font-weight: 600;
   }
 
+  /* Underlined, so links in a text are recognizable without relying on color alone */
   .legal a {
     color: var(--color-accent);
+    text-decoration: underline;
     text-underline-offset: 4px;
   }
 
   .legal a:hover {
-    text-decoration: underline;
+    text-decoration-thickness: 2px;
   }
 
   .legal .notice {

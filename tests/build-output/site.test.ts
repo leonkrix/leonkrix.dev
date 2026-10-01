@@ -292,6 +292,72 @@ describe('legal pages', () => {
   });
 });
 
+describe('privacy policy', () => {
+  // The policy must describe exactly what the site does. The contact form section exists in the
+  // policy and the Impressum if and only if the form is built in (PUBLIC_CONTACT_FORM=true).
+  const formEnabled = process.env.PUBLIC_CONTACT_FORM === 'true';
+  const textOf = (name: 'datenschutz' | 'impressum'): string => {
+    const html = pages.find(({ file }) => file.includes(name))?.html ?? '';
+    return html
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&[a-z]+;/g, ' ')
+      .replace(/\s+/g, ' ');
+  };
+
+  it('always covers hosting, email contact, cookies, rights and the supervisory authority', () => {
+    const text = textOf('datenschutz');
+    for (const required of [
+      'Cloudflare',
+      'IONOS',
+      'Art. 6 Abs. 1 lit. f DSGVO',
+      '§ 25 TDDDG',
+      'Auftragsverarbeitungsvertrag',
+      'Datenschutz-Aufsichtsbehörde',
+      'Widerspruchsrecht',
+      'Art. 22 DSGVO',
+      'Stand:',
+    ]) {
+      expect(text, required).toContain(required);
+    }
+  });
+
+  it('numbers its sections without gaps', () => {
+    const html = pages.find(({ file }) => file.includes('datenschutz'))?.html ?? '';
+    const numbers = [...html.matchAll(/<h2>(\d+)\./g)].map((match) => Number(match[1]));
+    expect(numbers.length).toBeGreaterThan(5);
+    expect(numbers).toEqual(numbers.map((_, index) => index + 1));
+  });
+
+  it(
+    formEnabled
+      ? 'describes the contact form: data, purpose, recipients, storage period'
+      : 'does not describe a contact form that does not exist',
+    () => {
+      const text = textOf('datenschutz');
+      const impressum = textOf('impressum');
+      if (!formEnabled) {
+        expect(text).not.toContain('Kontaktformular');
+        expect(impressum).not.toContain('Kontaktformular');
+        return;
+      }
+      for (const required of [
+        'Kontaktformular',
+        'Workers KV',
+        'Hashwert',
+        'zwei Stunden',
+        'Speicherdauer',
+        'Pflicht zur Bereitstellung',
+        'Weg Ihrer Nachricht',
+        '§ 257 HGB',
+        'STARTTLS',
+      ]) {
+        expect(text, required).toContain(required);
+      }
+      expect(impressum).toContain('Kontaktformular');
+    },
+  );
+});
+
 describe('contact data protection', () => {
   const forbidden = [
     ...Object.values(ADDRESS_PLACEHOLDERS),
