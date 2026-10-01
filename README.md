@@ -14,6 +14,7 @@ Personal portfolio. A minimal, dark, fast and privacy-friendly static site: no c
 
 - [Astro](https://astro.build) (static output), TypeScript (strict), Tailwind CSS v4, React islands where needed
 - Content as typed YAML (projects, experience) validated with Zod at build time
+- Contact form without any third-party service: a Cloudflare Pages Function validates the message (shared rules, signed time token, honeypot, rate limit in KV) and sends it through the own IONOS mailbox
 - Hosted on Cloudflare (Git integration), every change goes through a pull request
 
 ## Quality gates
@@ -76,7 +77,7 @@ src/
 functions/      Cloudflare Pages Functions (contact form API) with their own tsconfig
 public/         robots.txt, favicon, security headers (_headers)
 tests/          Build-output checks (Vitest) and end-to-end tests (Playwright)
-scripts/        Lighthouse quality gate
+scripts/        Lighthouse quality gate and the build with the contact form
 .github/        CI, CodeQL, security workflows and Dependabot
 ```
 
