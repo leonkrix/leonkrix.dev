@@ -6,3 +6,10 @@
 # Password of the IONOS mailbox hello@leonkrix.dev (gives access to the whole mailbox).
 # Put the value in double quotes if it contains #, spaces or quotes.
 SMTP_PASSWORD=
+
+# Signs the time tokens of the contact form and salts the hashed sender addresses. At least 32
+# random characters, for example the output of: node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+FORM_SECRET=
+
+# Switch for the contact form. Only the exact value true turns the endpoints on.
+CONTACT_ENABLED=true
