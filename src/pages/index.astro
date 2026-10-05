@@ -57,7 +57,7 @@ const experience = sortExperience((await getCollection('experience')).map((entry
       </div>
     </Section>
     <Section id="projects" index="02" title="Projects">
-      <ol class="border-l border-border">
+      <ol class="relative before:absolute before:top-[0.6875rem] before:bottom-0 before:-left-px before:w-px before:bg-border">
         {projects.map((project) => (
           <li
             id={`project-${project.id}`}

@@ -12,7 +12,7 @@ interface Props {
 
 const { class: className, withEmail = false } = Astro.props;
 const buttonClass =
-  'inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm text-muted transition-colors hover:border-accent hover:text-fg';
+  'btn-outline inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm text-muted hover:text-fg';
 ---
 
 <ul class:list={['flex flex-wrap items-center gap-3', className]} aria-label="Profiles">

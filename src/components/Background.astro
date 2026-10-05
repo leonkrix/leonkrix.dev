@@ -1,0 +1,27 @@
+---
+interface Props {
+  /** The grid belongs to pages with little text. Reading pages stay calm. */
+  grid?: boolean;
+}
+
+const { grid = true } = Astro.props;
+
+// Decorative background, hidden from assistive technology and ignoring the pointer. No script:
+// - calm, fixed layer on every page: two huge, very soft color fields that drift slowly
+// - the "hero light" on the home page: soft light from the top and a fine grid that appears from the
+//   top right corner and fades out downwards, away from the text. It scrolls away with the hero,
+//   so text never sits on grid lines.
+// Visitors who prefer reduced motion get the same picture without the drifting.
+---
+
+<div class="bg-fixed" aria-hidden="true">
+  <div class="bg-field bg-field-a"></div>
+  <div class="bg-field bg-field-b"></div>
+</div>
+
+{grid && (
+  <div class="bg-hero" aria-hidden="true" data-background>
+    <div class="bg-ambient" />
+    <div class="bg-grid" />
+  </div>
+)}

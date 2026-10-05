@@ -22,14 +22,17 @@ import { siteConfig } from '@/lib/site';
   <div class="mt-10 flex flex-wrap items-center gap-3">
     <a
       href="#projects"
-      class="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-3 text-sm font-medium text-bg transition hover:brightness-110"
+      class="btn-primary group inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-medium"
     >
       View projects
-      <Icon name="lucide:arrow-down" class="size-4" />
+      <Icon
+        name="lucide:arrow-down"
+        class="size-4 transition-transform duration-200 group-hover:translate-y-0.5"
+      />
     </a>
     <a
       href="#contact"
-      class="inline-flex items-center gap-2 rounded-lg border border-border px-5 py-3 text-sm font-medium text-fg transition-colors hover:border-accent hover:text-accent"
+      class="btn-outline inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-medium text-fg"
     >
       Contact
       <Icon name="lucide:mail" class="size-4" />

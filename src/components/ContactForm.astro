@@ -16,7 +16,7 @@ const errorClass = 'mt-1.5 text-sm text-danger';
   <form
     data-contact-form
     novalidate
-    class="rounded-xl border border-border bg-surface/50 p-5 sm:p-6"
+    class="edge rounded-xl border border-border bg-surface/50 p-5 sm:p-6"
     aria-labelledby="contact-form-title"
   >
     <h3 id="contact-form-title" class="font-mono text-sm text-accent-2">
@@ -93,10 +93,13 @@ const errorClass = 'mt-1.5 text-sm text-danger';
       <button
         type="submit"
         data-submit
-        class="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-3 text-sm font-medium text-bg transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+        class="btn-primary group inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
       >
         <span data-submit-label>Send message</span>
-        <Icon name="lucide:send" class="size-4" />
+        <Icon
+          name="lucide:send"
+          class="size-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+        />
       </button>
       <p class="text-sm text-muted">
         I use your details only to answer your message. See the{' '}
@@ -121,7 +124,7 @@ const errorClass = 'mt-1.5 text-sm text-danger';
     data-success
     hidden
     tabindex="-1"
-    class="rounded-xl border border-status/40 bg-status/10 p-5 sm:p-6"
+    class="edge rounded-xl border border-status/40 bg-status/10 p-5 sm:p-6"
   >
     <p class="flex items-center gap-2 font-medium text-fg">
       <Icon name="lucide:check" class="size-5 text-status" />

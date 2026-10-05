@@ -1,6 +1,7 @@
 ---
 import '@/styles/global.css';
 
+import Background from '@/components/Background.astro';
 import Footer from '@/components/Footer.astro';
 import Header from '@/components/Header.astro';
 import Seo from '@/components/Seo.astro';
@@ -11,9 +12,11 @@ interface Props {
   description?: string | undefined;
   image?: string | undefined;
   noindex?: boolean | undefined;
+  /** Pages with a lot of text get a calm background without the grid */
+  calm?: boolean | undefined;
 }
 
-const { title = siteConfig.title, description, image, noindex } = Astro.props;
+const { title = siteConfig.title, description, image, noindex, calm = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -32,6 +35,7 @@ const { title = siteConfig.title, description, image, noindex } = Astro.props;
     >
       Skip to content
     </a>
+    <Background grid={!calm} />
     <Header />
     <slot />
     <Footer />
