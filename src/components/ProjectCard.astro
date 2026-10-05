@@ -11,7 +11,7 @@ interface Props {
 const { project } = Astro.props;
 ---
 
-<article class="rounded-xl border border-border bg-surface/50 p-6 sm:p-7">
+<article class="edge rounded-xl border border-border bg-surface/50 p-6 sm:p-7">
   <div class="flex flex-wrap items-center justify-between gap-2">
     <p class="inline-flex rounded-full border border-border px-2.5 py-0.5 font-mono text-xs text-muted">
       {kindLabels[project.kind]}
@@ -53,7 +53,7 @@ const { project } = Astro.props;
     {project.code.status === 'public' ? (
       <ExternalLink
         href={project.code.url}
-        class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-fg transition-colors hover:border-accent hover:text-accent"
+        class="btn-outline inline-flex items-center gap-2 rounded-lg px-4 py-2 text-fg"
       >
         <Icon name="simple-icons:github" class="size-4" />
         View on GitHub

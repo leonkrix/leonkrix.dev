@@ -148,7 +148,8 @@ Decision: **Cloudflare's Git integration deploys, GitHub Actions runs CI in para
   - bg `#0a0d12`, surface `#11161d`, border `#1e2632`
   - text `#e6edf3`, muted `#8b98a9`
   - accent `#4f8cff`, accent-2 `#22d3ee`, contrast `#f5b642`
-- Subtle animation: background (decided: fine grid with a soft glow that follows the cursor, disabled for reduced motion), scroll reveals, hero text animation. Keep it lightweight (CSS/canvas), must not hurt Lighthouse.
+- Subtle animation: the background is implemented (`Background.astro`, no script). Principle: **reading text never sits on lines or busy patterns**. Every page has two huge, very soft color fields drifting slowly (fixed, behind everything); only the home page hero adds soft top light and a fine grid from the top right corner that scrolls away with the hero. Pages with a lot of text pass `calm` to `BaseLayout` (legal pages do). **No custom cursor and no cursor light** (tried, felt like a searchlight). Interaction feedback lives on the buttons: `.btn-primary` and `.btn-outline` (lift, glow, sheen, press), use them for every new button or button-like link. The page color lives on `html` so the layers at `z-index: -1` show through, do not give `body` a background. Still planned: scroll reveals, hero text animation. Keep animation lightweight (CSS and a few lines of script), it must not hurt Lighthouse and must honor reduced motion.
+- Boxes (cards, forms, notices, icon tiles) get the class `edge`: a faint permanent gradient on the border, only to lift them off the background. Header links use an accent underline for the active section instead of blue text. Never put a hover effect on boxes that are not clickable.
 - Mobile-first, responsive, WCAG AA contrast, full keyboard navigation, visible focus styles.
 - Use design tokens; no magic colors or spacing values in components.
 
