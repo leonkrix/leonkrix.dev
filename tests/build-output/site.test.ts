@@ -1,4 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -197,6 +198,30 @@ describe('contact form switch', () => {
     for (const { file, html } of pages) {
       expect(html, file).not.toMatch(/\b(?:src|action)="https?:\/\//);
     }
+  });
+});
+
+describe('link preview image', () => {
+  it('every page points to the same absolute og:image and Twitter card', () => {
+    for (const { file, html } of pages) {
+      expect(html, file).toContain(`<meta property="og:image" content="${siteConfig.url}/og.png">`);
+      expect(html, file).toContain(
+        `<meta name="twitter:image" content="${siteConfig.url}/og.png">`,
+      );
+      expect(html, file).toContain('<meta name="twitter:card" content="summary_large_image">');
+      expect(html, file).toContain('<meta property="og:image:width" content="1200">');
+      expect(html, file).toMatch(/<meta property="og:image:alt" content="[^"]+">/);
+    }
+  });
+
+  it('og.png is a 1200 x 630 PNG of reasonable size', async () => {
+    const png = await readFile(join(distDir, 'og.png'));
+    // PNG signature, then the IHDR chunk with width and height
+    expect(png.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+    expect(png.readUInt32BE(16)).toBe(1200);
+    expect(png.readUInt32BE(20)).toBe(630);
+    // Many platforms refuse or crop huge images
+    expect(png.byteLength).toBeLessThan(500 * 1024);
   });
 });
 
