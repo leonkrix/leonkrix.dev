@@ -110,7 +110,7 @@ test.describe('reduced motion', () => {
 
   test('stops repeating animations and smooth scrolling', async ({ page }) => {
     await page.goto('/');
-    const badge = page.locator('.animate-ping').first();
+    const badge = page.locator('.badge-ring').first();
     await expect(badge).toBeAttached();
     const iterations = await badge.evaluate((el) => getComputedStyle(el).animationIterationCount);
     expect(iterations).toBe('1');

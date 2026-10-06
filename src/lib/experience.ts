@@ -17,6 +17,8 @@ export const experienceSchema = z
     type: z.enum(experienceTypes),
     /** Degree or role, e.g. "M.Sc. Information Systems" */
     title: z.string().min(1),
+    /** Short label for the timeline strip, e.g. "M.Sc." (the title is used when missing) */
+    short: z.string().min(1).max(30).optional(),
     organization: z.string().min(1),
     /** Optional sub-unit, e.g. a chair or department */
     unit: z.string().min(1).optional(),
