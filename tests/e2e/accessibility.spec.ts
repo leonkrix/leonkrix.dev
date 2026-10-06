@@ -2,6 +2,9 @@ import AxeBuilder from '@axe-core/playwright';
 
 import { expect, pages, test } from './fixtures';
 
+// The scan runs without motion: while an element fades in its contrast would be measured mid-way.
+test.use({ reducedMotion: 'reduce' });
+
 // Automated accessibility scan (axe) of every page against WCAG 2.2 AA plus best practices.
 // It finds roughly a third of the possible problems; keyboard and screen reader use still
 // deserve a manual check.

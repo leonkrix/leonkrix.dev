@@ -7,20 +7,22 @@ import { availability } from '@/lib/site';
 ---
 
 <div class="max-w-2xl">
-  <p class="text-lg leading-relaxed text-muted">
+  <p class="reveal text-lg leading-relaxed text-muted">
     {availability.open
       ? "I'm currently open to new opportunities as a software engineer. Whether you have a role, a project or just a question, I'd be happy to hear from you."
       : "Whether you have a project or just a question, I'd be happy to hear from you."}
   </p>
 
   {PUBLIC_CONTACT_FORM && (
-    <div class="mt-8">
+    <div class="reveal mt-8">
       <ContactForm />
     </div>
   )}
 
-  <p class="mt-8 mb-3 text-sm text-muted">
-    {PUBLIC_CONTACT_FORM ? 'Or reach me directly' : 'You can reach me here'}
-  </p>
-  <SocialLinks withEmail />
+  <div class="reveal mt-8">
+    <p class="mb-3 text-sm text-muted">
+      {PUBLIC_CONTACT_FORM ? 'Or reach me directly' : 'You can reach me here'}
+    </p>
+    <SocialLinks withEmail />
+  </div>
 </div>

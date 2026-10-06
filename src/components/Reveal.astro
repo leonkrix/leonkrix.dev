@@ -1,0 +1,81 @@
+---
+// Scroll reveals: blocks marked with the class "reveal" that start below the visible area fade in
+// and rise a little when they come into view, one time, in a short sequence when several arrive
+// together. Content that is visible when the page loads is never touched, and without JavaScript
+// (or with reduced motion) nothing is hidden at all. The effect takes a fixed amount of time and is
+// not tied to the scroll position, so it can never fight browser history or anchor links. Blocks
+// that were scrolled past in one jump (End key, anchor link) are simply shown, without effect.
+---
+
+<script>
+  const motionAllowed = window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
+
+  if (motionAllowed) {
+    // A block counts as "arrived" when its top is this far above the bottom edge of the viewport.
+    // A fixed distance (not a percentage) feels the same on a laptop and on a large monitor, and it
+    // is early enough that the next block is already coming in while you read.
+    const OFFSET_PX = 60;
+    const threshold = (): number => window.innerHeight - OFFSET_PX;
+
+    const pending = new Set<HTMLElement>();
+    for (const element of document.querySelectorAll<HTMLElement>('.reveal')) {
+      // Only what starts below the visible area waits for its turn
+      if (element.getBoundingClientRect().top > threshold()) {
+        // Hide it without a transition, so it does not fade out first
+        element.style.transition = 'none';
+        element.classList.add('reveal-pending');
+        pending.add(element);
+      }
+    }
+    // One style recalculation for all of them, then the transition works again
+    void document.body.offsetHeight;
+    for (const element of pending) {
+      element.style.transition = '';
+    }
+
+    let frame = 0;
+    const check = (): void => {
+      frame = 0;
+      // Blocks that arrive together appear one after the other
+      let position = 0;
+      for (const element of pending) {
+        const box = element.getBoundingClientRect();
+        if (box.top > threshold()) {
+          continue;
+        }
+        pending.delete(element);
+        if (box.bottom < 0) {
+          // Scrolled past without being seen: just show it
+          element.classList.add('reveal-instant');
+          element.classList.remove('reveal-pending');
+          continue;
+        }
+        element.style.transitionDelay = `${String(position * 90)}ms`;
+        position += 1;
+        element.classList.remove('reveal-pending');
+        // The delay only belongs to the entrance, not to later hover effects
+        element.addEventListener(
+          'transitionend',
+          () => {
+            element.style.transitionDelay = '';
+          },
+          { once: true },
+        );
+      }
+      if (pending.size === 0) {
+        window.removeEventListener('scroll', schedule);
+        window.removeEventListener('resize', schedule);
+      }
+    };
+    const schedule = (): void => {
+      frame ||= requestAnimationFrame(check);
+    };
+
+    if (pending.size > 0) {
+      window.addEventListener('scroll', schedule, { passive: true });
+      window.addEventListener('resize', schedule, { passive: true });
+      // The page may already be scrolled (anchor link, restored position)
+      schedule();
+    }
+  }
+</script>

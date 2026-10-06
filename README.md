@@ -59,6 +59,7 @@ pnpm lighthouse   # performance, accessibility, best practices and SEO budgets
 | `pnpm build:form`      | Build with the contact form switched on (used by `test:e2e` and `lighthouse`)                  |
 | `pnpm test:e2e`        | Playwright end-to-end tests (builds first)                                                     |
 | `pnpm lighthouse`      | Lighthouse quality gate (builds first, needs Chrome)                                           |
+| `pnpm og`              | Regenerate the link preview image `public/og.png` (needs the Playwright browser)               |
 | `pnpm dev:functions`   | Build, then run site and Cloudflare Functions locally (Wrangler, port 8788), needs `.dev.vars` |
 | `pnpm build:functions` | Check that the Cloudflare Functions bundle                                                     |
 
