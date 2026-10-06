@@ -1,3 +1,9 @@
 allowBuilds:
   esbuild: true
   workerd: true
+
+overrides:
+  # miniflare (inside wrangler, development tooling only) pins sharp 0.35.4, which has a known
+  # vulnerability (GHSA-wq5f-xc86-pv6w), fixed in 0.35.5. Remove this override as soon as
+  # miniflare itself depends on sharp 0.35.5 or newer.
+  'sharp@<0.35.5': 0.35.5
