@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 
 import Contact from '@/components/Contact.astro';
 import ExperienceEntry from '@/components/ExperienceEntry.astro';
+import ExperienceTimeline from '@/components/ExperienceTimeline.astro';
 import Hero from '@/components/Hero.astro';
 import Icon from '@/components/Icon.astro';
 import ProjectCard from '@/components/ProjectCard.astro';
@@ -14,6 +15,7 @@ import { experienceGroups, sortExperience } from '@/lib/experience';
 import { formatPeriod, sortProjects } from '@/lib/projects';
 import { personJsonLd } from '@/lib/site';
 import { technologyGroups } from '@/lib/technologies';
+import { buildTimeline } from '@/lib/timeline';
 
 const projects = sortProjects(
   (await getCollection('projects')).map((entry) => ({ id: entry.id, ...entry.data })),
@@ -21,6 +23,7 @@ const projects = sortProjects(
 const projectTitles = new Map(projects.map((project) => [project.id, project.title]));
 
 const experience = sortExperience((await getCollection('experience')).map((entry) => entry.data));
+const timeline = buildTimeline(experience, new Date());
 ---
 
 <BaseLayout>
@@ -78,6 +81,7 @@ const experience = sortExperience((await getCollection('experience')).map((entry
       </ol>
     </Section>
     <Section id="experience" index="03" title="Experience">
+      {timeline && <ExperienceTimeline model={timeline} />}
       <div class="space-y-14">
         {experienceGroups.map((group) => (
           <div class="reveal">

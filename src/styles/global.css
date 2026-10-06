@@ -429,6 +429,12 @@
     transform: translateY(36px);
   }
 
+  /* While a block is being hidden, nothing in it may animate */
+  .reveal-quiet,
+  .reveal-quiet * {
+    transition: none !important;
+  }
+
   /* Scrolled past in one jump: shown at once, without the entrance */
   .reveal-instant {
     transition: none;
@@ -441,6 +447,85 @@
 
     .reveal {
       transition: none;
+    }
+  }
+}
+
+/* Timeline strip above the experience list (see ExperienceTimeline.astro): the bars grow from the
+   left when the strip is revealed, one after the other. Without JavaScript or with reduced motion
+   nothing is pending, so the bars are simply there. */
+@layer components {
+  .tl-bar {
+    transform-origin: left center;
+    transition: transform 900ms cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--n, 0) * 140ms + 150ms);
+  }
+
+  /* A position that is still running fades out at its end */
+  .tl-ongoing {
+    mask-image: linear-gradient(to right, #000 60%, transparent);
+  }
+
+  .tl-band {
+    transition: opacity 900ms ease 700ms;
+  }
+
+  .reveal-pending .tl-bar {
+    transform: scaleX(0);
+  }
+
+  .reveal-pending .tl-band {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tl-bar,
+    .tl-band {
+      transition: none;
+    }
+  }
+}
+
+/* Availability badge: a slow breathing ring around the dot and a faint green glow on the pill, and
+   an arrow that slides in on hover (see AvailabilityBadge.astro) */
+@layer components {
+  .badge-ring {
+    animation: badge-ring 3.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+
+  .badge-glow {
+    animation: badge-glow 4.5s ease-in-out infinite;
+  }
+
+  @keyframes badge-ring {
+    0% {
+      transform: scale(1);
+      opacity: 0.5;
+    }
+    70%,
+    100% {
+      transform: scale(3);
+      opacity: 0;
+    }
+  }
+
+  @keyframes badge-glow {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+    50% {
+      box-shadow: 0 0 18px -2px color-mix(in srgb, var(--color-status) 28%, transparent);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .badge-ring,
+    .badge-glow {
+      animation: none;
+    }
+
+    .badge-ring {
+      opacity: 0;
     }
   }
 }

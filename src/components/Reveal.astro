@@ -21,8 +21,9 @@
     for (const element of document.querySelectorAll<HTMLElement>('.reveal')) {
       // Only what starts below the visible area waits for its turn
       if (element.getBoundingClientRect().top > threshold()) {
-        // Hide it without a transition, so it does not fade out first
-        element.style.transition = 'none';
+        // Hide it (and anything inside that has its own transition) without animating, so
+        // nothing fades out first
+        element.classList.add('reveal-quiet');
         element.classList.add('reveal-pending');
         pending.add(element);
       }
@@ -30,7 +31,7 @@
     // One style recalculation for all of them, then the transition works again
     void document.body.offsetHeight;
     for (const element of pending) {
-      element.style.transition = '';
+      element.classList.remove('reveal-quiet');
     }
 
     let frame = 0;

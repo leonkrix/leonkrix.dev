@@ -1,0 +1,84 @@
+---
+import type { TimelineModel } from '@/lib/timeline';
+
+interface Props {
+  model: TimelineModel;
+}
+
+const { model } = Astro.props;
+
+const ROW_HEIGHT = 3.25; // rem: label above, bar below
+const laneHeight = (rows: number): string => `${String(rows * ROW_HEIGHT)}rem`;
+let barNumber = 0;
+---
+
+{/* Decorative overview of the list below it: hidden from assistive technology, desktop only */}
+<div class="reveal mb-14 hidden md:block" aria-hidden="true" data-timeline>
+  <div class="grid grid-cols-[6rem_1fr] gap-x-4">
+    <div>
+      {model.lanes.map((lane) => (
+        <p
+          class="flex items-end pb-1 font-mono text-xs text-muted"
+          style={`height:${laneHeight(lane.rows)}`}
+        >
+          {lane.title}
+        </p>
+      ))}
+    </div>
+
+    <div class="relative">
+      <!-- A faint line for every year, and the periods in which a job ran next to studies -->
+      {model.ticks.map((tick) => (
+        <span
+          class="absolute top-0 bottom-6 w-px bg-border/60"
+          style={`left:${String(tick.left)}%`}
+        />
+      ))}
+      {model.overlaps.map((overlap) => (
+        <span
+          class="tl-band absolute top-0 bottom-6 rounded-sm bg-accent-2/10"
+          style={`left:${String(overlap.left)}%;width:${String(overlap.width)}%`}
+        />
+      ))}
+
+      {model.lanes.map((lane) => (
+        <div class="relative" style={`height:${laneHeight(lane.rows)}`}>
+          {lane.bars.map((bar) => {
+            barNumber += 1;
+            return (
+              <div
+                class="absolute"
+                style={`left:${String(bar.left)}%;width:${String(bar.width)}%;top:${String(bar.row * ROW_HEIGHT)}rem`}
+              >
+                <p class="pt-2 pb-1.5 pl-1 font-mono text-xs leading-none whitespace-nowrap text-muted">
+                  {bar.label}
+                </p>
+                <div
+                  class:list={[
+                    'tl-bar h-2 rounded-full',
+                    lane.type === 'education'
+                      ? 'bg-linear-to-r from-accent to-accent/60'
+                      : 'bg-linear-to-r from-accent-2 to-accent-2/60',
+                    bar.ongoing && 'tl-ongoing',
+                  ]}
+                  style={`--n:${String(barNumber)}`}
+                />
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      <div class="relative h-6">
+        {model.ticks.map((tick) => (
+          <span
+            class="absolute top-1 font-mono text-xs text-muted/80"
+            style={`left:${String(tick.left)}%`}
+          >
+            {tick.year}
+          </span>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
