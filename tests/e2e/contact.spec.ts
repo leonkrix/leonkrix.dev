@@ -258,6 +258,9 @@ test.describe('contact form', () => {
 });
 
 test.describe('contact form accessibility', () => {
+  // Without motion, so contrast is measured on the final colors, not mid-fade
+  test.use({ reducedMotion: 'reduce' });
+
   test('has no detectable violations while showing errors', async ({ page }) => {
     await mockApi(page);
     await page.goto('/');

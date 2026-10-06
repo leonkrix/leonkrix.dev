@@ -399,3 +399,48 @@
     }
   }
 }
+
+/* Motion on entry. The hero builds up when the page loads. Blocks marked "reveal" fade in and rise
+   when they scroll into view: Reveal.astro adds "reveal-pending" to those that start below the
+   visible area and removes it when their turn comes (a scroll listener, no observer), the transition does the rest. Without
+   JavaScript or with reduced motion nothing is ever pending, so nothing is hidden. */
+@layer components {
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+  }
+
+  /* "backwards": the end state is the normal style, so hover transforms keep working afterwards */
+  .hero-in {
+    animation: rise 650ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+    animation-delay: calc(var(--i, 0) * 80ms + 60ms);
+  }
+
+  .reveal {
+    transition:
+      opacity 700ms ease,
+      transform 800ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .reveal-pending {
+    opacity: 0;
+    transform: translateY(36px);
+  }
+
+  /* Scrolled past in one jump: shown at once, without the entrance */
+  .reveal-instant {
+    transition: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-in {
+      animation: none;
+    }
+
+    .reveal {
+      transition: none;
+    }
+  }
+}

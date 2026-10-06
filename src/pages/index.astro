@@ -6,6 +6,7 @@ import ExperienceEntry from '@/components/ExperienceEntry.astro';
 import Hero from '@/components/Hero.astro';
 import Icon from '@/components/Icon.astro';
 import ProjectCard from '@/components/ProjectCard.astro';
+import Reveal from '@/components/Reveal.astro';
 import Section from '@/components/Section.astro';
 import TechList from '@/components/TechList.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
@@ -23,33 +24,34 @@ const experience = sortExperience((await getCollection('experience')).map((entry
 ---
 
 <BaseLayout>
+  <Reveal />
   <script type="application/ld+json" slot="head" set:html={JSON.stringify(personJsonLd)} />
   <main id="main" class="flex-1">
     <Hero />
 
     <Section id="about" index="01" title="About">
       <div class="max-w-2xl space-y-5 text-lg leading-relaxed text-muted">
-        <p>
+        <p class="reveal">
           I'm a software engineer who enjoys turning ideas into fast, reliable and well-designed
           software. My work spans the stack and beyond: from low-level code in C and C++ and machine
           learning with Python and PyTorch to full-stack web and mobile applications with
           TypeScript, React, Node.js and Android.
         </p>
-        <p>
+        <p class="reveal">
           I care about clean, maintainable code, sensible tooling and the details that make software
           pleasant to use: accessibility, performance and privacy included. This website is a small
           example. It is static, loads no third-party scripts or fonts, even its contact form needs
           no third-party service, and every change passes automated checks before it goes live. My
           IDEs of choice are PyCharm, WebStorm and CLion.
         </p>
-        <p>
+        <p class="reveal">
           Outside of work I like building things for fun. Some games are on their way to this site.
         </p>
       </div>
-      <h3 class="mt-14 font-mono text-sm text-accent-2">Technologies I work with</h3>
+      <h3 class="reveal mt-14 font-mono text-sm text-accent-2">Technologies I work with</h3>
       <div class="mt-6 grid gap-x-10 gap-y-8 sm:grid-cols-2">
         {technologyGroups.map((group) => (
-          <div>
+          <div class="reveal">
             <h4 class="mb-3 text-sm font-medium text-fg">{group.title}</h4>
             <TechList items={group.items} />
           </div>
@@ -61,7 +63,7 @@ const experience = sortExperience((await getCollection('experience')).map((entry
         {projects.map((project) => (
           <li
             id={`project-${project.id}`}
-            class="relative scroll-mt-24 pb-12 pl-8 last:pb-0 sm:pl-10"
+            class="reveal relative scroll-mt-24 pb-12 pl-8 last:pb-0 sm:pl-10"
           >
             <span
               aria-hidden="true"
@@ -78,7 +80,7 @@ const experience = sortExperience((await getCollection('experience')).map((entry
     <Section id="experience" index="03" title="Experience">
       <div class="space-y-14">
         {experienceGroups.map((group) => (
-          <div>
+          <div class="reveal">
             <h3 class="flex items-center gap-2 font-mono text-sm text-accent-2">
               <Icon name={group.icon} class="size-4" />
               {group.title}
