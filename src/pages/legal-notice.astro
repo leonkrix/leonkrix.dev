@@ -1,0 +1,14 @@
+---
+import LegalNoticeDe from '@/components/legal/LegalNoticeDe.astro';
+import LegalNoticeEn from '@/components/legal/LegalNoticeEn.astro';
+import LegalLayout from '@/layouts/LegalLayout.astro';
+---
+
+<LegalLayout
+  title="Legal notice"
+  germanTitle="Impressum"
+  description="Legal notice (Impressum) of Leon Krix, in English and German."
+>
+  <LegalNoticeEn />
+  <LegalNoticeDe />
+</LegalLayout>

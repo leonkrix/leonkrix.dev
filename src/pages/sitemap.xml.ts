@@ -3,7 +3,7 @@ import type { APIRoute } from 'astro';
 import { siteConfig } from '@/lib/site';
 
 // Pages that must not appear in the sitemap (they are noindex or not real content pages)
-const excluded = new Set(['404', 'impressum', 'datenschutz']);
+const excluded = new Set(['404', 'legal-notice', 'privacy-policy']);
 
 const pages = import.meta.glob('./**/*.astro');
 

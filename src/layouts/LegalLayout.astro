@@ -2,17 +2,45 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 
 interface Props {
+  /** English title, e.g. "Legal notice" */
   title: string;
+  /** The German term for the same page, e.g. "Impressum" */
+  germanTitle: string;
   description: string;
 }
 
-const { title, description } = Astro.props;
+const { title, germanTitle, description } = Astro.props;
 ---
 
-<BaseLayout title={`${title} | Leon Krix`} description={description} noindex calm>
+<BaseLayout title={`${title} (${germanTitle}) | Leon Krix`} description={description} noindex calm>
   <main id="main" class="mx-auto w-full max-w-3xl flex-1 px-6 py-16 sm:py-24">
     <div class="legal">
-      <h1>{title}</h1>
+      <h1>
+        {title}
+        <span lang="de" class="mt-1 block text-xl font-normal text-muted sm:text-2xl">
+          ({germanTitle})
+        </span>
+      </h1>
+
+      <div class="notice">
+        <p lang="en">
+          This page is available in English and German. The{' '}
+          <a href="#de" hreflang="de">
+            German version
+          </a>{' '}
+          below is the legally binding original; the English version is a translation to make it
+          easier to understand.
+        </p>
+        <p lang="de">
+          Diese Seite gibt es auf Englisch und Deutsch. Rechtlich maßgeblich ist die{' '}
+          <a href="#de">deutsche Fassung</a>, die{' '}
+          <a href="#en" hreflang="en">
+            englische Fassung
+          </a>{' '}
+          ist eine Übersetzung.
+        </p>
+      </div>
+
       <slot />
     </div>
   </main>

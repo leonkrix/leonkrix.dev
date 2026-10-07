@@ -1,0 +1,31 @@
+name: Link check
+
+# Once a week: every external link on the published pages must still work (scripts/check-links.ts).
+# Links are read from the pages, so new links in the content are checked without any change here.
+# A link that is on none of the pages goes into EXTRA_LINKS in the script.
+on:
+  schedule:
+    # Tuesdays, early morning
+    - cron: '23 5 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: link-check
+  cancel-in-progress: true
+
+jobs:
+  link-check:
+    name: External links
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - run: node scripts/check-links.ts

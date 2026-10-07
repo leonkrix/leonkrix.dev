@@ -1,0 +1,42 @@
+name: Live check
+
+# CI checks the code before it is deployed. This checks the published site from the outside:
+# the page, the security headers, the redirects, the legal pages, the contact form API, the TLS
+# certificate, the domain registration and the mail DNS records (scripts/live-check.ts).
+# It is not part of the "CI passed" gate: it looks at what is live, not at a pull request.
+on:
+  schedule:
+    # Every six hours
+    - cron: '17 */6 * * *'
+  # Right after Cloudflare has deployed to production (Cloudflare reports its deployments to GitHub)
+  deployment_status:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-check
+  cancel-in-progress: true
+
+jobs:
+  live-check:
+    name: Live site check
+    # After a deployment only for a successful production deployment, not for previews
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' &&
+      contains(github.event.deployment.environment, 'roduction'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The script has no dependencies, Node runs the TypeScript file directly
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      # A fresh deployment may need a moment to reach every Cloudflare location, so a failed
+      # check is repeated a few times before the run is reported as failed
+      - run: node scripts/live-check.ts --retries 4 --retry-delay 15000

@@ -47,7 +47,7 @@ test.describe('footer', () => {
   });
 
   test('has the source link on the legal pages too', async ({ page }) => {
-    await page.goto('/impressum/');
+    await page.goto('/legal-notice/');
     await expect(
       page.getByRole('contentinfo').getByRole('link', { name: /Source on GitHub/ }),
     ).toBeVisible();

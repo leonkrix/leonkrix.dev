@@ -17,7 +17,7 @@ test.describe('animated background', () => {
   });
 
   test('keeps text pages calm: no grid on the legal pages', async ({ page }) => {
-    await page.goto('/impressum/');
+    await page.goto('/legal-notice/');
     await expect(page.locator('[data-background]')).toHaveCount(0);
     await expect(page.locator('.bg-grid')).toHaveCount(0);
     // The calm color fields are still there, and never in the way

@@ -3,31 +3,25 @@ import { PUBLIC_CONTACT_FORM } from 'astro:env/client';
 
 import ObfuscatedText from '@/components/ObfuscatedText.astro';
 import ProtectedEmail from '@/components/ProtectedEmail.astro';
-import LegalLayout from '@/layouts/LegalLayout.astro';
 import { address } from '@/lib/legal-address';
 import { siteConfig } from '@/lib/site';
 
 // The headings are numbered in the order they appear, so sections that depend on a feature of the
 // site (the contact form) can come and go without renumbering by hand. This text must always
 // match what the site actually does: the contact form section exists exactly when the form does.
+// The English version (PrivacyPolicyEn.astro) must keep the same structure.
 let section = 0;
 const next = () => (section += 1);
 ---
 
-<LegalLayout
-  title="Datenschutzerklärung"
-  description="Datenschutzerklärung der Website leonkrix.dev."
->
-  <p class="notice" lang="en">
-    Privacy policy: this page is in German because German and EU data protection law applies. In
-    short: this website sets no cookies of its own, stores nothing on your device, uses no tracking
-    or analytics and loads no third-party fonts or scripts. Technical connection data (such as your
-    IP address) is processed by the hosting provider Cloudflare to deliver the site securely.
-    {PUBLIC_CONTACT_FORM &&
-      ' If you write to me through the contact form or by email, I use your details only to answer you and delete them when the matter is settled. The form needs no third-party service: your message goes through Cloudflare to my own mailbox at IONOS.'}
+<section lang="de" id="de" aria-labelledby="privacy-de">
+  <h2 id="privacy-de">Datenschutzerklärung</h2>
+  <p class="notice-inline">
+    Dies ist die rechtlich maßgebliche Originalfassung. Eine englische Übersetzung steht oben auf
+    dieser Seite.
   </p>
 
-  <h2>{next()}. Verantwortlicher</h2>
+  <h3>{next()}. Verantwortlicher</h3>
   <p>Verantwortlich für die Datenverarbeitung auf dieser Website im Sinne der DSGVO ist:</p>
   <address>
     {siteConfig.name}
@@ -39,7 +33,7 @@ const next = () => (section += 1);
     E-Mail: <ProtectedEmail address={siteConfig.email} />
   </address>
 
-  <h2>{next()}. Hosting und Server-Logfiles</h2>
+  <h3>{next()}. Hosting und Server-Logfiles</h3>
   <p>
     Diese Website wird bei Cloudflare, Inc. (101 Townsend St., San Francisco, CA 94107, USA)
     gehostet und über deren weltweites Netzwerk ausgeliefert. Beim Aufruf der Website verarbeitet
@@ -72,14 +66,14 @@ const next = () => (section += 1);
 
   {PUBLIC_CONTACT_FORM && (
     <>
-      <h2>{next()}. Kontaktformular</h2>
+      <h3>{next()}. Kontaktformular</h3>
       <p>
         Auf der Startseite können Sie mir über ein Kontaktformular schreiben. Das Formular
         funktioniert nur mit aktiviertem JavaScript. Alternativ erreichen Sie mich jederzeit per
         E-Mail (siehe Abschnitt &bdquo;Kontaktaufnahme per E-Mail&ldquo;).
       </p>
 
-      <h3>Welche Daten verarbeitet werden</h3>
+      <h4>Welche Daten verarbeitet werden</h4>
       <ul>
         <li>
           Ihre Angaben im Formular: Name, E-Mail-Adresse und der Text Ihrer Nachricht. Bitte geben
@@ -98,7 +92,7 @@ const next = () => (section += 1);
         </li>
       </ul>
 
-      <h3>Technische Schutzmaßnahmen ohne Speicherung auf Ihrem Gerät</h3>
+      <h4>Technische Schutzmaßnahmen ohne Speicherung auf Ihrem Gerät</h4>
       <p>
         Sobald Sie das Formular anklicken, ruft Ihr Browser einen signierten Zeitstempel ab. Er
         zeigt, dass ein Mensch sich Zeit zum Schreiben genommen hat, und wird nur im Arbeitsspeicher
@@ -107,7 +101,7 @@ const next = () => (section += 1);
         Ihrem Gerät.
       </p>
 
-      <h3>Zweck und Rechtsgrundlage</h3>
+      <h4>Zweck und Rechtsgrundlage</h4>
       <p>
         Ihre Angaben verarbeite ich ausschließlich, um Ihre Anfrage zu bearbeiten und zu
         beantworten. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, soweit Ihre Anfrage auf
@@ -118,7 +112,7 @@ const next = () => (section += 1);
         Einwilligung ist nicht erforderlich und wird nicht abgefragt.
       </p>
 
-      <h3>Weg Ihrer Nachricht und Empfänger</h3>
+      <h4>Weg Ihrer Nachricht und Empfänger</h4>
       <p>
         Ihre Nachricht wird von einer Funktion bei Cloudflare (Cloudflare Pages Functions)
         entgegengenommen, geprüft und über eine verschlüsselte Verbindung (STARTTLS) an den
@@ -131,7 +125,7 @@ const next = () => (section += 1);
         &bdquo;Hosting und Server-Logfiles&ldquo;.
       </p>
 
-      <h3>Speicherdauer</h3>
+      <h4>Speicherdauer</h4>
       <p>
         Ihre Nachricht und Ihre Angaben bleiben in meinem Postfach, solange es zur Bearbeitung Ihrer
         Anfrage erforderlich ist. Danach lösche ich sie, es sei denn, gesetzliche
@@ -140,7 +134,7 @@ const next = () => (section += 1);
         automatisch gelöscht.
       </p>
 
-      <h3>Pflicht zur Bereitstellung</h3>
+      <h4>Pflicht zur Bereitstellung</h4>
       <p>
         Die Angabe von Name, E-Mail-Adresse und Nachricht ist freiwillig. Ohne diese Angaben kann
         ich Ihre Anfrage über das Formular aber nicht beantworten. Sie können mir jederzeit auch
@@ -149,7 +143,7 @@ const next = () => (section += 1);
     </>
   )}
 
-  <h2>{next()}. Kontaktaufnahme per E-Mail</h2>
+  <h3>{next()}. Kontaktaufnahme per E-Mail</h3>
   <p>
     Wenn Sie mir eine E-Mail senden, verarbeite ich Ihre Angaben (E-Mail-Adresse, Inhalt der
     Nachricht) ausschließlich zur Bearbeitung Ihrer Anfrage. Rechtsgrundlage ist Art. 6 Abs. 1 lit.
@@ -162,7 +156,7 @@ const next = () => (section += 1);
     mitgelesen werden kann.
   </p>
 
-  <h2>{next()}. Cookies und Speicherung auf Ihrem Endgerät</h2>
+  <h3>{next()}. Cookies und Speicherung auf Ihrem Endgerät</h3>
   <p>
     Diese Website setzt keine eigenen Cookies und speichert keine Informationen auf Ihrem Endgerät
     (z. B. im Local Storage), und sie liest keine solchen Informationen aus. Eine Einwilligung nach
@@ -170,34 +164,34 @@ const next = () => (section += 1);
     Cloudflare siehe den Abschnitt &bdquo;Hosting und Server-Logfiles&ldquo;.
   </p>
 
-  <h2>{next()}. Keine Analyse- und Tracking-Dienste, keine externen Inhalte</h2>
+  <h3>{next()}. Keine Analyse- und Tracking-Dienste, keine externen Inhalte</h3>
   <p>
     Diese Website verwendet keine Analyse-, Tracking- oder Werbedienste und bindet keine externen
     Inhalte wie Karten, Videos oder Social-Media-Widgets ein. Schriftarten werden lokal von dieser
     Website ausgeliefert, es findet keine Verbindung zu Schriftarten-Servern Dritter statt.
   </p>
 
-  <h2>{next()}. Externe Links</h2>
+  <h3>{next()}. Externe Links</h3>
   <p>
     Diese Website enthält Links zu externen Seiten (z. B. GitHub, LinkedIn). Beim bloßen Aufruf
     dieser Website werden dorthin keine Daten übertragen. Erst wenn Sie einen Link anklicken, gelten
     die Datenschutzhinweise des jeweiligen Anbieters.
   </p>
 
-  <h2>{next()}. SSL- bzw. TLS-Verschlüsselung</h2>
+  <h3>{next()}. SSL- bzw. TLS-Verschlüsselung</h3>
   <p>
     Diese Website nutzt aus Sicherheitsgründen eine SSL- bzw. TLS-Verschlüsselung. Eine
     verschlüsselte Verbindung erkennen Sie an der Adresszeile Ihres Browsers
     (&bdquo;https://&ldquo;) und am Schloss-Symbol.
   </p>
 
-  <h2>{next()}. Keine automatisierte Entscheidungsfindung</h2>
+  <h3>{next()}. Keine automatisierte Entscheidungsfindung</h3>
   <p>
     Es findet keine automatisierte Entscheidungsfindung einschließlich Profiling im Sinne von Art.
     22 DSGVO statt.
   </p>
 
-  <h2>{next()}. Ihre Rechte</h2>
+  <h3>{next()}. Ihre Rechte</h3>
   <p>Sie haben im Rahmen der geltenden gesetzlichen Bestimmungen jederzeit das Recht auf:</p>
   <ul>
     <li>Auskunft über Ihre gespeicherten personenbezogenen Daten (Art. 15 DSGVO)</li>
@@ -227,9 +221,9 @@ const next = () => (section += 1);
     in dem ich meinen Wohnsitz habe.
   </p>
 
-  <h2>{next()}. Aktualität</h2>
+  <h3>{next()}. Aktualität</h3>
   <p>
     Stand: Oktober 2026. Ich passe diese Erklärung an, wenn sich die Website oder die rechtlichen
     Vorgaben ändern.
   </p>
-</LegalLayout>
+</section>

@@ -1,0 +1,54 @@
+---
+import { PUBLIC_CONTACT_FORM } from 'astro:env/client';
+
+import ObfuscatedText from '@/components/ObfuscatedText.astro';
+import ProtectedEmail from '@/components/ProtectedEmail.astro';
+import { address } from '@/lib/legal-address';
+import { siteConfig } from '@/lib/site';
+---
+
+<section lang="en" id="en" aria-labelledby="notice-en">
+  <h2 id="notice-en">Legal notice</h2>
+
+  <h3>Information pursuant to Section 5 of the German Digital Services Act (DDG)</h3>
+  <address>
+    {siteConfig.name}
+    <br />
+    <ObfuscatedText text={address.street} />
+    <br />
+    <ObfuscatedText text={`${address.zip} ${address.city}`} />
+  </address>
+
+  <h3>Contact</h3>
+  <p>
+    Email: <ProtectedEmail address={siteConfig.email} />
+  </p>
+  {PUBLIC_CONTACT_FORM && (
+    <p>
+      You can also reach me through the <a href="/#contact">contact form</a> on the home page.
+    </p>
+  )}
+
+  <h3>Liability for content</h3>
+  <p>
+    The content of this website has been created with the greatest possible care. However, no
+    guarantee can be given for its accuracy, completeness and timeliness. As a service provider I am
+    responsible for my own content on these pages in accordance with the general laws. If I become
+    aware of legal infringements I will remove the content concerned immediately.
+  </p>
+
+  <h3>Liability for links</h3>
+  <p>
+    This website contains links to external third-party websites over whose content I have no
+    influence. I cannot accept any liability for this third-party content. The respective provider
+    or operator of the linked pages is always responsible for their content. If I become aware of
+    legal infringements I will remove such links immediately.
+  </p>
+
+  <h3>Copyright</h3>
+  <p>
+    The content and works created by the site operator on this website (texts, images, design and
+    source code) are subject to German copyright law. All rights reserved. Reproduction, editing,
+    distribution and any kind of use beyond the limits of copyright law require written consent.
+  </p>
+</section>

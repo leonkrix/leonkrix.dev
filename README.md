@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/leonkrix/leonkrix.dev/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/leonkrix/leonkrix.dev/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/leonkrix/leonkrix.dev/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/leonkrix/leonkrix.dev/actions/workflows/codeql.yml)
+[![Live check](https://github.com/leonkrix/leonkrix.dev/actions/workflows/live-check.yml/badge.svg)](https://github.com/leonkrix/leonkrix.dev/actions/workflows/live-check.yml)
+[![Link check](https://github.com/leonkrix/leonkrix.dev/actions/workflows/link-check.yml/badge.svg)](https://github.com/leonkrix/leonkrix.dev/actions/workflows/link-check.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/leonkrix/leonkrix.dev/badge)](https://scorecard.dev/viewer/?uri=github.com/leonkrix/leonkrix.dev)
 [![Live](https://img.shields.io/badge/live-leonkrix.dev-4f8cff)](https://leonkrix.dev)
 [![License](https://img.shields.io/badge/license-all%20rights%20reserved-lightgrey)](LICENSE)
@@ -31,6 +33,8 @@ Nothing reaches `main` without a green `CI passed` check (enforced by a reposito
 | Security            | CodeQL, dependency review, `pnpm audit`, OpenSSF Scorecard, Dependabot, secret scanning  |
 | Workflow lint       | `actionlint` for the workflow files, actions pinned to commit SHAs                       |
 
+After the deployment (not part of the gate), the published site is watched: a **live check** every six hours and after every production deployment (headers, redirects, legal pages, contact form API, certificate, domain registration, mail DNS) and a **weekly link check**.
+
 A pre-commit hook (Husky and lint-staged) formats and lints staged files and runs the type check and related unit tests when code is staged.
 
 ## Development
@@ -59,11 +63,13 @@ pnpm lighthouse   # performance, accessibility, best practices and SEO budgets
 | `pnpm build:form`      | Build with the contact form switched on (used by `test:e2e` and `lighthouse`)                  |
 | `pnpm test:e2e`        | Playwright end-to-end tests (builds first)                                                     |
 | `pnpm lighthouse`      | Lighthouse quality gate (builds first, needs Chrome)                                           |
+| `pnpm live-check`      | Check the published site from the outside (`--base` for another address)                       |
+| `pnpm check-links`     | Check the external links on the published pages (`--dir dist` for a local build)               |
 | `pnpm og`              | Regenerate the link preview image `public/og.png` (needs the Playwright browser)               |
 | `pnpm dev:functions`   | Build, then run site and Cloudflare Functions locally (Wrangler, port 8788), needs `.dev.vars` |
 | `pnpm build:functions` | Check that the Cloudflare Functions bundle                                                     |
 
-Copy `.env.example` to `.env` to try the Impressum address locally. Real values are never committed; in production they are Cloudflare build variables.
+Copy `.env.example` to `.env` to try the address of the legal notice locally. Real values are never committed; in production they are Cloudflare build variables.
 
 ## Project structure
 
@@ -73,7 +79,7 @@ src/
   content/      Projects and experience as YAML (validated by src/lib schemas)
   layouts/      Base and legal page layouts
   lib/          Plain TypeScript: schemas, helpers, site configuration, with unit tests
-  pages/        Routes: home, Impressum, Datenschutz, 404, sitemap
+  pages/        Routes: home, legal notice, privacy policy (English and German), 404, sitemap
   styles/       Design tokens and global styles
 functions/      Cloudflare Pages Functions (contact form API) with their own tsconfig
 public/         robots.txt, favicon, security headers (_headers)
