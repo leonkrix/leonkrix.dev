@@ -7,6 +7,10 @@
  *   pnpm live-check                       # against https://leonkrix.dev
  *   pnpm live-check --base http://localhost:8788   # against a local `pnpm dev:functions`
  *
+ * Cloudflare's bot protection challenges requests from data centers, which includes GitHub's
+ * runners. Then the custom domain is only checked for being reachable, and the content is read from
+ * the .pages.dev address of the same deployment (--fallback none switches that off).
+ *
  * No dependencies: Node 24 runs this TypeScript file directly. Every check returns pass, warn or
  * fail; only a fail makes the run (and the GitHub workflow) fail.
  */
@@ -44,6 +48,12 @@ export interface MailDns {
 
 export interface LiveCheckOptions {
   baseUrl: string;
+  /**
+   * Cloudflare's bot protection shows a "Just a moment" challenge to requests from data centers
+   * (GitHub's runners). When the custom domain answers with such a challenge, the content is
+   * checked at this address instead (the same deployment, without the bot protection).
+   */
+  fallbackBaseUrl?: string;
   /** Headers every response must carry (from public/_headers) */
   expectedHeaders: Record<string, string>;
   fetch?: typeof fetch;
@@ -58,6 +68,9 @@ export interface LiveCheckOptions {
 }
 
 const DAY = 24 * 60 * 60 * 1000;
+
+/** The Cloudflare Pages address of this site: the same deployment as the custom domain. */
+const PAGES_DEV = 'https://leonkrix-dev.pages.dev';
 
 /** The mail provider the mailbox lives at. The DNS records must keep pointing there. */
 const MAIL_PROVIDER = 'ionos';
@@ -85,6 +98,14 @@ export function parseHeadersFile(text: string): Record<string, string> {
   return headers;
 }
 
+/** True for the challenge page of Cloudflare's bot protection instead of the real page. */
+export function isChallenge(page: Pick<Page, 'status' | 'headers' | 'body'>): boolean {
+  return (
+    page.headers.get('cf-mitigated') === 'challenge' ||
+    (page.status === 403 && page.body.includes('Just a moment'))
+  );
+}
+
 const normalize = (value: string): string => value.replace(/\s+/g, ' ').trim().toLowerCase();
 
 const ok = (name: string, detail: string): CheckResult => ({ name, status: 'pass', detail });
@@ -108,11 +129,13 @@ export async function runLiveChecks(options: LiveCheckOptions): Promise<CheckRes
   const now = options.now ?? (() => new Date());
   const base = new URL(options.baseUrl);
   const host = base.hostname;
+  // Where the content is read: the custom domain, or the fallback address when it is challenged
+  let contentBase = base;
 
   async function get(
     path: string,
     init: { method?: string; headers?: Record<string, string>; body?: string } = {},
-    url: URL = new URL(path, base),
+    url: URL = new URL(path, contentBase),
   ): Promise<Page> {
     const started = Date.now();
     const response = await fetchImpl(url, {
@@ -139,6 +162,24 @@ export async function runLiveChecks(options: LiveCheckOptions): Promise<CheckRes
       results.push(fail(name, error instanceof Error ? error.message : String(error)));
     }
   };
+
+  await run('custom domain', async () => {
+    const probe = await get('/', {}, new URL('/', base));
+    if (!isChallenge(probe)) {
+      return ok('custom domain', `${host} answers directly`);
+    }
+    if (options.fallbackBaseUrl === undefined) {
+      return fail(
+        'custom domain',
+        `${host} shows Cloudflare's bot challenge to this check (HTTP ${String(probe.status)}) and no fallback address is set`,
+      );
+    }
+    contentBase = new URL(options.fallbackBaseUrl);
+    return ok(
+      'custom domain',
+      `${host} is reachable, but Cloudflare's bot protection challenged this check (normal for a data center address), so the page content is checked at ${contentBase.hostname}`,
+    );
+  });
 
   // The home page is used by several checks
   let home: Page | undefined;
@@ -385,7 +426,7 @@ export async function runLiveChecks(options: LiveCheckOptions): Promise<CheckRes
     // sending a mail: the endpoint checks its configuration first and answers "ok" for the bot field.
     const honeypot = await get('/api/contact', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Origin: base.origin },
+      headers: { 'Content-Type': 'application/json', Origin: contentBase.origin },
       body: JSON.stringify({ website: 'live-check' }),
     });
     if (honeypot.status !== 200 || !honeypot.body.includes('"ok":true')) {
@@ -556,6 +597,8 @@ function option(name: string, fallback: string): string {
 
 async function main(): Promise<void> {
   const baseUrl = option('base', siteConfig.url);
+  // The same deployment without the bot protection; only used when the custom domain challenges us
+  const fallback = option('fallback', baseUrl === siteConfig.url ? PAGES_DEV : 'none');
   const retries = Number(option('retries', '0'));
   const retryDelay = Number(option('retry-delay', '10000'));
   const expectedHeaders = parseHeadersFile(readFileSync(resolve('public', '_headers'), 'utf8'));
@@ -563,7 +606,12 @@ async function main(): Promise<void> {
 
   let results: CheckResult[] = [];
   for (let attemptNumber = 0; attemptNumber <= retries; attemptNumber += 1) {
-    results = await runLiveChecks({ baseUrl, expectedHeaders, infrastructure: !local });
+    results = await runLiveChecks({
+      baseUrl,
+      expectedHeaders,
+      infrastructure: !local,
+      ...(fallback === 'none' ? {} : { fallbackBaseUrl: fallback }),
+    });
     if (!results.some((r) => r.status === 'fail')) {
       break;
     }

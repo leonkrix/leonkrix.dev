@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   type CheckResult,
+  isChallenge,
   type LiveCheckOptions,
   parseHeadersFile,
   runLiveChecks,
@@ -9,6 +10,7 @@ import {
 } from './live-check';
 
 const BASE = 'https://example.test';
+const FALLBACK = 'https://example.pages.test';
 const NOW = new Date('2026-10-07T12:00:00Z');
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -45,50 +47,53 @@ function page(body: string, init: ResponseInit = {}): Response {
 }
 
 /** A fake of the whole site. `routes` replaces answers by "METHOD url". */
-function fakeSite(routes: Record<string, Route | Response | undefined> = {}): typeof fetch {
+function fakeSite(
+  routes: Record<string, Route | Response | undefined> = {},
+  base = BASE,
+): typeof fetch {
   const defaults: Record<string, Response | Route> = {
-    [`GET ${BASE}/`]: page(HOME),
-    [`GET ${BASE}/_astro/site.css`]: new Response('a{}', {
+    [`GET ${base}/`]: page(HOME),
+    [`GET ${base}/_astro/site.css`]: new Response('a{}', {
       headers: {
         'content-type': 'text/css',
         'cache-control': 'public, max-age=31536000, immutable',
       },
     }),
-    [`GET ${BASE}/_astro/site.js`]: new Response('1', {
+    [`GET ${base}/_astro/site.js`]: new Response('1', {
       headers: { 'content-type': 'text/javascript' },
     }),
-    [`GET ${BASE}/og.png`]: new Response('png', { headers: { 'content-type': 'image/png' } }),
+    [`GET ${base}/og.png`]: new Response('png', { headers: { 'content-type': 'image/png' } }),
     [`GET http://example.test/`]: new Response('', {
       status: 301,
-      headers: { location: `${BASE}/` },
+      headers: { location: `${base}/` },
     }),
     [`GET https://www.example.test/`]: new Response('', {
       status: 301,
-      headers: { location: `${BASE}/` },
+      headers: { location: `${base}/` },
     }),
-    [`GET ${BASE}/impressum`]: new Response('', {
+    [`GET ${base}/impressum`]: new Response('', {
       status: 301,
       headers: { location: '/legal-notice' },
     }),
-    [`GET ${BASE}/datenschutz`]: new Response('', {
+    [`GET ${base}/datenschutz`]: new Response('', {
       status: 301,
       headers: { location: '/privacy-policy' },
     }),
-    [`GET ${BASE}/legal-notice/`]: page(LEGAL),
-    [`GET ${BASE}/privacy-policy/`]: page(LEGAL),
-    [`GET ${BASE}/robots.txt`]: new Response(
+    [`GET ${base}/legal-notice/`]: page(LEGAL),
+    [`GET ${base}/privacy-policy/`]: page(LEGAL),
+    [`GET ${base}/robots.txt`]: new Response(
       'User-agent: GPTBot\nDisallow: /\nSitemap: https://leonkrix.dev/sitemap.xml',
     ),
-    [`GET ${BASE}/sitemap.xml`]: new Response(
+    [`GET ${base}/sitemap.xml`]: new Response(
       '<urlset><url><loc>https://leonkrix.dev/</loc></url></urlset>',
     ),
-    [`GET ${BASE}/api/contact-token`]: (init) =>
+    [`GET ${base}/api/contact-token`]: (init) =>
       init.headers['Sec-Fetch-Site'] === 'cross-site'
         ? new Response('{"ok":false}', { status: 403 })
         : new Response('{"ok":true,"token":"v1.1.x"}', {
             headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
           }),
-    [`POST ${BASE}/api/contact`]: (init) =>
+    [`POST ${base}/api/contact`]: (init) =>
       init.headers.Origin === undefined
         ? new Response('{"ok":false}', { status: 403 })
         : new Response('{"ok":true}'),
@@ -150,6 +155,7 @@ describe('runLiveChecks', () => {
     const results = await runLiveChecks(options());
     expect(results.filter((result) => result.status !== 'pass')).toEqual([]);
     expect(results.map((result) => result.name)).toEqual([
+      'custom domain',
       'home page',
       'security headers',
       'content security policy',
@@ -371,6 +377,101 @@ describe('runLiveChecks', () => {
     expect(results.map((result) => result.name)).not.toContain('TLS certificate');
     expect(results.map((result) => result.name)).not.toContain('domain registration');
     expect(results.map((result) => result.name)).not.toContain('mail DNS records');
+  });
+});
+
+describe('bot protection of the custom domain', () => {
+  /** The custom domain answers every page with Cloudflare's challenge, except the redirects. */
+  function challenged(): { fetch: typeof fetch; hosts: Set<string> } {
+    const custom = fakeSite({}, BASE);
+    const fallback = fakeSite({}, FALLBACK);
+    const hosts = new Set<string>();
+    const answer: typeof fetch = (input, init) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      hosts.add(new URL(url).hostname);
+      const isRedirectCheck = url === 'http://example.test/' || url === 'https://www.example.test/';
+      if (url.startsWith(BASE) && !isRedirectCheck) {
+        return Promise.resolve(
+          new Response('<title>Just a moment...</title>', {
+            status: 403,
+            headers: { 'cf-mitigated': 'challenge', 'content-type': 'text/html' },
+          }),
+        );
+      }
+      return url.startsWith(FALLBACK) ? fallback(input, init) : custom(input, init);
+    };
+    return { fetch: answer, hosts };
+  }
+
+  it('reads the content from the fallback address when the custom domain is challenged', async () => {
+    const { fetch: fetchImpl, hosts } = challenged();
+    const results = await runLiveChecks(options({ fetch: fetchImpl, fallbackBaseUrl: FALLBACK }));
+    expect(results.filter((result) => result.status !== 'pass')).toEqual([]);
+    expect(find(results, 'custom domain').detail).toContain('bot protection');
+    expect(find(results, 'custom domain').detail).toContain('example.pages.test');
+    expect(hosts.has('example.pages.test')).toBe(true);
+  });
+
+  it('still checks that http and www redirect on the custom domain itself', async () => {
+    const { fetch: fetchImpl } = challenged();
+    const results = await runLiveChecks(options({ fetch: fetchImpl, fallbackBaseUrl: FALLBACK }));
+    expect(find(results, 'redirects').status).toBe('pass');
+  });
+
+  it('fails when the custom domain is challenged and there is no fallback address', async () => {
+    const { fetch: fetchImpl } = challenged();
+    const results = await runLiveChecks(options({ fetch: fetchImpl }));
+    expect(find(results, 'custom domain').status).toBe('fail');
+    expect(find(results, 'custom domain').detail).toContain('no fallback');
+    expect(find(results, 'home page').status).toBe('fail');
+  });
+
+  it('does not use the fallback address when the custom domain answers', async () => {
+    const hosts = new Set<string>();
+    const inner = fakeSite();
+    const spy: typeof fetch = (input, init) => {
+      hosts.add(
+        new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
+          .hostname,
+      );
+      return inner(input, init);
+    };
+    const results = await runLiveChecks(options({ fetch: spy, fallbackBaseUrl: FALLBACK }));
+    expect(find(results, 'custom domain').detail).toContain('answers directly');
+    expect(hosts.has('example.pages.test')).toBe(false);
+  });
+
+  it('a broken custom domain is not hidden by the fallback', async () => {
+    const down: typeof fetch = (input, init) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      return url.startsWith(BASE)
+        ? Promise.reject(new Error('connect ECONNREFUSED'))
+        : fakeSite({}, FALLBACK)(input, init);
+    };
+    const results = await runLiveChecks(options({ fetch: down, fallbackBaseUrl: FALLBACK }));
+    expect(find(results, 'custom domain')).toMatchObject({
+      status: 'fail',
+      detail: 'connect ECONNREFUSED',
+    });
+  });
+});
+
+describe('isChallenge', () => {
+  const page = (status: number, body: string, headers: Record<string, string> = {}) => ({
+    status,
+    body,
+    headers: new Headers(headers),
+  });
+
+  it('recognizes the challenge by its header or by its page', () => {
+    expect(isChallenge(page(403, '', { 'cf-mitigated': 'challenge' }))).toBe(true);
+    expect(isChallenge(page(403, '<title>Just a moment...</title>'))).toBe(true);
+  });
+
+  it('does not mistake an ordinary page or a plain refusal for a challenge', () => {
+    expect(isChallenge(page(200, '<title>Leon Krix</title>'))).toBe(false);
+    expect(isChallenge(page(403, '{"ok":false}'))).toBe(false);
+    expect(isChallenge(page(404, 'Page not found'))).toBe(false);
   });
 });
 
