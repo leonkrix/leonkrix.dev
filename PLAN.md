@@ -75,6 +75,13 @@ Content PRs (one branch each):
 
 Content decisions (done): no CV download, no certificates, no school (Abitur), no final degree grades (thesis grades 1.0 are shown on the project cards), no non-dev jobs, no Impressum-relevant private data.
 
+Content additions after the first live version (all done in one PR):
+
+- [x] About facts block (`AboutFacts.astro`): one box with "Now" (what is going on: the games section, polishing the site, and the job search while the availability badge is on; with the month it was updated and a breathing dot) and "Languages" (German native, English fluent). Data in `src/lib/site.ts` (`now`, `spokenLanguages`); **update the Now block whenever something changes**, a test only checks that the month is valid and not in the future
+- [x] Footer link "Source on GitHub" (`siteConfig.repo`), also on the legal pages
+- [x] Layout widths made consistent: running text stays at 672 px (about 70 characters per line, the readable range), everything structured uses the full container width (976 px): technologies, project cards, experience and now the facts box. The Contact section is two columns on desktop (text and direct contacts on the left, the form on the right at a comfortable 400 to 640 px; a form is harder to fill when the fields stretch across the whole page) and one column in the order text, form, direct contacts on small screens. The bullet points inside the project cards deliberately keep the full card width. Tests check the widths and the order
+- [x] Technologies: new Network Protocols (bachelor and master thesis), Network Coding (bachelor thesis), NumPy & pandas as one entry in Machine Learning (master thesis), REST APIs (Defuze), Linux / Unix and AI-assisted development in Tooling (the website project lists AI-assisted development). Rule of thumb: one chip per skill, related libraries are combined (NumPy & pandas), a group should stay readable at about eight chips. Android Studio was removed again (an IDE, covered by the JetBrains IDEs entry); further tools may move to the `/uses` page later to thin out Tooling
+
 Open content follow-ups:
 
 - [ ] Refine the About text together with Leon after the first live version
@@ -156,7 +163,7 @@ Phase 3A and 3B are complete. The next step is 3C.
 
 - [ ] Command palette (Cmd/Ctrl+K)
 - [ ] Terminal easter egg
-- [ ] `/uses` page, optional blog (MDX)
+- [ ] `/uses` page (and optional blog, MDX): the personal side for developers, in the same calm style: the machine, operating system and editor setup, IDEs (PyCharm, WebStorm, CLion), terminal and shell, tools and services, hardware. It can take over detail that would clutter the technology overview (for example IDEs). Linked from the footer. Needs a privacy policy check only if it embeds anything external (it should not)
 - [ ] Periodic legal review
 
 ## Open decisions

@@ -6,20 +6,31 @@ import SocialLinks from '@/components/SocialLinks.astro';
 import { availability } from '@/lib/site';
 ---
 
-<div class="max-w-2xl">
-  <p class="reveal text-lg leading-relaxed text-muted">
+{/*
+  With the form: text on the left, the form on the right (a form reads and fills better at a
+  moderate width than across the whole page). On small screens everything is one column in the
+  order text, form, direct contacts. Without the form: one calm column.
+*/}
+<div
+  class:list={[
+    PUBLIC_CONTACT_FORM
+      ? 'grid gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.45fr)] md:grid-rows-[auto_1fr] md:items-start md:gap-x-14'
+      : 'max-w-2xl',
+  ]}
+>
+  <p class="reveal text-lg leading-relaxed text-muted md:col-start-1 md:row-start-1">
     {availability.open
       ? "I'm currently open to new opportunities as a software engineer. Whether you have a role, a project or just a question, I'd be happy to hear from you."
       : "Whether you have a project or just a question, I'd be happy to hear from you."}
   </p>
 
   {PUBLIC_CONTACT_FORM && (
-    <div class="reveal mt-8">
+    <div class="reveal md:col-start-2 md:row-span-2 md:row-start-1">
       <ContactForm />
     </div>
   )}
 
-  <div class="reveal mt-8">
+  <div class:list={['reveal md:col-start-1 md:row-start-2', !PUBLIC_CONTACT_FORM && 'mt-8']}>
     <p class="mb-3 text-sm text-muted">
       {PUBLIC_CONTACT_FORM ? 'Or reach me directly' : 'You can reach me here'}
     </p>

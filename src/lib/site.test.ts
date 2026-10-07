@@ -23,3 +23,20 @@ describe('siteConfig', () => {
     }
   });
 });
+
+describe('about facts data', () => {
+  it('has the languages and a valid month for the now block', async () => {
+    const { now, spokenLanguages } = await import('./site');
+    expect(spokenLanguages.length).toBeGreaterThan(0);
+    expect(now.updated).toMatch(/^\d{4}-(0[1-9]|1[0-2])$/);
+    // The block must not claim to be updated in the future
+    const current = new Date().toISOString().slice(0, 7);
+    expect(now.updated <= current).toBe(true);
+    expect(now.items.length).toBeGreaterThan(0);
+  });
+
+  it('points to the public repository of this site', async () => {
+    const { siteConfig } = await import('./site');
+    expect(siteConfig.repo).toBe('https://github.com/leonkrix/leonkrix.dev');
+  });
+});

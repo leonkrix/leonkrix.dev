@@ -7,6 +7,8 @@ export const siteConfig = {
   url: 'https://leonkrix.dev',
   email: 'hello@leonkrix.dev',
   github: 'https://github.com/leonkrix',
+  /** Source code of this website */
+  repo: 'https://github.com/leonkrix/leonkrix.dev',
   linkedin: 'https://www.linkedin.com/in/leon-krix',
 } as const;
 
@@ -22,6 +24,23 @@ export const socialLinks: readonly SocialLink[] = [
   { label: 'GitHub', href: siteConfig.github, icon: 'simple-icons:github' },
   { label: 'LinkedIn', href: siteConfig.linkedin, icon: 'simple-icons:linkedin' },
 ];
+
+/** Spoken languages, shown in the About section. */
+export const spokenLanguages = [
+  { name: 'German', level: 'native' },
+  { name: 'English', level: 'fluent' },
+] as const;
+
+/**
+ * What is going on right now (the "Now" block in the About section). Update the items and the month
+ * whenever something changes; the month is shown next to the block so visitors can see how current
+ * it is. The job search item only appears while `availability.open` is true.
+ */
+export const now = {
+  updated: '2026-10',
+  items: ['Building the games section of this site', 'Polishing this website and its tooling'],
+  searching: 'Looking for my next role as a software engineer',
+} as const;
 
 /** Availability status shown as a badge in the hero. Set `open` to false to hide it. */
 export const availability = {
