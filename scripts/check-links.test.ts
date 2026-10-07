@@ -103,6 +103,14 @@ describe('checkLink', () => {
     expect(result.detail).toContain('refuses automated requests');
   });
 
+  it('does not treat a look-alike domain as a site that blocks bots', async () => {
+    const { fetch: fetchImpl } = fakeFetch({
+      'HEAD https://notlinkedin.com/in/x': 403,
+      'GET https://notlinkedin.com/in/x': 403,
+    });
+    expect((await checkLink('https://notlinkedin.com/in/x', fetchImpl, 0, 0)).status).toBe('fail');
+  });
+
   it('but a bot wall does not hide a really missing page', async () => {
     const { fetch: fetchImpl } = fakeFetch({ 'HEAD https://www.linkedin.com/in/x': 404 });
     expect((await checkLink('https://www.linkedin.com/in/x', fetchImpl, 0)).status).toBe('fail');

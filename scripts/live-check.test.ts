@@ -11,6 +11,10 @@ import {
 
 const BASE = 'https://example.test';
 const FALLBACK = 'https://example.pages.test';
+
+/** The URL of a fetch input. Addresses are compared as parsed URLs, never as text prefixes. */
+const urlOf = (input: Parameters<typeof fetch>[0]): URL =>
+  new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
 const NOW = new Date('2026-10-07T12:00:00Z');
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -100,7 +104,7 @@ function fakeSite(
   };
 
   return (input, init) => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const url = urlOf(input).href;
     const method = init?.method ?? 'GET';
     const key = `${method} ${url}`;
     const answer = key in routes ? routes[key] : defaults[key];
@@ -249,6 +253,39 @@ describe('runLiveChecks', () => {
     expect(result.detail).toContain('/impressum');
   });
 
+  it('fails when a redirect leads to a look-alike address or another host', async () => {
+    const lookAlike = fakeSite({
+      'GET http://example.test/': new Response('', {
+        status: 301,
+        headers: { location: 'https://example.test.evil.example/' },
+      }),
+      [`GET ${BASE}/impressum`]: new Response('', {
+        status: 301,
+        headers: { location: 'https://evil.example/legal-notice' },
+      }),
+    });
+    const result = find(await runLiveChecks(options({ fetch: lookAlike })), 'redirects');
+    expect(result.status).toBe('fail');
+    expect(result.detail).toContain('http:');
+    expect(result.detail).toContain('/impressum');
+  });
+
+  it('accepts a redirect with a relative or absolute Location and a trailing slash', async () => {
+    const variants = fakeSite({
+      [`GET ${BASE}/impressum`]: new Response('', {
+        status: 308,
+        headers: { location: '/legal-notice/' },
+      }),
+      [`GET ${BASE}/datenschutz`]: new Response('', {
+        status: 301,
+        headers: { location: `${BASE}/privacy-policy` },
+      }),
+    });
+    expect(find(await runLiveChecks(options({ fetch: variants })), 'redirects').status).toBe(
+      'pass',
+    );
+  });
+
   it('fails when http does not redirect to https', async () => {
     const open = fakeSite({ [`GET http://example.test/`]: new Response('hello') });
     expect(find(await runLiveChecks(options({ fetch: open })), 'redirects').detail).toContain(
@@ -288,7 +325,7 @@ describe('runLiveChecks', () => {
       [`GET ${BASE}/`]: page(HOME.replace('data-contact-form', 'nothing')),
     });
     const spy: typeof fetch = (input, init) => {
-      calls.push(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
+      calls.push(urlOf(input).href);
       return inner(input, init);
     };
     const result = find(await runLiveChecks(options({ fetch: spy })), 'contact form API');
@@ -387,10 +424,10 @@ describe('bot protection of the custom domain', () => {
     const fallback = fakeSite({}, FALLBACK);
     const hosts = new Set<string>();
     const answer: typeof fetch = (input, init) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      const url = urlOf(input).href;
       hosts.add(new URL(url).hostname);
       const isRedirectCheck = url === 'http://example.test/' || url === 'https://www.example.test/';
-      if (url.startsWith(BASE) && !isRedirectCheck) {
+      if (new URL(url).origin === new URL(BASE).origin && !isRedirectCheck) {
         return Promise.resolve(
           new Response('<title>Just a moment...</title>', {
             status: 403,
@@ -398,7 +435,9 @@ describe('bot protection of the custom domain', () => {
           }),
         );
       }
-      return url.startsWith(FALLBACK) ? fallback(input, init) : custom(input, init);
+      return new URL(url).origin === new URL(FALLBACK).origin
+        ? fallback(input, init)
+        : custom(input, init);
     };
     return { fetch: answer, hosts };
   }
@@ -430,10 +469,7 @@ describe('bot protection of the custom domain', () => {
     const hosts = new Set<string>();
     const inner = fakeSite();
     const spy: typeof fetch = (input, init) => {
-      hosts.add(
-        new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
-          .hostname,
-      );
+      hosts.add(urlOf(input).hostname);
       return inner(input, init);
     };
     const results = await runLiveChecks(options({ fetch: spy, fallbackBaseUrl: FALLBACK }));
@@ -443,8 +479,8 @@ describe('bot protection of the custom domain', () => {
 
   it('a broken custom domain is not hidden by the fallback', async () => {
     const down: typeof fetch = (input, init) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-      return url.startsWith(BASE)
+      const url = urlOf(input).href;
+      return new URL(url).origin === new URL(BASE).origin
         ? Promise.reject(new Error('connect ECONNREFUSED'))
         : fakeSite({}, FALLBACK)(input, init);
     };

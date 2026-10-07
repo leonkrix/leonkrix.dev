@@ -62,8 +62,11 @@ export function extractExternalLinks(html: string, ownHost: string): string[] {
   return [...links].sort();
 }
 
-const isBotWall = (url: string): boolean =>
-  BOT_WALLS.some((domain) => new URL(url).hostname.endsWith(domain));
+/** The domain itself or one of its subdomains, nothing that only ends with the same letters. */
+const isBotWall = (url: string): boolean => {
+  const { hostname } = new URL(url);
+  return BOT_WALLS.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
+};
 
 async function request(
   url: string,

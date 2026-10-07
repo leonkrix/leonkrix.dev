@@ -286,28 +286,53 @@ export async function runLiveChecks(options: LiveCheckOptions): Promise<CheckRes
 
   await run('redirects', async () => {
     const problems: string[] = [];
-    const expectRedirect = (label: string, page: Page, target: string): void => {
+    /**
+     * A permanent redirect to exactly the expected place: either another origin (http to https, www
+     * to the bare domain) or another path on the same host. The Location header is resolved like a
+     * browser does, and compared as a parsed address, so "https://leonkrix.dev.example" does not pass
+     * for "https://leonkrix.dev".
+     */
+    const expectRedirect = (
+      label: string,
+      page: Page,
+      from: URL,
+      expected: { origin: string } | { path: string },
+    ): void => {
       const location = page.headers.get('location') ?? '';
-      if (![301, 308].includes(page.status) || !location.startsWith(target)) {
+      let target: URL | undefined;
+      try {
+        target = new URL(location, from);
+      } catch {
+        target = undefined;
+      }
+      const permanent = [301, 308].includes(page.status);
+      const arrived =
+        target !== undefined &&
+        ('origin' in expected
+          ? target.origin === expected.origin
+          : target.origin === from.origin && target.pathname.replace(/\/$/, '') === expected.path);
+      if (!permanent || !arrived) {
+        const wanted = 'origin' in expected ? expected.origin : expected.path;
         problems.push(
-          `${label}: HTTP ${String(page.status)} to "${location}", expected a permanent redirect to ${target}`,
+          `${label}: HTTP ${String(page.status)} to "${location}", expected a permanent redirect to ${wanted}`,
         );
       }
     };
     if (base.protocol === 'https:') {
       const insecure = new URL(base);
       insecure.protocol = 'http:';
-      expectRedirect('http', await get('/', {}, insecure), `https://${host}`);
+      expectRedirect('http', await get('/', {}, insecure), insecure, { origin: base.origin });
       if (!host.startsWith('www.') && host.includes('.') && host !== 'localhost') {
-        expectRedirect(
-          'www',
-          await get('/', {}, new URL(`https://www.${host}/`)),
-          `https://${host}/`,
-        );
+        const www = new URL(`https://www.${host}/`);
+        expectRedirect('www', await get('/', {}, www), www, { origin: base.origin });
       }
     }
-    expectRedirect('/impressum', await get('/impressum'), '/legal-notice');
-    expectRedirect('/datenschutz', await get('/datenschutz'), '/privacy-policy');
+    for (const [old, current] of [
+      ['/impressum', '/legal-notice'],
+      ['/datenschutz', '/privacy-policy'],
+    ] as const) {
+      expectRedirect(old, await get(old), new URL(old, contentBase), { path: current });
+    }
     return verdict(
       'redirects',
       problems,
