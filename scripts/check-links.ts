@@ -15,6 +15,13 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { siteConfig } from '../src/lib/site.ts';
+import { isChallenge } from './live-check.ts';
+
+/**
+ * Cloudflare's bot protection challenges requests from data centers (GitHub's runners). Then the
+ * pages are read from the .pages.dev address of the same deployment, which has no bot protection.
+ */
+const PAGES_DEV = 'https://leonkrix-dev.pages.dev';
 
 /** Pages whose links are checked. Add new pages with links here (for example /uses). */
 export const PAGES: readonly string[] = ['/', '/legal-notice/', '/privacy-policy/'];
@@ -55,8 +62,11 @@ export function extractExternalLinks(html: string, ownHost: string): string[] {
   return [...links].sort();
 }
 
-const isBotWall = (url: string): boolean =>
-  BOT_WALLS.some((domain) => new URL(url).hostname.endsWith(domain));
+/** The domain itself or one of its subdomains, nothing that only ends with the same letters. */
+const isBotWall = (url: string): boolean => {
+  const { hostname } = new URL(url);
+  return BOT_WALLS.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
+};
 
 async function request(
   url: string,
@@ -145,18 +155,30 @@ export function summarize(results: readonly LinkResult[]): {
   };
 }
 
+/** The HTML of a published page, from the custom domain or, when that is challenged, from .pages.dev. */
+export async function fetchPage(path: string, fetchImpl: typeof fetch = fetch): Promise<string> {
+  for (const base of [siteConfig.url, PAGES_DEV]) {
+    const response = await fetchImpl(new URL(path, base), { signal: AbortSignal.timeout(20_000) });
+    const body = await response.text();
+    if (isChallenge({ status: response.status, headers: response.headers, body })) {
+      continue;
+    }
+    if (!response.ok) {
+      throw new Error(
+        `${path} answered HTTP ${String(response.status)} at ${new URL(base).hostname}`,
+      );
+    }
+    return body;
+  }
+  throw new Error(`${path} could not be read: the bot protection challenged both addresses`);
+}
+
 async function readPage(path: string, directory: string | undefined): Promise<string> {
   if (directory !== undefined) {
     const file = join(directory, path === '/' ? '' : path, 'index.html');
     return existsSync(file) ? readFileSync(file, 'utf8') : '';
   }
-  const response = await fetch(new URL(path, siteConfig.url), {
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!response.ok) {
-    throw new Error(`${path} answered HTTP ${String(response.status)}`);
-  }
-  return response.text();
+  return fetchPage(path);
 }
 
 async function main(): Promise<void> {

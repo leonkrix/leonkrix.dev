@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { checkLink, checkLinks, extractExternalLinks, summarize } from './check-links';
+import { checkLink, checkLinks, extractExternalLinks, fetchPage, summarize } from './check-links';
 
 /** A fetch that answers by "METHOD url" with a status, or throws for the value "error". */
 function fakeFetch(answers: Record<string, number | 'error'>): {
@@ -103,6 +103,14 @@ describe('checkLink', () => {
     expect(result.detail).toContain('refuses automated requests');
   });
 
+  it('does not treat a look-alike domain as a site that blocks bots', async () => {
+    const { fetch: fetchImpl } = fakeFetch({
+      'HEAD https://notlinkedin.com/in/x': 403,
+      'GET https://notlinkedin.com/in/x': 403,
+    });
+    expect((await checkLink('https://notlinkedin.com/in/x', fetchImpl, 0, 0)).status).toBe('fail');
+  });
+
   it('but a bot wall does not hide a really missing page', async () => {
     const { fetch: fetchImpl } = fakeFetch({ 'HEAD https://www.linkedin.com/in/x': 404 });
     expect((await checkLink('https://www.linkedin.com/in/x', fetchImpl, 0)).status).toBe('fail');
@@ -135,5 +143,53 @@ describe('checkLinks and summarize', () => {
         { url: 'b', status: 'warn', detail: 'blocked' },
       ]).failed,
     ).toBe(false);
+  });
+});
+
+describe('fetchPage', () => {
+  const challenge = () =>
+    new Response('<title>Just a moment...</title>', {
+      status: 403,
+      headers: { 'cf-mitigated': 'challenge' },
+    });
+
+  it('reads the custom domain when it answers', async () => {
+    const hosts: string[] = [];
+    const fetchImpl: typeof fetch = (input) => {
+      hosts.push(
+        new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
+          .hostname,
+      );
+      return Promise.resolve(new Response('<a href="https://github.com/x">x</a>'));
+    };
+    expect(await fetchPage('/', fetchImpl)).toContain('github.com');
+    expect(hosts).toEqual(['leonkrix.dev']);
+  });
+
+  it('falls back to the pages.dev address when the custom domain shows the bot challenge', async () => {
+    const hosts: string[] = [];
+    const fetchImpl: typeof fetch = (input) => {
+      const host = new URL(
+        typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
+      ).hostname;
+      hosts.push(host);
+      return Promise.resolve(
+        host === 'leonkrix.dev' ? challenge() : new Response('<p>real page</p>'),
+      );
+    };
+    expect(await fetchPage('/legal-notice/', fetchImpl)).toBe('<p>real page</p>');
+    expect(hosts).toEqual(['leonkrix.dev', 'leonkrix-dev.pages.dev']);
+  });
+
+  it('fails clearly when both addresses are challenged', async () => {
+    await expect(fetchPage('/', () => Promise.resolve(challenge()))).rejects.toThrow(
+      'bot protection',
+    );
+  });
+
+  it('fails on a real error page instead of reading it as content', async () => {
+    const fetchImpl: typeof fetch = () =>
+      Promise.resolve(new Response('Not found', { status: 404 }));
+    await expect(fetchPage('/missing/', fetchImpl)).rejects.toThrow('HTTP 404');
   });
 });
