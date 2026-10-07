@@ -31,4 +31,4 @@ export const test = base.extend<{ issues: string[] }>({
 export { expect } from '@playwright/test';
 
 /** Pages that exist on the site (the 404 page is tested separately). */
-export const pages = ['/', '/impressum/', '/datenschutz/'] as const;
+export const pages = ['/', '/legal-notice/', '/privacy-policy/'] as const;

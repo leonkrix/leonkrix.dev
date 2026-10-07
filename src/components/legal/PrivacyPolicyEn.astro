@@ -1,0 +1,215 @@
+---
+import { PUBLIC_CONTACT_FORM } from 'astro:env/client';
+
+import ObfuscatedText from '@/components/ObfuscatedText.astro';
+import ProtectedEmail from '@/components/ProtectedEmail.astro';
+import { address } from '@/lib/legal-address';
+import { siteConfig } from '@/lib/site';
+
+// English translation of PrivacyPolicyDe.astro. Keep both in step: same sections in the same
+// order, and the contact form section exists exactly when the form is built in. The German text
+// is the legally binding original.
+let section = 0;
+const next = () => (section += 1);
+---
+
+<section lang="en" id="en" aria-labelledby="privacy-en">
+  <h2 id="privacy-en">Privacy policy</h2>
+  <p class="notice-inline">
+    This is a translation to make the text easier to understand. The German version below is the
+    legally binding original.
+  </p>
+
+  <h3>{next()}. Controller</h3>
+  <p>The controller for data processing on this website within the meaning of the GDPR is:</p>
+  <address>
+    {siteConfig.name}
+    <br />
+    <ObfuscatedText text={address.street} />
+    <br />
+    <ObfuscatedText text={`${address.zip} ${address.city}`} />
+    <br />
+    Email: <ProtectedEmail address={siteConfig.email} />
+  </address>
+
+  <h3>{next()}. Hosting and server log files</h3>
+  <p>
+    This website is hosted by Cloudflare, Inc. (101 Townsend St., San Francisco, CA 94107, USA) and
+    delivered through its global network. When you visit the website, Cloudflare processes
+    technically necessary connection data. This includes in particular:
+  </p>
+  <ul>
+    <li>IP address</li>
+    <li>date and time of the request</li>
+    <li>the page requested (URL) and the page visited before (referrer)</li>
+    <li>browser type, operating system and other details of your device (user agent)</li>
+    <li>security-related information to detect and defend against attacks and bots</li>
+  </ul>
+  <p>
+    The processing serves to provide the website securely and reliably and to defend against abuse.
+    The legal basis is Art. 6(1)(f) GDPR (legitimate interest in secure and efficient operation).
+    Cloudflare may transfer data to the USA. Cloudflare is certified under the EU-US Data Privacy
+    Framework, and the EU Commission's standard contractual clauses are in place as well. A data
+    processing agreement exists with Cloudflare.
+  </p>
+  <p>
+    As part of its bot protection, Cloudflare may set technically necessary cookies (for example
+    <code>__cf_bm</code>). They serve security purposes only and do not require consent. The website
+    itself sets no cookies of its own.
+  </p>
+  <p>
+    Cloudflare stores this data only as long as necessary for the purposes stated. I do not analyse
+    it myself and I do not keep visitor statistics.
+  </p>
+
+  {PUBLIC_CONTACT_FORM && (
+    <>
+      <h3>{next()}. Contact form</h3>
+      <p>
+        You can write to me through a contact form on the home page. The form only works with
+        JavaScript enabled. Alternatively you can always reach me by email (see the section
+        &ldquo;Contact by email&rdquo;).
+      </p>
+
+      <h4>Which data is processed</h4>
+      <ul>
+        <li>
+          Your entries in the form: name, email address and the text of your message. Please do not
+          enter sensitive data (for example health data) that I do not need to reply.
+        </li>
+        <li>
+          When you submit the form, your IP address and the time, as with every visit to the
+          website, by Cloudflare (see the section &ldquo;Hosting and server log files&rdquo;).
+        </li>
+        <li>
+          A counter to protect against spam and abuse: a non-reversible hash value is created from
+          your IP address using a secret key. It is stored together with the number of your messages
+          at Cloudflare (Workers KV) for two hours at most and then deleted automatically. The IP
+          address itself is not stored there.
+        </li>
+      </ul>
+
+      <h4>Technical safeguards without storing anything on your device</h4>
+      <p>
+        As soon as you click into the form, your browser fetches a signed time stamp. It shows that
+        a person took time to write, and it is kept only in your browser&apos;s memory. There is
+        also a hidden field that only bots fill in. Neither contains any information about you, sets
+        cookies or stores anything on your device.
+      </p>
+
+      <h4>Purpose and legal basis</h4>
+      <p>
+        I process your data solely to handle and answer your enquiry. The legal basis is Art.
+        6(1)(b) GDPR where your enquiry concerns pre-contractual measures or a contract (for example
+        an enquiry about a position or a project), and otherwise Art. 6(1)(f) GDPR (legitimate
+        interest in answering enquiries). The counter for abuse protection is based on Art. 6(1)(f)
+        GDPR (legitimate interest in trouble-free operation and protection against spam). Consent is
+        not required and is not requested.
+      </p>
+
+      <h4>Path of your message and recipients</h4>
+      <p>
+        Your message is received and checked by a function at Cloudflare (Cloudflare Pages
+        Functions) and handed over through an encrypted connection (STARTTLS) to the mail server of
+        IONOS SE (Elgendorfer Str. 57, 56410 Montabaur, Germany), where my mailbox is hosted. I
+        receive it from there like any other email; your email address serves as the reply address.
+        I do not store the content of your message in a database and I do not write it to logs. No
+        further service provider (for example no form or newsletter service) is involved. Data
+        processing agreements exist with Cloudflare and IONOS. For the transfer to the USA see the
+        section &ldquo;Hosting and server log files&rdquo;.
+      </p>
+
+      <h4>Storage period</h4>
+      <p>
+        Your message and your details stay in my mailbox as long as necessary to handle your
+        enquiry. After that I delete them, unless statutory retention obligations apply (for example
+        under Section 257 HGB and Section 147 AO for business correspondence). The hash value from
+        the spam protection is deleted automatically after two hours at the latest.
+      </p>
+
+      <h4>Obligation to provide data</h4>
+      <p>
+        Providing your name, email address and message is voluntary. Without them I cannot answer
+        your enquiry through the form. You can always write to me directly by email instead.
+      </p>
+    </>
+  )}
+
+  <h3>{next()}. Contact by email</h3>
+  <p>
+    If you send me an email, I process your details (email address, content of the message) solely
+    to handle your enquiry. The legal basis is Art. 6(1)(b) GDPR (pre-contractual measures) or Art.
+    6(1)(f) GDPR (legitimate interest in answering enquiries). The mailbox is operated by IONOS SE
+    (Elgendorfer Str. 57, 56410 Montabaur, Germany), with which a data processing agreement exists.
+    Your data is deleted as soon as the enquiry is settled and no statutory retention obligations
+    apply (see above, for example Section 257 HGB and Section 147 AO for business correspondence).
+    Please note that an unencrypted email can in principle be read by third parties in transit.
+  </p>
+
+  <h3>{next()}. Cookies and storage on your device</h3>
+  <p>
+    This website sets no cookies of its own and stores no information on your device (for example in
+    local storage), and it does not read any such information. Consent under Section 25 TDDDG is
+    therefore not required. For Cloudflare&apos;s technically necessary security cookies see the
+    section &ldquo;Hosting and server log files&rdquo;.
+  </p>
+
+  <h3>{next()}. No analytics or tracking services, no external content</h3>
+  <p>
+    This website uses no analytics, tracking or advertising services and embeds no external content
+    such as maps, videos or social media widgets. Fonts are delivered locally by this website, no
+    connection to third-party font servers is made.
+  </p>
+
+  <h3>{next()}. External links</h3>
+  <p>
+    This website contains links to external sites (for example GitHub, LinkedIn). Merely visiting
+    this website does not transfer any data to them. The privacy notices of the respective provider
+    apply only once you click a link.
+  </p>
+
+  <h3>{next()}. SSL / TLS encryption</h3>
+  <p>
+    For security reasons this website uses SSL / TLS encryption. You can recognise an encrypted
+    connection by the address bar of your browser (&ldquo;https://&rdquo;) and the lock symbol.
+  </p>
+
+  <h3>{next()}. No automated decision-making</h3>
+  <p>
+    There is no automated decision-making, including profiling, within the meaning of Art. 22 GDPR.
+  </p>
+
+  <h3>{next()}. Your rights</h3>
+  <p>Within the scope of the applicable statutory provisions you have the right at any time to:</p>
+  <ul>
+    <li>access to your stored personal data (Art. 15 GDPR)</li>
+    <li>rectification of inaccurate data (Art. 16 GDPR)</li>
+    <li>erasure of your data (Art. 17 GDPR)</li>
+    <li>restriction of processing (Art. 18 GDPR)</li>
+    <li>data portability (Art. 20 GDPR)</li>
+    <li>object to processing based on legitimate interests (Art. 21 GDPR)</li>
+    <li>
+      withdraw consent you have given, with effect for the future (Art. 7(3) GDPR). At present no
+      processing on this website is based on consent.
+    </li>
+  </ul>
+  <p>
+    <strong>Right to object:</strong> Where I process data on the basis of legitimate interests
+    (Art. 6(1)(f) GDPR), you can object to this at any time on grounds relating to your particular
+    situation. I will then no longer process the data unless I can demonstrate compelling legitimate
+    grounds.
+  </p>
+  <p>
+    An informal email to the address above is enough to exercise your rights. You also have the
+    right to lodge a complaint with a data protection supervisory authority, in particular in the
+    member state of your habitual residence, place of work or the place of the alleged infringement.
+    The authority responsible for me is the data protection supervisory authority of the German
+    state in which I live.
+  </p>
+
+  <h3>{next()}. Last updated</h3>
+  <p>
+    Status: October 2026. I will update this policy when the website or the legal requirements
+    change.
+  </p>
+</section>

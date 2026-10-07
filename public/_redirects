@@ -1,0 +1,6 @@
+# The legal pages moved to English URLs. The old German addresses still work (permanent redirect),
+# because they are what people and tools type for an imprint and a privacy policy.
+/impressum /legal-notice 301
+/impressum/ /legal-notice 301
+/datenschutz /privacy-policy 301
+/datenschutz/ /privacy-policy 301

@@ -67,7 +67,7 @@ test.describe('navigation', () => {
   });
 
   test('the wordmark links home from a legal page', async ({ page }) => {
-    await page.goto('/impressum/');
+    await page.goto('/legal-notice/');
     await page.getByRole('link', { name: 'leonkrix, home' }).click();
     await expect(page).toHaveURL('/');
   });
@@ -77,19 +77,23 @@ test.describe('legal pages', () => {
   test('are reachable from the footer of the home page', async ({ page }) => {
     await page.goto('/');
     const footer = page.getByRole('contentinfo');
-    await footer.getByRole('link', { name: 'Impressum' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Impressum' })).toBeVisible();
-    await page.getByRole('contentinfo').getByRole('link', { name: 'Datenschutz' }).click();
-    await expect(
-      page.getByRole('heading', { level: 1, name: 'Datenschutzerklärung' }),
-    ).toBeVisible();
+    await footer.getByRole('link', { name: 'Legal notice' }).click();
+    await expect(page).toHaveURL(/\/legal-notice\/?$/);
+    await expect(page.getByRole('heading', { level: 1, name: /Legal notice/ })).toBeVisible();
+    await page.getByRole('contentinfo').getByRole('link', { name: 'Privacy policy' }).click();
+    await expect(page).toHaveURL(/\/privacy-policy\/?$/);
+    await expect(page.getByRole('heading', { level: 1, name: /Privacy policy/ })).toBeVisible();
   });
 
   test('render the address through CSS, not as text', async ({ page }) => {
-    await page.goto('/impressum/');
-    const address = page.getByRole('main').locator('address');
-    await expect(address.locator('.ob').first()).toBeAttached();
-    await expect(address).toHaveText(siteConfig.name);
+    await page.goto('/legal-notice/');
+    // Both language versions carry the address, rendered by CSS in each
+    const addresses = page.getByRole('main').locator('address');
+    await expect(addresses).toHaveCount(2);
+    for (const index of [0, 1]) {
+      await expect(addresses.nth(index).locator('.ob').first()).toBeAttached();
+      await expect(addresses.nth(index)).toHaveText(siteConfig.name);
+    }
   });
 });
 
@@ -118,5 +122,39 @@ test.describe('reduced motion', () => {
       () => getComputedStyle(document.documentElement).scrollBehavior,
     );
     expect(scrollBehavior).toBe('auto');
+  });
+});
+
+test.describe('legal pages in two languages', () => {
+  for (const path of ['/legal-notice/', '/privacy-policy/']) {
+    test(`${path} shows English first and German second, with working jump links`, async ({
+      page,
+    }) => {
+      await page.goto(path);
+      const english = page.locator('section[lang="en"]');
+      const german = page.locator('section[lang="de"]');
+      await expect(english).toBeVisible();
+      await expect(german).toBeAttached();
+      const englishBox = await english.boundingBox();
+      const germanBox = await german.boundingBox();
+      expect(englishBox && germanBox && germanBox.y > englishBox.y).toBe(true);
+
+      // The note at the top leads to the German original and back
+      await page.getByRole('link', { name: 'German version' }).click();
+      await expect(page).toHaveURL(/#de$/);
+      await expect(german).toBeInViewport();
+      await page.getByRole('link', { name: 'englische Fassung' }).click();
+      await expect(page).toHaveURL(/#en$/);
+      await expect(english).toBeInViewport();
+    });
+  }
+
+  test('the old German addresses are gone from the build, the new ones render', async ({
+    page,
+  }) => {
+    const response = await page.goto('/privacy-policy/');
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Privacy policy');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Datenschutzerklärung');
   });
 });

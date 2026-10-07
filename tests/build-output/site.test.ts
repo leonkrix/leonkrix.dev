@@ -29,10 +29,10 @@ describe('every page', () => {
     }
   });
 
-  it('links to Impressum and Datenschutz in the footer', () => {
+  it('links to the legal notice and the privacy policy in the footer, with English labels', () => {
     for (const { file, html } of pages) {
-      expect(html, file).toContain('href="/impressum"');
-      expect(html, file).toContain('href="/datenschutz"');
+      expect(html, file).toMatch(/<a[^>]*href="\/legal-notice"[^>]*>\s*Legal notice\s*<\/a>/);
+      expect(html, file).toMatch(/<a[^>]*href="\/privacy-policy"[^>]*>\s*Privacy policy\s*<\/a>/);
     }
   });
 
@@ -238,7 +238,7 @@ describe('search engine files', () => {
   it('sitemap lists the home page but not the noindex pages', async () => {
     const sitemap = await readDistFile('sitemap.xml');
     expect(sitemap).toContain(`<loc>${siteConfig.url}/</loc>`);
-    for (const hidden of ['impressum', 'datenschutz', '404']) {
+    for (const hidden of ['legal-notice', 'privacy-policy', 'impressum', 'datenschutz', '404']) {
       expect(sitemap, hidden).not.toContain(hidden);
     }
   });
@@ -303,69 +303,170 @@ describe('internal links', () => {
 });
 
 describe('legal pages', () => {
-  it('exist', () => {
-    expect(existsSync(join(distDir, 'impressum', 'index.html'))).toBe(true);
-    expect(existsSync(join(distDir, 'datenschutz', 'index.html'))).toBe(true);
+  const legalPages = (): Page[] =>
+    pages.filter(({ file }) => /legal-notice|privacy-policy/.test(file));
+
+  it('exist under English addresses, the old German pages are gone', () => {
+    expect(existsSync(join(distDir, 'legal-notice', 'index.html'))).toBe(true);
+    expect(existsSync(join(distDir, 'privacy-policy', 'index.html'))).toBe(true);
+    expect(existsSync(join(distDir, 'impressum', 'index.html'))).toBe(false);
+    expect(existsSync(join(distDir, 'datenschutz', 'index.html'))).toBe(false);
+  });
+
+  it('the old German addresses redirect permanently to the new ones', async () => {
+    const redirects = await readDistFile('_redirects');
+    expect(redirects).toMatch(/^\/impressum\/?\s+\/legal-notice\s+301$/m);
+    expect(redirects).toMatch(/^\/datenschutz\/?\s+\/privacy-policy\s+301$/m);
   });
 
   it('are set to noindex', () => {
-    for (const { file, html } of pages) {
-      if (file.includes('impressum') || file.includes('datenschutz')) {
-        expect(html, file).toContain('<meta name="robots" content="noindex">');
-      }
+    expect(legalPages()).toHaveLength(2);
+    for (const { file, html } of legalPages()) {
+      expect(html, file).toContain('<meta name="robots" content="noindex">');
+    }
+  });
+
+  it('have an English title that names the German term, and both languages in one page', () => {
+    for (const { file, html } of legalPages()) {
+      expect(html, file).toMatch(
+        /<h1>[^<]*<span[^>]*lang="de"[^>]*>\s*\((Impressum|Datenschutzerklärung)\)\s*<\/span>\s*<\/h1>/,
+      );
+      // English first, German second, each with its own language attribute
+      const english = html.indexOf('<section lang="en" id="en"');
+      const german = html.indexOf('<section lang="de" id="de"');
+      expect(english, file).toBeGreaterThan(-1);
+      expect(german, file).toBeGreaterThan(english);
+      // The note at the top points to the German original and back to the English translation
+      expect(html, file).toContain('href="#de"');
+      expect(html, file).toContain('href="#en"');
+      expect(html, file).toMatch(/legally binding original/);
     }
   });
 });
 
-describe('privacy policy', () => {
-  // The policy must describe exactly what the site does. The contact form section exists in the
-  // policy and the Impressum if and only if the form is built in (PUBLIC_CONTACT_FORM=true).
+describe('legal texts', () => {
+  // The policy must describe exactly what the site does, in both languages. The contact form
+  // section exists in the policy and the legal notice if and only if the form is built in
+  // (PUBLIC_CONTACT_FORM=true).
   const formEnabled = process.env.PUBLIC_CONTACT_FORM === 'true';
-  const textOf = (name: 'datenschutz' | 'impressum'): string => {
-    const html = pages.find(({ file }) => file.includes(name))?.html ?? '';
-    return html
+
+  const sectionHtml = (page: 'legal-notice' | 'privacy-policy', language: 'en' | 'de'): string => {
+    const html = pages.find(({ file }) => file.includes(page))?.html ?? '';
+    const start = html.indexOf(`<section lang="${language}" id="${language}"`);
+    const end = html.indexOf('</section>', start);
+    return start < 0 ? '' : html.slice(start, end);
+  };
+  const textOf = (html: string): string =>
+    html
       .replace(/<[^>]+>/g, ' ')
       .replace(/&[a-z]+;/g, ' ')
       .replace(/\s+/g, ' ');
-  };
 
-  it('always covers hosting, email contact, cookies, rights and the supervisory authority', () => {
-    const text = textOf('datenschutz');
-    for (const required of [
-      'Cloudflare',
-      'IONOS',
-      'Art. 6 Abs. 1 lit. f DSGVO',
-      '§ 25 TDDDG',
-      'Auftragsverarbeitungsvertrag',
-      'Datenschutz-Aufsichtsbehörde',
-      'Widerspruchsrecht',
-      'Art. 22 DSGVO',
-      'Stand:',
-    ]) {
-      expect(text, required).toContain(required);
+  it.each([
+    [
+      'en',
+      [
+        'Cloudflare',
+        'IONOS',
+        'Art. 6(1)(f) GDPR',
+        'Section 25 TDDDG',
+        'data processing agreement',
+        'supervisory authority',
+        'Right to object',
+        'Art. 22 GDPR',
+        'Status:',
+        'legally binding original',
+      ],
+    ],
+    [
+      'de',
+      [
+        'Cloudflare',
+        'IONOS',
+        'Art. 6 Abs. 1 lit. f DSGVO',
+        '§ 25 TDDDG',
+        'Auftragsverarbeitungsvertrag',
+        'Datenschutz-Aufsichtsbehörde',
+        'Widerspruchsrecht',
+        'Art. 22 DSGVO',
+        'Stand:',
+        'rechtlich maßgebliche Originalfassung',
+      ],
+    ],
+  ] as const)(
+    'the privacy policy in %s covers hosting, email, cookies, rights and authority',
+    (language, phrases) => {
+      const text = textOf(sectionHtml('privacy-policy', language));
+      expect(text.length).toBeGreaterThan(2000);
+      for (const phrase of phrases) {
+        expect(text, phrase).toContain(phrase);
+      }
+    },
+  );
+
+  it('numbers the sections of each language without gaps, and both languages have the same ones', () => {
+    const numbers = (language: 'en' | 'de'): number[] =>
+      [...sectionHtml('privacy-policy', language).matchAll(/<h3>(\d+)\./g)].map((match) =>
+        Number(match[1]),
+      );
+    const english = numbers('en');
+    const german = numbers('de');
+    expect(english.length).toBeGreaterThan(5);
+    expect(english).toEqual(english.map((_, index) => index + 1));
+    expect(german).toEqual(english);
+    // The detail headings (h4) match as well, so a paragraph cannot be missing in one language
+    const details = (language: 'en' | 'de'): number =>
+      [...sectionHtml('privacy-policy', language).matchAll(/<h4>/g)].length;
+    expect(details('en')).toBe(details('de'));
+  });
+
+  it('names the same service providers in both languages', () => {
+    for (const provider of ['Cloudflare', 'IONOS SE', 'Workers KV', 'STARTTLS']) {
+      const english = textOf(sectionHtml('privacy-policy', 'en')).includes(provider);
+      const german = textOf(sectionHtml('privacy-policy', 'de')).includes(provider);
+      expect(english, `${provider} (English)`).toBe(german);
     }
   });
 
-  it('numbers its sections without gaps', () => {
-    const html = pages.find(({ file }) => file.includes('datenschutz'))?.html ?? '';
-    const numbers = [...html.matchAll(/<h2>(\d+)\./g)].map((match) => Number(match[1]));
-    expect(numbers.length).toBeGreaterThan(5);
-    expect(numbers).toEqual(numbers.map((_, index) => index + 1));
+  it('shows the legal notice in both languages with the same sections', () => {
+    const headings = (language: 'en' | 'de'): number =>
+      [...sectionHtml('legal-notice', language).matchAll(/<h3>/g)].length;
+    expect(headings('en')).toBeGreaterThanOrEqual(4);
+    expect(headings('en')).toBe(headings('de'));
+    expect(textOf(sectionHtml('legal-notice', 'en'))).toContain('Section 5');
+    expect(textOf(sectionHtml('legal-notice', 'de'))).toContain('§ 5 DDG');
   });
 
   it(
     formEnabled
-      ? 'describes the contact form: data, purpose, recipients, storage period'
-      : 'does not describe a contact form that does not exist',
+      ? 'describe the contact form in both languages: data, purpose, recipients, storage period'
+      : 'do not describe a contact form that does not exist',
     () => {
-      const text = textOf('datenschutz');
-      const impressum = textOf('impressum');
+      const english = textOf(sectionHtml('privacy-policy', 'en'));
+      const german = textOf(sectionHtml('privacy-policy', 'de'));
+      const noticeEn = textOf(sectionHtml('legal-notice', 'en'));
+      const noticeDe = textOf(sectionHtml('legal-notice', 'de'));
       if (!formEnabled) {
-        expect(text).not.toContain('Kontaktformular');
-        expect(impressum).not.toContain('Kontaktformular');
+        expect(english).not.toContain('Contact form');
+        expect(german).not.toContain('Kontaktformular');
+        expect(noticeEn).not.toContain('contact form');
+        expect(noticeDe).not.toContain('Kontaktformular');
         return;
       }
-      for (const required of [
+      for (const phrase of [
+        'Contact form',
+        'Workers KV',
+        'hash value',
+        'two hours',
+        'Storage period',
+        'Obligation to provide data',
+        'Path of your message',
+        'Section 257 HGB',
+        'STARTTLS',
+      ]) {
+        expect(english, phrase).toContain(phrase);
+      }
+      for (const phrase of [
         'Kontaktformular',
         'Workers KV',
         'Hashwert',
@@ -376,9 +477,10 @@ describe('privacy policy', () => {
         '§ 257 HGB',
         'STARTTLS',
       ]) {
-        expect(text, required).toContain(required);
+        expect(german, phrase).toContain(phrase);
       }
-      expect(impressum).toContain('Kontaktformular');
+      expect(noticeEn).toContain('contact form');
+      expect(noticeDe).toContain('Kontaktformular');
     },
   );
 });
