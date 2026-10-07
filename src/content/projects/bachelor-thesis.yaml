@@ -18,6 +18,6 @@ highlights:
   - Evaluated on a dedicated testbed in a real network. Reached full reliability in almost all scenarios without retransmissions and outperformed earlier simulation results and standard FEC block codes, with better reliability at lower delay.
   - Identified and analyzed a sender-side limit, since encoding time grows quickly with the sliding window size. This defines two use cases, low-latency networks for real-time applications and high-latency networks for non-critical data.
   - Used Wireshark, debuggers and performance analysis tools.
-technologies: [cpp, c, networking, wireshark, profiling, git]
+technologies: [cpp, c, networking, networkprotocols, networkcoding, wireshark, profiling, git]
 code:
   status: planned

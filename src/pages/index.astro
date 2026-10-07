@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 
+import AboutFacts from '@/components/AboutFacts.astro';
 import Contact from '@/components/Contact.astro';
 import ExperienceEntry from '@/components/ExperienceEntry.astro';
 import ExperienceTimeline from '@/components/ExperienceTimeline.astro';
@@ -51,6 +52,7 @@ const timeline = buildTimeline(experience, new Date());
           Outside of work I like building things for fun. Some games are on their way to this site.
         </p>
       </div>
+      <AboutFacts />
       <h3 class="reveal mt-14 font-mono text-sm text-accent-2">Technologies I work with</h3>
       <div class="mt-6 grid gap-x-10 gap-y-8 sm:grid-cols-2">
         {technologyGroups.map((group) => (

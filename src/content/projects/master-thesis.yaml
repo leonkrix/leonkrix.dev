@@ -19,6 +19,20 @@ highlights:
   - Consistently outperformed shortest path, load-balanced and non-graph MLP baselines, still 13% lower delay and 6% lower packet loss (statistically significant) than the stronger load-balanced heuristic.
   - Generalized to larger networks not seen during training.
 technologies:
-  [python, cpp, pytorch, gnn, rl, raytune, deeplearning, tensorboard, ns3, networking, git]
+  [
+    python,
+    cpp,
+    pytorch,
+    numpypandas,
+    gnn,
+    rl,
+    raytune,
+    deeplearning,
+    tensorboard,
+    ns3,
+    networking,
+    networkprotocols,
+    git,
+  ]
 code:
   status: planned

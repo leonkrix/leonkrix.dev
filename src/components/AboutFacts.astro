@@ -1,0 +1,45 @@
+---
+import Icon from '@/components/Icon.astro';
+import { formatMonth } from '@/lib/experience';
+import { availability, now, spokenLanguages } from '@/lib/site';
+
+const nowItems = availability.open ? [...now.items, now.searching] : [...now.items];
+---
+
+<div class="reveal edge mt-12 grid gap-8 rounded-xl border border-border bg-surface/40 p-6 sm:grid-cols-2 sm:gap-0 sm:p-7">
+  <div class="sm:pr-8">
+    <p class="flex items-center gap-2.5 font-mono text-sm text-accent-2">
+      <span class="relative flex size-2" aria-hidden="true">
+        <span class="badge-ring absolute inline-flex size-full rounded-full bg-accent-2"></span>
+        <span class="relative inline-flex size-2 rounded-full bg-accent-2"></span>
+      </span>
+      Now
+      <span class="ml-auto font-sans text-xs text-muted">Updated {formatMonth(now.updated)}</span>
+    </p>
+    <ul class="mt-4 space-y-2.5 text-muted">
+      {nowItems.map((item) => (
+        <li class="flex items-start gap-2">
+          <Icon name="lucide:chevron-right" class="mt-1 size-4 shrink-0 text-accent" />
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+
+  <div class="border-t border-border pt-6 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-5">
+    <p class="flex items-center gap-2.5 font-mono text-sm text-accent-2">
+      <Icon name="lucide:languages" class="size-4" />
+      Languages
+    </p>
+    <ul class="mt-4 space-y-2.5">
+      {spokenLanguages.map((language) => (
+        <li class="text-muted">
+          <span class="text-fg">{language.name}</span>
+          <span aria-hidden="true"> · </span>
+          <span class="sr-only">, </span>
+          {language.level}
+        </li>
+      ))}
+    </ul>
+  </div>
+</div>

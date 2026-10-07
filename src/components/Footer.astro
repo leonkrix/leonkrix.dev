@@ -1,14 +1,25 @@
 ---
+import ExternalLink from '@/components/ExternalLink.astro';
+import Icon from '@/components/Icon.astro';
 import { siteConfig } from '@/lib/site';
 
 const year = new Date().getFullYear();
 ---
 
 <footer class="border-t border-border px-6 py-8 text-sm text-muted">
-  <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4">
-    <p>
-      &copy; {year} {siteConfig.name}
-    </p>
+  <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-8 gap-y-4">
+    <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+      <p>
+        &copy; {year} {siteConfig.name}
+      </p>
+      <ExternalLink
+        href={siteConfig.repo}
+        class="inline-flex items-center gap-2 underline-offset-4 transition-colors hover:text-fg hover:underline"
+      >
+        <Icon name="simple-icons:github" class="size-4" />
+        Source on GitHub
+      </ExternalLink>
+    </div>
     <nav aria-label="Legal">
       <ul class="flex gap-6">
         <li>
