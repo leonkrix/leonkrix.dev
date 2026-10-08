@@ -16,7 +16,7 @@ The roadmap lives in [PLAN.md](PLAN.md). Work through it phase by phase; do not 
 ## Language
 
 - Website content and UI: **English**.
-- Games: playable in **German and English** (language toggle inside the games only).
+- Games: **English only** (decided 2026-10-08; the tech vocabulary does not translate, and it keeps the games simple).
 - Code, comments, commits: English.
 
 ## Development environment
@@ -79,7 +79,7 @@ Tests exist to protect what would actually hurt: broken pages, legal pages missi
 - **Content validation**: Zod schemas on content collections so bad data fails the build (e.g. private projects must not carry a repo link).
 - **Build-output checks (Vitest over `dist/`)**: every page has `<title>`, meta description, canonical, `lang`; `/legal-notice` and `/privacy-policy` exist (both languages, same sections) and are linked from the footer of every page, and the old German addresses redirect; `robots.txt` and `sitemap.xml` exist; no broken internal links; no `http://` resources; Impressum placeholders are not left in production output.
 - **Privacy guard (Playwright)**: assert that page loads make requests only to our own origin (no third-party fonts/scripts/embeds), and set no cookies. This protects the "no cookie banner" decision.
-- **E2E smoke (Playwright)**: home loads, header anchors scroll to sections, mobile viewport, games start and the language toggle works, keyboard navigation, reduced-motion respected, no console errors.
+- **E2E smoke (Playwright)**: home loads, header anchors scroll to sections, mobile viewport, each game can be played with the keyboard, keyboard navigation, reduced-motion respected, no console errors.
 - **Accessibility**: `@axe-core/playwright` scan of every page, fail on violations.
 - **Performance/SEO**: Lighthouse CI budgets plus a JS bundle size budget.
 - **Security hygiene**: `pnpm audit`, dependency review, CodeQL, secret scanning (public repo, so GitHub secret scanning and push protection are enabled).
@@ -119,7 +119,7 @@ Decision: **Cloudflare's Git integration deploys, GitHub Actions runs CI in para
 ## Site structure
 
 - `/` one-page scroll layout: Hero, About, Projects, Experience, Contact (contact form), Footer (a Games teaser follows with Phase 4). Sticky header with anchor links and scroll-spy.
-- `/games`, `/games/<game>` (planned, Phase 4): one route per game (code-split, SEO friendly).
+- `/games/` and `/games/<slug>` (planned, Phase 4): the overview and one route per game (code-split, SEO friendly), plus a Playground section on the home page after Experience. See "Games / Playground".
 - `/api/contact` and `/api/contact-token`: the only server code (Cloudflare Pages Functions for the contact form, see "Contact form"). Not part of the sitemap.
 - `/legal-notice` and `/privacy-policy`: the legal notice ("Impressum") and the privacy policy ("Datenschutzerklärung"), each page in **English first and German second** (see Legal). Linked in the footer of every page with the English labels "Legal notice" and "Privacy policy", not disallowed in robots.txt, but with `noindex` meta (so search engines do not list them yet crawlers can still read the tag). The old German addresses `/impressum` and `/datenschutz` redirect permanently through `public/_redirects` (people and tools type them). Cloudflare Pages applies that file, and so does `pnpm dev:functions` (Wrangler); `astro dev` and `astro preview` do not, so a 404 on the old addresses there is expected. The live check verifies the redirects after every deployment.
 - `/404`: terminal style, `noindex`. Also generated: `/robots.txt` (search engines allowed, AI training crawlers blocked, points to the sitemap) and `/sitemap.xml` (from `src/pages/**/*.astro`, dynamic routes and noindex pages excluded; games pages are picked up automatically once they exist as static pages, dynamic game routes need explicit handling).
@@ -178,7 +178,7 @@ Not legal advice; have the final texts checked (e.g. eRecht24 / IT-Recht Kanzlei
 - **No cookie banner** as long as there are no non-essential cookies, trackers, embeds (YouTube, maps, social widgets) or third-party CDN resources. Adding any of these requires revisiting the privacy policy first.
 - No analytics initially. If added later: privacy-friendly and self-hosted (Plausible/Umami) and documented in the privacy policy.
 - `robots.txt`: disallow known AI crawlers (GPTBot, CCBot, ClaudeBot, Google-Extended, ...). This is a request, not protection. Real bot protection comes from Cloudflare settings.
-- Games: only use word lists and assets whose license permits it; record sources in `THIRD_PARTY.md`.
+- Games: only use word lists, data and assets whose license permits it; record sources in `THIRD_PARTY.md`. The privacy policy says that nothing is stored on the device, so nothing on the site (games included) may use browser storage; a site-wide guard test enforces it.
 - **Revisit the legal texts whenever the site changes**: games (localStorage for game state, word lists), a contact form (data processing, processor agreement, Turnstile), analytics, embeds, or any new third-party service. The privacy policy must always match what the site actually does.
 
 ## Cloudflare Functions (`functions/`)
@@ -234,13 +234,20 @@ CI checks the code before it is deployed. These look at what is actually running
 - Legal: the privacy policy describes the form exactly while it is built in (see Legal). The form plus the email address are the two contact channels for the Impressum. No Turnstile (it would load a third-party script); add only if spam appears, together with a CSP and privacy policy change.
 - Tests: unit tests for the shared rules, the client logic and every Function module (mocked mailer, in-memory KV), build-output tests for the switch and the legal texts, Playwright and axe tests for the UI (API mocked with `page.route`). The real mail round trip is tested by hand on a preview.
 
-## Games (after MVP)
+## Games / Playground (Phase 4, planned)
 
-Order: Wordle (DE/EN, daily word derived deterministically from the date, no backend) -> more small games (2048, Minesweeper, Snake, typing test, "guess the language", ...) -> Clueless.
+Full plan in PLAN.md, Phase 4. The rules that apply while building:
 
-**Clueless** (Semantle/Contexto-like): guess a word, see how close it is to the secret word by rank/number and color (e.g. under 100 = green). Needs word embeddings per language; use a limited vocabulary (~20-30k words), and precompute the ranking for each daily word offline with a build script, shipped as small static files. Dedicated task after other games.
-
-Game logic must be pure TypeScript (unit tested with Vitest), separate from React UI. Games must stay lightweight and work without a backend.
+- A home page section (working name **Playground**) with tiles, and one page per game under `/games/<slug>`, plus `/games/` as overview. The section and the nav entry exist only while at least one game is live (registry `src/games/registry.ts`, `status: 'hidden' | 'live'`).
+- **English only. Unlimited play, no daily mode, no saving.** Nothing is stored on the device (no localStorage, sessionStorage, IndexedDB or cookies), so the privacy policy statement "nothing is stored on your device" stays true. The guard is **site-wide**, not game-specific: a source scan of `src/`, a scan of the published JavaScript in `dist/` (small commented allow-list for libraries) and a Playwright runtime check that storage and cookies are empty after visiting every page and playing every game. Adding any storage requires a privacy policy update first (both languages), see Legal.
+- Random puzzles (Root Cause generator, Link Up) are only shown after an independent verification in the same run (exactly one solution); CI property-tests the generators with many seeds.
+- Games and their texts use product and technology names only as plain names (no logos, no claim of a connection); definitions are our own words.
+- Every game lives in `src/games/<slug>/` with its own `README.md` (rules, design decisions, data sources and licenses, how to add words or levels, how to test), `logic/` (pure TypeScript, unit tested, no DOM and no React), `data/`, `components/` (React island) and tests next to the code. Shared code in `src/games/shared/`. Game logic never knows the UI or the skin.
+- Own names, own art, own texts (no trademarks such as "Wordle" or "Connections", nothing copied from puzzle books). Data sources are recorded with their license in `THIRD_PARTY.md`.
+- Performance: no game JavaScript on the home page (tiles and previews are CSS and SVG), React and data only on the game page, a size budget per game page. Large data is fetched when the game page opens.
+- Accessibility: fully playable with the keyboard, results announced through a live region, never color alone, reduced motion honored. Animation is welcome (CSS or SVG), always off or static for reduced motion.
+- Tests per game: logic, data validation (word lists, levels with a solver, vectors), e2e round with the keyboard, axe, reduced motion. They run in the existing CI jobs.
+- Content rules that need a decision before building: ask Leon.
 
 ## Easter eggs / extras (later)
 
