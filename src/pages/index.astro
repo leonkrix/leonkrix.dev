@@ -5,12 +5,14 @@ import AboutFacts from '@/components/AboutFacts.astro';
 import Contact from '@/components/Contact.astro';
 import ExperienceEntry from '@/components/ExperienceEntry.astro';
 import ExperienceTimeline from '@/components/ExperienceTimeline.astro';
+import Playground from '@/components/games/Playground.astro';
 import Hero from '@/components/Hero.astro';
 import Icon from '@/components/Icon.astro';
 import ProjectCard from '@/components/ProjectCard.astro';
 import Reveal from '@/components/Reveal.astro';
 import Section from '@/components/Section.astro';
 import TechList from '@/components/TechList.astro';
+import { liveGames } from '@/games/registry';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { experienceGroups, sortExperience } from '@/lib/experience';
 import { formatPeriod, sortProjects } from '@/lib/projects';
@@ -25,6 +27,9 @@ const projectTitles = new Map(projects.map((project) => [project.id, project.tit
 
 const experience = sortExperience((await getCollection('experience')).map((entry) => entry.data));
 const timeline = buildTimeline(experience, new Date());
+
+// The Playground section (and its number) exists only while a game is live
+const hasPlayground = liveGames().length > 0;
 ---
 
 <BaseLayout>
@@ -108,7 +113,8 @@ const timeline = buildTimeline(experience, new Date());
         ))}
       </div>
     </Section>
-    <Section id="contact" index="04" title="Contact">
+    <Playground index="04" />
+    <Section id="contact" index={hasPlayground ? '05' : '04'} title="Contact">
       <Contact />
     </Section>
   </main>

@@ -1,0 +1,19 @@
+---
+import GameTile from '@/components/games/GameTile.astro';
+import { type GameDefinition } from '@/games/registry';
+
+interface Props {
+  games: readonly GameDefinition[];
+  level?: 'h2' | 'h3' | undefined;
+}
+
+const { games, level } = Astro.props;
+---
+
+<ul class="grid gap-6 sm:grid-cols-2">
+  {games.map((game) => (
+    <li class="reveal">
+      <GameTile game={game} level={level} />
+    </li>
+  ))}
+</ul>

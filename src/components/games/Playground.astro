@@ -1,0 +1,34 @@
+---
+import GameGrid from '@/components/games/GameGrid.astro';
+import Section from '@/components/Section.astro';
+import { gamesPath, liveGames } from '@/games/registry';
+
+interface Props {
+  /** Number shown above the title, e.g. "04" */
+  index: string;
+}
+
+const { index } = Astro.props;
+const games = liveGames();
+---
+
+{games.length > 0 && (
+  <Section id="playground" index={index} title="Playground">
+    <p class="reveal max-w-2xl text-lg leading-relaxed text-muted">
+      Small games I built for fun, around the things I work with: tech words, logic, machine
+      learning. Each one explains how it is built, runs in your browser and stores nothing on your
+      device.
+    </p>
+    <div class="mt-10">
+      <GameGrid games={games} />
+    </div>
+    <p class="reveal mt-8 text-sm">
+      <a
+        href={gamesPath}
+        class="text-muted underline-offset-4 transition-colors hover:text-fg hover:underline"
+      >
+        All games
+      </a>
+    </p>
+  </Section>
+)}

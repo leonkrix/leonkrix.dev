@@ -28,7 +28,7 @@ Nothing reaches `main` without a green `CI passed` check (enforced by a reposito
 | Lint, format, types | ESLint (typescript-eslint strict), Prettier, `astro check`                               |
 | Unit tests          | Vitest                                                                                   |
 | Build-output checks | Metadata, legal pages, links and anchors, security headers, CSP, contact data protection |
-| End-to-end tests    | Playwright (desktop and mobile), privacy guard (same-origin only, no cookies), axe       |
+| End-to-end tests    | Playwright (desktop and mobile), privacy guard (same-origin only, nothing stored), axe   |
 | Lighthouse          | Every category at least 95 on mobile, size budgets, no third-party requests              |
 | Security            | CodeQL, dependency review, `pnpm audit`, OpenSSF Scorecard, Dependabot, secret scanning  |
 | Workflow lint       | `actionlint` for the workflow files, actions pinned to commit SHAs                       |
@@ -75,11 +75,12 @@ Copy `.env.example` to `.env` to try the address of the legal notice locally. Re
 
 ```text
 src/
-  components/   Astro components (header, hero, cards, icons, ...)
+  components/   Astro components (header, hero, cards, icons, ...), games/ for the Playground tiles
   content/      Projects and experience as YAML (validated by src/lib schemas)
+  games/        The Playground: registry, shared code and one folder per game (see src/games/README.md)
   layouts/      Base and legal page layouts
   lib/          Plain TypeScript: schemas, helpers, site configuration, with unit tests
-  pages/        Routes: home, legal notice, privacy policy (English and German), 404, sitemap
+  pages/        Routes: home, legal notice, privacy policy (English and German), games, 404, sitemap
   styles/       Design tokens and global styles
 functions/      Cloudflare Pages Functions (contact form API) with their own tsconfig
 public/         robots.txt, favicon, security headers (_headers)

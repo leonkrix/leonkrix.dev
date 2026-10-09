@@ -7,14 +7,15 @@
  * Needs a Chrome or Chromium; set CHROME_PATH if it is not found automatically.
  */
 import { spawn } from 'node:child_process';
-import { appendFile, mkdir, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { appendFile, mkdir, readdir, writeFile } from 'node:fs/promises';
 
 import * as chromeLauncher from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 
 const PORT = 4323;
 const ORIGIN = `http://localhost:${String(PORT)}`;
-const URL_TO_TEST = `${ORIGIN}/`;
+const HOME_URL = `${ORIGIN}/`;
 const RUNS = 3;
 const REPORT_DIR = 'lighthouse-report';
 
@@ -32,6 +33,34 @@ const BUDGETS = {
   total: 200 * 1024,
 };
 
+/**
+ * Budgets of the game pages by slug (src/games/<slug>), in bytes. A live game must have an entry
+ * here: set it deliberately from a measurement (React and the game's own script are the big part).
+ * Without an entry the run fails, so a game cannot go live without a budget.
+ */
+const GAME_BUDGETS = {};
+
+/** The pages to test: the home page, and the Playground pages once a game is live. */
+async function listPages() {
+  const pages = [{ path: '/', budgets: BUDGETS }];
+  if (existsSync('dist/games/index.html')) {
+    pages.push({ path: '/games/', budgets: BUDGETS });
+  }
+  if (existsSync('dist/games')) {
+    const folders = await readdir('dist/games', { withFileTypes: true });
+    for (const folder of folders.filter((entry) => entry.isDirectory())) {
+      const budgets = GAME_BUDGETS[folder.name];
+      if (!budgets) {
+        throw new Error(
+          `The game "${folder.name}" has no entry in GAME_BUDGETS (scripts/lighthouse.mjs).`,
+        );
+      }
+      pages.push({ path: `/games/${folder.name}/`, budgets });
+    }
+  }
+  return pages;
+}
+
 const log = (message) => process.stdout.write(`${message}\n`);
 
 function median(values) {
@@ -42,7 +71,7 @@ function median(values) {
 async function waitForServer() {
   for (let attempt = 0; attempt < 60; attempt += 1) {
     try {
-      const response = await fetch(URL_TO_TEST);
+      const response = await fetch(HOME_URL);
       if (response.ok) {
         return;
       }
@@ -84,72 +113,88 @@ try {
     ...(process.env.CHROME_PATH ? { chromePath: process.env.CHROME_PATH } : {}),
   });
 
-  const runs = [];
-  for (let index = 0; index < RUNS; index += 1) {
-    const result = await lighthouse(URL_TO_TEST, {
-      port: chrome.port,
-      output: 'html',
-      logLevel: 'error',
-      onlyCategories: CATEGORIES,
-    });
-    if (!result) {
-      throw new Error('Lighthouse returned no result.');
-    }
-    runs.push({ ...summarize(result.lhr), report: result.report });
-  }
-
-  // Median run by performance score: its full report is saved
-  const ranked = [...runs].sort((a, b) => a.scores.performance - b.scores.performance);
-  const medianRun = ranked[Math.floor(ranked.length / 2)];
   await mkdir(REPORT_DIR, { recursive: true });
-  await writeFile(`${REPORT_DIR}/report.html`, medianRun.report);
-
-  const scores = Object.fromEntries(
-    CATEGORIES.map((id) => [id, median(runs.map((run) => run.scores[id]))]),
-  );
-  const measured = {
-    script: median(runs.map((run) => run.script)),
-    stylesheet: median(runs.map((run) => run.stylesheet)),
-    total: median(runs.map((run) => run.total)),
-    foreignRequests: Math.max(...runs.map((run) => run.foreignRequests)),
-  };
 
   const failures = [];
-  const lines = [`Lighthouse, mobile, median of ${String(RUNS)} runs, ${URL_TO_TEST}`, ''];
-  for (const id of CATEGORIES) {
-    const score = Math.round(scores[id] * 100);
-    const ok = scores[id] >= MIN_SCORE;
-    lines.push(
-      `${ok ? 'PASS' : 'FAIL'}  ${id.padEnd(15)} ${String(score).padStart(3)}  (min ${String(MIN_SCORE * 100)})`,
-    );
-    if (!ok) {
-      failures.push(`${id} score ${String(score)} is below ${String(MIN_SCORE * 100)}`);
+  const lines = [];
+  const summaries = {};
+
+  for (const { path, budgets } of await listPages()) {
+    const url = `${ORIGIN}${path}`;
+    const runs = [];
+    for (let index = 0; index < RUNS; index += 1) {
+      const result = await lighthouse(url, {
+        port: chrome.port,
+        output: 'html',
+        logLevel: 'error',
+        onlyCategories: CATEGORIES,
+      });
+      if (!result) {
+        throw new Error('Lighthouse returned no result.');
+      }
+      runs.push({ ...summarize(result.lhr), report: result.report });
     }
-  }
-  for (const [type, limit] of Object.entries(BUDGETS)) {
-    const value = measured[type];
-    const ok = value <= limit;
-    lines.push(
-      `${ok ? 'PASS' : 'FAIL'}  ${`${type} transfer`.padEnd(15)} ${(value / 1024).toFixed(1).padStart(5)} KB  (max ${(limit / 1024).toFixed(0)} KB)`,
+
+    // Median run by performance score: its full report is saved (the home page as report.html)
+    const ranked = [...runs].sort((a, b) => a.scores.performance - b.scores.performance);
+    const medianRun = ranked[Math.floor(ranked.length / 2)];
+    const reportName =
+      path === '/' ? 'report' : `report${path.replace(/\/$/, '').replaceAll('/', '-')}`;
+    await writeFile(`${REPORT_DIR}/${reportName}.html`, medianRun.report);
+
+    const scores = Object.fromEntries(
+      CATEGORIES.map((id) => [id, median(runs.map((run) => run.scores[id]))]),
     );
-    if (!ok) {
-      failures.push(
-        `${type} transfer ${(value / 1024).toFixed(1)} KB exceeds ${(limit / 1024).toFixed(0)} KB`,
+    const measured = {
+      script: median(runs.map((run) => run.script)),
+      stylesheet: median(runs.map((run) => run.stylesheet)),
+      total: median(runs.map((run) => run.total)),
+      foreignRequests: Math.max(...runs.map((run) => run.foreignRequests)),
+    };
+
+    const problems = [];
+    if (lines.length > 0) {
+      lines.push('');
+    }
+    lines.push(`Lighthouse, mobile, median of ${String(RUNS)} runs, ${url}`, '');
+    for (const id of CATEGORIES) {
+      const score = Math.round(scores[id] * 100);
+      const ok = scores[id] >= MIN_SCORE;
+      lines.push(
+        `${ok ? 'PASS' : 'FAIL'}  ${id.padEnd(15)} ${String(score).padStart(3)}  (min ${String(MIN_SCORE * 100)})`,
       );
+      if (!ok) {
+        problems.push(`${id} score ${String(score)} is below ${String(MIN_SCORE * 100)}`);
+      }
     }
-  }
-  const foreignOk = measured.foreignRequests === 0;
-  lines.push(
-    `${foreignOk ? 'PASS' : 'FAIL'}  ${'third-party'.padEnd(15)} ${String(measured.foreignRequests).padStart(5)}     (max 0 requests to other origins)`,
-  );
-  if (!foreignOk) {
-    failures.push(`${String(measured.foreignRequests)} requests to other origins`);
+    for (const [type, limit] of Object.entries(budgets)) {
+      const value = measured[type];
+      const ok = value <= limit;
+      lines.push(
+        `${ok ? 'PASS' : 'FAIL'}  ${`${type} transfer`.padEnd(15)} ${(value / 1024).toFixed(1).padStart(5)} KB  (max ${(limit / 1024).toFixed(0)} KB)`,
+      );
+      if (!ok) {
+        problems.push(
+          `${type} transfer ${(value / 1024).toFixed(1)} KB exceeds ${(limit / 1024).toFixed(0)} KB`,
+        );
+      }
+    }
+    const foreignOk = measured.foreignRequests === 0;
+    lines.push(
+      `${foreignOk ? 'PASS' : 'FAIL'}  ${'third-party'.padEnd(15)} ${String(measured.foreignRequests).padStart(5)}     (max 0 requests to other origins)`,
+    );
+    if (!foreignOk) {
+      problems.push(`${String(measured.foreignRequests)} requests to other origins`);
+    }
+
+    summaries[path] = { scores, measured, failures: problems };
+    failures.push(...problems.map((problem) => `${path}: ${problem}`));
   }
 
   log(lines.join('\n'));
   await writeFile(
     `${REPORT_DIR}/summary.json`,
-    JSON.stringify({ scores, measured, failures }, null, 2),
+    JSON.stringify({ pages: summaries, failures }, null, 2),
   );
   if (process.env.GITHUB_STEP_SUMMARY) {
     await appendFile(

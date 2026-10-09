@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 
+import { gamePaths } from '@/games/registry';
 import { siteConfig } from '@/lib/site';
 
 // Pages that must not appear in the sitemap (they are noindex or not real content pages)
@@ -23,6 +24,8 @@ export const GET: APIRoute = () => {
   const urls = Object.keys(pages)
     .map(toPath)
     .filter((path): path is string => path !== undefined)
+    // The games routes are dynamic (only live games exist), so they come from the registry
+    .concat(gamePaths())
     .sort()
     .map((path) => `  <url><loc>${siteConfig.url}${path}</loc></url>`);
 

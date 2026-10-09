@@ -180,10 +180,10 @@ A small section of games that say something about Leon (tech, software, networks
 
 Goal: everything a game needs, with no game inside yet.
 
-- [ ] Registry, `GameLayout`, game shell (title, short rules panel, "How it is built" disclosure, new round button, keyboard help), shared helpers (seeded random number generator, `TechTerm` type), `/games/` overview (only when a game is live) and the Playground section on the home page with the tile component (name, tag, description, animated preview slot, link), header nav entry that appears with the first live game, scroll-spy included
-- [ ] Site-wide storage guard (source scan, build-output scan, Playwright runtime check, see Decisions; the runtime check covers every page and later every game), size budgets per game page in the Lighthouse script (the existing budgets stay for the home page), `THIRD_PARTY.md` (fonts, icons, and later the game data), sitemap picks up live game pages, privacy policy checked (no change expected, the statement stays true)
-- [ ] CLAUDE.md, README and this plan updated; a template README for games
-- Done when: with no live game nothing changes on the site; a test game marked live in a test shows the section, the nav entry and the overview.
+- [x] Registry, `GameLayout`, game shell (title, short rules panel, "How it is built" disclosure, new round button, keyboard help), shared helpers (seeded random number generator, `TechTerm` type), `/games/` overview (only when a game is live) and the Playground section on the home page with the tile component (name, tag, description, animated preview slot, link), header nav entry that appears with the first live game, scroll-spy included
+- [x] Site-wide storage guard (source scan, build-output scan, Playwright runtime check, see Decisions; the runtime check covers every page and later every game), size budgets per game page in the Lighthouse script (the existing budgets stay for the home page), `THIRD_PARTY.md` (fonts, icons, and later the game data), sitemap picks up live game pages, privacy policy checked (no change expected, the statement stays true)
+- [x] CLAUDE.md, README and this plan updated; a template README for games (`src/games/README.md`)
+- Done when: with no live game nothing changes on the site; a test game marked live in a test shows the section, the nav entry and the overview. Verified on 2026-10-09 with a throwaway demo game (build, build-output tests, all e2e tests including axe and the storage check on the new pages, Lighthouse for the home page, `/games/` and the game page all at 98 to 100); the demo was removed again, so the foundation merges with every game `hidden`. How it works is in `src/games/README.md`: `GamePage.astro` and `Preview.astro` are found by name, a live game needs an entry in `GAME_BUDGETS` in `scripts/lighthouse.mjs`.
 
 ### 4.1 Tech Words (Wordle-like, tech vocabulary)
 

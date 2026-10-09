@@ -1,5 +1,7 @@
 import { expect, test as base } from '@playwright/test';
 
+import { gamePaths } from '../../src/games/registry';
+
 /**
  * Like Playwright's `test`, but every test automatically fails when the page logs a console
  * error, throws an exception, violates the CSP or receives an HTTP error response.
@@ -30,5 +32,8 @@ export const test = base.extend<{ issues: string[] }>({
 
 export { expect } from '@playwright/test';
 
-/** Pages that exist on the site (the 404 page is tested separately). */
-export const pages = ['/', '/legal-notice/', '/privacy-policy/'] as const;
+/**
+ * Pages that exist on the site (the 404 page is tested separately). The Playground pages are
+ * included as soon as a game is live, so every test that loops over the pages covers them.
+ */
+export const pages: readonly string[] = ['/', '/legal-notice/', '/privacy-policy/', ...gamePaths()];
