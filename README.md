@@ -35,6 +35,12 @@ Nothing reaches `main` without a green `CI passed` check (enforced by a reposito
 
 After the deployment (not part of the gate), the published site is watched: a **live check** every six hours and after every production deployment (headers, redirects, legal pages, contact form API, certificate, domain registration, mail DNS) and a **weekly link check**.
 
+**Check the numbers yourself.** The scores are not only claimed, they are enforced and you can measure them independently:
+
+- Every pull request runs the Lighthouse gate; the scores of each run are in the summary of the Lighthouse job in the public [CI runs](https://github.com/leonkrix/leonkrix.dev/actions/workflows/ci.yml).
+- [PageSpeed Insights](https://pagespeed.web.dev/analysis?url=https%3A%2F%2Fleonkrix.dev) runs Lighthouse against the live site, from Google's servers.
+- [Security Headers](https://securityheaders.com/?q=leonkrix.dev&followRedirects=on) grades the HTTP security headers of the live site.
+
 A pre-commit hook (Husky and lint-staged) formats and lints staged files and runs the type check and related unit tests when code is staged.
 
 ## Development
