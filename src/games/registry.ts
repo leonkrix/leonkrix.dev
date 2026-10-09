@@ -1,5 +1,5 @@
 /**
- * The list of games of the Playground (see PLAN.md, Phase 4).
+ * The list of games of the Playground.
  *
  * A game is merged as `hidden` while it is built and set to `live` in the pull request that
  * completes it. Only live games get a page, a tile, a navigation entry and a sitemap entry; with no
