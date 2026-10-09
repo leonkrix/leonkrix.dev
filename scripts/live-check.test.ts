@@ -168,12 +168,84 @@ describe('runLiveChecks', () => {
       'redirects',
       'legal pages',
       'search engine files',
+      'playground',
       'unknown pages',
       'contact form API',
       'TLS certificate',
       'domain registration',
       'mail DNS records',
     ]);
+  });
+
+  describe('playground', () => {
+    const GAME = `<html><head><title>Tech Words | Leon Krix</title></head><body><h1>Tech Words</h1>
+<astro-island component-url="/_astro/game.js" renderer-url="/_astro/client.js"></astro-island></body></html>`;
+    const HOME_WITH_PLAYGROUND = HOME.replace(
+      '<section id="contact">',
+      '<section id="playground"></section><section id="contact">',
+    );
+    const SITEMAP = `<urlset><url><loc>https://leonkrix.dev/</loc></url><url><loc>https://leonkrix.dev/games/</loc></url><url><loc>https://leonkrix.dev/games/tech-words/</loc></url></urlset>`;
+    const script = (): Response =>
+      new Response('1', { headers: { 'content-type': 'text/javascript' } });
+
+    function withGames(extra: Record<string, Route | Response | undefined> = {}): typeof fetch {
+      return fakeSite({
+        [`GET ${BASE}/`]: page(HOME_WITH_PLAYGROUND),
+        [`GET ${BASE}/sitemap.xml`]: new Response(SITEMAP),
+        [`GET ${BASE}/games/`]: page('<title>Playground | Leon Krix</title><h1>Playground</h1>'),
+        [`GET ${BASE}/games/tech-words/`]: page(GAME),
+        [`GET ${BASE}/_astro/game.js`]: script(),
+        [`GET ${BASE}/_astro/client.js`]: script(),
+        ...extra,
+      });
+    }
+
+    it('has nothing to check while no game is published', async () => {
+      const result = find(await runLiveChecks(options()), 'playground');
+      expect(result.status).toBe('pass');
+      expect(result.detail).toContain('nothing to check');
+    });
+
+    it('passes when the section, the pages and the game scripts are there', async () => {
+      const result = find(await runLiveChecks(options({ fetch: withGames() })), 'playground');
+      expect(result.status).toBe('pass');
+      expect(result.detail).toContain('2 game pages');
+    });
+
+    it('fails when the home page has no Playground section', async () => {
+      const fetchImpl = withGames({ [`GET ${BASE}/`]: page(HOME) });
+      const result = find(await runLiveChecks(options({ fetch: fetchImpl })), 'playground');
+      expect(result.status).toBe('fail');
+      expect(result.detail).toContain('no Playground section');
+    });
+
+    it('fails when a game page is missing', async () => {
+      const fetchImpl = withGames({
+        [`GET ${BASE}/games/tech-words/`]: new Response('Page not found', { status: 404 }),
+      });
+      const result = find(await runLiveChecks(options({ fetch: fetchImpl })), 'playground');
+      expect(result.status).toBe('fail');
+      expect(result.detail).toContain('/games/tech-words/: HTTP 404');
+    });
+
+    it('fails when a script of the game is not served', async () => {
+      const fetchImpl = withGames({
+        [`GET ${BASE}/_astro/game.js`]: new Response('Page not found', { status: 404 }),
+      });
+      const result = find(await runLiveChecks(options({ fetch: fetchImpl })), 'playground');
+      expect(result.status).toBe('fail');
+      expect(result.detail).toContain('/_astro/game.js is not served as JavaScript');
+    });
+
+    it('fails when a game page has no heading or the wrong title', async () => {
+      const fetchImpl = withGames({
+        [`GET ${BASE}/games/`]: page('<title>Something else</title>'),
+      });
+      const result = find(await runLiveChecks(options({ fetch: fetchImpl })), 'playground');
+      expect(result.status).toBe('fail');
+      expect(result.detail).toContain('unexpected title');
+      expect(result.detail).toContain('no main heading');
+    });
   });
 
   it('fails when a security header is missing or has a different value', async () => {

@@ -24,9 +24,10 @@ Runtime and development dependencies are listed in `package.json` and `pnpm-lock
 
 ## Games (Playground)
 
-Game data (word lists, definitions, level files, word vectors) is listed here with its source and license before a game goes live. Currently no game data is published.
+Game data (word lists, definitions, level files, word vectors) is listed here with its source and license before a game goes live.
 
-| Data | Source | License | Used in |
-| ---- | ------ | ------- | ------- |
+| Data                                                                 | Source                              | License                                        | Used in                                   |
+| -------------------------------------------------------------------- | ----------------------------------- | ---------------------------------------------- | ----------------------------------------- |
+| Tech term lists (3, 4 and 5 letters) with categories and definitions | Original work written for this site | All rights reserved, like the rest of the site | Tech Words (`src/games/tech-words/data/`) |
 
-Planned sources: the term lists and definitions of Tech Words and Link Up and the levels of Root Cause are original work written for this site. Word Radar will use GloVe word vectors (Pennington, Socher, Manning, Stanford, Public Domain Dedication and License v1.0) and a list of nouns derived from WordNet (Princeton University, WordNet License); both are credited here when they are added.
+Planned sources: the term lists are reused by Link Up, and the levels of Root Cause are original work written for this site. Word Radar will use GloVe word vectors (Pennington, Socher, Manning, Stanford, Public Domain Dedication and License v1.0) and a list of nouns derived from WordNet (Princeton University, WordNet License); both are credited here when they are added.

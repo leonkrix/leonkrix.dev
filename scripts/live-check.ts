@@ -391,6 +391,55 @@ export async function runLiveChecks(options: LiveCheckOptions): Promise<CheckRes
     return verdict('search engine files', problems, 'robots.txt and sitemap.xml are fine');
   });
 
+  // The Playground pages exist exactly while games are published; the sitemap tells which ones
+  await run('playground', async () => {
+    const sitemap = await get('/sitemap.xml');
+    const paths = [
+      ...sitemap.body.matchAll(/<loc>https?:\/\/[^/<]+(\/games\/[^<]*)<\/loc>/g),
+    ].flatMap((match) => (match[1] === undefined ? [] : [match[1]]));
+    if (paths.length === 0) {
+      return ok('playground', 'no games are published yet, nothing to check');
+    }
+    const problems: string[] = [];
+    const start = home ?? (await get('/'));
+    if (!start.body.includes('id="playground"')) {
+      problems.push('the home page has no Playground section although games are published');
+    }
+    for (const path of paths) {
+      const game = await get(path);
+      const title = /<title>([^<]*)<\/title>/.exec(game.body)?.[1] ?? '';
+      if (game.status !== 200) {
+        problems.push(`${path}: HTTP ${String(game.status)}`);
+        continue;
+      }
+      if (!title.includes(siteConfig.name)) {
+        problems.push(`${path}: unexpected title "${title}"`);
+      }
+      if (!/<h1[\s>]/.test(game.body)) {
+        problems.push(`${path}: no main heading`);
+      }
+      // A game is a script on the page: the files of the island must be served
+      for (const asset of game.body.matchAll(/(?:component-url|renderer-url)="([^"]+)"/g)) {
+        const file = asset[1];
+        if (file === undefined) {
+          continue;
+        }
+        const script = await get(file);
+        if (
+          script.status !== 200 ||
+          !(script.headers.get('content-type') ?? '').includes('javascript')
+        ) {
+          problems.push(`${path}: the script ${file} is not served as JavaScript`);
+        }
+      }
+    }
+    return verdict(
+      'playground',
+      problems,
+      `${String(paths.length)} game pages, the section on the home page and the game scripts are fine`,
+    );
+  });
+
   await run('unknown pages', async () => {
     const page = await get(`/does-not-exist-${String(Date.now())}`);
     const problems: string[] = [];

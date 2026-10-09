@@ -6,7 +6,7 @@ test.describe('home page', () => {
     await page.goto('/');
     await expect(page).toHaveTitle(siteConfig.title);
     await expect(page.getByRole('heading', { level: 1, name: siteConfig.name })).toBeVisible();
-    for (const id of ['about', 'projects', 'experience', 'contact']) {
+    for (const id of ['about', 'projects', 'experience', 'playground', 'contact']) {
       await expect(page.locator(`section#${id}`)).toBeAttached();
     }
     await expect(page.getByText('Open to opportunities')).toBeVisible();

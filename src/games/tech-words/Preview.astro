@@ -1,0 +1,142 @@
+---
+// The tile of the game on the Playground section: a real guess and the term it was a guess for.
+// The tiles flip over one after the other when the tile appears, and again whenever it is pointed
+// at or focused. Pure CSS, no script. The colors come from the real rules of the game, so the
+// example can never show something the game would not do. The final colors are also the normal
+// look, so the tile is right without any motion.
+import { evaluateGuess } from './logic/evaluate';
+import { PREVIEW_ANSWER, PREVIEW_GUESS } from './preview-words';
+
+const rows = [
+  { letters: PREVIEW_GUESS, states: evaluateGuess(PREVIEW_GUESS, PREVIEW_ANSWER) },
+  { letters: PREVIEW_ANSWER, states: evaluateGuess(PREVIEW_ANSWER, PREVIEW_ANSWER) },
+];
+---
+
+<div class="pv">
+  {rows.map((row, rowIndex) => (
+    <div class="pv-row">
+      {row.letters.split('').map((letter, column) => (
+        <span
+          class="pv-tile"
+          data-state={row.states[column]}
+          style={`--d: ${String(rowIndex * row.letters.length + column)}`}
+        >
+          {letter}
+        </span>
+      ))}
+    </div>
+  ))}
+</div>
+
+<style>
+  .pv {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    gap: 0.3rem;
+  }
+
+  .pv-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.3rem;
+  }
+
+  .pv-tile {
+    display: grid;
+    place-items: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    border: 2px solid var(--color-border);
+    border-radius: 0.3rem;
+    font-family: var(--font-mono), monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-bg);
+    /* Two animations in a list: the first plays when the tile appears. The second is switched on
+       by pointing at the tile and starts from the beginning every time. Changing the second one
+       does not restart the first one, so leaving the tile does not flip it again. */
+    animation-name: pv-load, none;
+    animation-duration: 520ms;
+    animation-timing-function: ease-in-out;
+    animation-delay: calc(var(--d) * 110ms);
+  }
+
+  /* A tile that is waiting to be revealed has not started yet: its flip begins when it appears */
+  :global(.reveal-pending) .pv-tile {
+    animation-name: none, none;
+  }
+
+  :global(.game-tile):hover .pv-tile,
+  :global(.game-tile):focus-visible .pv-tile {
+    animation-name: pv-load, pv-hover;
+  }
+
+  .pv-tile[data-state='correct'] {
+    border-color: var(--color-status);
+    background-color: var(--color-status);
+  }
+
+  .pv-tile[data-state='present'] {
+    border-color: var(--color-contrast);
+    background-color: var(--color-contrast);
+  }
+
+  .pv-tile[data-state='absent'] {
+    border-color: var(--color-border);
+    background-color: var(--color-border);
+    color: var(--color-muted);
+  }
+
+  /* The same flip under two names (see above). The colors change in the middle of the flip. */
+  @keyframes pv-load {
+    0% {
+      transform: rotateX(0);
+      border-color: var(--color-muted);
+      background-color: transparent;
+      color: var(--color-fg);
+    }
+    49% {
+      border-color: var(--color-muted);
+      background-color: transparent;
+      color: var(--color-fg);
+    }
+    50% {
+      transform: rotateX(90deg);
+    }
+    100% {
+      transform: rotateX(0);
+    }
+  }
+
+  @keyframes pv-hover {
+    0% {
+      transform: rotateX(0);
+      border-color: var(--color-muted);
+      background-color: transparent;
+      color: var(--color-fg);
+    }
+    49% {
+      border-color: var(--color-muted);
+      background-color: transparent;
+      color: var(--color-fg);
+    }
+    50% {
+      transform: rotateX(90deg);
+    }
+    100% {
+      transform: rotateX(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pv-tile,
+    :global(.game-tile):hover .pv-tile,
+    :global(.game-tile):focus-visible .pv-tile {
+      animation: none;
+    }
+  }
+</style>

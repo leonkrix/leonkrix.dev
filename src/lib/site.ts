@@ -38,7 +38,10 @@ export const spokenLanguages = [
  */
 export const now = {
   updated: '2026-10',
-  items: ['Building the games section of this site', 'Polishing this website and its tooling'],
+  items: [
+    'Building the Playground of this site: Tech Words is live, more games are on their way',
+    'Polishing this website and its tooling',
+  ],
   searching: 'Looking for my next role as a software engineer',
 } as const;
 
