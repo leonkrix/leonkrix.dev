@@ -128,7 +128,20 @@ export const caseFile: Skin = {
     },
   ],
   roles: ['developer', 'designer', 'tester', 'admin', 'manager', 'intern', 'analyst', 'architect'],
-  victimRole: 'founder',
+  victimRoles: [
+    'founder',
+    'ceo',
+    'cto',
+    'investor',
+    'auditor',
+    'developer',
+    'designer',
+    'tester',
+    'admin',
+    'manager',
+    'analyst',
+    'architect',
+  ],
   naming: { style: 'people', pool: namePool },
 };
 
@@ -199,7 +212,7 @@ export const outage: Skin = {
     },
   ],
   roles: ['switch', 'router', 'firewall', 'nas', 'accesspoint', 'balancer', 'proxy', 'dns'],
-  victimRole: 'server',
+  victimRoles: ['server', 'database', 'nas', 'router', 'firewall', 'balancer'],
   naming: {
     style: 'devices',
     prefixes: {
@@ -212,6 +225,7 @@ export const outage: Skin = {
       proxy: 'px',
       dns: 'dns',
       server: 'srv',
+      database: 'db',
     },
   },
 };

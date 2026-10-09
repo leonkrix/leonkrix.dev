@@ -63,13 +63,26 @@ export function tierOf(rating: Pick<Rating, 'solved' | 'level' | 'clueLevel'>): 
   return level === 1 ? 'easy' : level === 2 ? 'medium' : 'hard';
 }
 
-/** The people of a level: suspects with random roles, and the victim last. */
-export function makePeople(skin: Skin, size: number, random: Random): Person[] {
+/**
+ * The people of a level: suspects with random roles, and the victim last. The victim has the
+ * given role or a random one of the skin, and no suspect has the role of the victim.
+ */
+export function makePeople(
+  skin: Skin,
+  size: number,
+  random: Random,
+  victimRole?: string,
+): Person[] {
+  const victim = victimRole ?? random.pick(skin.victimRoles);
+  if (!skin.victimRoles.includes(victim)) {
+    throw new RangeError(`${victim} is not a victim role of ${skin.id}`);
+  }
+  const available = skin.roles.filter((role) => role !== victim);
   // Fewer roles than suspects, so that clues like "with two developers" can happen
-  const roleCount = Math.min(skin.roles.length, Math.max(2, Math.floor((size - 1) * 0.6) + 1));
-  const roles = random.shuffle(skin.roles).slice(0, roleCount);
+  const roleCount = Math.min(available.length, Math.max(2, Math.floor((size - 1) * 0.6) + 1));
+  const roles = random.shuffle(available).slice(0, roleCount);
   const suspectRoles = Array.from({ length: size - 1 }, () => random.pick(roles));
-  const allRoles = [...suspectRoles, skin.victimRole];
+  const allRoles = [...suspectRoles, victim];
 
   if (skin.naming.style === 'devices') {
     const { prefixes } = skin.naming;
@@ -406,13 +419,16 @@ interface Build {
   context: Context;
 }
 
-/** Whether a set of clues leaves exactly one solution. A search that gave up counts as no. */
-function isUnique(build: Build, clues: readonly Clue[]): boolean {
+/**
+ * Whether a set of clues is certainly not unique: the search found a second solution or none. A
+ * search that gave up says nothing, the rater then decides (what the rules can solve is unique).
+ */
+function isCertainlyNotUnique(build: Build, clues: readonly Clue[]): boolean {
   const result = solve(
     { layout: build.layout, kinds: build.kinds, people: build.people, clues },
     { limit: 2, maxNodes: 300_000 },
   );
-  return result.complete && result.count === 1;
+  return result.complete && result.count !== 1;
 }
 
 /** Whether a set of clues is varied enough, as a share of all of them */
@@ -482,9 +498,9 @@ export function chooseClues(
     return list.at(-1);
   };
 
-  /** Unique (a quick check with the search), and solved by the rules without too much reasoning */
+  /** Unique (a quick check with the search to turn most sets down), and solved by the rules without too much reasoning */
   const solvable = (clues: readonly Clue[]): boolean => {
-    if (!isUnique(build, clues)) {
+    if (isCertainlyNotUnique(build, clues)) {
       return false;
     }
     const rating = rate({ layout: build.layout, kinds: build.kinds, people: build.people, clues });
@@ -521,13 +537,23 @@ export function chooseClues(
     ...random.shuffle(chosen.filter((clue) => !isNeutral(clue))),
     ...random.shuffle(chosen.filter(isNeutral)),
   ];
-  for (const clue of order) {
-    const rest = chosen.filter((other) => other !== clue);
-    const subject = subjectOf(clue);
-    const stillCovered =
-      subject === undefined || rest.some((other) => subjectOf(other) === subject);
-    if (stillCovered && solvable(rest)) {
-      chosen.splice(chosen.indexOf(clue), 1);
+  // The rater is not strictly monotonic (a clue can change the route of the reasoning), so go
+  // around again until nothing more can go
+  let removed = true;
+  while (removed) {
+    removed = false;
+    for (const clue of order) {
+      if (!chosen.includes(clue)) {
+        continue;
+      }
+      const rest = chosen.filter((other) => other !== clue);
+      const subject = subjectOf(clue);
+      const stillCovered =
+        subject === undefined || rest.some((other) => subjectOf(other) === subject);
+      if (stillCovered && solvable(rest)) {
+        chosen.splice(chosen.indexOf(clue), 1);
+        removed = true;
+      }
     }
   }
 
@@ -555,7 +581,7 @@ export function generateLevel(
   size: number,
   tier: Tier,
   seed: number | string,
-  maxAttempts = 200,
+  { maxAttempts = 200, victimRole }: { maxAttempts?: number; victimRole?: string } = {},
 ): Generated | undefined {
   const random = createRandom(seed);
   const kinds = kindsOf(skin);
@@ -567,7 +593,7 @@ export function generateLevel(
     if (solution === undefined) {
       continue;
     }
-    const people = makePeople(skin, size, random);
+    const people = makePeople(skin, size, random, victimRole);
     const context: Context = { board, people, victim: size - 1 };
     const candidates = enumerateClues(context, layout, kinds, solution, MAX_LEVEL[tier], random);
     const [fewest, most] = NEUTRAL_COUNTS[tier];

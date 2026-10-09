@@ -28,7 +28,8 @@
     "live-check": "node scripts/live-check.ts",
     "check-links": "node scripts/check-links.ts",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build && pnpm test:dist",
-    "prepare": "husky"
+    "prepare": "husky",
+    "levels": "vitest run --config vitest.levels.config.ts"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

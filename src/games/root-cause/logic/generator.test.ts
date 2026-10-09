@@ -45,16 +45,18 @@ describe('makePeople', () => {
         expect(people).toHaveLength(size);
         expect(new Set(people.map((person) => person.name)).size).toBe(size);
         expect(new Set(people.map((person) => person.label)).size).toBe(size);
-        expect(people.at(-1)?.role).toBe(skin.victimRole);
+        const victimRole = people.at(-1)?.role ?? '';
+        expect(skin.victimRoles).toContain(victimRole);
         for (const person of people.slice(0, -1)) {
           expect(skin.roles).toContain(person.role);
+          expect(person.role).not.toBe(victimRole);
         }
       }
     }
   });
 
   it('numbers devices by type: sw-01, sw-02, fw-01, and the server last', () => {
-    const people = makePeople(outage, 9, createRandom('devices'));
+    const people = makePeople(outage, 9, createRandom('devices'), 'server');
     const byRole = new Map<string, string[]>();
     for (const person of people) {
       byRole.set(person.role, [...(byRole.get(person.role) ?? []), person.name]);
@@ -65,6 +67,21 @@ describe('makePeople', () => {
       });
     }
     expect(people.at(-1)?.name).toBe('srv-01');
+  });
+
+  it('gives the victim the wanted role, or a random one, and the suspects never the same', () => {
+    expect(makePeople(caseFile, 6, createRandom('v'), 'developer').at(-1)?.role).toBe('developer');
+    const db = makePeople(outage, 7, createRandom('v'), 'database');
+    expect(db.at(-1)?.name).toBe('db-01');
+    expect(db.slice(0, -1).some((person) => person.role === 'database')).toBe(false);
+    const seen = new Set(
+      Array.from(
+        { length: 80 },
+        (_, seed) => makePeople(caseFile, 5, createRandom(`victim-${String(seed)}`)).at(-1)?.role,
+      ),
+    );
+    expect(seen.size).toBeGreaterThan(4);
+    expect(() => makePeople(caseFile, 5, createRandom(1), 'router')).toThrow(RangeError);
   });
 
   it('uses first names with the first letter as the label in Case file', () => {
