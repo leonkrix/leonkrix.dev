@@ -1,0 +1,52 @@
+---
+import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
+
+import Icon from '@/components/Icon.astro';
+import { type GameDefinition, gamePath } from '@/games/registry';
+
+interface Props {
+  game: GameDefinition;
+  /** Heading level of the name: h3 below a section title, h2 below the page title */
+  level?: 'h2' | 'h3' | undefined;
+}
+
+const { game, level: Heading = 'h3' } = Astro.props;
+
+// Every game can bring its own animated preview as src/games/<slug>/Preview.astro (pure CSS and
+// SVG, no script). Without one the tile shows the game icon on a soft dot grid.
+const previews = import.meta.glob<{ default: AstroComponentFactory }>(
+  '/src/games/*/Preview.astro',
+  { eager: true },
+);
+const Preview = previews[`/src/games/${game.slug}/Preview.astro`]?.default;
+---
+
+<a
+  href={gamePath(game.slug)}
+  class="game-tile edge flex h-full flex-col rounded-xl border border-border bg-surface/50 p-4 transition-colors hover:border-accent/50"
+>
+  <div
+    aria-hidden="true"
+    class="game-preview relative aspect-video overflow-hidden rounded-lg border border-border bg-bg/60"
+  >
+    {Preview ? (
+      <Preview />
+    ) : (
+      <>
+        <div class="preview-dots absolute inset-0" />
+        <div class="absolute inset-0 grid place-items-center">
+          <span class="preview-badge anim">
+            <Icon name={game.icon} class="size-8 text-accent-2" />
+          </span>
+        </div>
+      </>
+    )}
+  </div>
+  <div class="mt-4 flex items-center justify-between gap-3">
+    <Heading class="text-lg font-semibold tracking-tight">{game.name}</Heading>
+    <span class="rounded-full border border-border px-2.5 py-0.5 font-mono text-xs text-muted">
+      {game.tag}
+    </span>
+  </div>
+  <p class="mt-1.5 text-muted">{game.description}</p>
+</a>

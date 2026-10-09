@@ -1,6 +1,7 @@
 ---
 import Logo from '@/components/Logo.astro';
-import { navLinks } from '@/lib/navigation';
+import { getNavLinks } from '@/lib/navigation';
+const navLinks = getNavLinks();
 ---
 
 <header class="sticky top-0 z-40 border-b border-border/60 bg-bg/70 backdrop-blur-md">

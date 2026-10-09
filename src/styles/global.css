@@ -552,3 +552,87 @@
     }
   }
 }
+
+/* Playground (see components/games and layouts/GameLayout.astro). Previews animate while the tile is
+   pointed at or focused; a preview marks its moving parts with the class "anim". On touch screens
+   and with reduced motion they stay still. */
+@layer components {
+  .game-tile .anim {
+    animation-play-state: paused;
+  }
+
+  .game-tile:hover .anim,
+  .game-tile:focus-visible .anim {
+    animation-play-state: running;
+  }
+
+  /* Fallback preview: the game icon on a soft dot grid */
+  .preview-dots {
+    background-image: radial-gradient(
+      color-mix(in srgb, var(--color-accent) 40%, transparent) 1px,
+      transparent 1.5px
+    );
+    background-size: 18px 18px;
+    mask-image: radial-gradient(ellipse at center, #000 15%, transparent 75%);
+  }
+
+  .preview-badge {
+    display: grid;
+    place-items: center;
+    width: 4.5rem;
+    height: 4.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background-color: var(--color-surface);
+    box-shadow: 0 0 28px -6px color-mix(in srgb, var(--color-accent) 40%, transparent);
+    animation: preview-float 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes preview-float {
+    to {
+      transform: translateY(-6px) rotate(-3deg);
+    }
+  }
+
+  /* Texts inside the panels of a game page (rules, keyboard help, how it is built) */
+  .game-prose {
+    color: var(--color-muted);
+    line-height: 1.7;
+  }
+
+  .game-prose > * + * {
+    margin-top: 0.75rem;
+  }
+
+  .game-prose strong {
+    color: var(--color-fg);
+    font-weight: 600;
+  }
+
+  .game-prose ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+  }
+
+  .game-prose a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .game-prose kbd {
+    border: 1px solid var(--color-border);
+    border-radius: 0.375rem;
+    background-color: var(--color-surface);
+    padding: 0.05rem 0.4rem;
+    font-family: var(--font-mono), monospace;
+    font-size: 0.8em;
+    color: var(--color-fg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .preview-badge {
+      animation: none;
+    }
+  }
+}

@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { ADDRESS_PLACEHOLDERS } from '../../src/lib/legal';
-import { navLinks } from '../../src/lib/navigation';
+import { getNavLinks } from '../../src/lib/navigation';
 import { availability, siteConfig, socialLinks } from '../../src/lib/site';
 import { distDir, type Page, readDistFile, readPages } from './helpers';
 
@@ -46,7 +46,7 @@ describe('every page', () => {
 describe('navigation', () => {
   it('shows every navigation link in the header of every page', () => {
     for (const { file, html } of pages) {
-      for (const link of navLinks) {
+      for (const link of getNavLinks()) {
         expect(html, file).toContain(`href="${link.href}"`);
       }
     }
@@ -55,7 +55,7 @@ describe('navigation', () => {
   it('points every navigation link to an existing section on the home page', () => {
     const home = pages.find(({ file }) => file.endsWith(join('dist', 'index.html')));
     expect(home, 'home page').toBeDefined();
-    for (const link of navLinks) {
+    for (const link of getNavLinks()) {
       const id = link.href.slice(2);
       expect(home?.html, link.href).toContain(`<section id="${id}"`);
     }
