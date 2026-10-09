@@ -43,8 +43,11 @@ export interface Skin {
   roomTypes: readonly RoomTypeDef[];
   /** The roles the suspects can have */
   roles: readonly string[];
-  /** The role of the victim */
-  victimRole: string;
+  /**
+   * The roles the victim can have: roles of its own (a founder) and roles that suspects have too
+   * (a developer). In a level nobody else has the role of the victim.
+   */
+  victimRoles: readonly string[];
   naming: Naming;
 }
 

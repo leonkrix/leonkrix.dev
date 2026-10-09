@@ -1,0 +1,1219 @@
+[
+  {
+    "id": "easy-1",
+    "skin": "case-file",
+    "tier": "easy",
+    "size": 4,
+    "seed": "easy-1-1",
+    "layout": {
+      "size": 4,
+      "roomOf": [3, 3, 2, 2, 0, 0, 2, 2, 0, 1, 1, 1, 0, 1, 1, 1],
+      "roomCount": 4,
+      "rooms": [
+        { "type": "break-room", "name": "Break room" },
+        { "type": "archive", "name": "Archive" },
+        { "type": "server-room", "name": "Server room" },
+        { "type": "open-office", "name": "Open office" }
+      ],
+      "objects": [
+        { "kind": "desk", "cells": [12] },
+        { "kind": "desk", "cells": [0] },
+        { "kind": "shelf", "cells": [14] },
+        { "kind": "chair", "cells": [13] },
+        { "kind": "chair", "cells": [1] },
+        { "kind": "chair", "cells": [8] },
+        { "kind": "chair", "cells": [4] },
+        { "kind": "chair", "cells": [11] }
+      ],
+      "windows": [
+        { "cell": 1, "side": "e" },
+        { "cell": 11, "side": "e" }
+      ]
+    },
+    "people": [
+      { "role": "designer", "name": "Hugo", "label": "H" },
+      { "role": "designer", "name": "Vera", "label": "V" },
+      { "role": "designer", "name": "Sven", "label": "S" },
+      { "role": "founder", "name": "Mara", "label": "M" }
+    ],
+    "clues": [
+      { "type": "line", "person": 0, "line": "firstRow" },
+      { "type": "corner", "person": 1 },
+      { "type": "onFurniture", "person": 2 },
+      { "type": "noRoleNextToKind", "role": "designer", "kind": "desk" }
+    ],
+    "solution": [2, 15, 4, 9]
+  },
+  {
+    "id": "easy-2",
+    "skin": "outage",
+    "tier": "easy",
+    "size": 4,
+    "seed": "easy-2-1",
+    "layout": {
+      "size": 4,
+      "roomOf": [0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3],
+      "roomCount": 4,
+      "rooms": [
+        { "type": "edge-site", "name": "Edge site" },
+        { "type": "network-closet", "name": "Network closet" },
+        { "type": "data-hall", "name": "Data hall" },
+        { "type": "ups-room", "name": "UPS room" }
+      ],
+      "objects": [
+        { "kind": "fan", "cells": [12] },
+        { "kind": "radiator", "cells": [10] },
+        { "kind": "ups", "cells": [11] },
+        { "kind": "rack", "cells": [13] },
+        { "kind": "rack", "cells": [5] },
+        { "kind": "patch", "cells": [0] },
+        { "kind": "rack", "cells": [1] },
+        { "kind": "rack", "cells": [15] }
+      ],
+      "windows": [
+        { "cell": 1, "side": "n" },
+        { "cell": 14, "side": "s" }
+      ]
+    },
+    "people": [
+      { "role": "balancer", "name": "lb-01", "label": "lb1" },
+      { "role": "balancer", "name": "lb-02", "label": "lb2" },
+      { "role": "router", "name": "rtr-01", "label": "rtr1" },
+      { "role": "server", "name": "srv-01", "label": "srv1" }
+    ],
+    "clues": [
+      { "type": "line", "person": 0, "line": "firstRow" },
+      { "type": "onFurniture", "person": 1 },
+      { "type": "roomHasWindow", "person": 2, "has": false },
+      { "type": "line", "person": 2, "line": "lastCol" }
+    ],
+    "solution": [2, 13, 7, 8]
+  },
+  {
+    "id": "easy-3",
+    "skin": "case-file",
+    "tier": "easy",
+    "size": 5,
+    "seed": "easy-3-1",
+    "layout": {
+      "size": 5,
+      "roomOf": [1, 1, 3, 3, 3, 1, 1, 3, 3, 3, 1, 1, 3, 3, 3, 0, 0, 2, 2, 2, 0, 0, 2, 2, 2],
+      "roomCount": 4,
+      "rooms": [
+        { "type": "server-room", "name": "Server room" },
+        { "type": "lab", "name": "Lab" },
+        { "type": "meeting-room", "name": "Meeting room" },
+        { "type": "reception", "name": "Reception" }
+      ],
+      "objects": [
+        { "kind": "printer", "cells": [20] },
+        { "kind": "desk", "cells": [10] },
+        { "kind": "desk", "cells": [4] },
+        { "kind": "screen", "cells": [0] },
+        { "kind": "chair", "cells": [15] },
+        { "kind": "chair", "cells": [21] },
+        { "kind": "chair", "cells": [1] },
+        { "kind": "chair", "cells": [3] },
+        { "kind": "chair", "cells": [23] },
+        { "kind": "sofa", "cells": [7, 12] }
+      ],
+      "windows": [
+        { "cell": 11, "side": "s" },
+        { "cell": 24, "side": "s" }
+      ]
+    },
+    "people": [
+      { "role": "intern", "name": "Hana", "label": "H" },
+      { "role": "architect", "name": "Lena", "label": "L" },
+      { "role": "manager", "name": "Viktor", "label": "V" },
+      { "role": "intern", "name": "Jade", "label": "J" },
+      { "role": "developer", "name": "Dara", "label": "D" }
+    ],
+    "clues": [
+      { "type": "inRoom", "person": 0, "room": 0 },
+      { "type": "line", "person": 3, "line": "middleCol" },
+      { "type": "roomHasKind", "person": 3, "kind": "sofa", "has": false },
+      { "type": "windowFront", "person": 1 },
+      { "type": "line", "person": 2, "line": "lastCol" }
+    ],
+    "solution": [15, 11, 9, 22, 3]
+  },
+  {
+    "id": "easy-4",
+    "skin": "outage",
+    "tier": "easy",
+    "size": 5,
+    "seed": "easy-4-2",
+    "layout": {
+      "size": 5,
+      "roomOf": [1, 1, 3, 3, 3, 2, 1, 3, 3, 3, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 2, 2, 2, 2, 2],
+      "roomCount": 4,
+      "rooms": [
+        { "type": "cable-corridor", "name": "Cable corridor" },
+        { "type": "edge-site", "name": "Edge site" },
+        { "type": "data-hall", "name": "Data hall" },
+        { "type": "server-room", "name": "Server room" }
+      ],
+      "objects": [
+        { "kind": "fan", "cells": [23] },
+        { "kind": "ups", "cells": [14] },
+        { "kind": "fan", "cells": [6] },
+        { "kind": "fan", "cells": [21] },
+        { "kind": "patch", "cells": [18] },
+        { "kind": "rack", "cells": [16] },
+        { "kind": "rack", "cells": [24] },
+        { "kind": "rack", "cells": [15] },
+        { "kind": "rack", "cells": [13] },
+        { "kind": "rack", "cells": [9] }
+      ],
+      "windows": [
+        { "cell": 1, "side": "e" },
+        { "cell": 2, "side": "n" },
+        { "cell": 11, "side": "s" }
+      ]
+    },
+    "people": [
+      { "role": "nas", "name": "nas-01", "label": "nas1" },
+      { "role": "nas", "name": "nas-02", "label": "nas2" },
+      { "role": "firewall", "name": "fw-01", "label": "fw1" },
+      { "role": "nas", "name": "nas-03", "label": "nas3" },
+      { "role": "database", "name": "db-01", "label": "db1" }
+    ],
+    "clues": [
+      { "type": "line", "person": 2, "line": "firstRow" },
+      { "type": "roomHasKind", "person": 0, "kind": "ups", "has": false },
+      { "type": "onKind", "person": 1, "kind": "rack" },
+      { "type": "inRoomType", "person": 3, "roomType": "server-room" },
+      { "type": "roomHasKind", "person": 2, "kind": "fan", "has": false },
+      { "type": "corner", "person": 1 },
+      { "type": "line", "person": 3, "line": "middleCol" }
+    ],
+    "solution": [16, 24, 3, 7, 10]
+  },
+  {
+    "id": "easy-5",
+    "skin": "case-file",
+    "tier": "easy",
+    "size": 6,
+    "seed": "easy-5-1",
+    "layout": {
+      "size": 6,
+      "roomOf": [
+        2, 2, 6, 6, 6, 6, 2, 2, 2, 6, 6, 6, 0, 2, 2, 4, 4, 6, 0, 3, 3, 3, 4, 5, 0, 1, 3, 3, 5, 5, 1,
+        1, 3, 3, 5, 5
+      ],
+      "roomCount": 7,
+      "rooms": [
+        { "type": "corridor", "name": "Corridor" },
+        { "type": "break-room", "name": "Break room 1" },
+        { "type": "meeting-room", "name": "Meeting room" },
+        { "type": "break-room", "name": "Break room 2" },
+        { "type": "archive", "name": "Archive 1" },
+        { "type": "open-office", "name": "Open office" },
+        { "type": "archive", "name": "Archive 2" }
+      ],
+      "objects": [
+        { "kind": "shelf", "cells": [24] },
+        { "kind": "crate", "cells": [5] },
+        { "kind": "shelf", "cells": [4] },
+        { "kind": "plant", "cells": [32] },
+        { "kind": "shelf", "cells": [15] },
+        { "kind": "chair", "cells": [2] },
+        { "kind": "chair", "cells": [25] },
+        { "kind": "chair", "cells": [35] },
+        { "kind": "chair", "cells": [14] },
+        { "kind": "rug", "cells": [6] },
+        { "kind": "chair", "cells": [28] },
+        { "kind": "chair", "cells": [13] },
+        { "kind": "sofa", "cells": [33, 27] }
+      ],
+      "windows": [
+        { "cell": 2, "side": "s" },
+        { "cell": 14, "side": "s" },
+        { "cell": 16, "side": "e" }
+      ]
+    },
+    "people": [
+      { "role": "tester", "name": "Iris", "label": "I" },
+      { "role": "admin", "name": "Theo", "label": "T" },
+      { "role": "manager", "name": "Yara", "label": "Y" },
+      { "role": "manager", "name": "Walt", "label": "W" },
+      { "role": "manager", "name": "Gus", "label": "G" },
+      { "role": "cto", "name": "Jade", "label": "J" }
+    ],
+    "clues": [
+      { "type": "noRoleNextToKind", "role": "manager", "kind": "sofa" },
+      { "type": "inRoomType", "person": 0, "roomType": "meeting-room" },
+      { "type": "inRoom", "person": 2, "room": 6 },
+      { "type": "line", "person": 3, "line": "lastRow" },
+      { "type": "windowFront", "person": 2 },
+      { "type": "corner", "person": 4 },
+      { "type": "windowFront", "person": 1 }
+    ],
+    "solution": [7, 20, 17, 34, 0, 27]
+  },
+  {
+    "id": "easy-6",
+    "skin": "outage",
+    "tier": "easy",
+    "size": 6,
+    "seed": "easy-6-1",
+    "layout": {
+      "size": 6,
+      "roomOf": [
+        5, 6, 6, 6, 0, 0, 5, 6, 6, 6, 6, 0, 5, 5, 6, 6, 6, 1, 5, 5, 3, 3, 3, 1, 5, 5, 5, 3, 3, 4, 5,
+        5, 5, 2, 2, 4
+      ],
+      "roomCount": 7,
+      "rooms": [
+        { "type": "cooling-room", "name": "Cooling room" },
+        { "type": "network-closet", "name": "Network closet 1" },
+        { "type": "server-room", "name": "Server room 1" },
+        { "type": "network-closet", "name": "Network closet 2" },
+        { "type": "server-room", "name": "Server room 2" },
+        { "type": "server-room", "name": "Server room 3" },
+        { "type": "cabling-room", "name": "Cabling room" }
+      ],
+      "objects": [
+        { "kind": "fan", "cells": [18] },
+        { "kind": "fan", "cells": [26] },
+        { "kind": "fan", "cells": [6] },
+        { "kind": "fan", "cells": [29] },
+        { "kind": "cabinet", "cells": [14] },
+        { "kind": "rack", "cells": [31] },
+        { "kind": "patch", "cells": [33] },
+        { "kind": "rack", "cells": [4] },
+        { "kind": "tray", "cells": [28, 27] },
+        { "kind": "patch", "cells": [9] },
+        { "kind": "rack", "cells": [13] },
+        { "kind": "rack", "cells": [23] },
+        { "kind": "rack", "cells": [25] }
+      ],
+      "windows": [
+        { "cell": 5, "side": "n" },
+        { "cell": 11, "side": "e" },
+        { "cell": 11, "side": "s" },
+        { "cell": 34, "side": "s" }
+      ]
+    },
+    "people": [
+      { "role": "firewall", "name": "fw-01", "label": "fw1" },
+      { "role": "proxy", "name": "px-01", "label": "px1" },
+      { "role": "proxy", "name": "px-02", "label": "px2" },
+      { "role": "dns", "name": "dns-01", "label": "dns1" },
+      { "role": "switch", "name": "sw-01", "label": "sw1" },
+      { "role": "nas", "name": "nas-01", "label": "nas1" }
+    ],
+    "clues": [
+      { "type": "windowFront", "person": 0 },
+      { "type": "inRoom", "person": 3, "room": 0 },
+      { "type": "corner", "person": 1 },
+      { "type": "onKind", "person": 4, "kind": "tray" },
+      { "type": "inRoomType", "person": 2, "roomType": "network-closet" },
+      { "type": "inRoomType", "person": 0, "roomType": "cooling-room" }
+    ],
+    "solution": [11, 30, 20, 4, 27, 13]
+  },
+  {
+    "id": "medium-1",
+    "skin": "outage",
+    "tier": "medium",
+    "size": 5,
+    "seed": "medium-1-1",
+    "layout": {
+      "size": 5,
+      "roomOf": [3, 3, 1, 1, 1, 3, 3, 3, 1, 1, 3, 3, 3, 1, 1, 0, 2, 2, 1, 1, 0, 2, 2, 1, 1],
+      "roomCount": 4,
+      "rooms": [
+        { "type": "network-closet", "name": "Network closet 1" },
+        { "type": "cabling-room", "name": "Cabling room" },
+        { "type": "server-room", "name": "Server room" },
+        { "type": "network-closet", "name": "Network closet 2" }
+      ],
+      "objects": [
+        { "kind": "fan", "cells": [16] },
+        { "kind": "cabinet", "cells": [4] },
+        { "kind": "rack", "cells": [12] },
+        { "kind": "tray", "cells": [2, 3] },
+        { "kind": "patch", "cells": [5] },
+        { "kind": "patch", "cells": [6] },
+        { "kind": "rack", "cells": [11] }
+      ],
+      "windows": [
+        { "cell": 12, "side": "e" },
+        { "cell": 20, "side": "s" }
+      ]
+    },
+    "people": [
+      { "role": "router", "name": "rtr-01", "label": "rtr1" },
+      { "role": "firewall", "name": "fw-01", "label": "fw1" },
+      { "role": "firewall", "name": "fw-02", "label": "fw2" },
+      { "role": "firewall", "name": "fw-03", "label": "fw3" },
+      { "role": "server", "name": "srv-01", "label": "srv1" }
+    ],
+    "clues": [
+      { "type": "direction", "person": 2, "other": 3, "direction": "east", "mode": "adjacent" },
+      { "type": "kindInLine", "person": 3, "kind": "tray", "axis": "row", "where": "same" },
+      {
+        "type": "and",
+        "person": 0,
+        "parts": [
+          {
+            "type": "relativeToKind",
+            "person": 0,
+            "kind": "fan",
+            "direction": "south",
+            "where": "same"
+          },
+          { "type": "notNextToKind", "person": 0, "kind": "patch" }
+        ]
+      },
+      { "type": "diagonal", "person": 1, "other": 3 }
+    ],
+    "solution": [21, 7, 19, 3, 10]
+  },
+  {
+    "id": "medium-2",
+    "skin": "case-file",
+    "tier": "medium",
+    "size": 6,
+    "seed": "medium-2-1",
+    "layout": {
+      "size": 6,
+      "roomOf": [
+        2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 4, 4, 4, 3, 3, 3, 4, 4, 4, 3, 1, 3, 4, 4, 4, 1, 1, 1, 4,
+        4, 4, 1, 1, 1
+      ],
+      "roomCount": 5,
+      "rooms": [
+        { "type": "corridor", "name": "Corridor" },
+        { "type": "open-office", "name": "Open office 1" },
+        { "type": "reception", "name": "Reception" },
+        { "type": "server-room", "name": "Server room" },
+        { "type": "open-office", "name": "Open office 2" }
+      ],
+      "objects": [
+        { "kind": "plant", "cells": [25] },
+        { "kind": "desk", "cells": [19] },
+        { "kind": "desk", "cells": [35] },
+        { "kind": "chair", "cells": [9] },
+        { "kind": "rug", "cells": [3] },
+        { "kind": "sofa", "cells": [4, 5] },
+        { "kind": "chair", "cells": [21] },
+        { "kind": "chair", "cells": [30] },
+        { "kind": "chair", "cells": [18] }
+      ],
+      "windows": [
+        { "cell": 3, "side": "s" },
+        { "cell": 24, "side": "w" },
+        { "cell": 35, "side": "e" }
+      ]
+    },
+    "people": [
+      { "role": "manager", "name": "Lena", "label": "L" },
+      { "role": "developer", "name": "Zoe", "label": "Z" },
+      { "role": "developer", "name": "Theo", "label": "T" },
+      { "role": "manager", "name": "Olga", "label": "O" },
+      { "role": "intern", "name": "Ivan", "label": "I" },
+      { "role": "designer", "name": "Jonas", "label": "J" }
+    ],
+    "clues": [
+      {
+        "type": "relativeToKind",
+        "person": 4,
+        "kind": "desk",
+        "direction": "east",
+        "where": "same"
+      },
+      { "type": "line", "person": 2, "line": "lastRow" },
+      { "type": "roomSize", "person": 2, "which": "largest" },
+      { "type": "onKind", "person": 1, "kind": "rug" },
+      { "type": "kindInLine", "person": 0, "kind": "chair", "axis": "row", "where": "same" },
+      { "type": "roomHasWindow", "person": 0, "has": true },
+      {
+        "type": "and",
+        "person": 3,
+        "parts": [
+          {
+            "type": "direction",
+            "person": 3,
+            "other": 0,
+            "direction": "south",
+            "mode": "adjacent"
+          },
+          { "type": "notInRoomType", "person": 3, "roomType": "reception" }
+        ]
+      }
+    ],
+    "solution": [7, 3, 30, 16, 26, 23]
+  },
+  {
+    "id": "medium-3",
+    "skin": "outage",
+    "tier": "medium",
+    "size": 6,
+    "seed": "medium-3-1",
+    "layout": {
+      "size": 6,
+      "roomOf": [
+        3, 3, 3, 3, 4, 4, 3, 3, 3, 3, 1, 1, 3, 3, 3, 3, 1, 1, 0, 0, 0, 3, 5, 5, 0, 0, 2, 5, 5, 5, 0,
+        2, 2, 5, 5, 5
+      ],
+      "roomCount": 6,
+      "rooms": [
+        { "type": "cooling-room", "name": "Cooling room" },
+        { "type": "ups-room", "name": "UPS room" },
+        { "type": "server-room", "name": "Server room 1" },
+        { "type": "edge-site", "name": "Edge site" },
+        { "type": "data-hall", "name": "Data hall" },
+        { "type": "server-room", "name": "Server room 2" }
+      ],
+      "objects": [
+        { "kind": "fan", "cells": [5] },
+        { "kind": "ups", "cells": [13] },
+        { "kind": "fan", "cells": [34] },
+        { "kind": "rack", "cells": [24] },
+        { "kind": "rack", "cells": [31] },
+        { "kind": "tray", "cells": [6, 12] },
+        { "kind": "rack", "cells": [22] },
+        { "kind": "rack", "cells": [30] },
+        { "kind": "rack", "cells": [32] }
+      ],
+      "windows": [
+        { "cell": 5, "side": "s" },
+        { "cell": 25, "side": "e" },
+        { "cell": 30, "side": "w" },
+        { "cell": 35, "side": "e" }
+      ]
+    },
+    "people": [
+      { "role": "proxy", "name": "px-01", "label": "px1" },
+      { "role": "accesspoint", "name": "ap-01", "label": "ap1" },
+      { "role": "balancer", "name": "lb-01", "label": "lb1" },
+      { "role": "firewall", "name": "fw-01", "label": "fw1" },
+      { "role": "accesspoint", "name": "ap-02", "label": "ap2" },
+      { "role": "database", "name": "db-01", "label": "db1" }
+    ],
+    "clues": [
+      { "type": "diagonal", "person": 1, "other": 2 },
+      { "type": "direction", "person": 4, "other": 3, "direction": "north", "mode": "adjacent" },
+      { "type": "onKind", "person": 3, "kind": "rack" },
+      { "type": "line", "person": 4, "line": "lastCol" },
+      { "type": "windowFront", "person": 3 },
+      { "type": "notInRoom", "person": 2, "room": 3 },
+      { "type": "inRoomType", "person": 0, "roomType": "cooling-room" },
+      { "type": "line", "person": 1, "line": "firstRow" }
+    ],
+    "solution": [19, 3, 10, 30, 29, 14]
+  },
+  {
+    "id": "medium-4",
+    "skin": "case-file",
+    "tier": "medium",
+    "size": 7,
+    "seed": "medium-4-1",
+    "layout": {
+      "size": 7,
+      "roomOf": [
+        4, 4, 5, 5, 6, 6, 3, 4, 4, 5, 5, 3, 3, 3, 4, 5, 5, 5, 3, 3, 3, 1, 5, 5, 5, 5, 3, 2, 1, 1, 1,
+        5, 5, 2, 2, 1, 1, 1, 5, 5, 2, 2, 0, 0, 0, 0, 0, 0, 2
+      ],
+      "roomCount": 7,
+      "rooms": [
+        { "type": "corridor", "name": "Corridor" },
+        { "type": "break-room", "name": "Break room" },
+        { "type": "reception", "name": "Reception" },
+        { "type": "server-room", "name": "Server room" },
+        { "type": "open-office", "name": "Open office" },
+        { "type": "archive", "name": "Archive 1" },
+        { "type": "archive", "name": "Archive 2" }
+      ],
+      "objects": [
+        { "kind": "shelf", "cells": [31] },
+        { "kind": "crate", "cells": [15] },
+        { "kind": "plant", "cells": [36] },
+        { "kind": "chair", "cells": [9] },
+        { "kind": "chair", "cells": [34] },
+        { "kind": "chair", "cells": [38] },
+        { "kind": "chair", "cells": [26] },
+        { "kind": "chair", "cells": [5] },
+        { "kind": "rug", "cells": [42] },
+        { "kind": "rug", "cells": [44] }
+      ],
+      "windows": [
+        { "cell": 23, "side": "s" },
+        { "cell": 43, "side": "s" },
+        { "cell": 46, "side": "s" }
+      ]
+    },
+    "people": [
+      { "role": "analyst", "name": "Vera", "label": "V" },
+      { "role": "analyst", "name": "Olga", "label": "O" },
+      { "role": "designer", "name": "Ravi", "label": "R" },
+      { "role": "admin", "name": "Wanda", "label": "W" },
+      { "role": "admin", "name": "Milo", "label": "M" },
+      { "role": "developer", "name": "Jade", "label": "J" },
+      { "role": "investor", "name": "Chloe", "label": "C" }
+    ],
+    "clues": [
+      { "type": "direction", "person": 1, "other": 4, "direction": "south", "mode": "any" },
+      {
+        "type": "relativeToKind",
+        "person": 5,
+        "kind": "chair",
+        "direction": "southwest",
+        "where": "any"
+      },
+      { "type": "kindInLine", "person": 0, "kind": "plant", "axis": "row", "where": "other" },
+      { "type": "roomCount", "room": 2, "n": 0 },
+      { "type": "diagonal", "person": 1, "other": 2 },
+      { "type": "inRoomType", "person": 2, "roomType": "archive" },
+      { "type": "direction", "person": 1, "other": 3, "direction": "northwest", "mode": "any" },
+      { "type": "kindInLine", "person": 3, "kind": "chair", "axis": "col", "where": "other" },
+      { "type": "line", "person": 1, "line": "firstCol" },
+      { "type": "diagonal", "person": 4, "other": 2 }
+    ],
+    "solution": [38, 28, 22, 47, 16, 11, 6]
+  },
+  {
+    "id": "medium-5",
+    "skin": "outage",
+    "tier": "medium",
+    "size": 7,
+    "seed": "medium-5-1",
+    "layout": {
+      "size": 7,
+      "roomOf": [
+        5, 6, 6, 6, 6, 1, 1, 5, 5, 6, 6, 6, 1, 1, 5, 5, 4, 6, 6, 1, 1, 4, 4, 4, 4, 4, 4, 1, 4, 4, 4,
+        4, 4, 1, 1, 2, 0, 0, 0, 7, 7, 7, 2, 3, 3, 7, 7, 7, 7
+      ],
+      "roomCount": 8,
+      "rooms": [
+        { "type": "cable-corridor", "name": "Cable corridor" },
+        { "type": "server-room", "name": "Server room 1" },
+        { "type": "cabling-room", "name": "Cabling room" },
+        { "type": "data-hall", "name": "Data hall 1" },
+        { "type": "data-hall", "name": "Data hall 2" },
+        { "type": "server-room", "name": "Server room 2" },
+        { "type": "data-hall", "name": "Data hall 3" },
+        { "type": "cooling-room", "name": "Cooling room" }
+      ],
+      "objects": [
+        { "kind": "fan", "cells": [47] },
+        { "kind": "fan", "cells": [3] },
+        { "kind": "ups", "cells": [34] },
+        { "kind": "patch", "cells": [0] },
+        { "kind": "rack", "cells": [26] },
+        { "kind": "rack", "cells": [21] },
+        { "kind": "patch", "cells": [14] },
+        { "kind": "rack", "cells": [27] },
+        { "kind": "rack", "cells": [9] },
+        { "kind": "rack", "cells": [20] }
+      ],
+      "windows": [
+        { "cell": 0, "side": "e" },
+        { "cell": 5, "side": "n" },
+        { "cell": 18, "side": "s" },
+        { "cell": 37, "side": "s" }
+      ]
+    },
+    "people": [
+      { "role": "nas", "name": "nas-01", "label": "nas1" },
+      { "role": "firewall", "name": "fw-01", "label": "fw1" },
+      { "role": "dns", "name": "dns-01", "label": "dns1" },
+      { "role": "firewall", "name": "fw-02", "label": "fw2" },
+      { "role": "dns", "name": "dns-02", "label": "dns2" },
+      { "role": "nas", "name": "nas-02", "label": "nas2" },
+      { "role": "router", "name": "rtr-01", "label": "rtr1" }
+    ],
+    "clues": [
+      { "type": "separate", "persons": [0, 1, 4] },
+      { "type": "inRoom", "person": 4, "room": 5 },
+      { "type": "windowFront", "person": 0 },
+      { "type": "kindInLine", "person": 1, "kind": "rack", "axis": "col", "where": "other" },
+      {
+        "type": "relativeToKind",
+        "person": 5,
+        "kind": "ups",
+        "direction": "south",
+        "where": "any"
+      },
+      { "type": "nextToKind", "person": 3, "kind": "ups" },
+      { "type": "nextToKind", "person": 5, "kind": "fan" },
+      {
+        "type": "relativeToKind",
+        "person": 2,
+        "kind": "patch",
+        "direction": "east",
+        "where": "any"
+      },
+      { "type": "nextToKind", "person": 1, "kind": "ups" },
+      {
+        "type": "and",
+        "person": 4,
+        "parts": [
+          {
+            "type": "relativeToKind",
+            "person": 4,
+            "kind": "patch",
+            "direction": "northeast",
+            "where": "any"
+          },
+          { "type": "roomRole", "person": 4, "role": "router", "counting": "atLeast", "n": 1 }
+        ]
+      }
+    ],
+    "solution": [37, 33, 17, 27, 8, 46, 0]
+  },
+  {
+    "id": "medium-6",
+    "skin": "case-file",
+    "tier": "medium",
+    "size": 7,
+    "seed": "medium-6-1",
+    "layout": {
+      "size": 7,
+      "roomOf": [
+        4, 4, 7, 5, 5, 5, 2, 7, 7, 7, 5, 5, 2, 2, 7, 7, 6, 6, 6, 2, 2, 7, 7, 6, 6, 6, 6, 2, 7, 7, 7,
+        6, 6, 6, 2, 7, 0, 0, 6, 6, 6, 1, 3, 3, 0, 6, 6, 6, 1
+      ],
+      "roomCount": 8,
+      "rooms": [
+        { "type": "break-room", "name": "Break room 1" },
+        { "type": "lab", "name": "Lab 1" },
+        { "type": "reception", "name": "Reception" },
+        { "type": "server-room", "name": "Server room" },
+        { "type": "meeting-room", "name": "Meeting room" },
+        { "type": "lab", "name": "Lab 2" },
+        { "type": "open-office", "name": "Open office" },
+        { "type": "break-room", "name": "Break room 2" }
+      ],
+      "objects": [
+        { "kind": "shelf", "cells": [42] },
+        { "kind": "plant", "cells": [15] },
+        { "kind": "desk", "cells": [18] },
+        { "kind": "rug", "cells": [33] },
+        { "kind": "chair", "cells": [2] },
+        { "kind": "sofa", "cells": [6, 13] },
+        { "kind": "chair", "cells": [12] },
+        { "kind": "chair", "cells": [1] },
+        { "kind": "chair", "cells": [43] },
+        { "kind": "chair", "cells": [29] }
+      ],
+      "windows": [
+        { "cell": 7, "side": "w" },
+        { "cell": 18, "side": "e" },
+        { "cell": 48, "side": "e" }
+      ]
+    },
+    "people": [
+      { "role": "designer", "name": "Pia", "label": "P" },
+      { "role": "architect", "name": "Dara", "label": "D" },
+      { "role": "architect", "name": "Kai", "label": "K" },
+      { "role": "developer", "name": "Walt", "label": "W" },
+      { "role": "developer", "name": "Emre", "label": "E" },
+      { "role": "architect", "name": "Leo", "label": "L" },
+      { "role": "manager", "name": "Greta", "label": "G" }
+    ],
+    "clues": [
+      { "type": "direction", "person": 3, "other": 1, "direction": "east", "mode": "adjacent" },
+      { "type": "separate", "persons": [3, 4, 5] },
+      { "type": "alone", "person": 1 },
+      { "type": "direction", "person": 2, "other": 3, "direction": "west", "mode": "any" },
+      { "type": "kindInLine", "person": 4, "kind": "chair", "axis": "row", "where": "other" },
+      { "type": "roomHasKind", "person": 4, "kind": "rug", "has": true },
+      { "type": "onFloor", "person": 5 },
+      { "type": "alone", "person": 0 },
+      { "type": "direction", "person": 0, "other": 5, "direction": "west", "mode": "adjacent" },
+      { "type": "diagonal", "person": 4, "other": 3 },
+      { "type": "nextToKind", "person": 5, "kind": "sofa" }
+    ],
+    "solution": [5, 43, 7, 37, 31, 20, 25]
+  },
+  {
+    "id": "hard-1",
+    "skin": "case-file",
+    "tier": "hard",
+    "size": 7,
+    "seed": "hard-1-1",
+    "layout": {
+      "size": 7,
+      "roomOf": [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 1, 1, 1, 1, 2, 2, 2, 1, 3, 3,
+        1, 1, 1, 1, 3, 3, 3, 1, 1, 1, 1, 3, 3, 3, 1, 1, 1, 1
+      ],
+      "roomCount": 4,
+      "rooms": [
+        { "type": "open-office", "name": "Open office" },
+        { "type": "break-room", "name": "Break room" },
+        { "type": "archive", "name": "Archive" },
+        { "type": "reception", "name": "Reception" }
+      ],
+      "objects": [
+        { "kind": "desk", "cells": [29] },
+        { "kind": "desk", "cells": [15] },
+        { "kind": "chair", "cells": [4] },
+        { "kind": "chair", "cells": [20] },
+        { "kind": "sofa", "cells": [42, 43] },
+        { "kind": "rug", "cells": [35] },
+        { "kind": "chair", "cells": [0] }
+      ],
+      "windows": [
+        { "cell": 19, "side": "s" },
+        { "cell": 21, "side": "w" },
+        { "cell": 44, "side": "e" }
+      ]
+    },
+    "people": [
+      { "role": "architect", "name": "Dmitri", "label": "D" },
+      { "role": "architect", "name": "Olga", "label": "O" },
+      { "role": "architect", "name": "Iris", "label": "I" },
+      { "role": "architect", "name": "Ada", "label": "A" },
+      { "role": "manager", "name": "Tara", "label": "T" },
+      { "role": "developer", "name": "Fatima", "label": "F" },
+      { "role": "auditor", "name": "Hana", "label": "H" }
+    ],
+    "clues": [
+      { "type": "direction", "person": 1, "other": 0, "direction": "east", "mode": "adjacent" },
+      { "type": "between", "person": 2, "other": 0, "third": 5, "axis": "col" },
+      { "type": "notNextToWall", "person": 4 },
+      { "type": "roomSize", "person": 0, "which": "largest" },
+      { "type": "roomCount", "room": 3, "n": 1 },
+      { "type": "inRoom", "person": 1, "room": 0 },
+      { "type": "distance", "person": 2, "other": 4, "distance": 8 },
+      { "type": "onKind", "person": 5, "kind": "sofa" },
+      { "type": "distance", "person": 3, "other": 1, "distance": 5 }
+    ],
+    "solution": [16, 10, 1, 27, 39, 42, 33]
+  },
+  {
+    "id": "hard-2",
+    "skin": "outage",
+    "tier": "hard",
+    "size": 7,
+    "seed": "hard-2-1",
+    "layout": {
+      "size": 7,
+      "roomOf": [
+        2, 2, 2, 2, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 2, 2, 1, 1, 0, 0, 0, 2, 3, 3, 0, 0, 0, 0, 2, 3, 3,
+        0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 0
+      ],
+      "roomCount": 4,
+      "rooms": [
+        { "type": "ups-room", "name": "UPS room" },
+        { "type": "network-closet", "name": "Network closet" },
+        { "type": "cooling-room", "name": "Cooling room" },
+        { "type": "data-hall", "name": "Data hall" }
+      ],
+      "objects": [
+        { "kind": "fan", "cells": [25] },
+        { "kind": "fan", "cells": [43] },
+        { "kind": "rack", "cells": [47] },
+        { "kind": "patch", "cells": [13] },
+        { "kind": "rack", "cells": [24] },
+        { "kind": "rack", "cells": [33] },
+        { "kind": "patch", "cells": [48] }
+      ],
+      "windows": [
+        { "cell": 4, "side": "n" },
+        { "cell": 13, "side": "e" },
+        { "cell": 44, "side": "e" },
+        { "cell": 48, "side": "s" }
+      ]
+    },
+    "people": [
+      { "role": "router", "name": "rtr-01", "label": "rtr1" },
+      { "role": "proxy", "name": "px-01", "label": "px1" },
+      { "role": "nas", "name": "nas-01", "label": "nas1" },
+      { "role": "firewall", "name": "fw-01", "label": "fw1" },
+      { "role": "proxy", "name": "px-02", "label": "px2" },
+      { "role": "firewall", "name": "fw-02", "label": "fw2" },
+      { "role": "server", "name": "srv-01", "label": "srv1" }
+    ],
+    "clues": [
+      { "type": "noRoleNextToKind", "role": "nas", "kind": "fan" },
+      {
+        "type": "and",
+        "person": 4,
+        "parts": [
+          { "type": "distance", "person": 4, "other": 5, "distance": 6 },
+          { "type": "direction", "person": 4, "other": 5, "direction": "northwest", "mode": "any" }
+        ]
+      },
+      { "type": "nextToKind", "person": 3, "kind": "fan" },
+      { "type": "line", "person": 4, "line": "firstRow" },
+      {
+        "type": "or",
+        "person": 4,
+        "parts": [
+          {
+            "type": "relativeToKind",
+            "person": 4,
+            "kind": "fan",
+            "direction": "northwest",
+            "where": "any"
+          },
+          { "type": "direction", "person": 4, "other": 3, "direction": "south", "mode": "any" }
+        ]
+      },
+      { "type": "relativeToKind", "person": 4, "kind": "fan", "direction": "east", "where": "any" },
+      { "type": "kindInLine", "person": 0, "kind": "patch", "axis": "row", "where": "other" },
+      {
+        "type": "relativeToKind",
+        "person": 1,
+        "kind": "fan",
+        "direction": "northeast",
+        "where": "same"
+      },
+      { "type": "direction", "person": 2, "other": 3, "direction": "west", "mode": "adjacent" },
+      { "type": "nextToKind", "person": 5, "kind": "patch" }
+    ],
+    "solution": [42, 12, 38, 32, 2, 20, 22]
+  },
+  {
+    "id": "hard-3",
+    "skin": "case-file",
+    "tier": "hard",
+    "size": 8,
+    "seed": "hard-3-2",
+    "layout": {
+      "size": 8,
+      "roomOf": [
+        3, 3, 3, 3, 4, 4, 4, 4, 3, 3, 3, 3, 2, 2, 0, 4, 3, 3, 3, 2, 2, 2, 0, 0, 3, 1, 1, 2, 2, 2, 0,
+        0, 1, 1, 1, 1, 2, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0,
+        0, 0
+      ],
+      "roomCount": 5,
+      "rooms": [
+        { "type": "open-office", "name": "Open office 1" },
+        { "type": "lab", "name": "Lab" },
+        { "type": "server-room", "name": "Server room" },
+        { "type": "meeting-room", "name": "Meeting room" },
+        { "type": "open-office", "name": "Open office 2" }
+      ],
+      "objects": [
+        { "kind": "plant", "cells": [16] },
+        { "kind": "crate", "cells": [28] },
+        { "kind": "rug", "cells": [50] },
+        { "kind": "chair", "cells": [4] },
+        { "kind": "chair", "cells": [0] },
+        { "kind": "chair", "cells": [44] },
+        { "kind": "rug", "cells": [14] },
+        { "kind": "chair", "cells": [59] }
+      ],
+      "windows": [
+        { "cell": 24, "side": "w" },
+        { "cell": 36, "side": "s" },
+        { "cell": 56, "side": "w" }
+      ]
+    },
+    "people": [
+      { "role": "tester", "name": "Theo", "label": "T" },
+      { "role": "tester", "name": "Rosa", "label": "R" },
+      { "role": "manager", "name": "Omar", "label": "O" },
+      { "role": "intern", "name": "Aiko", "label": "A" },
+      { "role": "designer", "name": "Greta", "label": "G" },
+      { "role": "manager", "name": "Chloe", "label": "C" },
+      { "role": "architect", "name": "Lena", "label": "L" },
+      { "role": "ceo", "name": "Fatima", "label": "F" }
+    ],
+    "clues": [
+      { "type": "roomCount", "room": 3, "n": 1 },
+      { "type": "roomCount", "room": 4, "n": 2 },
+      { "type": "noRoleNextToKind", "role": "tester", "kind": "plant" },
+      {
+        "type": "relativeToKind",
+        "person": 3,
+        "kind": "chair",
+        "direction": "west",
+        "where": "any"
+      },
+      { "type": "roomMates", "person": 0, "counting": "exactly", "n": 1 },
+      { "type": "notNextToWall", "person": 1 },
+      { "type": "distance", "person": 1, "other": 0, "distance": 8 },
+      { "type": "nextToKind", "person": 2, "kind": "rug" },
+      { "type": "between", "person": 5, "other": 0, "third": 2, "axis": "col" },
+      {
+        "type": "relativeToKind",
+        "person": 6,
+        "kind": "crate",
+        "direction": "west",
+        "where": "any"
+      },
+      { "type": "distance", "person": 1, "other": 3, "distance": 4 },
+      {
+        "type": "relativeToKind",
+        "person": 6,
+        "kind": "plant",
+        "direction": "southeast",
+        "where": "other"
+      },
+      { "type": "roomHasKind", "person": 0, "kind": "rug", "has": false },
+      {
+        "type": "and",
+        "person": 2,
+        "parts": [
+          {
+            "type": "relativeToKind",
+            "person": 2,
+            "kind": "chair",
+            "direction": "north",
+            "where": "any"
+          },
+          { "type": "notNextToKind", "person": 2, "kind": "crate" }
+        ]
+      },
+      { "type": "line", "person": 4, "line": "firstRow" }
+    ],
+    "solution": [21, 49, 42, 24, 6, 36, 59, 15]
+  },
+  {
+    "id": "hard-4",
+    "skin": "outage",
+    "tier": "hard",
+    "size": 8,
+    "seed": "hard-4-1",
+    "layout": {
+      "size": 8,
+      "roomOf": [
+        2, 2, 2, 2, 4, 4, 3, 3, 2, 2, 2, 2, 4, 4, 3, 3, 2, 2, 2, 4, 4, 4, 1, 1, 2, 2, 2, 2, 2, 6, 6,
+        1, 2, 5, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+        5, 5
+      ],
+      "roomCount": 7,
+      "rooms": [
+        { "type": "cable-corridor", "name": "Cable corridor" },
+        { "type": "data-hall", "name": "Data hall" },
+        { "type": "edge-site", "name": "Edge site" },
+        { "type": "ups-room", "name": "UPS room 1" },
+        { "type": "network-closet", "name": "Network closet" },
+        { "type": "ups-room", "name": "UPS room 2" },
+        { "type": "server-room", "name": "Server room" }
+      ],
+      "objects": [
+        { "kind": "cabinet", "cells": [31] },
+        { "kind": "fan", "cells": [59] },
+        { "kind": "rack", "cells": [48] },
+        { "kind": "rack", "cells": [62] },
+        { "kind": "rack", "cells": [2] },
+        { "kind": "rack", "cells": [7] },
+        { "kind": "tray", "cells": [45, 53] },
+        { "kind": "rack", "cells": [24] }
+      ],
+      "windows": [
+        { "cell": 4, "side": "n" },
+        { "cell": 13, "side": "e" },
+        { "cell": 33, "side": "e" }
+      ]
+    },
+    "people": [
+      { "role": "accesspoint", "name": "ap-01", "label": "ap1" },
+      { "role": "router", "name": "rtr-01", "label": "rtr1" },
+      { "role": "accesspoint", "name": "ap-02", "label": "ap2" },
+      { "role": "balancer", "name": "lb-01", "label": "lb1" },
+      { "role": "router", "name": "rtr-02", "label": "rtr2" },
+      { "role": "dns", "name": "dns-01", "label": "dns1" },
+      { "role": "balancer", "name": "lb-02", "label": "lb2" },
+      { "role": "firewall", "name": "fw-01", "label": "fw1" }
+    ],
+    "clues": [
+      { "type": "inRoom", "person": 0, "room": 0 },
+      { "type": "diagonal", "person": 2, "other": 0 },
+      { "type": "kindInLine", "person": 6, "kind": "rack", "axis": "col", "where": "other" },
+      { "type": "roomCount", "room": 3, "n": 0 },
+      {
+        "type": "or",
+        "person": 1,
+        "parts": [
+          { "type": "distance", "person": 1, "other": 6, "distance": 12 },
+          {
+            "type": "relativeToKind",
+            "person": 1,
+            "kind": "tray",
+            "direction": "south",
+            "where": "any"
+          }
+        ]
+      },
+      { "type": "distance", "person": 5, "other": 2, "distance": 8 },
+      {
+        "type": "relativeToKind",
+        "person": 4,
+        "kind": "rack",
+        "direction": "southeast",
+        "where": "same"
+      },
+      { "type": "nextToKind", "person": 5, "kind": "fan" },
+      { "type": "notNextToWall", "person": 3 }
+    ],
+    "solution": [37, 52, 30, 41, 11, 58, 23, 0]
+  },
+  {
+    "id": "hard-5",
+    "skin": "case-file",
+    "tier": "hard",
+    "size": 9,
+    "seed": "hard-5-4",
+    "layout": {
+      "size": 9,
+      "roomOf": [
+        1, 1, 1, 1, 2, 2, 3, 3, 3, 2, 1, 1, 1, 2, 2, 2, 3, 4, 2, 2, 2, 2, 2, 2, 2, 4, 4, 2, 2, 2, 2,
+        2, 2, 2, 4, 4, 2, 2, 2, 2, 2, 2, 2, 4, 4, 2, 2, 2, 2, 2, 2, 2, 4, 4, 0, 0, 2, 2, 2, 2, 5, 5,
+        5, 0, 0, 0, 0, 0, 2, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 5, 5
+      ],
+      "roomCount": 6,
+      "rooms": [
+        { "type": "archive", "name": "Archive" },
+        { "type": "lab", "name": "Lab" },
+        { "type": "meeting-room", "name": "Meeting room" },
+        { "type": "open-office", "name": "Open office 1" },
+        { "type": "open-office", "name": "Open office 2" },
+        { "type": "break-room", "name": "Break room" }
+      ],
+      "objects": [
+        { "kind": "printer", "cells": [17] },
+        { "kind": "shelf", "cells": [67] },
+        { "kind": "plant", "cells": [61] },
+        { "kind": "chair", "cells": [76] },
+        { "kind": "chair", "cells": [48] },
+        { "kind": "chair", "cells": [63] },
+        { "kind": "chair", "cells": [25] },
+        { "kind": "chair", "cells": [53] },
+        { "kind": "sofa", "cells": [70, 69] },
+        { "kind": "chair", "cells": [73] }
+      ],
+      "windows": [
+        { "cell": 12, "side": "s" },
+        { "cell": 51, "side": "e" },
+        { "cell": 53, "side": "s" },
+        { "cell": 62, "side": "e" },
+        { "cell": 63, "side": "w" }
+      ]
+    },
+    "people": [
+      { "role": "tester", "name": "Rosa", "label": "R" },
+      { "role": "intern", "name": "Walt", "label": "W" },
+      { "role": "designer", "name": "Leo", "label": "L" },
+      { "role": "architect", "name": "Bruno", "label": "B" },
+      { "role": "intern", "name": "Omar", "label": "O" },
+      { "role": "architect", "name": "Felix", "label": "F" },
+      { "role": "developer", "name": "Uma", "label": "U" },
+      { "role": "tester", "name": "Greta", "label": "G" },
+      { "role": "admin", "name": "Mara", "label": "M" }
+    ],
+    "clues": [
+      { "type": "roomCount", "room": 4, "n": 2 },
+      { "type": "nextToKind", "person": 6, "kind": "chair" },
+      { "type": "separate", "persons": [0, 2, 6] },
+      { "type": "notInRoomType", "person": 1, "roomType": "meeting-room" },
+      { "type": "kindInLine", "person": 3, "kind": "chair", "axis": "col", "where": "other" },
+      { "type": "onFurniture", "person": 5 },
+      { "type": "notInRoomType", "person": 4, "roomType": "meeting-room" },
+      { "type": "kindInLine", "person": 0, "kind": "chair", "axis": "col", "where": "other" },
+      { "type": "direction", "person": 6, "other": 1, "direction": "southwest", "mode": "any" },
+      { "type": "inRoomType", "person": 3, "roomType": "lab" },
+      { "type": "kindInLine", "person": 3, "kind": "printer", "axis": "row", "where": "other" },
+      { "type": "kindInLine", "person": 2, "kind": "sofa", "axis": "row", "where": "same" },
+      { "type": "between", "person": 6, "other": 0, "third": 3, "axis": "row" },
+      { "type": "roomRole", "person": 7, "role": "tester", "counting": "exactly", "n": 1 },
+      { "type": "notNextToKind", "person": 1, "kind": "chair" }
+    ],
+    "solution": [75, 35, 69, 10, 2, 25, 49, 54, 41]
+  },
+  {
+    "id": "hard-6",
+    "skin": "outage",
+    "tier": "hard",
+    "size": 9,
+    "seed": "hard-6-1",
+    "layout": {
+      "size": 9,
+      "roomOf": [
+        1, 1, 1, 3, 3, 3, 2, 2, 2, 1, 1, 1, 3, 3, 2, 2, 2, 2, 0, 1, 1, 3, 3, 2, 2, 2, 2, 0, 1, 1, 1,
+        2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+        0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 0
+      ],
+      "roomCount": 5,
+      "rooms": [
+        { "type": "network-closet", "name": "Network closet" },
+        { "type": "server-room", "name": "Server room 1" },
+        { "type": "cooling-room", "name": "Cooling room" },
+        { "type": "server-room", "name": "Server room 2" },
+        { "type": "data-hall", "name": "Data hall" }
+      ],
+      "objects": [
+        { "kind": "fan", "cells": [43] },
+        { "kind": "ups", "cells": [58] },
+        { "kind": "fan", "cells": [54] },
+        { "kind": "rack", "cells": [11] },
+        { "kind": "patch", "cells": [77] },
+        { "kind": "tray", "cells": [15, 16] },
+        { "kind": "rack", "cells": [6] },
+        { "kind": "tray", "cells": [33, 34] },
+        { "kind": "rack", "cells": [30] },
+        { "kind": "rack", "cells": [72] }
+      ],
+      "windows": [
+        { "cell": 13, "side": "e" },
+        { "cell": 30, "side": "s" },
+        { "cell": 44, "side": "e" },
+        { "cell": 75, "side": "s" },
+        { "cell": 76, "side": "s" }
+      ]
+    },
+    "people": [
+      { "role": "router", "name": "rtr-01", "label": "rtr1" },
+      { "role": "router", "name": "rtr-02", "label": "rtr2" },
+      { "role": "dns", "name": "dns-01", "label": "dns1" },
+      { "role": "nas", "name": "nas-01", "label": "nas1" },
+      { "role": "nas", "name": "nas-02", "label": "nas2" },
+      { "role": "dns", "name": "dns-02", "label": "dns2" },
+      { "role": "router", "name": "rtr-03", "label": "rtr3" },
+      { "role": "proxy", "name": "px-01", "label": "px1" },
+      { "role": "balancer", "name": "lb-01", "label": "lb1" }
+    ],
+    "clues": [
+      { "type": "separate", "persons": [2, 5, 6] },
+      {
+        "type": "relativeToKind",
+        "person": 0,
+        "kind": "ups",
+        "direction": "southeast",
+        "where": "any"
+      },
+      {
+        "type": "and",
+        "person": 4,
+        "parts": [
+          { "type": "roomHasKind", "person": 4, "kind": "rack", "has": false },
+          { "type": "nextToWall", "person": 4 }
+        ]
+      },
+      { "type": "kindCount", "kind": "tray", "counting": "exactly", "n": 1 },
+      { "type": "direction", "person": 5, "other": 2, "direction": "south", "mode": "any" },
+      { "type": "direction", "person": 6, "other": 1, "direction": "south", "mode": "adjacent" },
+      { "type": "direction", "person": 3, "other": 1, "direction": "west", "mode": "any" },
+      { "type": "sameRoom", "person": 6, "other": 4 },
+      { "type": "notInRoomType", "person": 7, "roomType": "network-closet" },
+      {
+        "type": "and",
+        "person": 1,
+        "parts": [
+          {
+            "type": "relativeToKind",
+            "person": 1,
+            "kind": "rack",
+            "direction": "east",
+            "where": "any"
+          },
+          { "type": "direction", "person": 1, "other": 5, "direction": "west", "mode": "adjacent" }
+        ]
+      },
+      { "type": "distance", "person": 3, "other": 5, "distance": 6 },
+      { "type": "notSameRoom", "person": 2, "other": 4 },
+      { "type": "distance", "person": 6, "other": 7, "distance": 11 },
+      { "type": "distance", "person": 7, "other": 4, "distance": 2 }
+    ],
+    "solution": [79, 59, 3, 49, 36, 15, 71, 28, 20]
+  }
+]
