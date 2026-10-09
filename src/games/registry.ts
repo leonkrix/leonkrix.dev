@@ -31,7 +31,7 @@ export const games: readonly GameDefinition[] = [
     tag: 'Words',
     description: 'Guess the hidden tech term in six tries.',
     icon: 'lucide:spell-check',
-    status: 'hidden',
+    status: 'live',
   },
   {
     slug: 'root-cause',

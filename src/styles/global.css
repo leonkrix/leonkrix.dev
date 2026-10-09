@@ -3,7 +3,7 @@
 @import '@fontsource-variable/jetbrains-mono';
 
 /* Design tokens. Tailwind generates utilities from these, e.g. bg-bg, text-fg, text-muted. */
-@theme {
+@theme static {
   --color-bg: #0a0d12;
   --color-surface: #11161d;
   --color-border: #1e2632;

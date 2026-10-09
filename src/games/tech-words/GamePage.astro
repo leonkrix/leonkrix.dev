@@ -1,0 +1,90 @@
+---
+import { type GameDefinition } from '@/games/registry';
+import GameLayout from '@/layouts/GameLayout.astro';
+
+import TechWords from './components/TechWords';
+
+interface Props {
+  game: GameDefinition;
+}
+
+const { game } = Astro.props;
+---
+
+<GameLayout game={game}>
+  {/* Rendered in the browser only: the round is random and the lists load on demand */}
+  <TechWords client:only="react">
+    <p slot="fallback" class="grid min-h-[36rem] place-items-center text-muted">
+      Loading the game...
+    </p>
+  </TechWords>
+  <noscript>
+    <p class="text-muted">
+      This game needs JavaScript to run. Nothing is sent anywhere, it all happens in your browser.
+    </p>
+  </noscript>
+
+  <div slot="rules">
+    <p>
+      A tech term is hidden. Guess it in <strong>six tries</strong>. Choose a length of 3, 4 or 5
+      letters, and optionally a category.
+    </p>
+    <ul>
+      <li>
+        <strong>Green with a check mark:</strong> the right letter in the right place.
+      </li>
+      <li>
+        <strong>Amber with a circle:</strong> the letter is in the term, but somewhere else. A
+        letter that appears twice in your guess is only marked twice if the term has it twice.
+      </li>
+      <li>
+        <strong>Grey with a cross:</strong> the letter is not in the term. It is greyed out on the
+        keyboard, too.
+      </li>
+    </ul>
+    <p>
+      Only terms from the list of the game are accepted as guesses. If you type something else, the
+      row shakes and you do not lose a try. When the round ends, you see the term, its category and
+      what it means. You can copy your result as a row of colored squares.
+    </p>
+    <p>
+      Rounds are unlimited and nothing is saved. The link in a copied result opens the same puzzle
+      for whoever you send it to. You can also add <code>?seed=anything</code> to the address to get
+      the same term again.
+    </p>
+  </div>
+
+  <div slot="keys">
+    <ul>
+      <li>
+        <kbd>A</kbd> to <kbd>Z</kbd> type a letter
+      </li>
+      <li>
+        <kbd>Backspace</kbd> deletes the last letter
+      </li>
+      <li>
+        <kbd>Enter</kbd> hands in the guess, and starts a new round when the round is over
+      </li>
+      <li>
+        <kbd>Tab</kbd> moves to the length, the category and the buttons
+      </li>
+    </ul>
+    <p>The on-screen keyboard works with a mouse and with a finger.</p>
+  </div>
+
+  <div slot="built">
+    <p>
+      The rules are small, pure TypeScript functions with unit tests: evaluating a guess (including
+      repeated letters), the state of the keyboard, the round as a value that is never changed, and
+      picking a term with a seeded random number generator. The user interface is a React component
+      that only draws what the rules say.
+    </p>
+    <p>
+      The terms and their definitions are written for this site. Each length is its own file that is
+      only downloaded when you play that length. Tests check every term: letters only, the right
+      length, no duplicates, a definition of at most 100 characters that does not give the term
+      away. The animations are CSS only and stop when your system asks for reduced motion. Nothing
+      is stored on your device.
+    </p>
+  </div>
+</GameLayout>

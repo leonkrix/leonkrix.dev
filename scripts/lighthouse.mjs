@@ -38,7 +38,10 @@ const BUDGETS = {
  * here: set it deliberately from a measurement (React and the game's own script are the big part).
  * Without an entry the run fails, so a game cannot go live without a budget.
  */
-const GAME_BUDGETS = {};
+const GAME_BUDGETS = {
+  // Measured on 2026-10-09 (React, the game, the five-letter list): scripts 96 KB, stylesheets 12.8 KB, total 203 KB
+  'tech-words': { script: 130 * 1024, stylesheet: 20 * 1024, total: 260 * 1024 },
+};
 
 /** The pages to test: the home page, and the Playground pages once a game is live. */
 async function listPages() {

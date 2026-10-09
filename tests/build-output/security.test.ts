@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { type Page, readDistFile, readPages, readStylesheets } from './helpers';
@@ -90,11 +92,21 @@ describe('assets stay compatible with the policy', () => {
     }
   });
 
-  it('has no executable inline scripts', () => {
+  it('has only inline scripts that the policy allows by their hash', () => {
+    // Astro writes the small runtime of a React island into the page. That is fine as long as the
+    // policy of the page lists its hash, so nothing else can slip in.
     for (const { file, html } of pages) {
-      expect(html, file).not.toMatch(
-        /<script(?![^>]*\ssrc=)(?![^>]*type="application\/ld\+json")[^>]*>/,
+      const allowed = cspOf(html).get('script-src') ?? '';
+      expect(allowed, file).not.toContain("'unsafe-inline'");
+      const inline = html.matchAll(
+        /<script(?![^>]*\ssrc=)(?![^>]*type="application\/ld\+json")[^>]*>([\s\S]*?)<\/script>/g,
       );
+      for (const match of inline) {
+        const hash = createHash('sha256')
+          .update(match[1] ?? '')
+          .digest('base64');
+        expect(allowed, `${file}: inline script sha256-${hash}`).toContain(`'sha256-${hash}'`);
+      }
     }
   });
 });
