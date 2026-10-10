@@ -4,20 +4,26 @@ import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 
 import GameGrid from '@/components/games/GameGrid.astro';
 import Reveal from '@/components/Reveal.astro';
-import { type GameDefinition, liveGames } from '@/games/registry';
+import { type GameDefinition, games as allGames, liveGames } from '@/games/registry';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { siteConfig } from '@/lib/site';
 
 // One route for the overview (/games/) and every live game (/games/<slug>/). With no live game
-// nothing is generated at all: the Playground does not exist on the site yet.
+// nothing is generated at all: the Playground does not exist on the site yet. In the dev server
+// (never in a build) the hidden games get their page too, so they can be played while they are
+// built; the overview and the navigation still show live games only.
 export const getStaticPaths = (() => {
   const live = liveGames();
-  if (live.length === 0) {
+  const pages = Object.keys(import.meta.glob('/src/games/*/GamePage.astro'));
+  const playable = import.meta.env.DEV
+    ? allGames.filter((game) => pages.includes(`/src/games/${game.slug}/GamePage.astro`))
+    : live;
+  if (live.length === 0 && playable.length === 0) {
     return [];
   }
   return [
     { params: { slug: undefined }, props: { game: undefined } },
-    ...live.map((game) => ({ params: { slug: game.slug }, props: { game } })),
+    ...playable.map((game) => ({ params: { slug: game.slug }, props: { game } })),
   ];
 }) satisfies GetStaticPaths;
 

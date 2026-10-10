@@ -1,0 +1,1222 @@
+/* Styles of the Root Cause game. Plain CSS on the design tokens of the site (src/styles/global.css).
+   Moving parts are CSS animations only; reduced motion is handled at the end of the file. */
+
+.rc {
+  /* Nine room colors made of the site's tokens, mixed into the dark surface. A color belongs to a
+     kind of room (every server room has the same one), so that a color means something. */
+  --rc-room-0: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface));
+  --rc-room-1: color-mix(in srgb, var(--color-status) 18%, var(--color-surface));
+  --rc-room-2: color-mix(in srgb, var(--color-contrast) 18%, var(--color-surface));
+  --rc-room-3: color-mix(in srgb, var(--color-accent-2) 17%, var(--color-surface));
+  --rc-room-4: color-mix(in srgb, var(--color-danger) 20%, var(--color-surface));
+  --rc-room-5: color-mix(in srgb, var(--color-accent) 14%, var(--color-danger) 14%);
+  --rc-room-6: color-mix(in srgb, var(--color-muted) 22%, var(--color-surface));
+  --rc-room-7: color-mix(in srgb, var(--color-status) 10%, var(--color-contrast) 10%);
+  --rc-room-8: color-mix(in srgb, var(--color-contrast) 12%, var(--color-danger) 12%);
+  --rc-line: color-mix(in srgb, var(--color-fg) 14%, transparent);
+  --rc-wall: color-mix(in srgb, var(--color-fg) 85%, var(--color-bg));
+  --rc-window: var(--color-accent-2);
+  --rc-victim: var(--color-contrast);
+  --rc-culprit: var(--color-danger);
+}
+
+.rc button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.rc button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+/* ---- Title, story and the way back ---- */
+
+.rc-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.35rem 1rem;
+  align-items: start;
+  max-width: 100%;
+}
+
+.rc-back {
+  grid-column: 2;
+  grid-row: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.rc-back:hover {
+  color: var(--color-fg);
+  border-color: color-mix(in srgb, var(--color-accent) 50%, var(--color-border));
+}
+
+.rc-back svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rc-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--color-accent-2);
+}
+
+.rc-title {
+  margin-top: 0.25rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.rc-story {
+  grid-column: 1 / -1;
+  max-width: 42rem;
+  color: var(--color-muted);
+}
+
+/* ---- The page before a level: choose one ---- */
+
+.rc-select-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.rc-select-tier {
+  margin-top: 1.75rem;
+}
+
+.rc-select-tier-name {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent-2);
+}
+
+.rc-select-blurb {
+  margin-top: 0.25rem;
+  max-width: 40rem;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.rc-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+  list-style: none;
+}
+
+.rc-card {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  color: var(--color-fg);
+  text-align: left;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.rc-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-accent) 60%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+}
+
+.rc-card-number {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.rc-card-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.rc-card-title {
+  font-weight: 500;
+}
+
+.rc-card-meta {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+/* ---- Layout: map on the left, people and clues on the right ---- */
+
+.rc-layout {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.rc-map {
+  min-width: 0;
+}
+
+@media (min-width: 64rem) {
+  .rc-layout {
+    grid-template-columns: minmax(0, 36rem) minmax(0, 1fr);
+    grid-template-areas:
+      'map people'
+      'map clues';
+    grid-template-rows: auto 1fr;
+    align-items: start;
+    gap: 1.5rem 2rem;
+  }
+
+  .rc-map {
+    grid-area: map;
+  }
+
+  .rc-people {
+    grid-area: people;
+  }
+
+  .rc-clue-panel {
+    grid-area: clues;
+  }
+}
+
+.rc-section-title {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+
+/* ---- People ---- */
+
+.rc-roster {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.4rem;
+  list-style: none;
+}
+
+.rc-person {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.8rem 0.35rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  color: var(--color-fg);
+  text-align: left;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.rc-person:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 50%, var(--color-border));
+}
+
+.rc-person[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+.rc-person[data-victim] {
+  border-color: color-mix(in srgb, var(--rc-victim) 70%, var(--color-border));
+}
+
+.rc-person-token {
+  display: grid;
+  place-items: center;
+  min-width: 1.9rem;
+  height: 1.9rem;
+  padding: 0 0.25rem;
+  border: 2px solid var(--color-fg);
+  border-radius: 50%;
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.rc-person[data-victim] .rc-person-token {
+  border-color: var(--rc-victim);
+  border-radius: 28%;
+  background: color-mix(in srgb, var(--rc-victim) 25%, var(--color-surface));
+}
+
+.rc-person-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.rc-person-name {
+  font-size: 0.875rem;
+}
+
+.rc-person-role {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+}
+
+.rc-person[data-placed] .rc-person-name::after {
+  content: ' ✓';
+  color: var(--color-status);
+}
+
+.rc-count {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+/* ---- The map ---- */
+
+.rc-board {
+  display: grid;
+  grid-template-rows: repeat(var(--n), 1fr);
+  width: min(100%, 36rem);
+  aspect-ratio: 1;
+  margin-inline: auto;
+  border: 3px solid var(--rc-wall);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  container-type: inline-size;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rc-row {
+  display: grid;
+  grid-template-columns: repeat(var(--n), 1fr);
+}
+
+.rc-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  border: 1px solid var(--rc-line);
+  background-color: var(--rc-room-0);
+  cursor: pointer;
+  transition: box-shadow 140ms ease;
+}
+
+.rc-cell[data-room-color='1'] {
+  background-color: var(--rc-room-1);
+}
+.rc-cell[data-room-color='2'] {
+  background-color: var(--rc-room-2);
+}
+.rc-cell[data-room-color='3'] {
+  background-color: var(--rc-room-3);
+}
+.rc-cell[data-room-color='4'] {
+  background-color: var(--rc-room-4);
+}
+.rc-cell[data-room-color='5'] {
+  background-color: var(--rc-room-5);
+}
+.rc-cell[data-room-color='6'] {
+  background-color: var(--rc-room-6);
+}
+.rc-cell[data-room-color='7'] {
+  background-color: var(--rc-room-7);
+}
+.rc-cell[data-room-color='8'] {
+  background-color: var(--rc-room-8);
+}
+
+/* Walls: the sides of a cell that border another room. Both cells draw their side. */
+.rc-cell[data-wall~='n'] {
+  border-top: 2px solid var(--rc-wall);
+}
+.rc-cell[data-wall~='e'] {
+  border-right: 2px solid var(--rc-wall);
+}
+.rc-cell[data-wall~='s'] {
+  border-bottom: 2px solid var(--rc-wall);
+}
+.rc-cell[data-wall~='w'] {
+  border-left: 2px solid var(--rc-wall);
+}
+
+.rc-cell[data-blocked] {
+  cursor: not-allowed;
+  box-shadow: inset 0 0 0 999px rgb(0 0 0 / 0.38);
+}
+
+.rc-cell[data-same-line] {
+  box-shadow: inset 0 0 0 999px rgb(255 255 255 / 0.05);
+}
+
+.rc-cell[data-blocked][data-same-line] {
+  box-shadow: inset 0 0 0 999px rgb(0 0 0 / 0.3);
+}
+
+.rc-cell[data-cursor] {
+  z-index: 2;
+  outline: 3px solid var(--color-accent);
+  outline-offset: -3px;
+}
+
+.rc-cell:focus {
+  outline-offset: -3px;
+}
+
+.rc-cell:not([data-cursor]):hover:not([data-blocked]) {
+  box-shadow: inset 0 0 0 999px rgb(255 255 255 / 0.09);
+}
+
+/* The room where the victim was found, once the level is solved */
+.rc-cell[data-crime] {
+  box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--rc-culprit) 14%, transparent);
+}
+
+/* A click that is refused: the cell shakes and flashes red for a moment */
+.rc-cell[data-refused] {
+  z-index: 3;
+  animation: rc-shake 420ms ease-in-out;
+}
+
+.rc-cell[data-refused]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-danger) 30%, transparent);
+  pointer-events: none;
+  animation: rc-fade-out 420ms ease-out forwards;
+}
+
+.rc-room-letter {
+  position: absolute;
+  top: 3%;
+  left: 6%;
+  z-index: 1;
+  font-family: var(--font-mono);
+  font-size: calc(100cqw / var(--n) * 0.22);
+  font-weight: 700;
+  line-height: 1;
+  color: color-mix(in srgb, var(--color-fg) 80%, transparent);
+  pointer-events: none;
+}
+
+.rc-window {
+  position: absolute;
+  z-index: 1;
+  background: var(--rc-window);
+  box-shadow: 0 0 0.5rem color-mix(in srgb, var(--rc-window) 70%, transparent);
+  pointer-events: none;
+}
+.rc-window[data-side='n'],
+.rc-window[data-side='s'] {
+  left: 20%;
+  width: 60%;
+  height: 6%;
+}
+.rc-window[data-side='e'],
+.rc-window[data-side='w'] {
+  top: 20%;
+  height: 60%;
+  width: 6%;
+}
+.rc-window[data-side='n'] {
+  top: 0;
+}
+.rc-window[data-side='s'] {
+  bottom: 0;
+}
+.rc-window[data-side='e'] {
+  right: 0;
+}
+.rc-window[data-side='w'] {
+  left: 0;
+}
+
+.rc-glyph {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  stroke: var(--color-fg);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  pointer-events: none;
+}
+
+.rc-glyph[data-occupiable='true'] {
+  opacity: 0.4;
+}
+
+.rc-glyph[data-occupiable='false'] {
+  fill: color-mix(in srgb, var(--color-fg) 14%, transparent);
+  opacity: 0.85;
+}
+
+.rc-cross {
+  position: absolute;
+  inset: 12%;
+  width: 76%;
+  height: 76%;
+  stroke: var(--color-danger);
+  stroke-width: 5;
+  stroke-linecap: round;
+  opacity: 0.6;
+  pointer-events: none;
+  animation: rc-fade 160ms ease-out;
+}
+
+.rc-notes {
+  position: absolute;
+  inset: 14% 6% 6% 6%;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  gap: 0 0.25em;
+  font-family: var(--font-mono);
+  font-size: calc(100cqw / var(--n) * 0.17);
+  line-height: 1.25;
+  color: color-mix(in srgb, var(--color-fg) 78%, transparent);
+  pointer-events: none;
+}
+
+.rc-notes [data-selected] {
+  color: var(--color-accent-2);
+  font-weight: 700;
+}
+
+.rc-token {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 68%;
+  aspect-ratio: 1;
+  border: 2px solid var(--color-fg);
+  border-radius: 50%;
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: calc(100cqw / var(--n) * 0.28);
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  animation: rc-pop 220ms ease-out;
+}
+
+.rc-token[data-long] {
+  font-size: calc(100cqw / var(--n) * 0.2);
+}
+
+.rc-token[data-selected] {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 80%, transparent);
+}
+
+.rc-token[data-victim] {
+  border-color: var(--rc-victim);
+  border-radius: 28%;
+  background: color-mix(in srgb, var(--rc-victim) 28%, var(--color-surface));
+}
+
+.rc-token[data-culprit] {
+  border-color: var(--rc-culprit);
+  background: color-mix(in srgb, var(--rc-culprit) 35%, var(--color-surface));
+  animation: rc-pulse 1.4s ease-in-out infinite;
+}
+
+/* ---- Modes, history and the list of rooms ---- */
+
+.rc-toolbar {
+  display: grid;
+  width: fit-content;
+  max-width: 100%;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.rc-modes,
+.rc-tools {
+  display: flex;
+  padding: 0.2rem;
+  gap: 0.2rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+}
+
+.rc-modes button,
+.rc-tools button {
+  display: inline-flex;
+  flex: 1 1 auto;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border: 0;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.rc-tools button {
+  padding: 0.4rem 0.6rem;
+}
+
+.rc-tools svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rc-modes button:hover:not(:disabled),
+.rc-tools button:hover:not(:disabled) {
+  color: var(--color-fg);
+}
+
+.rc-modes button[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--color-accent) 24%, transparent);
+  color: var(--color-fg);
+}
+
+.rc-modes kbd {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  opacity: 0.6;
+}
+
+.rc-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin-top: 0.9rem;
+  list-style: none;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.rc-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.rc-legend-letter {
+  display: grid;
+  place-items: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border: 1px solid var(--rc-line);
+  border-radius: 0.3rem;
+  background: var(--rc-room-0);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-fg);
+}
+
+.rc-legend li[data-room-color='1'] .rc-legend-letter {
+  background: var(--rc-room-1);
+}
+.rc-legend li[data-room-color='2'] .rc-legend-letter {
+  background: var(--rc-room-2);
+}
+.rc-legend li[data-room-color='3'] .rc-legend-letter {
+  background: var(--rc-room-3);
+}
+.rc-legend li[data-room-color='4'] .rc-legend-letter {
+  background: var(--rc-room-4);
+}
+.rc-legend li[data-room-color='5'] .rc-legend-letter {
+  background: var(--rc-room-5);
+}
+.rc-legend li[data-room-color='6'] .rc-legend-letter {
+  background: var(--rc-room-6);
+}
+.rc-legend li[data-room-color='7'] .rc-legend-letter {
+  background: var(--rc-room-7);
+}
+.rc-legend li[data-room-color='8'] .rc-legend-letter {
+  background: var(--rc-room-8);
+}
+
+.rc-legend li[data-crime] {
+  color: var(--color-fg);
+}
+
+/* ---- Clues ---- */
+
+.rc-clues {
+  margin-top: 0.6rem;
+  list-style: none;
+  counter-reset: clue;
+}
+
+.rc-clues li {
+  counter-increment: clue;
+  border-top: 1px solid var(--color-border);
+}
+
+.rc-clues li:first-child {
+  border-top: 0;
+}
+
+.rc-clues li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.2rem;
+  padding: 0.55rem 0.2rem;
+}
+
+.rc-clue-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 0.2rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 0.3rem;
+  font-size: 0.8rem;
+  line-height: 1;
+  color: var(--color-bg);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.rc-clues [data-wrong] .rc-clue-text {
+  background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+  animation: rc-flash 900ms ease-out;
+}
+
+.rc-clues [data-wrong] .rc-clue-mark {
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+}
+
+.rc-clues [data-done] .rc-clue-mark {
+  border-color: var(--color-status);
+  background: var(--color-status);
+}
+
+/* The text has room of its own on both sides, so that a background behind it has the same space left and right; the gap of the row is made smaller by what the text has gained */
+.rc-clue-text {
+  margin: -0.15rem 0;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.4rem;
+  line-height: 1.45;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease;
+}
+
+.rc-clues [data-done] .rc-clue-text {
+  color: var(--color-muted);
+}
+
+.rc-rule {
+  margin-top: 0.8rem;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+/* ---- Result ---- */
+
+.rc-status {
+  margin-top: 1.5rem;
+  min-height: 12rem;
+  display: flex;
+}
+
+@media (max-width: 40rem) {
+  .rc-status {
+    min-height: 16.5rem;
+  }
+}
+
+.rc-status-hint {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border: 1px dashed var(--color-border);
+  border-radius: 0.9rem;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.rc-result {
+  width: 100%;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--color-status) 50%, var(--color-border));
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--color-status) 8%, var(--color-surface));
+  animation: rc-rise 320ms ease-out;
+}
+
+.rc-stamp {
+  display: inline-block;
+  padding: 0.2rem 0.8rem;
+  border: 3px solid var(--rc-culprit);
+  border-radius: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--rc-culprit);
+  transform: rotate(-3deg);
+  animation: rc-stamp 420ms cubic-bezier(0.2, 0.9, 0.3, 1.3) backwards;
+}
+
+.rc-result-text {
+  margin-top: 0.8rem;
+}
+
+.rc-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* ---- Motion ---- */
+
+/* A clue lights up in red for a moment when a placement breaks it, then keeps a soft red */
+@keyframes rc-flash {
+  from {
+    background: color-mix(in srgb, var(--color-danger) 38%, transparent);
+  }
+}
+
+@keyframes rc-shake {
+  20% {
+    transform: translateX(-0.18rem);
+  }
+  40% {
+    transform: translateX(0.18rem);
+  }
+  60% {
+    transform: translateX(-0.12rem);
+  }
+  80% {
+    transform: translateX(0.12rem);
+  }
+}
+
+@keyframes rc-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes rc-pop {
+  from {
+    transform: scale(0.55);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes rc-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rc-pulse {
+  50% {
+    box-shadow: 0 0 0 0.45rem color-mix(in srgb, var(--rc-culprit) 35%, transparent);
+  }
+}
+
+@keyframes rc-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+@keyframes rc-stamp {
+  from {
+    opacity: 0;
+    transform: rotate(-3deg) scale(2.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rc-token,
+  .rc-cross,
+  /* No movement, the red flash stays */
+  .rc-cell[data-refused] {
+    animation: none;
+  }
+
+  .rc-result,
+  .rc-clues [data-wrong] .rc-clue-text,
+  .rc-stamp {
+    animation: none;
+  }
+
+  .rc-token[data-culprit] {
+    animation: none;
+    box-shadow: 0 0 0 0.3rem color-mix(in srgb, var(--rc-culprit) 40%, transparent);
+  }
+
+  .rc-cell,
+  .rc-card,
+  .rc-back,
+  .rc-clue-mark,
+  .rc-person {
+    transition: none;
+  }
+}
+
+/* ---- Small screens: a compact list of people, so that the map stays in reach ---- */
+
+@media (max-width: 40rem) {
+  .rc-person-role {
+    display: none;
+  }
+
+  .rc-person {
+    padding-right: 0.6rem;
+  }
+
+  .rc-roster {
+    grid-template-columns: repeat(auto-fill, minmax(7.2rem, 1fr));
+    gap: 0.3rem;
+  }
+}
+
+/* ---- Random levels ---- */
+
+.rc-random {
+  margin-top: 0.8rem;
+}
+
+.rc-random-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.6rem;
+}
+
+.rc-field select {
+  max-width: 100%;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background-color: var(--color-surface);
+  color: var(--color-fg);
+  font-size: 0.85rem;
+}
+
+.rc-random-button {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  color: var(--color-fg);
+  font-size: 0.85rem;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.rc-random-button:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 50%, var(--color-border));
+}
+
+.rc-random-button[data-primary] {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 24%, transparent);
+}
+
+.rc-progress {
+  margin-top: 0.7rem;
+  max-width: 32rem;
+}
+
+.rc-progress progress {
+  display: block;
+  width: 100%;
+  height: 0.45rem;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-border);
+  overflow: hidden;
+}
+
+.rc-progress progress::-webkit-progress-bar {
+  background: var(--color-border);
+}
+
+.rc-progress progress::-webkit-progress-value {
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-2));
+  transition: width 220ms linear;
+}
+
+.rc-progress progress::-moz-progress-bar {
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-2));
+}
+
+.rc-progress p {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.rc-error {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-danger);
+}
+
+/* ---- Legend of the pictures ---- */
+
+/* The legend opens over the page (a modal dialog), so nothing on the page moves */
+.rc-dialog {
+  width: min(34rem, calc(100vw - 2rem));
+  max-height: min(40rem, calc(100vh - 2rem));
+  margin: auto;
+  padding: 1.25rem 1.4rem;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-surface);
+  color: var(--color-fg);
+  box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 0.6);
+}
+
+.rc-dialog::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+.rc-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.rc-dialog-head h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.rc-dialog-close {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.rc-dialog-close:hover {
+  color: var(--color-fg);
+}
+
+.rc-key-list {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  list-style: none;
+  color: var(--color-muted);
+}
+
+.rc-key-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.rc-key-list strong {
+  color: var(--color-fg);
+  font-weight: 500;
+}
+
+.rc-key-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid var(--rc-line);
+  border-radius: 0.4rem;
+  background: var(--rc-room-0);
+}
+
+.rc-key-window span {
+  width: 60%;
+  height: 0.28rem;
+  background: var(--rc-window);
+  box-shadow: 0 0 0.4rem color-mix(in srgb, var(--rc-window) 70%, transparent);
+}
+
+.rc-key-wall span {
+  width: 100%;
+  height: 0.2rem;
+  background: var(--rc-wall);
+}
+
+.rc-key-token {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 2px solid var(--color-fg);
+  border-radius: 50%;
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-fg);
+}
+
+.rc-key-token[data-victim] {
+  border-color: var(--rc-victim);
+  border-radius: 28%;
+  background: color-mix(in srgb, var(--rc-victim) 28%, var(--color-surface));
+}
+
+.rc-key-cross {
+  width: 70%;
+  height: 70%;
+  stroke: var(--color-danger);
+  stroke-width: 6;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+
+.rc-key-notes span {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: color-mix(in srgb, var(--color-fg) 78%, transparent);
+}
+
+@media (max-width: 40rem) {
+  .rc-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rc-back {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    margin-bottom: 0.4rem;
+  }
+}
+
+/* ---- The two looks, explained on the choice page ---- */
+
+.rc-looks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+  list-style: none;
+}
+
+.rc-looks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--color-surface) 50%, transparent);
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.rc-looks li > span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  line-height: 1.4;
+}
+
+.rc-looks strong {
+  color: var(--color-fg);
+  font-weight: 500;
+}
+
+.rc-skin-icon {
+  flex: none;
+  width: 1.4rem;
+  height: 1.4rem;
+  fill: none;
+  stroke: var(--color-accent-2);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rc-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.rc-card-meta .rc-skin-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  stroke: var(--color-muted);
+}
