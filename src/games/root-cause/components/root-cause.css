@@ -40,9 +40,23 @@
   max-width: 100%;
 }
 
-.rc-back {
+.rc-head-actions {
   grid-column: 2;
   grid-row: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* The words change when the link is copied: the button keeps its width */
+.rc-copy-text {
+  display: inline-block;
+  min-width: 5.2rem;
+  text-align: left;
+}
+
+.rc-back {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -256,10 +270,6 @@
 .rc-person[aria-pressed='true'] {
   border-color: var(--color-accent);
   background: color-mix(in srgb, var(--color-accent) 20%, transparent);
-}
-
-.rc-person[data-victim] {
-  border-color: color-mix(in srgb, var(--rc-victim) 70%, var(--color-border));
 }
 
 .rc-person-token {
@@ -493,6 +503,30 @@
   opacity: 0.85;
 }
 
+/* A picture from the icon set: lines only, an object that blocks its cell sits on a solid tile */
+.rc-glyph[data-icon] {
+  fill: none;
+}
+
+.rc-glyph[data-icon][data-occupiable='false'] {
+  opacity: 1;
+}
+
+.rc-glyph-tile {
+  fill: color-mix(in srgb, var(--color-fg) 13%, transparent);
+  stroke: none;
+}
+
+/* The icons bring their own stroke settings; ours win, so that all pictures look alike */
+.rc-icon {
+  color: var(--color-fg);
+}
+
+.rc-icon,
+.rc-icon * {
+  stroke-width: 1.15;
+}
+
 .rc-cross {
   position: absolute;
   inset: 12%;
@@ -606,7 +640,7 @@
   padding: 0.4rem 0.6rem;
 }
 
-.rc-tools svg {
+.rc-tools > button svg {
   width: 1.1rem;
   height: 1.1rem;
   fill: none;
@@ -630,6 +664,19 @@
   font-family: var(--font-mono);
   font-size: 0.65rem;
   opacity: 0.6;
+}
+
+/* One line under the map that says what is on the cell under the pointer. It always takes the
+   room of one line, so nothing moves when the text changes. */
+.rc-cellinfo {
+  min-height: 1.4rem;
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+  line-height: 1.4rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rc-legend {
@@ -1020,6 +1067,22 @@
   color: var(--color-muted);
 }
 
+/* The time is the only thing that changes, and it keeps its place and its width */
+.rc-progress-now {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--color-fg);
+}
+
+.rc-elapsed {
+  min-width: 5.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted);
+}
+
 .rc-error {
   margin-top: 0.5rem;
   font-size: 0.85rem;
@@ -1137,8 +1200,8 @@
 }
 
 .rc-key-cross {
-  width: 70%;
-  height: 70%;
+  width: 80%;
+  height: 80%;
   stroke: var(--color-danger);
   stroke-width: 6;
   stroke-linecap: round;
@@ -1147,7 +1210,8 @@
 
 .rc-key-notes span {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.9rem;
+  font-weight: 700;
   color: color-mix(in srgb, var(--color-fg) 78%, transparent);
 }
 
@@ -1156,10 +1220,10 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .rc-back {
+  .rc-head-actions {
     grid-column: 1;
     grid-row: 1;
-    justify-self: start;
+    justify-content: flex-start;
     margin-bottom: 0.4rem;
   }
 }
@@ -1219,4 +1283,9 @@
   width: 0.85rem;
   height: 0.85rem;
   stroke: var(--color-muted);
+}
+
+/* In the legend the pictures are shown at full strength, not as faint as on a cell under a person */
+.rc-key-icon .rc-glyph[data-occupiable] {
+  opacity: 0.9;
 }

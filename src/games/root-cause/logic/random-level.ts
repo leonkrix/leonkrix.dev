@@ -51,28 +51,78 @@ export function chooseJob(setup: RandomSetup, random: Random, seed: string): Job
 }
 
 /**
- * About how long one worker needs for a level, in milliseconds, measured on a laptop and made
- * longer for slower devices. It only drives the progress bar: the real time is a matter of chance
- * (a map either gives a puzzle or does not), so the bar is an estimate and says so.
+ * The address query that makes the very same random level again: the seed with what the seed was
+ * used for. Everything is public text and nothing personal. A level is only the same again while
+ * the generator is the same, so a link may give another (equally good) level after an update.
+ */
+export function shareQuery(record: LevelRecord): string {
+  const victim = record.people.at(-1)?.role ?? '';
+  const query = new URLSearchParams({
+    level: 'random',
+    seed: record.seed,
+    tier: record.tier,
+    size: String(record.size),
+    skin: record.skin,
+    victim,
+  });
+  return `?${query.toString()}`;
+}
+
+/** The job in an address query made by `shareQuery`, or nothing if it is not one or not valid. */
+export function jobFromQuery(search: string): Job | undefined {
+  const query = new URLSearchParams(search);
+  if (query.get('level') !== 'random') {
+    return undefined;
+  }
+  const seed = query.get('seed') ?? '';
+  const tier = TIERS.find((entry) => entry === query.get('tier'));
+  const skin = (['case-file', 'outage'] as const).find((entry) => entry === query.get('skin'));
+  const size = Number(query.get('size'));
+  const victimRole = query.get('victim') ?? '';
+  if (
+    !/^[a-z0-9-]{1,60}$/.test(seed) ||
+    tier === undefined ||
+    skin === undefined ||
+    !Number.isInteger(size) ||
+    size < 4 ||
+    size > 9 ||
+    !skins[skin].victimRoles.includes(victimRole)
+  ) {
+    return undefined;
+  }
+  return { skin, tier, size, victimRole, seed };
+}
+
+/**
+ * About how long one worker needs for a level, in milliseconds: the median of 12 to 16 levels per
+ * size and tier made one after the other on a laptop (2026-10-10, the generator with objects
+ * placed room by room). It only drives the progress bar: the real time is a matter of chance (a
+ * map either gives a puzzle or does not, and now and then it takes ten times as long), so the bar
+ * is an estimate and says so. A hard 9 by 9 is a median of 10 s but a mean of 40 s.
  */
 const TYPICAL_MS: Readonly<Record<string, number>> = {
-  'easy-4': 40,
-  'easy-5': 100,
-  'easy-6': 1000,
-  'easy-7': 4000,
+  'easy-4': 20,
+  'easy-5': 45,
+  'easy-6': 300,
+  'easy-7': 800,
   'medium-5': 100,
-  'medium-6': 500,
-  'medium-7': 2000,
-  'medium-8': 4000,
-  'medium-9': 15000,
-  'hard-6': 1700,
-  'hard-7': 5500,
-  'hard-8': 11000,
-  'hard-9': 30000,
+  'medium-6': 250,
+  'medium-7': 700,
+  'medium-8': 2300,
+  'medium-9': 9900,
+  'hard-6': 650,
+  'hard-7': 3000,
+  'hard-8': 15700,
+  'hard-9': 15000,
 };
 
-export function typicalMilliseconds(tier: Tier, size: number): number {
-  return TYPICAL_MS[`${tier}-${String(size)}`] ?? 5000;
+/**
+ * How long a level takes, about, with this many threads trying at once: the first one to finish
+ * wins, which helps a lot but not four times as much (measured: 4 threads need about a third).
+ */
+export function typicalMilliseconds(tier: Tier, size: number, workers = 1): number {
+  const single = TYPICAL_MS[`${tier}-${String(size)}`] ?? 5000;
+  return Math.round(single * Math.max(1, workers) ** -0.8);
 }
 
 /**

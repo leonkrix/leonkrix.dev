@@ -19,6 +19,20 @@ export interface DescribeContext {
   people: readonly Person[];
   layout: Layout;
   kinds: Readonly<Record<string, { occupiable: boolean }>>;
+  /**
+   * Kinds of objects that another clue of the level says nobody is on ("Nobody is on a rug"). A
+   * clue "on a chair, a rug or a sofa" would repeat that, so it leaves them out.
+   */
+  nobodyOn?: ReadonlySet<string>;
+}
+
+/** The kinds of objects that a clue of the list says nobody is on */
+export function kindsNobodyIsOn(clues: readonly Clue[]): ReadonlySet<string> {
+  return new Set(
+    clues.flatMap((clue) =>
+      clue.type === 'kindCount' && clue.counting === 'exactly' && clue.n === 0 ? [clue.kind] : [],
+    ),
+  );
 }
 
 const DIRECTION_TEXT: Readonly<Record<Direction, string>> = {
@@ -83,9 +97,14 @@ function listOf(items: readonly string[]): string {
 /** The kinds of objects that people can be on and that are on this map: a clue names no other */
 function occupiableKinds(context: DescribeContext): string {
   const present = new Set(context.layout.objects.map((object) => object.kind));
-  const names = Object.entries(context.kinds)
-    .filter(([id, info]) => info.occupiable && present.has(id))
-    .map(([id]) => noun(context.words.kinds, id).one);
+  const possible = Object.entries(context.kinds).filter(
+    ([id, info]) => info.occupiable && present.has(id),
+  );
+  // Without the kinds that another clue rules out, as long as something is left
+  const open = possible.filter(([id]) => context.nobodyOn?.has(id) !== true);
+  const names = (open.length > 0 ? open : possible).map(
+    ([id]) => noun(context.words.kinds, id).one,
+  );
   return listOf(names);
 }
 

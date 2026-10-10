@@ -6,7 +6,15 @@ import { skins } from '../data/skins';
 import { toLevel } from '../pool';
 import { problemsOf, tierOf } from './generator';
 import { rate } from './propagation';
-import { chooseJob, RANDOM_SIZES, runJob, sizesFor, typicalMilliseconds } from './random-level';
+import {
+  chooseJob,
+  jobFromQuery,
+  RANDOM_SIZES,
+  runJob,
+  shareQuery,
+  sizesFor,
+  typicalMilliseconds,
+} from './random-level';
 
 describe('choosing a random level', () => {
   it('keeps to the wishes of the player, and chooses the rest by chance', () => {
@@ -37,6 +45,11 @@ describe('choosing a random level', () => {
     for (const tier of ['easy', 'medium', 'hard'] as const) {
       for (const size of sizesFor(tier)) {
         expect(typicalMilliseconds(tier, size), `${tier} ${String(size)}`).toBeGreaterThan(0);
+        // More threads are faster, but not in proportion
+        expect(typicalMilliseconds(tier, size, 4)).toBeLessThan(typicalMilliseconds(tier, size, 1));
+        expect(typicalMilliseconds(tier, size, 4) * 4).toBeGreaterThanOrEqual(
+          typicalMilliseconds(tier, size, 1) - 4,
+        );
       }
     }
   });
@@ -90,5 +103,49 @@ describe('the stories of random levels', () => {
     expect(
       randomStory('case-file', 'x', { name: 'Mara', role: 'cto' }).story.toLowerCase(),
     ).toContain('the cto');
+  });
+});
+
+describe('the address of a random level', () => {
+  const job = chooseJob({ tier: 'easy', size: 5 }, createRandom('link'), 'link-seed');
+
+  it('is read again as the very same job and level', () => {
+    const record = runJob(job);
+    const query = shareQuery(record);
+    expect(query).toMatch(/^\?level=random&seed=/);
+    const again = jobFromQuery(query);
+    expect(again).toEqual({
+      skin: record.skin,
+      tier: record.tier,
+      size: record.size,
+      victimRole: record.people.at(-1)?.role,
+      seed: record.seed,
+    });
+    // One thread with the seed of the link makes the level of the link
+    const same = runJob(again ?? job);
+    expect(same.layout).toEqual(record.layout);
+    expect(same.clues).toEqual(record.clues);
+    expect(same.solution).toEqual(record.solution);
+  });
+
+  it('ignores addresses that are not a valid random level', () => {
+    const ok = '?level=random&seed=abc-1&tier=easy&size=5&skin=outage&victim=server';
+    expect(jobFromQuery(ok)).toBeDefined();
+    const bad = [
+      '',
+      '?level=easy-1',
+      '?level=random',
+      '?level=random&seed=abc-1&tier=easy&size=5&skin=outage&victim=founder',
+      '?level=random&seed=ABC&tier=easy&size=5&skin=outage&victim=server',
+      '?level=random&seed=abc-1&tier=easy&size=3&skin=outage&victim=server',
+      '?level=random&seed=abc-1&tier=easy&size=10&skin=outage&victim=server',
+      '?level=random&seed=abc-1&tier=hard-ish&size=5&skin=outage&victim=server',
+      '?level=random&seed=abc-1&tier=easy&size=5&skin=other&victim=server',
+      `?level=random&seed=${'a'.repeat(61)}&tier=easy&size=5&skin=outage&victim=server`,
+      '?level=random&seed=a%20b&tier=easy&size=5&skin=outage&victim=server',
+    ];
+    for (const query of bad) {
+      expect(jobFromQuery(query), query).toBeUndefined();
+    }
   });
 });

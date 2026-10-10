@@ -9,7 +9,7 @@ import { STORIES, type Story } from '../data/stories';
 import { skinWords } from '../data/words';
 import { Board } from '../logic/board';
 import { check, type Context, isNeutral, subjectOf, UNPLACED } from '../logic/clues';
-import { describeClue, roomText } from '../logic/describe';
+import { describeClue, kindsNobodyIsOn, roomText } from '../logic/describe';
 import {
   clearCell,
   culpritOf,
@@ -26,13 +26,14 @@ import {
   toggleNote,
   undo,
 } from '../logic/play';
-import { type RandomSetup } from '../logic/random-level';
+import { jobFromQuery, type RandomSetup, shareQuery } from '../logic/random-level';
 import { type Cell } from '../logic/types';
 import { type LevelRecord, toLevel } from '../pool';
 import { BoardView, ROOM_LETTERS } from './BoardView';
-import { ItemLegend } from './Legend';
+import { ItemLegend, LegendButton } from './Legend';
 import { LevelSelect } from './LevelSelect';
 import { ClueList, type Mode, Roster, Toolbar } from './Panels';
+import { capitalize } from './text';
 import { useGenerator } from './useGenerator';
 
 const records = levelsJson as unknown as LevelRecord[];
@@ -59,11 +60,18 @@ function storyOf(levelRecord: LevelRecord): Story | undefined {
   return victim === undefined ? undefined : randomStory(levelRecord.skin, levelRecord.seed, victim);
 }
 
-/** `?level=hard-3` in the address opens that level of the pool */
+/**
+ * `?level=hard-3` in the address opens that level of the pool. A shared random level
+ * (`?level=random&seed=...`) opens at once if it is the one in memory, else it has to be made
+ * again (see `jobFromQuery`), and the page of the choice is shown meanwhile.
+ */
 function screenFromAddress(random: LevelRecord | undefined): Screen {
   const id = new URLSearchParams(window.location.search).get('level');
-  if (id === 'random' && random !== undefined) {
-    return { kind: 'play', record: random };
+  if (id === 'random') {
+    const job = jobFromQuery(window.location.search);
+    return random !== undefined && job?.seed === random.seed
+      ? { kind: 'play', record: random }
+      : { kind: 'select' };
   }
   const found = records.find((entry) => entry.id === id);
   return found === undefined ? { kind: 'select' } : { kind: 'play', record: found };
@@ -82,11 +90,11 @@ export default function RootCause() {
     if (isRandom) {
       randomRef.current = record;
     }
-    window.history.pushState(null, '', `?level=${isRandom ? 'random' : record.id}`);
+    window.history.pushState(null, '', isRandom ? shareQuery(record) : `?level=${record.id}`);
     setScreen({ kind: 'play', record });
   };
   const generator = useGenerator(open);
-  const { cancel } = generator;
+  const { cancel, startJob } = generator;
 
   const showSelect = (): void => {
     window.history.pushState(null, '', window.location.pathname);
@@ -97,13 +105,26 @@ export default function RootCause() {
   useEffect(() => {
     const onPop = (): void => {
       cancel();
-      setScreen(screenFromAddress(randomRef.current));
+      const next = screenFromAddress(randomRef.current);
+      setScreen(next);
+      const job = jobFromQuery(window.location.search);
+      if (next.kind === 'select' && job !== undefined) {
+        startJob(job);
+      }
     };
     window.addEventListener('popstate', onPop);
     return () => {
       window.removeEventListener('popstate', onPop);
     };
-  }, [cancel]);
+  }, [cancel, startJob]);
+
+  // A shared random level in the address is made when the page opens
+  useEffect(() => {
+    const job = jobFromQuery(window.location.search);
+    if (job !== undefined) {
+      startJob(job);
+    }
+  }, [startJob]);
 
   // A new page gets the focus on its heading, so that nobody is left on a button that is gone
   useEffect(() => {
@@ -175,7 +196,17 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
   const [selected, setSelected] = useState<number | undefined>(0);
   const [cursor, setCursor] = useState<Cell>(() => firstCell(board));
   const [announcement, setAnnouncement] = useState('');
+  const [hovered, setHovered] = useState<Cell | undefined>();
+  const [copied, setCopied] = useState<'yes' | 'no' | undefined>();
+  const copiedTimerRef = useRef<number | undefined>(undefined);
+  useEffect(
+    () => () => {
+      window.clearTimeout(copiedTimerRef.current);
+    },
+    [],
+  );
   const gridRef = useRef<HTMLDivElement>(null);
+  const legendRef = useRef<HTMLDialogElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const play = history.present;
 
@@ -192,7 +223,14 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
     );
 
   const describeContext = useMemo(
-    () => ({ skin, words, people: level.people, layout: level.layout, kinds: level.kinds }),
+    () => ({
+      skin,
+      words,
+      people: level.people,
+      layout: level.layout,
+      kinds: level.kinds,
+      nobodyOn: kindsNobodyIsOn(level.clues),
+    }),
     [skin, words, level],
   );
   const clues = useMemo(() => {
@@ -328,6 +366,22 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
     }
   }, [solved]);
 
+  // The address of the page is the link to this level: for a random level it holds the seed
+  const copyLink = async (): Promise<void> => {
+    let result: 'yes' | 'no' = 'yes';
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+    } catch {
+      result = 'no';
+    }
+    setCopied(result);
+    say(result === 'yes' ? 'Link to this level copied' : 'The link could not be copied');
+    window.clearTimeout(copiedTimerRef.current);
+    copiedTimerRef.current = window.setTimeout(() => {
+      setCopied(undefined);
+    }, 2200);
+  };
+
   const reset = (): void => {
     change(emptyPlay(level));
     say('Everything taken off the map');
@@ -410,6 +464,22 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
     }
   };
 
+  // A line under the map names what is on the cell under the pointer (or on the cell of the
+  // cursor, for the keyboard and for touch): a quick help, so that the legend is not needed for it
+  const infoCell = hovered ?? cursor;
+  const infoKind = board.kindAt[infoCell];
+  const infoNoun = infoKind === undefined ? undefined : words.kinds[infoKind];
+  const cellInfo = [
+    roomName(board.roomOf[infoCell] ?? 0),
+    infoKind === undefined
+      ? `Bare floor: ${words.people} can stand here`
+      : `${capitalize((infoNoun?.one ?? infoKind).replace(/^(an?|the) /, ''))}: ${
+          board.blocked.has(infoCell)
+            ? 'blocks the cell'
+            : (infoNoun?.use ?? `${words.people} can be here`)
+        }`,
+  ].join(' · ');
+
   const levelIndex = records.findIndex((entry) => entry.id === levelRecord.id);
   const nextRecord = isRandom ? undefined : records[levelIndex + 1];
   const culpritPerson = culprit === undefined ? undefined : level.people[culprit];
@@ -429,18 +499,41 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
             {story?.title ?? levelRecord.id}
           </h2>
         </div>
-        <button type="button" className="rc-back" onClick={onBack}>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          Level selection
-        </button>
+        <div className="rc-head-actions">
+          <button
+            type="button"
+            className="rc-back"
+            onClick={() => {
+              void copyLink();
+            }}
+            title="Copy the link to this level"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+            <span className="rc-copy-text">
+              {copied === 'yes' ? 'Link copied' : copied === 'no' ? 'Not copied' : 'Copy link'}
+            </span>
+          </button>
+          <button type="button" className="rc-back" onClick={onBack}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            Level selection
+          </button>
+        </div>
         <p className="rc-story">{story?.story}</p>
       </header>
 
       <div className="rc-layout">
         <section className="rc-map" aria-label="Map">
-          <div ref={gridRef}>
+          <div
+            ref={gridRef}
+            onMouseLeave={() => {
+              setHovered(undefined);
+            }}
+          >
             <BoardView
               level={level}
               board={board}
@@ -453,8 +546,12 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
               colorOf={colorOf}
               onActivate={activate}
               onCursor={setCursor}
+              onHover={setHovered}
             />
           </div>
+          <p className="rc-cellinfo" aria-hidden="true">
+            {cellInfo}
+          </p>
           <ul className="rc-legend" aria-label="Rooms">
             {Array.from({ length: board.roomCount }, (_, room) => (
               <li
@@ -495,7 +592,7 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
             }}
             onReset={reset}
           >
-            <ItemLegend level={level} words={words} />
+            <LegendButton dialogRef={legendRef} />
           </Toolbar>
         </section>
 
@@ -562,6 +659,8 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
           </p>
         )}
       </div>
+
+      <ItemLegend level={level} words={words} dialogRef={legendRef} />
 
       <p className="sr-only" role="status" aria-live="polite">
         {solved ? `${words.solved}.` : announcement}

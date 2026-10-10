@@ -23,6 +23,8 @@ interface BoardViewProps {
   colorOf: (room: number) => number;
   onActivate: (cell: Cell) => void;
   onCursor: (cell: Cell) => void;
+  /** The cell under the pointer, or nothing when the pointer leaves the map */
+  onHover: (cell: Cell | undefined) => void;
 }
 
 const SIDE_NAMES: Readonly<Record<Side, string>> = {
@@ -45,6 +47,7 @@ export function BoardView({
   colorOf,
   onActivate,
   onCursor,
+  onHover,
 }: BoardViewProps) {
   const { size } = board;
   const auto = useMemo(() => autoCrossed(play, board), [play, board]);
@@ -152,6 +155,9 @@ export function BoardView({
                 onClick={() => {
                   onCursor(cell);
                   onActivate(cell);
+                }}
+                onMouseEnter={() => {
+                  onHover(cell);
                 }}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {

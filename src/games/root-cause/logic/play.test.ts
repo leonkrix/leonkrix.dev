@@ -5,7 +5,7 @@ import { skins } from '../data/skins';
 import { skinWords } from '../data/words';
 import { Board } from './board';
 import { CLUE_TYPES } from './clues';
-import { describeClue } from './describe';
+import { describeClue, kindsNobodyIsOn } from './describe';
 import { enumerateClues, generateLevel } from './generator';
 import {
   autoCrossed,
@@ -395,4 +395,46 @@ describe('the texts of the clues', () => {
     }
     expect(CLUE_TYPES.filter((type) => !seen.has(type))).toEqual([]);
   }, 120_000);
+});
+
+describe('the text of an "on furniture" clue', () => {
+  it('leaves out a kind that another clue says nobody is on, and never ends up with no kind', () => {
+    for (let seed = 0; seed < 20; seed += 1) {
+      const generated = generateLevel(skins['case-file'], 6, 'easy', `furniture-${String(seed)}`);
+      if (generated === undefined) {
+        continue;
+      }
+      const { layout, people, kinds } = generated.level;
+      const present = [...new Set(layout.objects.map((object) => object.kind))].filter(
+        (kind) => kinds[kind]?.occupiable === true,
+      );
+      if (present.length < 2) {
+        continue;
+      }
+      const words = skinWords['case-file'];
+      const context = { skin: skins['case-file'], words, people, layout, kinds };
+      const clue = { type: 'onFurniture', person: 0 } as const;
+      const first = words.kinds[present[0] ?? '']?.one ?? '';
+      const second = words.kinds[present[1] ?? '']?.one ?? '';
+
+      const plain = describeClue(clue, context);
+      expect(plain).toContain(first);
+      expect(plain).toContain(second);
+
+      const without = describeClue(clue, {
+        ...context,
+        nobodyOn: kindsNobodyIsOn([
+          { type: 'kindCount', kind: present[0] ?? '', counting: 'exactly', n: 0 },
+        ]),
+      });
+      expect(without).not.toContain(first);
+      expect(without).toContain(second);
+
+      // Every kind ruled out: the clue still says something
+      const all = describeClue(clue, { ...context, nobodyOn: new Set(present) });
+      expect(all).toContain(first);
+      return;
+    }
+    throw new Error('no level with two kinds to stand on');
+  });
 });

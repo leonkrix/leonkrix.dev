@@ -33,6 +33,21 @@ export interface RoomTypeDef {
   weight: number;
   /** How well each kind of object fits into the room: more is more likely, 0 never, no entry 0.3 */
   affinity: Readonly<Record<string, number>>;
+  /**
+   * How full the room is compared with other kinds of rooms: 1 is the usual, more means more
+   * objects for the same size (a server room), less means fewer (a reception, a corridor).
+   * No entry means 1.
+   */
+  density?: number;
+  /** The fewest and the most cells a room of this kind has: an open office is not two cells */
+  minCells?: number;
+  maxCells?: number;
+  /**
+   * How big a room of this kind likes to be, from 0 (the smallest rooms of a map) to 1 (the
+   * biggest): a closet is small, a hall is big. Among the kinds that are allowed for a room, the
+   * ones that match its size are likelier. No entry means 0.5.
+   */
+  bigness?: number;
   /** A long and narrow room: a map has at most one of these */
   corridor?: boolean;
 }
