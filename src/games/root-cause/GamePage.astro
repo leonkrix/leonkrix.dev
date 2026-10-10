@@ -1,0 +1,101 @@
+---
+import { type GameDefinition } from '@/games/registry';
+import GameLayout from '@/layouts/GameLayout.astro';
+
+import RootCause from './components/RootCause';
+
+interface Props {
+  game: GameDefinition;
+}
+
+const { game } = Astro.props;
+---
+
+<GameLayout game={game}>
+  {/* Rendered in the browser only: nothing of the game is worth sending as HTML first */}
+  <RootCause client:only="react">
+    <p slot="fallback" class="grid min-h-[36rem] place-items-center text-muted">
+      Loading the game...
+    </p>
+  </RootCause>
+  <noscript>
+    <p class="text-muted">
+      This game needs JavaScript to run. Nothing is sent anywhere, it all happens in your browser.
+    </p>
+  </noscript>
+
+  <div slot="rules">
+    <p>
+      Every level is a map divided into rooms. As many people (in <strong>Outage</strong>: devices)
+      stand on it as the map has rows, and{' '}
+      <strong>exactly one stands in every row and in every column</strong>. All but one are
+      suspects, the last one is the <strong>victim</strong>. Your job is to put everybody where they
+      belong.
+    </p>
+    <ul>
+      <li>
+        <strong>The rule behind every level:</strong> the victim shares a room with exactly one
+        suspect. That suspect is the culprit.
+      </li>
+      <li>
+        <strong>The clues</strong> tell you where the suspects are. The victim never gets a clue and
+        is never named. Some clues are about the whole map and count everybody, the victim too.
+      </li>
+      <li>
+        <strong>Walls</strong> are the edges of the map and the thick lines between rooms.{' '}
+        <strong>Next to</strong> means the four cells straight above, below, left or right, inside
+        the same room.
+      </li>
+      <li>
+        <strong>Objects:</strong> the outlined ones (a chair to sit on, a rack to mount a device in)
+        can be used, the solid ones block their cell. A bright bar on the edge of a cell is a
+        window. The <strong>Legend</strong> button under the map explains every picture.
+      </li>
+      <li>
+        <strong>Two looks:</strong> <em>Case file</em> is about detectives and suspects in a tech
+        company, <em>Outage</em> about a network where the failed device shared a room with the
+        device that caused it. The rules are the same.
+      </li>
+    </ul>
+    <p>
+      Choose a person, then click a cell to place them. Switch to <strong>Note</strong> to mark
+      cells where the chosen person could be, and to <strong>Cross</strong> to rule out cells where
+      nobody is. A person on the map crosses out their whole row and column by themselves (nobody
+      else can be placed on those crosses), hides the notes about themselves, and everything comes
+      back when they are taken off. A clue is ticked while the people on the map satisfy it, and
+      turns red while they break it. There is no other feedback while you play. When everybody is in
+      the right place, the level is solved and the culprit is shown.
+    </p>
+  </div>
+
+  <div slot="keys">
+    <ul>
+      <li>
+        <kbd>1</kbd> to <kbd>9</kbd> choose a person
+      </li>
+      <li>
+        <kbd>P</kbd>, <kbd>N</kbd>, <kbd>X</kbd> switch between place, note and cross
+      </li>
+      <li>
+        <kbd>Arrow keys</kbd> move over the map, <kbd>Enter</kbd> or <kbd>Space</kbd> use the
+        current mode on the cell
+      </li>
+      <li>
+        <kbd>Backspace</kbd> clears a cell, <kbd>Esc</kbd> lets go of the chosen person
+      </li>
+      <li>
+        <kbd>Ctrl</kbd> + <kbd>Z</kbd> undoes, <kbd>Ctrl</kbd> + <kbd>Y</kbd> redoes
+      </li>
+    </ul>
+  </div>
+
+  <div slot="built">
+    <p>
+      The rules, the clues and the solvers are plain TypeScript with unit tests. Two solvers that
+      share no search code (one searches, one reasons the way a person does) must find exactly the
+      stored solution of every level, and the second one also rates how hard a level is. The
+      interface only draws what the rules say and keeps your moves; nothing is stored on your
+      device.
+    </p>
+  </div>
+</GameLayout>

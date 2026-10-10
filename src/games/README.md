@@ -4,7 +4,7 @@ The games of the Playground section.
 
 ## How it fits together
 
-- `registry.ts` lists every game (slug, name, tag, description, icon, `status`). A game is merged as `hidden` and set to `live` in the pull request that completes it. Only live games get a page, a tile, a navigation entry and a sitemap entry. With no live game the site looks as if the Playground did not exist.
+- `registry.ts` lists every game (slug, name, tag, description, icon, `status`). A game is merged as `hidden` and set to `live` in the pull request that completes it. A hidden game with a `GamePage.astro` still gets its page in the dev server (`pnpm dev`, never in a build), so it can be played while it is built. Only live games get a page, a tile, a navigation entry and a sitemap entry. With no live game the site looks as if the Playground did not exist.
 - `shared/` holds what several games use: seeded random numbers (`random.ts`, reproducible rounds and generators) and the tech vocabulary type (`tech-term.ts`).
 - `<slug>/` is one game (see below).
 - The pages come from `src/pages/games/[...slug].astro` (overview and one page per live game), the home page section from `src/components/games/Playground.astro`, the page frame from `src/layouts/GameLayout.astro` (title, the game, and the panels "How to play", "Keyboard" and "How it is built" as native `<details>`, no script needed).

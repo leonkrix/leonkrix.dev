@@ -37,7 +37,7 @@ export const games: readonly GameDefinition[] = [
     slug: 'root-cause',
     name: 'Root Cause',
     tag: 'Logic',
-    description: 'A logic puzzle: work out who was alone with the victim.',
+    description: 'A logic puzzle: work out which suspect shared a room with the victim.',
     icon: 'lucide:search',
     status: 'hidden',
   },
