@@ -32,6 +32,10 @@ const code = z.discriminatedUnion('status', [
   z.object({ status: z.literal('none') }),
 ]);
 
+/** The small animated pictures a project card can show (see components/project-art) */
+export const projectArts = ['tetrys'] as const;
+export type ProjectArt = (typeof projectArts)[number];
+
 export const projectSchema = z
   .object({
     title: z.string().min(1),
@@ -52,6 +56,8 @@ export const projectSchema = z
       .optional(),
     technologies: z.array(z.enum(technologyIds)).min(1),
     code,
+    /** Optional animated picture on the card */
+    art: z.enum(projectArts).optional(),
     /** Short extra remark shown next to the code status, e.g. "No longer available." */
     note: z.string().min(1).optional(),
   })

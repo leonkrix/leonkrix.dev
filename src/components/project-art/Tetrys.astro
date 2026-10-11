@@ -1,0 +1,817 @@
+---
+// Tetrys, the protocol of the bachelor thesis, in ten seconds. Source packets stream from the
+// sender to the receiver through a lossy channel, one every 0.9 seconds. The sender keeps the
+// packets it has sent that are not confirmed yet in its **sliding window** (the dashed frame at
+// the bottom left, there from the start). One packet is lost on the way, the receiver keeps a hole
+// for it. The sender then sends a **coded packet**, a combination of the packets in its window
+// (amber), in the same rhythm as the packets before. It fills the hole: the lost packet is
+// recovered without being sent again and without a timeout.
+//
+// A **return channel** carries the acknowledgements: when a packet arrives, the receiver sends an
+// ack for it back at the same speed; when the ack arrives, the copy of the packet in the sender
+// window turns green. The ack of the recovered packet 3 comes last (after the one of packet 4),
+// and when all four copies are green they are deleted from the window and the loop ends.
+//
+// Pure CSS and SVG. The base style of every part is the frame that tells the story (used with
+// reduced motion, and before the animation starts); the keyframes start from nothing and build the
+// scene up, and the whole scene fades out at the end of the loop. The times are in the comments
+// (the loop is 10 seconds, so 10 per cent are one second).
+---
+
+<svg
+  viewBox="0 0 240 200"
+  class="tetrys block h-full w-full"
+  preserveAspectRatio="xMidYMid meet"
+  focusable="false"
+>
+  <g class="tx-scene">
+    <!-- Sender and receiver, and the two channels between them: packets above, acks below -->
+    <rect class="tx-node" x="4" y="50" width="24" height="72" rx="5"></rect>
+    <rect class="tx-node" x="212" y="50" width="24" height="72" rx="5"></rect>
+    <path
+      class="tx-node-lines"
+      d="M10 64h12M10 78h12M10 92h12M10 106h12M218 64h12M218 78h12M218 92h12M218 106h12"
+    ></path>
+    <line class="tx-channel" x1="32" y1="70" x2="208" y2="70"></line>
+    <line class="tx-channel" x1="32" y1="102" x2="208" y2="102"></line>
+    <path class="tx-arrow" d="M203 66.5l5.5 3.5-5.5 3.5zM37 98.5l-5.5 3.5 5.5 3.5z"></path>
+    <text class="tx-label tx-label-mid" x="120" y="57">
+      Packets
+    </text>
+    <text class="tx-label tx-label-mid" x="120" y="119">
+      ACKs
+    </text>
+
+    <!-- The slots of the sender window (below the sender) and of the receiver (below the receiver) -->
+    <rect class="tx-slot" x="8" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-slot" x="25" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-slot" x="42" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-slot" x="59" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-slot" x="167" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-slot" x="184" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-slot" x="201" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-slot" x="218" y="144" width="14" height="14" rx="3"></rect>
+
+    <!-- Copies of the sent packets in the sender window (green once the ack has arrived) -->
+    <rect class="tx-copy tx-s1" x="8" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-copy tx-s2" x="25" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-copy tx-s3" x="42" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-copy tx-s4" x="59" y="144" width="14" height="14" rx="3"></rect>
+
+    <!-- The sliding window holds the four packets that are not confirmed yet -->
+    <rect class="tx-window" x="5" y="140" width="71" height="22" rx="5"></rect>
+    <text class="tx-label" x="5" y="180">
+      Sliding Window
+    </text>
+    <text class="tx-label tx-label-right" x="167" y="180">
+      Receiver
+    </text>
+    <!-- The coded packet is made from the window -->
+    <line class="tx-emit" x1="40" y1="139" x2="40" y2="78"></line>
+
+    <!-- The receiver: what arrived, a hole where packet 3 should be, and the recovered packet -->
+    <rect class="tx-got tx-r1" x="167" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-got tx-r2" x="184" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-hole" x="201" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-got tx-r3" x="201" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-got tx-r4" x="218" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-ring" x="201" y="144" width="14" height="14" rx="3"></rect>
+    <rect class="tx-glow" x="164" y="140" width="71" height="22" rx="6"></rect>
+
+    <!-- The packets on the channel (the third one is lost) -->
+    <rect class="tx-pkt tx-p1" x="34" y="64" width="12" height="12" rx="3"></rect>
+    <rect class="tx-pkt tx-p2" x="34" y="64" width="12" height="12" rx="3"></rect>
+    <rect class="tx-pkt tx-p3" x="34" y="64" width="12" height="12" rx="3"></rect>
+    <rect class="tx-pkt tx-p4" x="34" y="64" width="12" height="12" rx="3"></rect>
+    <path class="tx-lost" d="M120 65l10 10M130 65l-10 10"></path>
+
+    <!-- The coded packet: amber, a plus inside -->
+    <g class="tx-coded">
+      <circle cx="40" cy="70" r="6.5"></circle>
+      <path d="M37 70h6M40 67v6"></path>
+    </g>
+
+    <!-- The acks on the return channel, one for every packet that arrives (packet 3 is last) -->
+    <g class="tx-ack tx-a1">
+      <circle cx="206" cy="102" r="5"></circle>
+      <path d="M203.5 102l1.8 1.8 3.2-3.6"></path>
+    </g>
+    <g class="tx-ack tx-a2">
+      <circle cx="206" cy="102" r="5"></circle>
+      <path d="M203.5 102l1.8 1.8 3.2-3.6"></path>
+    </g>
+    <g class="tx-ack tx-a4">
+      <circle cx="206" cy="102" r="5"></circle>
+      <path d="M203.5 102l1.8 1.8 3.2-3.6"></path>
+    </g>
+    <g class="tx-ack tx-a3">
+      <circle cx="206" cy="102" r="5"></circle>
+      <path d="M203.5 102l1.8 1.8 3.2-3.6"></path>
+    </g>
+  </g>
+</svg>
+
+<style>
+  /* Colors come from the tokens of the site */
+  .tx-node {
+    fill: color-mix(in srgb, var(--color-surface) 80%, transparent);
+    stroke: var(--color-border);
+    stroke-width: 1.2;
+  }
+
+  .tx-node-lines {
+    stroke: var(--color-muted);
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    opacity: 0.7;
+  }
+
+  .tx-channel {
+    stroke: var(--color-muted);
+    stroke-width: 1;
+    stroke-dasharray: 2 4;
+    opacity: 0.45;
+  }
+
+  .tx-arrow {
+    fill: var(--color-muted);
+    opacity: 0.55;
+  }
+
+  .tx-slot {
+    fill: none;
+    stroke: var(--color-border);
+    stroke-width: 1.2;
+  }
+
+  .tx-pkt,
+  .tx-copy,
+  .tx-got {
+    fill: var(--color-accent);
+  }
+
+  .tx-copy {
+    opacity: 0.85;
+  }
+
+  /* Confirmed copies are green (in the frame that tells the story: the first two) */
+  .tx-s1,
+  .tx-s2 {
+    fill: var(--color-status);
+  }
+
+  .tx-r3 {
+    opacity: 0;
+  }
+
+  .tx-window {
+    fill: color-mix(in srgb, var(--color-accent-2) 10%, transparent);
+    stroke: var(--color-accent-2);
+    stroke-width: 1.2;
+    stroke-dasharray: 3 2.5;
+  }
+
+  .tx-label {
+    fill: var(--color-accent-2);
+    font-family: var(--font-mono), monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.02em;
+    opacity: 0.8;
+  }
+
+  .tx-label-right,
+  .tx-label-mid {
+    fill: var(--color-muted);
+    opacity: 0.7;
+  }
+
+  .tx-label-mid {
+    text-anchor: middle;
+    opacity: 0.55;
+  }
+
+  .tx-emit {
+    stroke: var(--color-contrast);
+    stroke-width: 1.2;
+    stroke-dasharray: 1.5 3;
+    stroke-linecap: round;
+    opacity: 0;
+  }
+
+  .tx-hole {
+    fill: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    stroke: var(--color-danger);
+    stroke-width: 1.2;
+    stroke-dasharray: 2.5 2;
+  }
+
+  .tx-ring {
+    fill: none;
+    stroke: var(--color-status);
+    stroke-width: 1.5;
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .tx-glow {
+    fill: var(--color-accent);
+    opacity: 0;
+  }
+
+  .tx-lost {
+    fill: none;
+    stroke: var(--color-danger);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .tx-coded circle {
+    fill: var(--color-contrast);
+  }
+
+  .tx-coded path,
+  .tx-ack path {
+    fill: none;
+    stroke: var(--color-bg);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .tx-ack circle {
+    fill: var(--color-accent-2);
+  }
+
+  /* The frame that tells the story: the coded packet on its way, the lost packet marked, the hole
+     at the receiver, the window over the four packets, the first two acks back (green copies) */
+  .tx-p1,
+  .tx-p2,
+  .tx-p3,
+  .tx-ack {
+    opacity: 0;
+  }
+
+  .tx-p4 {
+    transform: translateX(130px);
+  }
+
+  .tx-coded {
+    transform: translateX(60px);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .tx-scene {
+      animation: tetrys-scene 10s linear infinite;
+    }
+
+    .tx-p1 {
+      animation: tetrys-p1 10s linear infinite;
+    }
+
+    .tx-p2 {
+      animation: tetrys-p2 10s linear infinite;
+    }
+
+    .tx-p3 {
+      animation: tetrys-p3 10s linear infinite;
+    }
+
+    .tx-p4 {
+      animation: tetrys-p4 10s linear infinite;
+    }
+
+    .tx-lost {
+      animation: tetrys-lost 10s ease-out infinite;
+    }
+
+    .tx-coded {
+      animation: tetrys-coded 10s linear infinite;
+    }
+
+    .tx-a1 {
+      animation: tetrys-a1 10s linear infinite;
+    }
+
+    .tx-a2 {
+      animation: tetrys-a2 10s linear infinite;
+    }
+
+    .tx-a4 {
+      animation: tetrys-a4 10s linear infinite;
+    }
+
+    .tx-a3 {
+      animation: tetrys-a3 10s linear infinite;
+    }
+
+    .tx-s1 {
+      animation: tetrys-s1 10s linear infinite;
+    }
+
+    .tx-s2 {
+      animation: tetrys-s2 10s linear infinite;
+    }
+
+    .tx-s3 {
+      animation: tetrys-s3 10s linear infinite;
+    }
+
+    .tx-s4 {
+      animation: tetrys-s4 10s linear infinite;
+    }
+
+    .tx-window {
+      animation: tetrys-window-flash 10s linear infinite;
+    }
+
+    .tx-emit {
+      animation: tetrys-emit 10s linear infinite;
+    }
+
+    .tx-r1 {
+      animation: tetrys-r1 10s linear infinite;
+    }
+
+    .tx-r2 {
+      animation: tetrys-r2 10s linear infinite;
+    }
+
+    .tx-r3 {
+      animation: tetrys-r3 10s linear infinite;
+    }
+
+    .tx-r4 {
+      animation: tetrys-r4 10s linear infinite;
+    }
+
+    .tx-hole {
+      animation: tetrys-hole 10s linear infinite;
+    }
+
+    .tx-ring {
+      animation: tetrys-ring 10s ease-out infinite;
+    }
+
+    .tx-glow {
+      animation: tetrys-glow 10s ease-in-out infinite;
+    }
+  }
+
+  /* The whole scene builds up and fades out, so the loop has no visible seam */
+  @keyframes tetrys-scene {
+    0% {
+      opacity: 0;
+    }
+    2%,
+    93% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  /* Packets 1, 2 and 4 cross the channel in two seconds (162 units), one second apart */
+  @keyframes tetrys-p1 {
+    0%,
+    3% {
+      opacity: 0;
+      transform: translateX(0);
+    }
+    4% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    23% {
+      opacity: 1;
+      transform: translateX(162px);
+    }
+    24%,
+    100% {
+      opacity: 0;
+      transform: translateX(162px);
+    }
+  }
+
+  @keyframes tetrys-p2 {
+    0%,
+    12% {
+      opacity: 0;
+      transform: translateX(0);
+    }
+    13% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    32% {
+      opacity: 1;
+      transform: translateX(162px);
+    }
+    33%,
+    100% {
+      opacity: 0;
+      transform: translateX(162px);
+    }
+  }
+
+  @keyframes tetrys-p4 {
+    0%,
+    30% {
+      opacity: 0;
+      transform: translateX(0);
+    }
+    31% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    50% {
+      opacity: 1;
+      transform: translateX(162px);
+    }
+    51%,
+    100% {
+      opacity: 0;
+      transform: translateX(162px);
+    }
+  }
+
+  /* Packet 3 gets half way, turns red and is gone */
+  @keyframes tetrys-p3 {
+    0%,
+    21% {
+      opacity: 0;
+      transform: translateX(0);
+      fill: var(--color-accent);
+    }
+    22% {
+      opacity: 1;
+      transform: translateX(0);
+      fill: var(--color-accent);
+    }
+    31% {
+      opacity: 1;
+      transform: translateX(80px);
+      fill: var(--color-accent);
+    }
+    33% {
+      opacity: 1;
+      transform: translateX(86px);
+      fill: var(--color-danger);
+    }
+    37%,
+    100% {
+      opacity: 0;
+      transform: translateX(92px);
+      fill: var(--color-danger);
+    }
+  }
+
+  @keyframes tetrys-lost {
+    0%,
+    32% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    35% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    43% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    48%,
+    100% {
+      opacity: 0;
+      transform: scale(1);
+    }
+  }
+
+  /* The coded packet is sent at 3.9 s, in the rhythm of the packets before (every 0.9 s), and
+     arrives at 5.9 s */
+  @keyframes tetrys-coded {
+    0%,
+    39% {
+      opacity: 0;
+      transform: translateX(0);
+    }
+    40% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    59% {
+      opacity: 1;
+      transform: translateX(162px);
+    }
+    60%,
+    100% {
+      opacity: 0;
+      transform: translateX(162px);
+    }
+  }
+
+  /* An ack leaves when its packet has arrived (1 at 2.4 s, 2 at 3.3 s, 4 at 5.1 s, and 3 at 6.1 s,
+     after it was recovered) and needs as long as a packet to come back (168 units) */
+  @keyframes tetrys-a1 {
+    0%,
+    23% {
+      opacity: 0;
+      transform: translateX(0);
+    }
+    24% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    43% {
+      opacity: 1;
+      transform: translateX(-168px);
+    }
+    44%,
+    100% {
+      opacity: 0;
+      transform: translateX(-168px);
+    }
+  }
+
+  @keyframes tetrys-a2 {
+    0%,
+    32% {
+      opacity: 0;
+      transform: translateX(0);
+    }
+    33% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    52% {
+      opacity: 1;
+      transform: translateX(-168px);
+    }
+    53%,
+    100% {
+      opacity: 0;
+      transform: translateX(-168px);
+    }
+  }
+
+  @keyframes tetrys-a4 {
+    0%,
+    50% {
+      opacity: 0;
+      transform: translateX(0);
+    }
+    51% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    70% {
+      opacity: 1;
+      transform: translateX(-168px);
+    }
+    71%,
+    100% {
+      opacity: 0;
+      transform: translateX(-168px);
+    }
+  }
+
+  @keyframes tetrys-a3 {
+    0%,
+    60% {
+      opacity: 0;
+      transform: translateX(0);
+    }
+    61% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    80% {
+      opacity: 1;
+      transform: translateX(-168px);
+    }
+    81%,
+    100% {
+      opacity: 0;
+      transform: translateX(-168px);
+    }
+  }
+
+  /* The sender keeps a copy of every sent packet. It turns green when the ack has arrived (1 at
+     4.4 s, 2 at 5.3 s, 4 at 7.1 s, 3 at 8.1 s). When all four are green (8.2 s) they are deleted */
+  @keyframes tetrys-s1 {
+    0%,
+    3% {
+      opacity: 0;
+      fill: var(--color-accent);
+    }
+    4%,
+    44% {
+      opacity: 0.85;
+      fill: var(--color-accent);
+    }
+    46%,
+    86% {
+      opacity: 0.85;
+      fill: var(--color-status);
+    }
+    89%,
+    100% {
+      opacity: 0;
+      fill: var(--color-status);
+    }
+  }
+
+  @keyframes tetrys-s2 {
+    0%,
+    12% {
+      opacity: 0;
+      fill: var(--color-accent);
+    }
+    13%,
+    53% {
+      opacity: 0.85;
+      fill: var(--color-accent);
+    }
+    55%,
+    86% {
+      opacity: 0.85;
+      fill: var(--color-status);
+    }
+    89%,
+    100% {
+      opacity: 0;
+      fill: var(--color-status);
+    }
+  }
+
+  @keyframes tetrys-s3 {
+    0%,
+    21% {
+      opacity: 0;
+      fill: var(--color-accent);
+    }
+    22%,
+    81% {
+      opacity: 0.85;
+      fill: var(--color-accent);
+    }
+    83%,
+    86% {
+      opacity: 0.85;
+      fill: var(--color-status);
+    }
+    89%,
+    100% {
+      opacity: 0;
+      fill: var(--color-status);
+    }
+  }
+
+  @keyframes tetrys-s4 {
+    0%,
+    30% {
+      opacity: 0;
+      fill: var(--color-accent);
+    }
+    31%,
+    71% {
+      opacity: 0.85;
+      fill: var(--color-accent);
+    }
+    73%,
+    86% {
+      opacity: 0.85;
+      fill: var(--color-status);
+    }
+    89%,
+    100% {
+      opacity: 0;
+      fill: var(--color-status);
+    }
+  }
+
+  /* The window shows that the coded packet is made from it */
+  @keyframes tetrys-window-flash {
+    0%,
+    37% {
+      stroke: var(--color-accent-2);
+    }
+    40%,
+    46% {
+      stroke: var(--color-contrast);
+    }
+    50%,
+    100% {
+      stroke: var(--color-accent-2);
+    }
+  }
+
+  @keyframes tetrys-emit {
+    0%,
+    37% {
+      opacity: 0;
+    }
+    39% {
+      opacity: 1;
+    }
+    44%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  /* The receiver: packets arrive, the hole shows at 3.6 s, the coded packet fills it at 6 s */
+  @keyframes tetrys-r1 {
+    0%,
+    24% {
+      opacity: 0;
+    }
+    26%,
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes tetrys-r2 {
+    0%,
+    33% {
+      opacity: 0;
+    }
+    35%,
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes tetrys-r4 {
+    0%,
+    51% {
+      opacity: 0;
+    }
+    53%,
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes tetrys-hole {
+    0%,
+    35% {
+      opacity: 0;
+    }
+    38%,
+    60% {
+      opacity: 1;
+    }
+    62%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes tetrys-r3 {
+    0%,
+    60% {
+      opacity: 0;
+    }
+    63%,
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes tetrys-ring {
+    0%,
+    60% {
+      opacity: 0;
+      transform: scale(1);
+    }
+    61% {
+      opacity: 0.9;
+      transform: scale(1);
+    }
+    69%,
+    100% {
+      opacity: 0;
+      transform: scale(1.9);
+    }
+  }
+
+  /* Everything has arrived in order: a soft glow over the receiver */
+  @keyframes tetrys-glow {
+    0%,
+    67% {
+      opacity: 0;
+    }
+    73% {
+      opacity: 0.16;
+    }
+    82%,
+    100% {
+      opacity: 0;
+    }
+  }
+</style>

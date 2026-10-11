@@ -4,6 +4,8 @@
  * production gets until the form is switched on there (Cloudflare build variable of the same name).
  * A small script instead of `VAR=value command`, so it works on Windows and Linux alike.
  */
+import './clear-content-cache.mjs';
+
 import { spawnSync } from 'node:child_process';
 
 const result = spawnSync(process.execPath, ['node_modules/astro/bin/astro.mjs', 'build'], {

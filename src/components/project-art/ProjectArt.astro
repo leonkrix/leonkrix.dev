@@ -1,0 +1,43 @@
+---
+// The small animated picture on a project card (the right side of the card on wide screens, a
+// strip below the subtitle on narrow ones). Every picture is pure CSS and SVG, a few seconds in a
+// loop, calm and in the colors of the site; it carries no information that the text does not
+// have, so it is hidden from assistive technology. With reduced motion a picture stays still and
+// shows a frame that tells the story. A tiny script pauses a picture while it is off screen.
+import Tetrys from '@/components/project-art/Tetrys.astro';
+import { type ProjectArt } from '@/lib/projects';
+
+interface Props {
+  art: ProjectArt;
+}
+
+const { art } = Astro.props;
+---
+
+<div
+  class="proj-art edge relative h-48 overflow-hidden rounded-lg border border-border bg-bg/50 md:h-full md:min-h-52"
+  aria-hidden="true"
+>
+  {art === 'tetrys' && <Tetrys />}
+</div>
+
+<script>
+  // A picture only runs while it can be seen (saves battery, and the loop starts where it should)
+  const arts = document.querySelectorAll<HTMLElement>('.proj-art');
+  if ('IntersectionObserver' in window && arts.length > 0) {
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        entry.target.toggleAttribute('data-paused', !entry.isIntersecting);
+      }
+    });
+    for (const element of arts) {
+      observer.observe(element);
+    }
+  }
+</script>
+
+<style is:global>
+  .proj-art[data-paused] * {
+    animation-play-state: paused !important;
+  }
+</style>

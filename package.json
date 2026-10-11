@@ -8,8 +8,8 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
+    "dev": "node scripts/clear-content-cache.mjs && astro dev",
+    "build": "node scripts/clear-content-cache.mjs && astro build",
     "preview": "astro preview",
     "lint": "astro sync && eslint .",
     "lint:fix": "astro sync && eslint . --fix",

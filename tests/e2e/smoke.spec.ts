@@ -123,6 +123,39 @@ test.describe('reduced motion', () => {
     );
     expect(scrollBehavior).toBe('auto');
   });
+
+  test('keeps the pictures on the project cards still', async ({ page }) => {
+    await page.goto('/');
+    const art = page.locator('.proj-art').first();
+    await expect(art).toBeAttached();
+    const running = await art.evaluate(
+      (element) => element.getAnimations({ subtree: true }).length,
+    );
+    expect(running).toBe(0);
+  });
+});
+
+test.describe('project pictures', () => {
+  test('run on the cards, and stop while they are off screen', async ({ page }) => {
+    await page.goto('/');
+    const art = page.locator('.proj-art').first();
+    await art.scrollIntoViewIfNeeded();
+    await expect(art).not.toHaveAttribute('data-paused', '');
+    expect(
+      await art.evaluate((element) => element.getAnimations({ subtree: true }).length),
+    ).toBeGreaterThan(0);
+    await page.evaluate(() => {
+      window.scrollTo(0, 0);
+    });
+    await expect(art).toHaveAttribute('data-paused', '');
+    expect(
+      await art.evaluate((element) =>
+        element
+          .getAnimations({ subtree: true })
+          .every((animation) => animation.playState === 'paused'),
+      ),
+    ).toBe(true);
+  });
 });
 
 test.describe('legal pages in two languages', () => {

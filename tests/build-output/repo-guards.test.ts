@@ -15,6 +15,20 @@ describe('repository guards', () => {
     },
   );
 
+  it('clears the saved content of the content collections before dev and build, so a changed schema is never served from stale entries', () => {
+    const scripts = (
+      JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as {
+        scripts: Record<string, string>;
+      }
+    ).scripts;
+    expect(scripts.dev).toContain('scripts/clear-content-cache.mjs');
+    expect(scripts.build).toContain('scripts/clear-content-cache.mjs');
+    expect(readFileSync(join(root, 'scripts', 'build-with-form.mjs'), 'utf8')).toContain(
+      "import './clear-content-cache.mjs'",
+    );
+    expect(existsSync(join(root, 'scripts', 'clear-content-cache.mjs'))).toBe(true);
+  });
+
   it('has no hidden bidirectional or control characters in source files (Trojan Source)', () => {
     // Such characters make code look different from what it does. Write them as escapes
     // (the code U+202E written as a backslash u escape in a string) when a test needs them.
