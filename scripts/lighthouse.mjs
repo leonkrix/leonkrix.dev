@@ -41,6 +41,8 @@ const BUDGETS = {
 const GAME_BUDGETS = {
   // Measured on 2026-10-09 (React, the game, the five-letter list): scripts 96 KB, stylesheets 12.8 KB, total 203 KB
   'tech-words': { script: 130 * 1024, stylesheet: 20 * 1024, total: 260 * 1024 },
+  // Measured on 2026-10-10 (React, the game, the 18 levels, the generator is a separate worker file that is only loaded for a random level): scripts 100 KB, stylesheets 17.7 KB, total 212 KB
+  'root-cause': { script: 130 * 1024, stylesheet: 24 * 1024, total: 260 * 1024 },
 };
 
 /** The pages to test: the home page, and the Playground pages once a game is live. */

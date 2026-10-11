@@ -48,8 +48,11 @@ const { game } = Astro.props;
       </li>
       <li>
         <strong>Objects:</strong> the outlined ones (a chair to sit on, a rack to mount a device in)
-        can be used, the solid ones block their cell. A bright bar on the edge of a cell is a
-        window. The <strong>Legend</strong> button under the map explains every picture.
+        can be used, the solid ones block their cell. A sofa has its back to a wall. A bright bar on
+        a wall is a window: it belongs to the cells on both sides of the wall, so "in front of a
+        window" and "a room with a window" count for both rooms. The <strong>Legend</strong> button
+        under the map explains every picture, and the line under the map says what is on the cell
+        you point at.
       </li>
       <li>
         <strong>Two looks:</strong> <em>Case file</em> is about detectives and suspects in a tech
@@ -63,8 +66,11 @@ const { game } = Astro.props;
       nobody is. A person on the map crosses out their whole row and column by themselves (nobody
       else can be placed on those crosses), hides the notes about themselves, and everything comes
       back when they are taken off. A clue is ticked while the people on the map satisfy it, and
-      turns red while they break it. There is no other feedback while you play. When everybody is in
-      the right place, the level is solved and the culprit is shown.
+      turns red while they break it. There is no other feedback while you play. A pencil after a
+      name means that the person has notes on the map. Stuck? The <strong>Hint</strong> button
+      points at the next person to look at in three steps, from a push to the cell itself, and
+      counts the hints you used. At the last step <em>Why here?</em> explains the reasoning. When
+      everybody is in the right place, the level is solved and the culprit is shown.
     </p>
   </div>
 
@@ -75,6 +81,9 @@ const { game } = Astro.props;
       </li>
       <li>
         <kbd>P</kbd>, <kbd>N</kbd>, <kbd>X</kbd> switch between place, note and cross
+      </li>
+      <li>
+        <kbd>H</kbd> asks for a hint (press again for the next stage)
       </li>
       <li>
         <kbd>Arrow keys</kbd> move over the map, <kbd>Enter</kbd> or <kbd>Space</kbd> use the

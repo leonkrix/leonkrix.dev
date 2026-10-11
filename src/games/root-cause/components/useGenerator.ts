@@ -41,13 +41,10 @@ export function useGenerator(onLevel: (record: LevelRecord) => void) {
   // Leaving the page ends the threads
   useEffect(() => cancel, [cancel]);
 
-  const start = useCallback(
-    (setup: RandomSetup) => {
+  const launch = useCallback(
+    (job: Job, count: number, seeds: (index: number) => string) => {
       cancel();
       setError(undefined);
-      const seed = freshSeed().toString(36);
-      const job = chooseJob(setup, createRandom(seed), seed);
-      const count = Math.max(1, Math.min(MAX_WORKERS, (navigator.hardwareConcurrency || 2) - 1));
       try {
         const started: Worker[] = [];
         for (let index = 0; index < count; index += 1) {
@@ -62,14 +59,14 @@ export function useGenerator(onLevel: (record: LevelRecord) => void) {
             cancel();
             setError('The generator could not start in this browser.');
           };
-          worker.postMessage({ ...job, seed: `${job.seed}-w${String(index + 1)}` });
+          worker.postMessage({ ...job, seed: seeds(index) });
           started.push(worker);
         }
         workers.current = started;
         setRun({
           job,
           startedAt: Date.now(),
-          typical: typicalMilliseconds(job.tier, job.size),
+          typical: typicalMilliseconds(job.tier, job.size, count),
           workers: count,
         });
       } catch {
@@ -79,5 +76,23 @@ export function useGenerator(onLevel: (record: LevelRecord) => void) {
     [cancel],
   );
 
-  return { run, error, start, cancel };
+  const start = useCallback(
+    (setup: RandomSetup) => {
+      const seed = freshSeed().toString(36);
+      const job = chooseJob(setup, createRandom(seed), seed);
+      const count = Math.max(1, Math.min(MAX_WORKERS, (navigator.hardwareConcurrency || 2) - 1));
+      launch(job, count, (index) => `${job.seed}-w${String(index + 1)}`);
+    },
+    [launch],
+  );
+
+  /** Makes the level of a shared link: the seed is known to work, so one thread is enough */
+  const startJob = useCallback(
+    (job: Job) => {
+      launch(job, 1, () => job.seed);
+    },
+    [launch],
+  );
+
+  return { run, error, start, startJob, cancel };
 }

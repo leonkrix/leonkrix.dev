@@ -96,12 +96,18 @@ export function RandomPanel({ setup, run, error, onSetup, onStart, onCancel }: R
       </div>
 
       {run !== undefined && (
-        <div className="rc-progress" role="status">
+        <div className="rc-progress">
           <progress max={1} value={fraction(elapsed, run.typical)} aria-label="Making a level" />
-          <p>
-            Making a {run.job.tier} {String(run.job.size)}×{String(run.job.size)} level:{' '}
-            {seconds(elapsed)} so far. This usually takes about {seconds(run.typical)}, but it is a
-            matter of luck
+          {/* The first line is the same all the time, only the time at its end changes (and is not
+              read aloud every second); the longer text is a line of its own, so nothing jumps */}
+          <p className="rc-progress-now" role="status">
+            Making a {run.job.tier} {String(run.job.size)}×{String(run.job.size)} level
+            <span className="rc-elapsed" aria-hidden="true">
+              {String(Math.floor(elapsed / 1000))} s so far
+            </span>
+          </p>
+          <p className="rc-progress-hint">
+            This usually takes about {seconds(run.typical)}, but it is a matter of luck
             {run.workers > 1 ? ` (${String(run.workers)} threads are trying different maps)` : ''}.
             Every level is checked by two solvers before you see it.
           </p>

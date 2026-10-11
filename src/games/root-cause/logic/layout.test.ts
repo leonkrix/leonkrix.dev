@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createRandom } from '../../shared/random';
 import { caseFile, outage } from '../data/skins';
 import { Board } from './board';
-import { generateLayout, roomCountFor, roomCountRange, SIZES } from './layout';
+import { generateLayout, minObjectsIn, roomCountFor, roomCountRange, SIZES } from './layout';
 import { kindsOf, type Skin } from './skin';
 import { type Layout, type Tier } from './types';
 
@@ -293,6 +293,196 @@ describe.each(SKINS)('generateLayout for $id', (skin) => {
     };
     expect(blockedCells('easy')).toBeGreaterThan(blockedCells('medium'));
     expect(blockedCells('medium')).toBeGreaterThan(blockedCells('hard'));
+  });
+
+  /** How many objects a room holds: an object counts for the room of its first cell */
+  const objectsPerRoom = (layout: Layout): number[] => {
+    const counts = Array.from({ length: layout.roomCount }, () => 0);
+    for (const object of layout.objects) {
+      const room = layout.roomOf[object.cells[0] ?? 0] ?? 0;
+      counts[room] = (counts[room] ?? 0) + 1;
+    }
+    return counts;
+  };
+
+  it('puts at least one object into every room, and more into a bigger room', () => {
+    expect([2, 3, 4, 5].map(minObjectsIn)).toEqual([1, 1, 1, 1]);
+    expect([6, 10, 11, 16].map(minObjectsIn)).toEqual([2, 2, 3, 4]);
+    for (const size of SIZES) {
+      for (const tier of TIERS) {
+        for (let seed = 0; seed < 25; seed += 1) {
+          const layout = make(size, tier, seed);
+          const board = new Board(layout, kindsOf(skin));
+          objectsPerRoom(layout).forEach((count, room) => {
+            const cells = board.roomCells[room]?.length ?? 0;
+            expect(
+              count,
+              `${tier} ${String(size)} seed ${String(seed)}: room ${String(room)} of ${String(cells)} cells`,
+            ).toBeGreaterThanOrEqual(minObjectsIn(cells));
+          });
+        }
+      }
+    }
+  });
+
+  it('fills a big room with more objects than a small one', () => {
+    let small = 0;
+    let smallRooms = 0;
+    let big = 0;
+    let bigRooms = 0;
+    for (let seed = 0; seed < 60; seed += 1) {
+      const layout = make(8, 'medium', seed);
+      const board = new Board(layout, kindsOf(skin));
+      objectsPerRoom(layout).forEach((count, room) => {
+        const cells = board.roomCells[room]?.length ?? 0;
+        if (cells <= 4) {
+          small += count;
+          smallRooms += 1;
+        } else if (cells >= 10) {
+          big += count;
+          bigRooms += 1;
+        }
+      });
+    }
+    expect(smallRooms).toBeGreaterThan(10);
+    expect(bigRooms).toBeGreaterThan(10);
+    expect(big / bigRooms).toBeGreaterThan((small / smallRooms) * 2);
+  });
+
+  it('fills a kind of room that is fuller than another with more objects for the same size', () => {
+    const perCell = new Map<string, { objects: number; cells: number }>();
+    for (let seed = 0; seed < 150; seed += 1) {
+      const layout = make(8, 'medium', seed);
+      const board = new Board(layout, kindsOf(skin));
+      objectsPerRoom(layout).forEach((count, room) => {
+        const type = layout.rooms[room]?.type ?? '';
+        const sum = perCell.get(type) ?? { objects: 0, cells: 0 };
+        perCell.set(type, {
+          objects: sum.objects + count,
+          cells: sum.cells + (board.roomCells[room]?.length ?? 0),
+        });
+      });
+    }
+    const dense = skin.roomTypes.filter((type) => (type.density ?? 1) >= 1.2);
+    const sparse = skin.roomTypes.filter((type) => (type.density ?? 1) <= 0.8);
+    const average = (types: typeof dense): number => {
+      const sums = types.flatMap((type) => perCell.get(type.id) ?? []);
+      const objects = sums.reduce((total, sum) => total + sum.objects, 0);
+      const cells = sums.reduce((total, sum) => total + sum.cells, 0);
+      return objects / cells;
+    };
+    expect(dense.length).toBeGreaterThan(0);
+    expect(sparse.length).toBeGreaterThan(0);
+    expect(average(dense)).toBeGreaterThan(average(sparse));
+  });
+
+  it('gives a room a kind that can have its size, in every map', () => {
+    for (const size of SIZES) {
+      for (const tier of TIERS) {
+        for (let seed = 0; seed < 25; seed += 1) {
+          const layout = make(size, tier, seed);
+          const board = new Board(layout, kindsOf(skin));
+          layout.rooms.forEach((room, index) => {
+            const type = skin.roomTypes.find((entry) => entry.id === room.type);
+            const cells = board.roomCells[index]?.length ?? 0;
+            if (type?.corridor === true) {
+              return;
+            }
+            expect(
+              cells,
+              `${room.name} (${tier} ${String(size)} seed ${String(seed)})`,
+            ).toBeGreaterThanOrEqual(type?.minCells ?? 0);
+            expect(
+              cells,
+              `${room.name} (${tier} ${String(size)} seed ${String(seed)})`,
+            ).toBeLessThanOrEqual(type?.maxCells ?? Infinity);
+          });
+        }
+      }
+    }
+  });
+
+  it('names the biggest rooms after kinds of rooms that are big, and the smallest after small ones', () => {
+    let biggest = 0;
+    let smallest = 0;
+    let maps = 0;
+    for (let seed = 0; seed < 120; seed += 1) {
+      const layout = make(8, 'medium', seed);
+      const board = new Board(layout, kindsOf(skin));
+      const sizes = layout.rooms.map((_, index) => board.roomCells[index]?.length ?? 0);
+      const bigness = (room: number): number =>
+        skin.roomTypes.find((entry) => entry.id === layout.rooms[room]?.type)?.bigness ?? 0.5;
+      biggest += bigness(sizes.indexOf(Math.max(...sizes)));
+      smallest += bigness(sizes.indexOf(Math.min(...sizes)));
+      maps += 1;
+    }
+    expect(biggest / maps).toBeGreaterThan(smallest / maps + 0.1);
+  });
+
+  it('mixes places to stand on and things that block: half and half, and both in a room with two', () => {
+    let stand = 0;
+    let all = 0;
+    for (const tier of TIERS) {
+      for (let seed = 0; seed < 40; seed += 1) {
+        const layout = make(8, tier, seed);
+        const sorts = Array.from({ length: layout.roomCount }, () => ({ stand: 0, block: 0 }));
+        for (const object of layout.objects) {
+          const room = layout.roomOf[object.cells[0] ?? 0] ?? 0;
+          const sort = sorts[room];
+          if (sort === undefined) {
+            continue;
+          }
+          if (skin.kinds[object.kind]?.occupiable === true) {
+            sort.stand += 1;
+            stand += 1;
+          } else {
+            sort.block += 1;
+          }
+          all += 1;
+        }
+        sorts.forEach((sort, room) => {
+          if (sort.stand + sort.block >= 2) {
+            expect(
+              sort.stand,
+              `${tier} seed ${String(seed)} room ${String(room)}: no place to stand`,
+            ).toBeGreaterThan(0);
+            expect(
+              sort.block,
+              `${tier} seed ${String(seed)} room ${String(room)}: nothing that blocks`,
+            ).toBeGreaterThan(0);
+          }
+        });
+      }
+    }
+    expect(stand / all).toBeGreaterThan(0.4);
+    expect(stand / all).toBeLessThan(0.6);
+  });
+
+  it('puts the typical objects into a room: servers into a server room', () => {
+    const serverRoom = skin.roomTypes.find((entry) => entry.id === 'server-room');
+    const typical = Object.entries(skin.kinds)
+      .filter(([, kind]) => !kind.occupiable)
+      .map(([id]) => ({ id, fit: serverRoom?.affinity[id] ?? 0.3 }))
+      .sort((a, b) => b.fit - a.fit)[0]?.id;
+    let rooms = 0;
+    let withTypical = 0;
+    for (let seed = 0; seed < 200; seed += 1) {
+      const layout = make(8, 'medium', seed);
+      layout.rooms.forEach((room, index) => {
+        if (room.type !== 'server-room') {
+          return;
+        }
+        const objects = layout.objects.filter(
+          (object) => layout.roomOf[object.cells[0] ?? 0] === index,
+        );
+        if (objects.length >= 2) {
+          rooms += 1;
+          withTypical += objects.some((object) => object.kind === typical) ? 1 : 0;
+        }
+      });
+    }
+    expect(rooms).toBeGreaterThan(20);
+    expect(withTypical / rooms).toBeGreaterThan(0.6);
   });
 
   it('makes the same plan for the same seed and a different one for another seed', () => {

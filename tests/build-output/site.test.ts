@@ -36,6 +36,31 @@ describe('every page', () => {
     }
   });
 
+  it('has a space between a word and an inline element next to it', () => {
+    // Astro drops the line break in front of an element at the start of a line, so the text "The",
+    // a line break and "<strong>Legend</strong>" came out as "The<strong>Legend". A dictionary is
+    // not needed to find those: a word character right in front of an opening inline tag that is
+    // followed by a letter (or a letter right after a closing tag) is a missing space.
+    // "<code>x</code>s" would be a legitimate exception; none exists yet.
+    const inline = '(?:strong|em|kbd|code|b|i|a|mark|abbr)';
+    const before = new RegExp(`[A-Za-z0-9,.;:!?)]<${inline}(?:\\s[^>]*)?>[A-Za-z]`);
+    const after = new RegExp(`</${inline}>[A-Za-z]`);
+    for (const { file, html } of pages) {
+      // Repeated until nothing changes, so that nothing like "<scr<script></script>ipt>" is left
+      // (this only reads our own build output, but CodeQL asks for a complete removal)
+      let text = html;
+      let previous: string;
+      do {
+        previous = text;
+        text = text.replace(/<(script|style)[\s\S]*?<\/\1>/gi, '');
+      } while (text !== previous);
+      expect(before.exec(text)?.[0], `${file}: no space in front of an inline element`).toBe(
+        undefined,
+      );
+      expect(after.exec(text)?.[0], `${file}: no space after an inline element`).toBe(undefined);
+    }
+  });
+
   it('loads no insecure http:// resources', () => {
     for (const { file, html } of pages) {
       expect(html, file).not.toMatch(/(?:src|href)="http:\/\//);

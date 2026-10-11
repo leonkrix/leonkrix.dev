@@ -39,7 +39,7 @@ export const games: readonly GameDefinition[] = [
     tag: 'Logic',
     description: 'A logic puzzle: work out which suspect shared a room with the victim.',
     icon: 'lucide:search',
-    status: 'hidden',
+    status: 'live',
   },
   {
     slug: 'word-radar',

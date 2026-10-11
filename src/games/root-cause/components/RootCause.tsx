@@ -9,7 +9,9 @@ import { STORIES, type Story } from '../data/stories';
 import { skinWords } from '../data/words';
 import { Board } from '../logic/board';
 import { check, type Context, isNeutral, subjectOf, UNPLACED } from '../logic/clues';
-import { describeClue, roomText } from '../logic/describe';
+import { describeClue, kindsNobodyIsOn, roomText } from '../logic/describe';
+import { explanationLines } from '../logic/explain';
+import { findHint, type Hint, type HintStage, hintText } from '../logic/hint';
 import {
   clearCell,
   culpritOf,
@@ -26,13 +28,15 @@ import {
   toggleNote,
   undo,
 } from '../logic/play';
-import { type RandomSetup } from '../logic/random-level';
+import { jobFromQuery, type RandomSetup, shareQuery } from '../logic/random-level';
 import { type Cell } from '../logic/types';
 import { type LevelRecord, toLevel } from '../pool';
 import { BoardView, ROOM_LETTERS } from './BoardView';
-import { ItemLegend } from './Legend';
+import { Explanation } from './Explanation';
+import { ItemLegend, LegendButton } from './Legend';
 import { LevelSelect } from './LevelSelect';
-import { ClueList, type Mode, Roster, Toolbar } from './Panels';
+import { ClueList, HintButton, type Mode, Roster, Toolbar } from './Panels';
+import { capitalize, roleLabel } from './text';
 import { useGenerator } from './useGenerator';
 
 const records = levelsJson as unknown as LevelRecord[];
@@ -59,11 +63,18 @@ function storyOf(levelRecord: LevelRecord): Story | undefined {
   return victim === undefined ? undefined : randomStory(levelRecord.skin, levelRecord.seed, victim);
 }
 
-/** `?level=hard-3` in the address opens that level of the pool */
+/**
+ * `?level=hard-3` in the address opens that level of the pool. A shared random level
+ * (`?level=random&seed=...`) opens at once if it is the one in memory, else it has to be made
+ * again (see `jobFromQuery`), and the page of the choice is shown meanwhile.
+ */
 function screenFromAddress(random: LevelRecord | undefined): Screen {
   const id = new URLSearchParams(window.location.search).get('level');
-  if (id === 'random' && random !== undefined) {
-    return { kind: 'play', record: random };
+  if (id === 'random') {
+    const job = jobFromQuery(window.location.search);
+    return random !== undefined && job?.seed === random.seed
+      ? { kind: 'play', record: random }
+      : { kind: 'select' };
   }
   const found = records.find((entry) => entry.id === id);
   return found === undefined ? { kind: 'select' } : { kind: 'play', record: found };
@@ -82,11 +93,11 @@ export default function RootCause() {
     if (isRandom) {
       randomRef.current = record;
     }
-    window.history.pushState(null, '', `?level=${isRandom ? 'random' : record.id}`);
+    window.history.pushState(null, '', isRandom ? shareQuery(record) : `?level=${record.id}`);
     setScreen({ kind: 'play', record });
   };
   const generator = useGenerator(open);
-  const { cancel } = generator;
+  const { cancel, startJob } = generator;
 
   const showSelect = (): void => {
     window.history.pushState(null, '', window.location.pathname);
@@ -97,13 +108,26 @@ export default function RootCause() {
   useEffect(() => {
     const onPop = (): void => {
       cancel();
-      setScreen(screenFromAddress(randomRef.current));
+      const next = screenFromAddress(randomRef.current);
+      setScreen(next);
+      const job = jobFromQuery(window.location.search);
+      if (next.kind === 'select' && job !== undefined) {
+        startJob(job);
+      }
     };
     window.addEventListener('popstate', onPop);
     return () => {
       window.removeEventListener('popstate', onPop);
     };
-  }, [cancel]);
+  }, [cancel, startJob]);
+
+  // A shared random level in the address is made when the page opens
+  useEffect(() => {
+    const job = jobFromQuery(window.location.search);
+    if (job !== undefined) {
+      startJob(job);
+    }
+  }, [startJob]);
 
   // A new page gets the focus on its heading, so that nobody is left on a button that is gone
   useEffect(() => {
@@ -175,7 +199,23 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
   const [selected, setSelected] = useState<number | undefined>(0);
   const [cursor, setCursor] = useState<Cell>(() => firstCell(board));
   const [announcement, setAnnouncement] = useState('');
+  const [hovered, setHovered] = useState<Cell | undefined>();
+  // A hint: the person it is about, how far it has got (three stages), and how many were asked for
+  const [shownHint, setShownHint] = useState<
+    { hint: Hint; stage: HintStage; key: string } | undefined
+  >();
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const [copied, setCopied] = useState<'yes' | 'no' | undefined>();
+  const copiedTimerRef = useRef<number | undefined>(undefined);
+  useEffect(
+    () => () => {
+      window.clearTimeout(copiedTimerRef.current);
+    },
+    [],
+  );
   const gridRef = useRef<HTMLDivElement>(null);
+  const legendRef = useRef<HTMLDialogElement>(null);
+  const explainRef = useRef<HTMLDialogElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const play = history.present;
 
@@ -192,7 +232,14 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
     );
 
   const describeContext = useMemo(
-    () => ({ skin, words, people: level.people, layout: level.layout, kinds: level.kinds }),
+    () => ({
+      skin,
+      words,
+      people: level.people,
+      layout: level.layout,
+      kinds: level.kinds,
+      nobodyOn: kindsNobodyIsOn(level.clues),
+    }),
     [skin, words, level],
   );
   const clues = useMemo(() => {
@@ -328,7 +375,73 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
     }
   }, [solved]);
 
+  // The address of the page is the link to this level: for a random level it holds the seed
+  const copyLink = async (): Promise<void> => {
+    let result: 'yes' | 'no' = 'yes';
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+    } catch {
+      result = 'no';
+    }
+    setCopied(result);
+    say(result === 'yes' ? 'Link to this level copied' : 'The link could not be copied');
+    window.clearTimeout(copiedTimerRef.current);
+    copiedTimerRef.current = window.setTimeout(() => {
+      setCopied(undefined);
+    }, 2200);
+  };
+
+  // A hint is about the map as it was: when the people move, it is gone
+  const placedKey = play.placed.join(',');
+  const hint = shownHint?.key === placedKey ? shownHint : undefined;
+
+  const hintWords = (shown: Hint): { name: string; victim: string; isVictim: boolean } => ({
+    name: level.people[shown.person]?.name ?? '',
+    victim: words.victim,
+    isVictim: shown.person === victim,
+  });
+
+  // Each press goes one stage further for the same person (and counts as a hint); at the last
+  // stage the text is just said again
+  const askHint = (): void => {
+    if (solved) {
+      return;
+    }
+    const shown = hint?.hint ?? findHint(level, play.placed);
+    if (shown === undefined) {
+      say('There is nothing left to hint at.');
+      return;
+    }
+    const stage: HintStage =
+      hint === undefined ? 1 : hint.stage === 3 ? 3 : ((hint.stage + 1) as HintStage);
+    if (hint === undefined || hint.stage < 3) {
+      setHintsUsed((used) => used + 1);
+    }
+    setShownHint({ hint: shown, stage, key: placedKey });
+    say(hintText(shown, stage, hintWords(shown)));
+  };
+
+  // The reasoning behind the hint, in words (only at the last stage, where the cells are shown)
+  const explanation = useMemo(() => {
+    if (hint?.stage !== 3) {
+      return [];
+    }
+    const shown = hint.hint;
+    return explanationLines(shown.steps, {
+      name: (person) => level.people[person]?.name ?? '?',
+      clue: (index) => {
+        const clue = level.clues[index];
+        return clue === undefined ? '' : describeClue(clue, describeContext);
+      },
+      where: (cell) => `row ${String(board.row(cell) + 1)}, column ${String(board.col(cell) + 1)}`,
+      victim: words.victim,
+      person: shown.person,
+      isVictim: shown.person === victim,
+    });
+  }, [hint, level, describeContext, board, words, victim]);
+
   const reset = (): void => {
+    setHintsUsed(0);
     change(emptyPlay(level));
     say('Everything taken off the map');
   };
@@ -401,6 +514,9 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
       case 'x':
         setMode('cross');
         return;
+      case 'h':
+        askHint();
+        return;
       default:
         break;
     }
@@ -409,6 +525,40 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
       choosePerson(digit - 1);
     }
   };
+
+  // A line under the map names what is on the cell under the pointer (or on the cell of the
+  // cursor, for the keyboard and for touch): a quick help, so that the legend is not needed for it
+  const infoCell = hovered ?? cursor;
+  const infoKind = board.kindAt[infoCell];
+  const infoNoun = infoKind === undefined ? undefined : words.kinds[infoKind];
+  const infoPerson = play.placed.indexOf(infoCell);
+  const cellInfo = [
+    ...(infoPerson === -1
+      ? []
+      : [
+          `${level.people[infoPerson]?.name ?? ''} (${
+            infoPerson === victim
+              ? words.victim
+              : roleLabel(words, level.people[infoPerson]?.role ?? '').toLowerCase()
+          })`,
+        ]),
+    roomName(board.roomOf[infoCell] ?? 0),
+    infoKind === undefined
+      ? `Bare floor: ${words.people} can stand here`
+      : `${capitalize((infoNoun?.one ?? infoKind).replace(/^(an?|the) /, ''))}: ${
+          board.blocked.has(infoCell)
+            ? 'blocks the cell'
+            : (infoNoun?.use ?? `${words.people} can be here`)
+        }`,
+  ].join(' · ');
+
+  // The people with notes on the map (a note is hidden for a person who is placed), the clues and
+  // the cells that a hint points at (the cells only at the last stage)
+  const notedPeople = new Set(
+    play.notes.flatMap((people) => people).filter((person) => play.placed[person] === undefined),
+  );
+  const hintedClues = new Set(hint && hint.stage >= 2 ? hint.hint.clues : []);
+  const hintCells = new Set(hint?.stage === 3 ? hint.hint.cells : []);
 
   const levelIndex = records.findIndex((entry) => entry.id === levelRecord.id);
   const nextRecord = isRandom ? undefined : records[levelIndex + 1];
@@ -429,18 +579,41 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
             {story?.title ?? levelRecord.id}
           </h2>
         </div>
-        <button type="button" className="rc-back" onClick={onBack}>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          Level selection
-        </button>
+        <div className="rc-head-actions">
+          <button
+            type="button"
+            className="rc-back"
+            onClick={() => {
+              void copyLink();
+            }}
+            title="Copy the link to this level"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+            <span className="rc-copy-text">
+              {copied === 'yes' ? 'Link copied' : copied === 'no' ? 'Not copied' : 'Copy link'}
+            </span>
+          </button>
+          <button type="button" className="rc-back" onClick={onBack}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            Level selection
+          </button>
+        </div>
         <p className="rc-story">{story?.story}</p>
       </header>
 
       <div className="rc-layout">
         <section className="rc-map" aria-label="Map">
-          <div ref={gridRef}>
+          <div
+            ref={gridRef}
+            onMouseLeave={() => {
+              setHovered(undefined);
+            }}
+          >
             <BoardView
               level={level}
               board={board}
@@ -449,12 +622,18 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
               selected={selected}
               culprit={culprit}
               refused={refused}
+              hintCells={hintCells}
+              hinted={hint?.hint.person}
               roomName={roomName}
               colorOf={colorOf}
               onActivate={activate}
               onCursor={setCursor}
+              onHover={setHovered}
             />
           </div>
+          <p className="rc-cellinfo" aria-hidden="true">
+            {cellInfo}
+          </p>
           <ul className="rc-legend" aria-label="Rooms">
             {Array.from({ length: board.roomCount }, (_, room) => (
               <li
@@ -477,6 +656,8 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
             play={play}
             selected={selected}
             words={words}
+            noted={notedPeople}
+            hinted={hint?.hint.person}
             onSelect={choosePerson}
           />
           <p className="rc-count" aria-live="off">
@@ -495,7 +676,8 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
             }}
             onReset={reset}
           >
-            <ItemLegend level={level} words={words} />
+            <HintButton used={hintsUsed} disabled={solved} onHint={askHint} />
+            <LegendButton dialogRef={legendRef} />
           </Toolbar>
         </section>
 
@@ -505,6 +687,7 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
             items={clues}
             fulfilled={verdicts.fulfilled}
             contradicted={verdicts.contradicted}
+            hinted={hintedClues}
           />
           <p className="rc-rule">
             Exactly one suspect shares a room with the {words.victim}: the {words.culprit}. A clue
@@ -522,7 +705,10 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
             <p className="rc-stamp">{words.solved}</p>
             <p className="rc-result-text">
               <strong>{culpritPerson.name}</strong> was the {words.culprit}: alone with{' '}
-              <strong>{level.people[victim]?.name}</strong> in {roomText(level.layout, crimeRoom)}.
+              <strong>{level.people[victim]?.name}</strong> in {roomText(level.layout, crimeRoom)}.{' '}
+              {hintsUsed === 0
+                ? 'Solved without a hint.'
+                : `Solved with ${String(hintsUsed)} ${hintsUsed === 1 ? 'hint' : 'hints'}.`}
             </p>
             <div className="rc-result-actions">
               {nextRecord !== undefined && (
@@ -554,14 +740,33 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
               </button>
             </div>
           </div>
+        ) : hint !== undefined ? (
+          <div className="rc-status-hint" data-hint>
+            <p className="rc-hint-step">Hint {String(hint.stage)} of 3</p>
+            <p>{hintText(hint.hint, hint.stage, hintWords(hint.hint))}</p>
+            {explanation.length > 0 && (
+              <button
+                type="button"
+                className="rc-explain-open"
+                onClick={() => {
+                  explainRef.current?.showModal();
+                }}
+              >
+                Why here?
+              </button>
+            )}
+          </div>
         ) : (
           <p className="rc-status-hint">
             The case is solved when everybody stands in the right place, the {words.victim}{' '}
             included. Until then there is no feedback, except the ticks and the red marks on the
-            clues.
+            clues. Stuck? The hint button shows which person to look at next, in three steps.
           </p>
         )}
       </div>
+
+      <ItemLegend level={level} words={words} dialogRef={legendRef} />
+      <Explanation lines={explanation} dialogRef={explainRef} />
 
       <p className="sr-only" role="status" aria-live="polite">
         {solved ? `${words.solved}.` : announcement}

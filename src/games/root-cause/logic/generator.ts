@@ -6,11 +6,13 @@ import {
   type Context,
   isNeutral,
   isSolution,
+  isStatic,
   mentions,
   subjectOf,
+  UNPLACED,
 } from './clues';
 import { generateLayout } from './layout';
-import { countByPropagation, rate, type Rating } from './propagation';
+import { countByPropagation, directlySolved, nakedSolved, rate, type Rating } from './propagation';
 import { kindsOf, type Skin } from './skin';
 import { solve } from './solver';
 import {
@@ -48,11 +50,68 @@ const TYPE_WEIGHT: Partial<Record<ClueType, number>> = {
   between: 0.25,
   or: 0.5,
   and: 0.8,
+  // Rows and columns pin a person down fast and are easy to overuse, so they are rare
+  line: 0.45,
+  rowCol: 0.3,
+  roomCorner: 0.8,
+  cornerOfRoom: 0.6,
 };
+
+/** The axes (rows, columns) a clue pins down: a level has at most one clue for each */
+export function axesOf(clue: Clue): ('row' | 'col')[] {
+  switch (clue.type) {
+    case 'line':
+      return [clue.line.endsWith('Row') ? 'row' : 'col'];
+    case 'rowCol':
+      return [clue.axis];
+    case 'and':
+    case 'or':
+      return clue.parts.flatMap((part) => axesOf(part));
+    default:
+      return [];
+  }
+}
+
+/**
+ * The people that the clues of a list pin to a row, and to a column. A row and a column clue about
+ * the same person together are one clue about a single cell, so a level never has both (see
+ * `chooseClues`).
+ */
+export function axisSubjects(clues: readonly Clue[]): { row: number[]; col: number[] } {
+  const result: { row: number[]; col: number[] } = { row: [], col: [] };
+  for (const clue of clues) {
+    const subject = subjectOf(clue);
+    if (subject !== undefined) {
+      for (const axis of axesOf(clue)) {
+        result[axis].push(subject);
+      }
+    }
+  }
+  return result;
+}
 
 /** At most this share of the clues may be of one kind, and of the hardest level, in a bigger level */
 const MAX_SHARE_OF_ONE_TYPE = 1 / 3;
 const MAX_SHARE_OF_LEVEL_THREE = 0.4;
+
+/**
+ * How many of the people the clues alone have to place (see `directlySolved`): on a medium level
+ * at least half of them, so that the way in from an easy level is gentle and the rules about
+ * rooms only finish what the clues began. Easy levels are solved by the clues alone anyway, hard
+ * ones may need more.
+ */
+export function directShare(tier: Tier, size: number): number {
+  return tier === 'medium' ? Math.ceil(size / 2) : 0;
+}
+
+/**
+ * How many of the people the plainest reasoning has to place (see `nakedSolved`): all of them on an
+ * easy level, so that nothing but "this person has one cell left" is ever needed; nothing is asked
+ * on the other tiers.
+ */
+export function nakedShare(tier: Tier, size: number): number {
+  return tier === 'easy' ? size : 0;
+}
 
 /** The tier that goes with a rating: the harder of the reasoning and the clues, or none if it is too hard. */
 export function tierOf(rating: Pick<Rating, 'solved' | 'level' | 'clueLevel'>): Tier | undefined {
@@ -244,6 +303,20 @@ function personClueInstances(
   for (const line of LINES) {
     found.push({ type: 'line', person, line });
   }
+  found.push({ type: 'roomCorner', person });
+  for (let room = 0; room < board.roomCount; room += 1) {
+    found.push({ type: 'cornerOfRoom', person, room });
+  }
+  // Numbered rows and columns, except the first, the last and the middle one (they have words)
+  for (let index = 1; index < board.size - 1; index += 1) {
+    if (board.size % 2 === 1 && index * 2 === board.size - 1) {
+      continue;
+    }
+    found.push(
+      { type: 'rowCol', person, axis: 'row', index },
+      { type: 'rowCol', person, axis: 'col', index },
+    );
+  }
   for (const counting of COUNTINGS) {
     for (const n of [1, 2, 3]) {
       found.push({ type: 'roomMates', person, counting, n });
@@ -375,9 +448,65 @@ export function enumerateClues(
   const allowed = (clue: Clue): boolean => clueLevelOf(clue) <= maxLevel;
   const holds = (clue: Clue): boolean => check(clue, context, solution) === true;
 
+  // The cells a person can stand on (not blocked) where a clue about one person holds. Only for
+  // clues that depend on nothing but the cell of that person.
+  const free = Array.from({ length: context.board.cellCount }, (_, cell) => cell).filter(
+    (cell) => !context.board.blocked.has(cell),
+  );
+  const cellSets = new Map<PersonClue, ReadonlySet<Cell>>();
+  const cellsOf = (clue: PersonClue): ReadonlySet<Cell> | undefined => {
+    if (!isStatic(clue)) {
+      return undefined;
+    }
+    let cells = cellSets.get(clue);
+    if (cells === undefined) {
+      cells = new Set(
+        free.filter(
+          (cell) =>
+            check(
+              clue,
+              context,
+              context.people.map((_, other) => (other === clue.person ? cell : UNPLACED)),
+            ) === true,
+        ),
+      );
+      cellSets.set(clue, cells);
+    }
+    return cells;
+  };
+  /** A clue that rules out something: not true of every cell a person can stand on */
+  const rulesOutSomething = (clue: PersonClue): boolean => {
+    const cells = cellsOf(clue);
+    return cells === undefined || cells.size < free.length;
+  };
+  /**
+   * Both parts of a combination have to contribute: with "and" each part rules out cells the other
+   * one does not, with "or" each part allows cells the other one does not. A part that follows from
+   * the other one ("north-east of a rack and not on a patch panel", when no patch panel is north-east
+   * of a rack) is left out. Parts that depend on other people cannot be checked this way.
+   */
+  const contributes = (kind: 'and' | 'or', first: PersonClue, second: PersonClue): boolean => {
+    const a = cellsOf(first);
+    const b = cellsOf(second);
+    if (a === undefined || b === undefined) {
+      return true;
+    }
+    const both = [...a].filter((cell) => b.has(cell)).length;
+    if (kind === 'and') {
+      return a.size < free.length && b.size < free.length && both < a.size && both < b.size;
+    }
+    return (
+      a.size > 0 &&
+      b.size > 0 &&
+      both < a.size &&
+      both < b.size &&
+      a.size + b.size - both < free.length
+    );
+  };
+
   for (let person = 0; person < context.victim; person += 1) {
     const instances = personClueInstances(context, layout, kinds, person);
-    const truths = instances.filter((clue) => holds(clue));
+    const truths = instances.filter((clue) => holds(clue) && rulesOutSomething(clue));
     const falsehoods = instances.filter((clue) => !holds(clue));
     found.push(...truths.filter(allowed));
 
@@ -391,11 +520,11 @@ export function enumerateClues(
       const first = random.pick(truths);
       const second = random.pick(truths);
       const and: Clue = { type: 'and', person, parts: [first, second] };
-      if (small(first, second) && allowed(and)) {
+      if (small(first, second) && contributes('and', first, second) && allowed(and)) {
         found.push(and);
       }
       const wrong = falsehoods.length > 0 ? random.pick(falsehoods) : undefined;
-      if (wrong !== undefined && small(first, wrong)) {
+      if (wrong !== undefined && small(first, wrong) && contributes('or', first, wrong)) {
         const or: Clue = {
           type: 'or',
           person,
@@ -468,20 +597,43 @@ export function chooseClues(
   maxReasoning: 1 | 2 | 3,
   neutralWanted = 0,
   neutralMost = Number.POSITIVE_INFINITY,
+  needDirect = 0,
+  needNaked = 0,
 ): Clue[] | undefined {
   const { victim } = build.context;
   const used = new Map<string, number>();
+  const usedAxes = new Set<'row' | 'col'>();
+  const axisOf: Record<'row' | 'col', Set<number>> = { row: new Set(), col: new Set() };
   const chosen: Clue[] = [];
   let pool = [...candidates];
 
   const take = (clue: Clue): void => {
     chosen.push(clue);
     used.set(clue.type, (used.get(clue.type) ?? 0) + 1);
+    const subject = subjectOf(clue);
+    for (const axis of axesOf(clue)) {
+      usedAxes.add(axis);
+      if (subject !== undefined) {
+        axisOf[axis].add(subject);
+      }
+    }
     pool = pool.filter((other) => other !== clue);
   };
 
   /** A random clue from the list: kinds that are used less often, or weighted down, are rarer */
-  const pickFrom = (list: readonly Clue[]): Clue | undefined => {
+  const pickFrom = (everything: readonly Clue[]): Clue | undefined => {
+    // At most one clue about a row and one about a column in a level
+    // and never a row and a column clue about the same person: together they name one cell
+    const list = everything.filter((clue) => {
+      const axes = axesOf(clue);
+      const subject = subjectOf(clue);
+      return (
+        axes.every((axis) => !usedAxes.has(axis)) &&
+        !(axes.includes('row') && axes.includes('col')) &&
+        (subject === undefined ||
+          axes.every((axis) => !axisOf[axis === 'row' ? 'col' : 'row'].has(subject)))
+      );
+    });
     if (list.length === 0) {
       return undefined;
     }
@@ -503,8 +655,16 @@ export function chooseClues(
     if (isCertainlyNotUnique(build, clues)) {
       return false;
     }
-    const rating = rate({ layout: build.layout, kinds: build.kinds, people: build.people, clues });
-    return rating.solved && rating.level <= maxReasoning;
+    const puzzle = { layout: build.layout, kinds: build.kinds, people: build.people, clues };
+    const rating = rate(puzzle);
+    if (!rating.solved || rating.level > maxReasoning) {
+      return false;
+    }
+    // A level may want the clues alone to place a share of the people (see `directShare`)
+    return (
+      (needDirect === 0 || directlySolved(puzzle) >= needDirect) &&
+      (needNaked === 0 || nakedSolved(puzzle) >= needNaked)
+    );
   };
 
   // The clues about the whole map first, then every suspect gets one
@@ -605,6 +765,8 @@ export function generateLevel(
       MAX_LEVEL[tier],
       neutralWanted,
       most,
+      directShare(tier, size),
+      nakedShare(tier, size),
     );
     if (clues === undefined) {
       continue;

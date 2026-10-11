@@ -66,6 +66,7 @@ export const caseFileWords: SkinWords = {
     shelf: { one: 'a shelf', plural: 'shelves' },
     crate: { one: 'a crate', plural: 'crates' },
     printer: { one: 'a printer', plural: 'printers' },
+    server: { one: 'a server', plural: 'servers' },
   },
   roles: {
     developer: { one: 'a developer', plural: 'developers' },

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { type RefObject } from 'react';
 
 import { type SkinWords } from '../data/words';
 import { type Level } from '../logic/types';
@@ -8,6 +8,26 @@ import { capitalize } from './text';
 interface LegendProps {
   level: Level;
   words: SkinWords;
+  dialogRef: RefObject<HTMLDialogElement | null>;
+}
+
+/** The button that opens the legend. It sits among the tools; the dialog itself does not. */
+export function LegendButton({ dialogRef }: Pick<LegendProps, 'dialogRef'>) {
+  return (
+    <button
+      type="button"
+      title="What the pictures mean"
+      onClick={() => {
+        dialogRef.current?.showModal();
+      }}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 11v5M12 8h.01" />
+      </svg>
+      Legend
+    </button>
+  );
 }
 
 /**
@@ -15,25 +35,11 @@ interface LegendProps {
  * in a dialog over the page, so that nothing on the page moves, and closes with Escape, the
  * button, or a click outside.
  */
-export function ItemLegend({ level, words }: LegendProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+export function ItemLegend({ level, words, dialogRef }: LegendProps) {
   const kinds = [...new Set(level.layout.objects.map((object) => object.kind))];
 
   return (
     <>
-      <button
-        type="button"
-        title="What the pictures mean"
-        onClick={() => {
-          dialogRef.current?.showModal();
-        }}
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 11v5M12 8h.01" />
-        </svg>
-        Legend
-      </button>
       {/* A click on the dark area around the dialog closes it, Escape works by itself */}
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events */}
       <dialog
@@ -82,7 +88,8 @@ export function ItemLegend({ level, words }: LegendProps) {
               <span />
             </span>
             <span>
-              <strong>Window:</strong> a bright bar on the edge of a cell
+              <strong>Window:</strong> a bright bar on a wall. It belongs to the cells on both sides
+              of it, so "in front of a window" and "a room with a window" count for both rooms
             </span>
           </li>
           <li>

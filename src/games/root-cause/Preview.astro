@@ -1,0 +1,253 @@
+---
+// The tile of the game on the Playground section: the first level of the game, solved step by
+// step. The map is drawn from the real data of the level (rooms, walls and where everybody
+// stands), so it can never show something the game would not. It starts empty, the suspects are
+// placed one after the other, then the victim, and only when everybody stands on the map the
+// culprit turns red. The same happens again, from an empty map, whenever the tile is pointed at or
+// focused, and the people stay where they are when the pointer leaves. Pure CSS, no script. The
+// final look is also the normal look, so the tile is right without any motion.
+import levelsJson from './data/levels.json';
+import { skins } from './data/skins';
+import { Board, SIDES } from './logic/board';
+import { culpritOf } from './logic/play';
+import { type LevelRecord, toLevel } from './pool';
+
+const record = (levelsJson as unknown as LevelRecord[])[0];
+if (record === undefined) {
+  throw new Error('The level pool is empty');
+}
+const level = toLevel(record);
+const board = new Board(level.layout, level.kinds);
+const skin = skins[record.skin];
+const victim = level.people.length - 1;
+const culprit = culpritOf(level);
+
+// The kind of room decides the color, as in the game
+const cells = Array.from({ length: board.cellCount }, (_, cell) => {
+  const room = board.roomOf[cell] ?? 0;
+  const type = level.layout.rooms[room]?.type;
+  const walls = SIDES.filter((side) => {
+    const next = board.step(cell, side);
+    return next !== undefined && board.roomOf[next] !== room;
+  });
+  const person = level.solution.indexOf(cell);
+  return {
+    color: Math.max(
+      0,
+      skin.roomTypes.findIndex((entry) => entry.id === type),
+    ),
+    walls: walls.join(' '),
+    person: person === -1 ? undefined : person,
+    label: person === -1 ? '' : (level.people[person]?.label ?? ''),
+    order: person,
+  };
+});
+---
+
+<div class="pv" aria-hidden="true">
+  <div class="pv-board" style={`--n: ${String(board.size)}; --last: ${String(victim)}`}>
+    {cells.map((cell) => (
+      <div class="pv-cell" data-color={cell.color} data-wall={cell.walls}>
+        {cell.person !== undefined && (
+          <span
+            class="pv-token"
+            data-victim={cell.person === victim || undefined}
+            data-culprit={cell.person === culprit || undefined}
+            style={`--d: ${String(cell.person)}`}
+          >
+            {cell.label}
+          </span>
+        )}
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .pv {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+  }
+
+  .pv-board {
+    display: grid;
+    grid-template-columns: repeat(var(--n), 1fr);
+    width: 10.5rem;
+    aspect-ratio: 1;
+    border: 2px solid color-mix(in srgb, var(--color-fg) 85%, var(--color-bg));
+    border-radius: 0.4rem;
+    overflow: hidden;
+  }
+
+  .pv-cell {
+    display: grid;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--color-fg) 14%, transparent);
+    background-color: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface));
+  }
+
+  .pv-cell[data-color='1'] {
+    background-color: color-mix(in srgb, var(--color-status) 18%, var(--color-surface));
+  }
+  .pv-cell[data-color='2'] {
+    background-color: color-mix(in srgb, var(--color-contrast) 18%, var(--color-surface));
+  }
+  .pv-cell[data-color='3'] {
+    background-color: color-mix(in srgb, var(--color-accent-2) 17%, var(--color-surface));
+  }
+  .pv-cell[data-color='4'] {
+    background-color: color-mix(in srgb, var(--color-danger) 20%, var(--color-surface));
+  }
+  .pv-cell[data-color='5'] {
+    background-color: color-mix(in srgb, var(--color-accent) 14%, var(--color-danger) 14%);
+  }
+  .pv-cell[data-color='6'] {
+    background-color: color-mix(in srgb, var(--color-muted) 22%, var(--color-surface));
+  }
+  .pv-cell[data-color='7'] {
+    background-color: color-mix(in srgb, var(--color-status) 10%, var(--color-contrast) 10%);
+  }
+
+  .pv-cell[data-wall~='n'] {
+    border-top: 2px solid color-mix(in srgb, var(--color-fg) 85%, var(--color-bg));
+  }
+  .pv-cell[data-wall~='e'] {
+    border-right: 2px solid color-mix(in srgb, var(--color-fg) 85%, var(--color-bg));
+  }
+  .pv-cell[data-wall~='s'] {
+    border-bottom: 2px solid color-mix(in srgb, var(--color-fg) 85%, var(--color-bg));
+  }
+  .pv-cell[data-wall~='w'] {
+    border-left: 2px solid color-mix(in srgb, var(--color-fg) 85%, var(--color-bg));
+  }
+
+  /* The names of the animations start with "rcp-": keyframes are not scoped to a component, and
+     the preview of Tech Words has animations of its own that would otherwise be mixed up with
+     these. Each effect exists twice, under two names: the first plays when the tile appears. The
+     second is switched on by pointing at the tile and starts from the beginning every time. */
+  .pv-token {
+    display: grid;
+    place-items: center;
+    width: 68%;
+    aspect-ratio: 1;
+    border: 2px solid var(--color-fg);
+    border-radius: 50%;
+    background: var(--color-surface);
+    font-family: var(--font-mono), monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-fg);
+    animation-name: rcp-place, none;
+    animation-duration: 420ms;
+    animation-timing-function: ease-out;
+    /* Before its turn a person is not on the map yet */
+    animation-fill-mode: backwards;
+    animation-delay: calc(var(--d) * 260ms);
+  }
+
+  /* A token that is waiting to be revealed has not started yet */
+  :global(.reveal-pending) .pv-token {
+    animation-name: none, none;
+  }
+
+  :global(.game-tile):hover .pv-token,
+  :global(.game-tile):focus-visible .pv-token {
+    animation-name: rcp-place, rcp-place-again;
+  }
+
+  .pv-token[data-victim] {
+    border-color: var(--color-contrast);
+    border-radius: 28%;
+    background: color-mix(in srgb, var(--color-contrast) 28%, var(--color-surface));
+  }
+
+  /* The culprit looks like everybody else until the last person is on the map, then turns red and
+     stays red (the fill mode "both" keeps it, and shows the plain look while it waits) */
+  .pv-token[data-culprit] {
+    animation-name: rcp-place, rcp-red, none, none;
+    animation-duration: 420ms, 520ms, 420ms, 520ms;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards, both, backwards, both;
+    animation-delay:
+      calc(var(--d) * 260ms), calc(var(--last) * 260ms + 520ms), calc(var(--d) * 260ms),
+      calc(var(--last) * 260ms + 520ms);
+  }
+
+  :global(.reveal-pending) .pv-token[data-culprit] {
+    animation-name: none, none, none, none;
+  }
+
+  :global(.game-tile):hover .pv-token[data-culprit],
+  :global(.game-tile):focus-visible .pv-token[data-culprit] {
+    animation-name: rcp-place, rcp-red, rcp-place-again, rcp-red-again;
+  }
+
+  @keyframes rcp-place {
+    0% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1.12);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes rcp-place-again {
+    0% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1.12);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes rcp-red {
+    from {
+      border-color: var(--color-fg);
+      background: var(--color-surface);
+    }
+    to {
+      border-color: var(--color-danger);
+      background: color-mix(in srgb, var(--color-danger) 35%, var(--color-surface));
+    }
+  }
+
+  @keyframes rcp-red-again {
+    from {
+      border-color: var(--color-fg);
+      background: var(--color-surface);
+    }
+    to {
+      border-color: var(--color-danger);
+      background: color-mix(in srgb, var(--color-danger) 35%, var(--color-surface));
+    }
+  }
+
+  /* Without motion everybody is on the map from the start, and the culprit is red */
+  @media (prefers-reduced-motion: reduce) {
+    .pv-token,
+    :global(.game-tile):hover .pv-token,
+    :global(.game-tile):focus-visible .pv-token {
+      animation: none;
+    }
+
+    .pv-token[data-culprit] {
+      border-color: var(--color-danger);
+      background: color-mix(in srgb, var(--color-danger) 35%, var(--color-surface));
+    }
+  }
+</style>

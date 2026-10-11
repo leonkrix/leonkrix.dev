@@ -110,6 +110,12 @@ export type PersonClue =
   | { type: 'line'; person: number; line: Line }
   | { type: 'nextToWall'; person: number }
   | { type: 'notNextToWall'; person: number }
+  /** In a corner of the room the person is in (two walls meet, a wall is the board edge or a room boundary) */
+  | { type: 'roomCorner'; person: number }
+  /** In a corner of one given room */
+  | { type: 'cornerOfRoom'; person: number; room: number }
+  /** In row or column number `index` (counted from 0, from the top or from the left) */
+  | { type: 'rowCol'; person: number; axis: 'row' | 'col'; index: number }
   // About who else is in the room
   | { type: 'alone'; person: number }
   | { type: 'roomMates'; person: number; counting: Counting; n: number }

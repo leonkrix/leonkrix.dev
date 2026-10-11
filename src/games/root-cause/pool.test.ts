@@ -3,9 +3,17 @@ import { describe, expect, it } from 'vitest';
 import levelsJson from './data/levels.json';
 import { LEVEL_PLAN, minRoomsOf } from './data/pool-plan';
 import { STORIES } from './data/stories';
-import { subjectOf } from './logic/clues';
-import { problemsOf, tierOf } from './logic/generator';
-import { rate } from './logic/propagation';
+import { Board } from './logic/board';
+import { check, type Context, isStatic, subjectOf, UNPLACED } from './logic/clues';
+import {
+  axesOf,
+  axisSubjects,
+  directShare,
+  nakedShare,
+  problemsOf,
+  tierOf,
+} from './logic/generator';
+import { directlySolved, nakedSolved, rate } from './logic/propagation';
 import { type Level, type Tier } from './logic/types';
 import { type LevelRecord, toLevel } from './pool';
 
@@ -85,6 +93,69 @@ describe('the level pool', () => {
       expect(level.layout.roomCount).toBeGreaterThanOrEqual(minRoomsOf(record.size));
     });
 
+    it('opens the way it should: a medium level is placed half by the clues alone', () => {
+      if (record.tier === 'medium') {
+        expect(directlySolved(level)).toBeGreaterThanOrEqual(directShare('medium', record.size));
+      }
+    });
+
+    it('opens the way it should: an easy level needs nothing but a person with one cell left', () => {
+      if (record.tier === 'easy') {
+        expect(nakedSolved(level)).toBe(nakedShare('easy', record.size));
+      }
+    });
+
+    it('never has a row and a column clue about the same person', () => {
+      const { row, col } = axisSubjects(level.clues);
+      expect(row.filter((person) => col.includes(person))).toEqual([]);
+    });
+
+    it('has at most one clue about a row and one about a column', () => {
+      const axes = level.clues.flatMap((clue) => axesOf(clue));
+      expect(axes.filter((axis) => axis === 'row').length).toBeLessThanOrEqual(1);
+      expect(axes.filter((axis) => axis === 'col').length).toBeLessThanOrEqual(1);
+    });
+
+    it('has no clue that says nothing, and no combination with a part that adds nothing', () => {
+      const board = new Board(level.layout, level.kinds);
+      const context: Context = { board, people: level.people, victim: level.people.length - 1 };
+      const free = Array.from({ length: board.cellCount }, (_, cell) => cell).filter(
+        (cell) => !board.blocked.has(cell),
+      );
+      const cellsOf = (clue: Parameters<typeof isStatic>[0]): Set<number> | undefined => {
+        const person = subjectOf(clue);
+        if (person === undefined || !isStatic(clue)) {
+          return undefined;
+        }
+        return new Set(
+          free.filter(
+            (cell) =>
+              check(
+                clue,
+                context,
+                level.people.map((_, other) => (other === person ? cell : UNPLACED)),
+              ) === true,
+          ),
+        );
+      };
+      for (const clue of level.clues) {
+        if (clue.type === 'and' || clue.type === 'or') {
+          const a = cellsOf(clue.parts[0]);
+          const b = cellsOf(clue.parts[1]);
+          if (a !== undefined && b !== undefined) {
+            const both = [...a].filter((cell) => b.has(cell)).length;
+            expect(both, `${clue.type}: a part follows from the other`).toBeLessThan(a.size);
+            expect(both, `${clue.type}: a part follows from the other`).toBeLessThan(b.size);
+          }
+        } else {
+          const cells = cellsOf(clue);
+          if (cells !== undefined) {
+            expect(cells.size, `${clue.type} says nothing`).toBeLessThan(free.length);
+          }
+        }
+      }
+    });
+
     it('has no clue that could be taken away', () => {
       level.clues.forEach((clue, index) => {
         const clues = level.clues.filter((_, other) => other !== index);
@@ -94,8 +165,13 @@ describe('the level pool', () => {
           return;
         }
         const rating = rate({ ...level, clues });
+        // A clue is also needed when the level would no longer open the way its tier wants
         const stillEnough =
-          rating.solved && rating.level <= MAX_REASONING[record.tier] && rating.level !== 4;
+          rating.solved &&
+          rating.level <= MAX_REASONING[record.tier] &&
+          rating.level !== 4 &&
+          directlySolved({ ...level, clues }) >= directShare(record.tier, record.size) &&
+          nakedSolved({ ...level, clues }) >= nakedShare(record.tier, record.size);
         expect(stillEnough, `clue ${String(index)} (${clue.type}) is not needed`).toBe(false);
       });
     }, 60_000);

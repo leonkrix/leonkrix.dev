@@ -520,6 +520,202 @@ export function engineOf(puzzle: Puzzle): Engine {
   };
 }
 
+/**
+ * How many people the clues alone place (clues about one person and about people next to each
+ * other, with the rule of one person per row and column), without any of the rules about rooms
+ * (the rule about the victim, empty rooms, counting people in rooms). It tells how directly a
+ * puzzle opens: an easy level is solved by the clues alone, a harder one needs the rules about
+ * rooms for part of the people.
+ */
+export function directlySolved(puzzle: Puzzle): number {
+  const engine = engineOf(puzzle);
+  const state = initialState(engine);
+  if (state === undefined) {
+    return 0;
+  }
+  for (let round = 0; round < 200; round += 1) {
+    const one = levelOne(engine, state);
+    const related = relations(engine, state);
+    if (one === undefined || related === undefined) {
+      return 0;
+    }
+    if (!one && !related) {
+      break;
+    }
+  }
+  return Array.from({ length: engine.people }, (_, person) => person).filter(
+    (person) => candidates(state, person).length === 1,
+  ).length;
+}
+
+/**
+ * How many people are placed by the plainest reasoning there is: a person with only one cell left
+ * (after the clues about them alone) stands there, which takes the row and the column of the cell
+ * from everybody else, and that leaves one cell for the next person, and so on. Nothing else is
+ * used: no person bound to a row, no row with one place left, no clue about two people, no rule
+ * about rooms. An easy level is solved this way completely, so it never asks for crossing out in
+ * the head; the victim, who has no clue, is the last one and gets the cell that is left.
+ */
+export function nakedSolved(puzzle: Puzzle): number {
+  const engine = engineOf(puzzle);
+  const state = initialState(engine);
+  if (state === undefined) {
+    return 0;
+  }
+  const { board, people } = engine;
+  const placed = new Set<number>();
+  for (;;) {
+    const next = Array.from({ length: people }, (_, person) => person).find(
+      (person) => !placed.has(person) && candidates(state, person).length === 1,
+    );
+    const [cell] = next === undefined ? [] : candidates(state, next);
+    if (next === undefined || cell === undefined) {
+      break;
+    }
+    placed.add(next);
+    for (let other = 0; other < people; other += 1) {
+      if (other !== next) {
+        keepOnly(
+          state,
+          other,
+          (c) => board.row(c) !== board.row(cell) && board.col(c) !== board.col(cell),
+        );
+      }
+    }
+  }
+  return placed.size;
+}
+
+/** What is known about a person, and how far the reasoning had to go to know it */
+export interface Deduction {
+  /** The cells that are left for the person */
+  cells: Cell[];
+  /**
+   * given: the person is placed already; clues: the clues alone place the person; rooms: with the
+   * rules about rooms; whatif: by trying a cell and finding a contradiction; open: not placed by
+   * any of these, the cells are what is left.
+   */
+  by: 'given' | 'clues' | 'rooms' | 'whatif' | 'open';
+}
+
+/** What the cells of everybody were at one point of `deduce`, to explain how the reasoning got there */
+export interface TraceStep {
+  /**
+   * start: after the clues about one person each; placed: the people on the map are in; cross:
+   * one pass of the rows, columns and singles; relations: one pass of the clues about several
+   * people; rooms: the rules about rooms; whatif: a round of trying cells
+   */
+  label: 'start' | 'placed' | 'cross' | 'relations' | 'rooms' | 'whatif';
+  /** The cells that are left, for every person */
+  cells: Cell[][];
+}
+
+/**
+ * What can be worked out when some people are placed (correctly): for every person the cells that
+ * are left and the kind of reasoning that gets there, from the clues alone up to what-if. Nothing
+ * comes back if the placements contradict the clues. This is what the hints are made of.
+ */
+export function deduce(
+  puzzle: Puzzle,
+  placed: readonly (Cell | undefined)[],
+  trace?: TraceStep[],
+): Deduction[] | undefined {
+  const engine = engineOf(puzzle);
+  const state = initialState(engine);
+  if (state === undefined) {
+    return undefined;
+  }
+  const note = (label: TraceStep['label']): void => {
+    trace?.push({
+      label,
+      cells: Array.from({ length: engine.people }, (_, person) => candidates(state, person)),
+    });
+  };
+  note('start');
+  placed.forEach((cell, person) => {
+    if (cell !== undefined) {
+      keepOnly(state, person, (candidate) => candidate === cell);
+    }
+  });
+  const people = Array.from({ length: engine.people }, (_, person) => person);
+  if (people.some((person) => candidates(state, person).length === 0)) {
+    return undefined;
+  }
+  note('placed');
+  const single = (): Set<number> =>
+    new Set(people.filter((person) => candidates(state, person).length === 1));
+
+  // 1. the clues alone
+  for (let round = 0; round < 200; round += 1) {
+    const one = levelOne(engine, state);
+    if (one) {
+      note('cross');
+    }
+    const related = one === undefined ? undefined : relations(engine, state);
+    if (one === undefined || related === undefined) {
+      return undefined;
+    }
+    if (related) {
+      note('relations');
+    }
+    if (!one && !related) {
+      break;
+    }
+  }
+  const byClues = single();
+
+  // 2. with the rules about rooms
+  if (propagate(engine, state, 2, false) === 'contradiction') {
+    return undefined;
+  }
+  note('rooms');
+  const byRooms = single();
+
+  // 3. what if
+  for (let round = 0; round < 200; round += 1) {
+    let progress = false;
+    for (const person of people) {
+      for (const cell of candidates(state, person)) {
+        if (candidates(state, person).length === 1) {
+          break;
+        }
+        const trial = cloneState(state);
+        keepOnly(trial, person, (candidate) => candidate === cell);
+        if (propagate(engine, trial, 2, false) === 'contradiction') {
+          remove(state, person, cell);
+          progress = true;
+        }
+      }
+    }
+    const outcome = propagate(engine, state, 2, false);
+    if (outcome === 'contradiction') {
+      return undefined;
+    }
+    if (progress) {
+      note('whatif');
+    }
+    if (outcome === 'solved' || !progress) {
+      break;
+    }
+  }
+  const byWhatIf = single();
+
+  return people.map((person) => {
+    const cells = candidates(state, person);
+    const given = placed[person] !== undefined;
+    const by = given
+      ? 'given'
+      : byClues.has(person)
+        ? 'clues'
+        : byRooms.has(person)
+          ? 'rooms'
+          : byWhatIf.has(person)
+            ? 'whatif'
+            : 'open';
+    return { cells, by };
+  });
+}
+
 /** The result of the rater */
 export interface Rating {
   /** Whether the rules and the what-if step (see below) alone were enough to solve the puzzle */
