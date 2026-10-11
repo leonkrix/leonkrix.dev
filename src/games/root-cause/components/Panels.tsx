@@ -18,11 +18,15 @@ interface RosterProps {
   play: Play;
   selected: number | undefined;
   words: SkinWords;
+  /** The people who have a note on the map that is shown */
+  noted: ReadonlySet<number>;
+  /** The person that a hint points at */
+  hinted: number | undefined;
   onSelect: (person: number) => void;
 }
 
 /** The people of the level: choose one, then click a cell. The victim is the last one. */
-export function Roster({ people, play, selected, words, onSelect }: RosterProps) {
+export function Roster({ people, play, selected, words, noted, hinted, onSelect }: RosterProps) {
   const victim = people.length - 1;
   return (
     <ul className="rc-roster" aria-label="People">
@@ -34,6 +38,8 @@ export function Roster({ people, play, selected, words, onSelect }: RosterProps)
             aria-pressed={index === selected}
             data-victim={index === victim || undefined}
             data-placed={play.placed[index] !== undefined || undefined}
+            data-noted={noted.has(index) || undefined}
+            data-hint={index === hinted || undefined}
             onClick={() => {
               onSelect(index);
             }}
@@ -47,6 +53,7 @@ export function Roster({ people, play, selected, words, onSelect }: RosterProps)
               <span className="rc-person-role">
                 {index === victim ? capitalize(words.victim) : roleLabel(words, person.role)}
                 {play.placed[index] !== undefined && <span className="sr-only"> (placed)</span>}
+                {noted.has(index) && <span className="sr-only"> (has notes)</span>}
               </span>
             </span>
           </button>
@@ -64,7 +71,7 @@ interface ModesProps {
   onUndo: () => void;
   onRedo: () => void;
   onReset: () => void;
-  /** More tools for the second row (the legend) */
+  /** More tools for the second row (the hint and the legend) */
   children?: ReactNode;
 }
 
@@ -150,6 +157,8 @@ interface CluesProps {
   fulfilled: ReadonlySet<number>;
   /** The clues that the people on the map break (a break is final, however the rest is placed) */
   contradicted: ReadonlySet<number>;
+  /** The clues that a hint points at */
+  hinted: ReadonlySet<number>;
 }
 
 /**
@@ -157,7 +166,7 @@ interface CluesProps {
  * clue is ticked while the people placed so far satisfy it (and moves to the end of the list),
  * and shown in red while a placement breaks it. Both go away when the people are moved.
  */
-export function ClueList({ items, fulfilled, contradicted }: CluesProps) {
+export function ClueList({ items, fulfilled, contradicted, hinted }: CluesProps) {
   // Satisfied clues go to the end of the list, so that the open ones stay together at the top.
   // Both groups keep the reading order.
   const ordered = [
@@ -170,7 +179,12 @@ export function ClueList({ items, fulfilled, contradicted }: CluesProps) {
         const done = fulfilled.has(item.index);
         const wrong = contradicted.has(item.index);
         return (
-          <li key={item.index} data-done={done || undefined} data-wrong={wrong || undefined}>
+          <li
+            key={item.index}
+            data-done={done || undefined}
+            data-wrong={wrong || undefined}
+            data-hint={hinted.has(item.index) || undefined}
+          >
             <span className="rc-clue-mark" aria-hidden="true">
               {done ? '✓' : wrong ? '✕' : ''}
             </span>
@@ -178,10 +192,40 @@ export function ClueList({ items, fulfilled, contradicted }: CluesProps) {
               {item.text}
               {done && <span className="sr-only"> (satisfied by the people on the map)</span>}
               {wrong && <span className="sr-only"> (broken by the people on the map)</span>}
+              {hinted.has(item.index) && <span className="sr-only"> (marked by the hint)</span>}
             </span>
           </li>
         );
       })}
     </ol>
+  );
+}
+
+interface HintButtonProps {
+  used: number;
+  disabled: boolean;
+  onHint: () => void;
+}
+
+/** The hint button, with the number of hints that were used on this level */
+export function HintButton({ used, disabled, onHint }: HintButtonProps) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onHint}
+      title="A hint: first which person to look at, then what to look at, then where (key H)"
+      aria-label={used > 0 ? `Hint, ${String(used)} used` : 'Hint'}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+        <path d="M9 18h6M10 22h4" />
+      </svg>
+      Hint
+      {/* The place of the counter is always there (invisible at 0), so the tools never move */}
+      <span className="rc-hint-count" data-empty={used === 0 ? '' : undefined} aria-hidden="true">
+        {String(used)}
+      </span>
+    </button>
   );
 }

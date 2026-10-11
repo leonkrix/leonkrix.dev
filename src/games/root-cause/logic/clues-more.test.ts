@@ -29,6 +29,12 @@ import { type Clue, type PersonClue } from './types';
  * or blocked. Both rooms have eight cells.
  */
 const trueClues: [string, Clue][] = [
+  // Ann stands in the top left corner: a corner of the map and of her room
+  ['roomCorner', { type: 'roomCorner', person: ANN }],
+  ['cornerOfRoom', { type: 'cornerOfRoom', person: ANN, room: 0 }],
+  // Ben is in the second row and the third column (numbered from 1, the index counts from 0)
+  ['rowCol row', { type: 'rowCol', person: BEN, axis: 'row', index: 1 }],
+  ['rowCol col', { type: 'rowCol', person: BEN, axis: 'col', index: 2 }],
   ['inRoomType', { type: 'inRoomType', person: ANN, roomType: 'open-office' }],
   ['notInRoomType', { type: 'notInRoomType', person: BEN, roomType: 'open-office' }],
   ['roomHasWindow', { type: 'roomHasWindow', person: ANN, has: true }],
@@ -95,6 +101,12 @@ const trueClues: [string, Clue][] = [
 ];
 
 const falseClues: [string, Clue][] = [
+  // Ben at (1,2) only touches the wall on his left, Cleo at (2,3) only the edge of the board
+  ['roomCorner Ben', { type: 'roomCorner', person: BEN }],
+  ['roomCorner Cleo', { type: 'roomCorner', person: CLEO }],
+  ['cornerOfRoom wrong room', { type: 'cornerOfRoom', person: ANN, room: 1 }],
+  ['rowCol wrong row', { type: 'rowCol', person: BEN, axis: 'row', index: 2 }],
+  ['rowCol wrong col', { type: 'rowCol', person: BEN, axis: 'col', index: 1 }],
   ['inRoomType', { type: 'inRoomType', person: ANN, roomType: 'server-room' }],
   ['notInRoomType', { type: 'notInRoomType', person: ANN, roomType: 'open-office' }],
   ['roomHasWindow', { type: 'roomHasWindow', person: ANN, has: false }],

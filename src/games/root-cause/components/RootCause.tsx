@@ -10,6 +10,8 @@ import { skinWords } from '../data/words';
 import { Board } from '../logic/board';
 import { check, type Context, isNeutral, subjectOf, UNPLACED } from '../logic/clues';
 import { describeClue, kindsNobodyIsOn, roomText } from '../logic/describe';
+import { explanationLines } from '../logic/explain';
+import { findHint, type Hint, type HintStage, hintText } from '../logic/hint';
 import {
   clearCell,
   culpritOf,
@@ -30,10 +32,11 @@ import { jobFromQuery, type RandomSetup, shareQuery } from '../logic/random-leve
 import { type Cell } from '../logic/types';
 import { type LevelRecord, toLevel } from '../pool';
 import { BoardView, ROOM_LETTERS } from './BoardView';
+import { Explanation } from './Explanation';
 import { ItemLegend, LegendButton } from './Legend';
 import { LevelSelect } from './LevelSelect';
-import { ClueList, type Mode, Roster, Toolbar } from './Panels';
-import { capitalize } from './text';
+import { ClueList, HintButton, type Mode, Roster, Toolbar } from './Panels';
+import { capitalize, roleLabel } from './text';
 import { useGenerator } from './useGenerator';
 
 const records = levelsJson as unknown as LevelRecord[];
@@ -197,6 +200,11 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
   const [cursor, setCursor] = useState<Cell>(() => firstCell(board));
   const [announcement, setAnnouncement] = useState('');
   const [hovered, setHovered] = useState<Cell | undefined>();
+  // A hint: the person it is about, how far it has got (three stages), and how many were asked for
+  const [shownHint, setShownHint] = useState<
+    { hint: Hint; stage: HintStage; key: string } | undefined
+  >();
+  const [hintsUsed, setHintsUsed] = useState(0);
   const [copied, setCopied] = useState<'yes' | 'no' | undefined>();
   const copiedTimerRef = useRef<number | undefined>(undefined);
   useEffect(
@@ -207,6 +215,7 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
   );
   const gridRef = useRef<HTMLDivElement>(null);
   const legendRef = useRef<HTMLDialogElement>(null);
+  const explainRef = useRef<HTMLDialogElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const play = history.present;
 
@@ -382,7 +391,57 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
     }, 2200);
   };
 
+  // A hint is about the map as it was: when the people move, it is gone
+  const placedKey = play.placed.join(',');
+  const hint = shownHint?.key === placedKey ? shownHint : undefined;
+
+  const hintWords = (shown: Hint): { name: string; victim: string; isVictim: boolean } => ({
+    name: level.people[shown.person]?.name ?? '',
+    victim: words.victim,
+    isVictim: shown.person === victim,
+  });
+
+  // Each press goes one stage further for the same person (and counts as a hint); at the last
+  // stage the text is just said again
+  const askHint = (): void => {
+    if (solved) {
+      return;
+    }
+    const shown = hint?.hint ?? findHint(level, play.placed);
+    if (shown === undefined) {
+      say('There is nothing left to hint at.');
+      return;
+    }
+    const stage: HintStage =
+      hint === undefined ? 1 : hint.stage === 3 ? 3 : ((hint.stage + 1) as HintStage);
+    if (hint === undefined || hint.stage < 3) {
+      setHintsUsed((used) => used + 1);
+    }
+    setShownHint({ hint: shown, stage, key: placedKey });
+    say(hintText(shown, stage, hintWords(shown)));
+  };
+
+  // The reasoning behind the hint, in words (only at the last stage, where the cells are shown)
+  const explanation = useMemo(() => {
+    if (hint?.stage !== 3) {
+      return [];
+    }
+    const shown = hint.hint;
+    return explanationLines(shown.steps, {
+      name: (person) => level.people[person]?.name ?? '?',
+      clue: (index) => {
+        const clue = level.clues[index];
+        return clue === undefined ? '' : describeClue(clue, describeContext);
+      },
+      where: (cell) => `row ${String(board.row(cell) + 1)}, column ${String(board.col(cell) + 1)}`,
+      victim: words.victim,
+      person: shown.person,
+      isVictim: shown.person === victim,
+    });
+  }, [hint, level, describeContext, board, words, victim]);
+
   const reset = (): void => {
+    setHintsUsed(0);
     change(emptyPlay(level));
     say('Everything taken off the map');
   };
@@ -455,6 +514,9 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
       case 'x':
         setMode('cross');
         return;
+      case 'h':
+        askHint();
+        return;
       default:
         break;
     }
@@ -469,7 +531,17 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
   const infoCell = hovered ?? cursor;
   const infoKind = board.kindAt[infoCell];
   const infoNoun = infoKind === undefined ? undefined : words.kinds[infoKind];
+  const infoPerson = play.placed.indexOf(infoCell);
   const cellInfo = [
+    ...(infoPerson === -1
+      ? []
+      : [
+          `${level.people[infoPerson]?.name ?? ''} (${
+            infoPerson === victim
+              ? words.victim
+              : roleLabel(words, level.people[infoPerson]?.role ?? '').toLowerCase()
+          })`,
+        ]),
     roomName(board.roomOf[infoCell] ?? 0),
     infoKind === undefined
       ? `Bare floor: ${words.people} can stand here`
@@ -479,6 +551,14 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
             : (infoNoun?.use ?? `${words.people} can be here`)
         }`,
   ].join(' · ');
+
+  // The people with notes on the map (a note is hidden for a person who is placed), the clues and
+  // the cells that a hint points at (the cells only at the last stage)
+  const notedPeople = new Set(
+    play.notes.flatMap((people) => people).filter((person) => play.placed[person] === undefined),
+  );
+  const hintedClues = new Set(hint && hint.stage >= 2 ? hint.hint.clues : []);
+  const hintCells = new Set(hint?.stage === 3 ? hint.hint.cells : []);
 
   const levelIndex = records.findIndex((entry) => entry.id === levelRecord.id);
   const nextRecord = isRandom ? undefined : records[levelIndex + 1];
@@ -542,6 +622,8 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
               selected={selected}
               culprit={culprit}
               refused={refused}
+              hintCells={hintCells}
+              hinted={hint?.hint.person}
               roomName={roomName}
               colorOf={colorOf}
               onActivate={activate}
@@ -574,6 +656,8 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
             play={play}
             selected={selected}
             words={words}
+            noted={notedPeople}
+            hinted={hint?.hint.person}
             onSelect={choosePerson}
           />
           <p className="rc-count" aria-live="off">
@@ -592,6 +676,7 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
             }}
             onReset={reset}
           >
+            <HintButton used={hintsUsed} disabled={solved} onHint={askHint} />
             <LegendButton dialogRef={legendRef} />
           </Toolbar>
         </section>
@@ -602,6 +687,7 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
             items={clues}
             fulfilled={verdicts.fulfilled}
             contradicted={verdicts.contradicted}
+            hinted={hintedClues}
           />
           <p className="rc-rule">
             Exactly one suspect shares a room with the {words.victim}: the {words.culprit}. A clue
@@ -619,7 +705,10 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
             <p className="rc-stamp">{words.solved}</p>
             <p className="rc-result-text">
               <strong>{culpritPerson.name}</strong> was the {words.culprit}: alone with{' '}
-              <strong>{level.people[victim]?.name}</strong> in {roomText(level.layout, crimeRoom)}.
+              <strong>{level.people[victim]?.name}</strong> in {roomText(level.layout, crimeRoom)}.{' '}
+              {hintsUsed === 0
+                ? 'Solved without a hint.'
+                : `Solved with ${String(hintsUsed)} ${hintsUsed === 1 ? 'hint' : 'hints'}.`}
             </p>
             <div className="rc-result-actions">
               {nextRecord !== undefined && (
@@ -651,16 +740,33 @@ function LevelView({ record: levelRecord, onBack, onNext, onAnotherRandom }: Lev
               </button>
             </div>
           </div>
+        ) : hint !== undefined ? (
+          <div className="rc-status-hint" data-hint>
+            <p className="rc-hint-step">Hint {String(hint.stage)} of 3</p>
+            <p>{hintText(hint.hint, hint.stage, hintWords(hint.hint))}</p>
+            {explanation.length > 0 && (
+              <button
+                type="button"
+                className="rc-explain-open"
+                onClick={() => {
+                  explainRef.current?.showModal();
+                }}
+              >
+                Why here?
+              </button>
+            )}
+          </div>
         ) : (
           <p className="rc-status-hint">
             The case is solved when everybody stands in the right place, the {words.victim}{' '}
             included. Until then there is no feedback, except the ticks and the red marks on the
-            clues.
+            clues. Stuck? The hint button shows which person to look at next, in three steps.
           </p>
         )}
       </div>
 
       <ItemLegend level={level} words={words} dialogRef={legendRef} />
+      <Explanation lines={explanation} dialogRef={explainRef} />
 
       <p className="sr-only" role="status" aria-live="polite">
         {solved ? `${words.solved}.` : announcement}

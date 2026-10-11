@@ -88,7 +88,8 @@ export function ItemLegend({ level, words, dialogRef }: LegendProps) {
               <span />
             </span>
             <span>
-              <strong>Window:</strong> a bright bar on the edge of a cell
+              <strong>Window:</strong> a bright bar on a wall. It belongs to the cells on both sides
+              of it, so "in front of a window" and "a room with a window" count for both rooms
             </span>
           </li>
           <li>

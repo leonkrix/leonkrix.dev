@@ -60,6 +60,9 @@ export const CLUE_LEVEL: Readonly<Record<ClueType, ClueLevel>> = {
   notNextToKind: 2,
   nextToWall: 2,
   notNextToWall: 2,
+  roomCorner: 2,
+  cornerOfRoom: 2,
+  rowCol: 1,
   notSameRoom: 2,
   roomRole: 2,
   roomSize: 2,
@@ -278,6 +281,9 @@ const STATIC_TYPES: ReadonlySet<ClueType> = new Set<ClueType>([
   'line',
   'nextToWall',
   'notNextToWall',
+  'roomCorner',
+  'cornerOfRoom',
+  'rowCol',
 ]);
 
 /** Whether a clue only depends on where the one person it is about stands (not on anybody else) */
@@ -396,6 +402,12 @@ function checkPerson(clue: PersonClue, context: Context, placement: readonly Cel
       return board.wallCells.has(cell);
     case 'notNextToWall':
       return !board.wallCells.has(cell);
+    case 'roomCorner':
+      return board.roomCorners.has(cell);
+    case 'cornerOfRoom':
+      return room === clue.room && board.roomCorners.has(cell);
+    case 'rowCol':
+      return (clue.axis === 'row' ? board.row(cell) : board.col(cell)) === clue.index;
     case 'soleOnKind': {
       if (board.kindAt[cell] !== clue.kind) {
         return false;

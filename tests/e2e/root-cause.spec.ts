@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 import AxeBuilder from '@axe-core/playwright';
-import { type Page } from '@playwright/test';
+import { type Locator, type Page } from '@playwright/test';
 
 import { Board } from '../../src/games/root-cause/logic/board';
 import { check, subjectOf, UNPLACED } from '../../src/games/root-cause/logic/clues';
@@ -168,7 +168,9 @@ test.describe('Root Cause', () => {
     await page.getByRole('button', { name: 'Legend' }).click();
     const dialog = page.getByRole('dialog', { name: 'What the pictures mean' });
     await expect(dialog).toBeVisible();
-    await expect(dialog).toContainText('Window: a bright bar on the edge of a cell');
+    await expect(dialog).toContainText(
+      'Window: a bright bar on a wall. It belongs to the cells on both sides of it',
+    );
     await expect(dialog).toContainText('Cross:');
     expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(before);
 
@@ -176,6 +178,95 @@ test.describe('Root Cause', () => {
     await page.keyboard.press('1');
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();
+  });
+
+  test('gives a hint in three stages, counts them, and takes them back when the map changes', async ({
+    page,
+  }) => {
+    const level = levelOf('easy-1');
+    await open(page, 'easy-1');
+    const hintButton = page.getByRole('button', { name: /^Hint/ });
+    // Asking for hints moves nothing: the tools keep their places while the counter appears
+    const legend = page.getByRole('button', { name: 'Legend' });
+    const placeOf = (target: Locator): Promise<number[]> =>
+      target.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        return [box.x, box.y + window.scrollY, box.width, box.height];
+      });
+    const tools = page.locator('.rc-tools').first();
+    const legendBefore = await placeOf(legend);
+    const toolsBefore = await placeOf(tools);
+    await hintButton.click();
+    await expect(page.locator('.rc-hint-step')).toHaveText('Hint 1 of 3');
+    expect(await placeOf(legend)).toEqual(legendBefore);
+    expect(await placeOf(tools)).toEqual(toolsBefore);
+    // The first stage points at a person in the list, no clue and no cell is marked yet
+    await expect(page.locator('.rc-person[data-hint]')).toHaveCount(1);
+    await expect(page.locator('.rc-clues [data-hint]')).toHaveCount(0);
+    await expect(page.locator('.rc-cell[data-hint]')).toHaveCount(0);
+
+    await hintButton.click();
+    await expect(page.locator('.rc-hint-step')).toHaveText('Hint 2 of 3');
+    expect(await page.locator('.rc-clues [data-hint]').count()).toBeGreaterThan(0);
+
+    await hintButton.click();
+    await expect(page.locator('.rc-hint-step')).toHaveText('Hint 3 of 3');
+    const marked = page.locator('.rc-cell[data-hint]');
+    expect(await marked.count()).toBeGreaterThan(0);
+    // The person belongs on one of the marked cells (the hint never points at a wrong cell)
+    const person = await page
+      .locator('.rc-person[data-hint]')
+      .evaluate((element) =>
+        Array.from(element.parentElement?.parentElement?.children ?? []).indexOf(
+          element.parentElement as Element,
+        ),
+      );
+    const solutionCell = level.solution[person] ?? -1;
+    await expect(cellOf(page, solutionCell)).toHaveAttribute('data-hint', 'true');
+    // Three hints were used
+    await expect(hintButton).toHaveAccessibleName('Hint, 3 used');
+
+    // The last stage explains why, in a dialog that moves nothing on the page
+    const before = await page.evaluate(() => document.documentElement.scrollHeight);
+    await page.getByRole('button', { name: 'Why here?' }).click();
+    const why = page.getByRole('dialog', { name: 'Why here?' });
+    await expect(why).toBeVisible();
+    expect(await why.getByRole('listitem').count()).toBeGreaterThanOrEqual(2);
+    await expect(why.getByRole('listitem').last()).toContainText('So ');
+    await page.keyboard.press('Escape');
+    await expect(why).toBeHidden();
+    expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(before);
+
+    // A hint is gone when the people on the map change
+    await page.keyboard.press(String(person + 1));
+    await cellOf(page, solutionCell).click();
+    await expect(page.locator('.rc-cell[data-hint]')).toHaveCount(0);
+    await expect(page.locator('.rc-hint-step')).toHaveCount(0);
+  });
+
+  test('shows a pencil after the name of a person who has notes', async ({ page }) => {
+    const level = levelOf('easy-1');
+    const blocked = blockedCells(level);
+    await open(page, 'easy-1');
+    const free = Array.from({ length: level.size * level.size }, (_, cell) => cell).find(
+      (cell) => !blocked.has(cell),
+    );
+    await page.getByRole('button', { name: 'Note' }).click();
+    await page.keyboard.press('2');
+    await expect(page.locator('.rc-person[data-noted]')).toHaveCount(0);
+    await cellOf(page, free ?? 0).click();
+    await expect(page.locator('.rc-person[data-noted]')).toHaveCount(1);
+  });
+
+  test('names who stands on a cell in the line under the map', async ({ page }) => {
+    const level = levelOf('easy-1');
+    await open(page, 'easy-1');
+    const home = level.solution[0] ?? 0;
+    await page.keyboard.press('1');
+    await cellOf(page, home).click();
+    await cellOf(page, home).hover();
+    const name = toLevel(level).people[0]?.name ?? '';
+    await expect(page.locator('.rc-cellinfo')).toContainText(name);
   });
 
   test('makes a random level in the browser with the workers, and opens it from its link', async ({

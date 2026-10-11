@@ -18,6 +18,10 @@ interface BoardViewProps {
   culprit: number | undefined;
   /** A cell that refused a click a moment ago: it shakes */
   refused: Cell | undefined;
+  /** The cells that a hint points at */
+  hintCells: ReadonlySet<Cell>;
+  /** The person that a hint points at */
+  hinted: number | undefined;
   roomName: (room: number) => string;
   /** The color number of a room: all rooms of one type share a color */
   colorOf: (room: number) => number;
@@ -43,6 +47,8 @@ export function BoardView({
   selected,
   culprit,
   refused,
+  hintCells,
+  hinted,
   roomName,
   colorOf,
   onActivate,
@@ -73,6 +79,31 @@ export function BoardView({
           const back = { n: 's', s: 'n', e: 'w', w: 'e' } as const;
           result.set(second, { ...result.get(second), [back[side]]: true });
         }
+      }
+    }
+    return result;
+  }, [board, level.layout.objects]);
+  // A sofa has its back to a wall: the back is on the side where a wall is (the board edge or a
+  // room boundary), along the long side. A chair is always drawn the same way, it is too round to turn
+  const backs = useMemo(() => {
+    const result = new Map<Cell, Side>();
+    const wallAt = (cell: Cell, side: Side): boolean => {
+      const next = board.step(cell, side);
+      return next === undefined || board.roomOf[next] !== board.roomOf[cell];
+    };
+    for (const object of level.layout.objects) {
+      if (object.kind !== 'sofa') {
+        continue;
+      }
+      const [first = 0, second] = object.cells;
+      const vertical = second !== undefined && board.col(first) === board.col(second);
+      const allowed: Side[] =
+        second === undefined ? ['n', 'w', 'e', 's'] : vertical ? ['w', 'e'] : ['n', 's'];
+      const side = allowed.find((candidate) =>
+        object.cells.some((cell) => wallAt(cell, candidate)),
+      );
+      for (const cell of object.cells) {
+        result.set(cell, side ?? allowed[0] ?? 'n');
       }
     }
     return result;
@@ -150,6 +181,7 @@ export function BoardView({
                 }
                 data-cursor={isCursor || undefined}
                 data-refused={cell === refused || undefined}
+                data-hint={hintCells.has(cell) || undefined}
                 data-crime={crimeRoom === room ? true : undefined}
                 data-wall={walls.join(' ') || undefined}
                 onClick={() => {
@@ -178,10 +210,21 @@ export function BoardView({
                   </span>
                 )}
                 {(windows.get(cell) ?? []).map((side) => (
-                  <span key={side} className="rc-window" data-side={side} aria-hidden="true" />
+                  <span
+                    key={side}
+                    className="rc-window"
+                    data-side={side}
+                    data-across={board.step(cell, side) !== undefined || undefined}
+                    aria-hidden="true"
+                  />
                 ))}
                 {kind !== undefined && (
-                  <Glyph kind={kind} occupiable={!blocked} join={joins.get(cell) ?? {}} />
+                  <Glyph
+                    kind={kind}
+                    occupiable={!blocked}
+                    join={joins.get(cell) ?? {}}
+                    back={backs.get(cell)}
+                  />
                 )}
                 {crossed && (
                   <svg className="rc-cross" viewBox="0 0 100 100" aria-hidden="true">
@@ -203,6 +246,7 @@ export function BoardView({
                     className="rc-token"
                     data-victim={occupant === victim || undefined}
                     data-selected={occupant === selected || undefined}
+                    data-hint={occupant === hinted || undefined}
                     data-culprit={occupant === culprit || undefined}
                     data-long={(level.people[occupant]?.label.length ?? 0) > 2 || undefined}
                     aria-hidden="true"

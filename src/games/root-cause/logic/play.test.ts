@@ -378,7 +378,7 @@ describe('the texts of the clues', () => {
           if (clue.type === 'onFurniture') {
             const present = new Set(layout.objects.map((object) => object.kind));
             for (const [kind, info] of Object.entries(kinds)) {
-              const name = skinWords[skin.id].kinds[kind]?.one ?? '';
+              const name = (skinWords[skin.id].kinds[kind]?.one ?? '').replace(/^(an?|the) /, '');
               expect(text.includes(name), `${kind} in "${text}"`).toBe(
                 info.occupiable && present.has(kind),
               );

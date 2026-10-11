@@ -27,6 +27,8 @@ export class Board {
   readonly windowCells: ReadonlySet<Cell>;
   /** Cells with a wall on at least one side: the board edge or a room boundary */
   readonly wallCells: ReadonlySet<Cell>;
+  /** Cells where two walls meet at a right angle: a corner of their room */
+  readonly roomCorners: ReadonlySet<Cell>;
   /** The cells next to a cell, above, below, left and right, in the same room only */
   readonly roomNeighbors: readonly (readonly Cell[])[];
   /** The type of every room, in the order of the room numbers */
@@ -124,6 +126,18 @@ export class Board {
       }
     }
     this.wallCells = wallCells;
+
+    const roomCorners = new Set<Cell>();
+    for (let cell = 0; cell < this.cellCount; cell += 1) {
+      const wall = (side: Side): boolean => {
+        const next = this.step(cell, side);
+        return next === undefined || layout.roomOf[next] !== layout.roomOf[cell];
+      };
+      if ((wall('n') || wall('s')) && (wall('e') || wall('w'))) {
+        roomCorners.add(cell);
+      }
+    }
+    this.roomCorners = roomCorners;
     this.roomNeighbors = roomNeighbors;
   }
 

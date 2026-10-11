@@ -11,7 +11,11 @@ interface GlyphProps {
   /** Whether people can stand on it: they are drawn as outlines, the others on a solid tile */
   occupiable: boolean;
   join: Join;
+  /** The side of the cell where the back of a sofa is (at a wall); north if not given */
+  back?: Side | undefined;
 }
+
+const CLOCKWISE: readonly Side[] = ['n', 'e', 's', 'w'];
 
 /**
  * The picture of an object on a 100 by 100 square. Most kinds use an icon of the Lucide set
@@ -20,7 +24,9 @@ interface GlyphProps {
  * The kind of an object is also in the label of the cell, so a picture is never the only
  * information. Objects that block their cell sit on a solid tile.
  */
-export function Glyph({ kind, occupiable, join }: GlyphProps) {
+export function Glyph({ kind, occupiable, join, back = 'n' }: GlyphProps) {
+  // How far the picture is turned (clockwise, in quarters) so that its back is on the wall
+  const turns = CLOCKWISE.indexOf(back);
   const icon = OBJECT_ICONS[kind];
   if (icon !== undefined) {
     return (
@@ -67,27 +73,35 @@ export function Glyph({ kind, occupiable, join }: GlyphProps) {
       break;
     case 'sofa': {
       // One sofa over two cells: the lines run through the seam without a break, and only the two
-      // outer ends are closed with a rounded arm, so the halves read as one piece
-      const x0 = toStart ? 0 : 8;
-      const x1 = toEnd ? 100 : 92;
-      const lineFrom = toStart ? 0 : x0 + 10;
-      const lineTo = toEnd ? 100 : x1 - 10;
-      shapes = body(
-        <>
+      // outer ends are closed with a rounded arm, so the halves read as one piece. It is drawn
+      // with the back on top, the arms left and right, and then turned so that the back is on the
+      // wall; the joined sides are looked up in that turned frame.
+      const screenOf = (side: Side): Side =>
+        CLOCKWISE[(CLOCKWISE.indexOf(side) + turns) % 4] ?? side;
+      const joinedStart = join[screenOf('w')] === true;
+      const joinedEnd = join[screenOf('e')] === true;
+      const x0 = joinedStart ? 0 : 8;
+      const x1 = joinedEnd ? 100 : 92;
+      const lineFrom = joinedStart ? 0 : x0 + 10;
+      const lineTo = joinedEnd ? 100 : x1 - 10;
+      shapes = (
+        <g transform={turns === 0 ? undefined : `rotate(${String(turns * 90)} 50 50)`}>
           <path d={`M ${String(lineFrom)} 20 H ${String(lineTo)}`} />
           <path d={`M ${String(lineFrom)} 76 H ${String(lineTo)}`} />
-          <path d={`M ${String(toStart ? 0 : x0 + 14)} 40 H ${String(toEnd ? 100 : x1 - 14)}`} />
-          {!toStart && (
+          <path
+            d={`M ${String(joinedStart ? 0 : x0 + 14)} 40 H ${String(joinedEnd ? 100 : x1 - 14)}`}
+          />
+          {!joinedStart && (
             <path
               d={`M ${String(x0 + 10)} 20 Q ${String(x0)} 20 ${String(x0)} 30 V 66 Q ${String(x0)} 76 ${String(x0 + 10)} 76 M ${String(x0 + 14)} 40 V 76`}
             />
           )}
-          {!toEnd && (
+          {!joinedEnd && (
             <path
               d={`M ${String(x1 - 10)} 20 Q ${String(x1)} 20 ${String(x1)} 30 V 66 Q ${String(x1)} 76 ${String(x1 - 10)} 76 M ${String(x1 - 14)} 40 V 76`}
             />
           )}
-        </>,
+        </g>
       );
       break;
     }
