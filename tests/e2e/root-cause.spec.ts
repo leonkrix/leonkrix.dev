@@ -292,6 +292,32 @@ test.describe('Root Cause', () => {
     await expect(page.getByRole('heading', { level: 2 })).toHaveText(title);
   });
 
+  test('makes a random level in the look that was asked for', async ({ page }) => {
+    await page.goto(PATH);
+    await page.getByLabel('Difficulty').selectOption('easy');
+    await page.getByLabel('Size').selectOption('4');
+    await page.getByLabel('Look of the level').selectOption('outage');
+    await page.getByRole('button', { name: 'New level' }).click();
+    await expect(page.getByRole('button', { name: 'Level selection' })).toBeVisible({
+      timeout: 60_000,
+    });
+    expect(page.url()).toContain('skin=outage');
+    await expect(page.locator('.rc-eyebrow')).toContainText('Outage');
+  });
+
+  test('shows the role of every person on a small screen too', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await open(page, 'easy-1');
+    const roles = page.locator('.rc-person-role');
+    expect(await roles.count()).toBeGreaterThan(0);
+    for (const role of await roles.all()) {
+      await expect(role).toBeVisible();
+    }
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+  });
+
   test('stores nothing on the device after a round', async ({ page }) => {
     await open(page, 'easy-2');
     await solveWithKeyboard(page, levelOf('easy-2'));

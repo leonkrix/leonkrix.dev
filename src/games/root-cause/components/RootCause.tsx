@@ -83,7 +83,7 @@ function screenFromAddress(random: LevelRecord | undefined): Screen {
 /** The game: choose a level or make a random one, then put the people on the map. */
 export default function RootCause() {
   const [screen, setScreen] = useState<Screen>(() => screenFromAddress(undefined));
-  const [setup, setSetup] = useState<RandomSetup>({ tier: 'any', size: 'any' });
+  const [setup, setSetup] = useState<RandomSetup>({ tier: 'any', size: 'any', skin: 'any' });
   const randomRef = useRef<LevelRecord | undefined>(undefined);
   const rootRef = useRef<HTMLDivElement>(null);
   const firstRef = useRef(true);

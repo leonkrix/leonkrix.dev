@@ -971,20 +971,28 @@
   }
 }
 
-/* ---- Small screens: a compact list of people, so that the map stays in reach ---- */
+/* ---- Small screens: a compact list of people (two columns), so that the map stays in reach ---- */
 
 @media (max-width: 40rem) {
-  .rc-person-role {
-    display: none;
-  }
-
+  /* Two columns, name and role one above the other: the roles are what the clues talk about */
   .rc-person {
     padding-right: 0.6rem;
   }
 
   .rc-roster {
-    grid-template-columns: repeat(auto-fill, minmax(7.2rem, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.3rem;
+  }
+
+  .rc-person-text {
+    min-width: 0;
+  }
+
+  .rc-person-name,
+  .rc-person-role {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 

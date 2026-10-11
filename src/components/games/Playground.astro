@@ -1,7 +1,7 @@
 ---
 import GameGrid from '@/components/games/GameGrid.astro';
 import Section from '@/components/Section.astro';
-import { gamesPath, liveGames } from '@/games/registry';
+import { gamesPath, liveGames, playgroundIntro } from '@/games/registry';
 
 interface Props {
   /** Number shown above the title, e.g. "04" */
@@ -14,11 +14,7 @@ const games = liveGames();
 
 {games.length > 0 && (
   <Section id="playground" index={index} title="Playground">
-    <p class="reveal max-w-2xl text-lg leading-relaxed text-muted">
-      Small games I built for fun, around the things I work with: tech words, logic, computer
-      networks, machine learning. Each one explains how it is built, runs in your browser and stores
-      nothing on your device.
-    </p>
+    <p class="reveal max-w-2xl text-lg leading-relaxed text-muted">{playgroundIntro}</p>
     <div class="mt-10">
       <GameGrid games={games} />
     </div>

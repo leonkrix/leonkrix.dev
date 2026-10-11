@@ -113,10 +113,10 @@ describe('the newer clues', () => {
     ).toBe('Cleo either sits on a chair or is alone in the room.');
   });
 
-  it('says that the object in the same row is on another cell', () => {
+  it('says the row and the column of an object in a room, and nothing about the cell', () => {
     expect(
       say({ type: 'kindInLine', person: BEN, kind: 'chair', axis: 'row', where: 'same' }),
-    ).toBe('Ben is in the same row as a chair in the same room (on another cell).');
+    ).toBe('Ben is in the same row as a chair in the same room.');
     expect(
       say({ type: 'kindInLine', person: BEN, kind: 'chair', axis: 'col', where: 'other' }),
     ).toBe('Ben is in the same column as a chair in another room.');

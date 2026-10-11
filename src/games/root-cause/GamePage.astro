@@ -48,11 +48,12 @@ const { game } = Astro.props;
       </li>
       <li>
         <strong>Objects:</strong> the outlined ones (a chair to sit on, a rack to mount a device in)
-        can be used, the solid ones block their cell. A sofa has its back to a wall. A bright bar on
-        a wall is a window: it belongs to the cells on both sides of the wall, so "in front of a
-        window" and "a room with a window" count for both rooms. The <strong>Legend</strong> button
-        under the map explains every picture, and the line under the map says what is on the cell
-        you point at.
+        can be used, the solid ones block their cell. A sofa has its back to a wall. A sofa or a
+        cable tray is one object over two cells: you are next to it when you stand beside it, not
+        when you sit on it. A bright bar on a wall is a window: it belongs to the cells on both
+        sides of the wall, so "in front of a window" and "a room with a window" count for both
+        rooms. The <strong>Legend</strong> button under the map explains every picture, and the line
+        under the map says what is on the cell you point at.
       </li>
       <li>
         <strong>Two looks:</strong> <em>Case file</em> is about detectives and suspects in a tech

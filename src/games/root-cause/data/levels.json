@@ -367,58 +367,67 @@
     "layout": {
       "size": 6,
       "roomOf": [
-        2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 4, 4, 4, 3, 3, 3, 4, 4, 4, 3, 1, 3, 4, 4, 4, 1, 1, 1, 4,
-        4, 4, 1, 1, 1
+        3, 3, 4, 4, 0, 0, 3, 3, 3, 4, 0, 1, 3, 4, 4, 4, 4, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2
       ],
       "roomCount": 5,
       "rooms": [
-        { "type": "corridor", "name": "Corridor" },
-        { "type": "reception", "name": "Reception" },
-        { "type": "server-room", "name": "Server room" },
-        { "type": "open-office", "name": "Open office 1" },
-        { "type": "open-office", "name": "Open office 2" }
+        { "type": "archive", "name": "Archive" },
+        { "type": "meeting-room", "name": "Meeting room 1" },
+        { "type": "lab", "name": "Lab" },
+        { "type": "open-office", "name": "Open office" },
+        { "type": "meeting-room", "name": "Meeting room 2" }
       ],
       "objects": [
-        { "kind": "crate", "cells": [7] },
-        { "kind": "desk", "cells": [34] },
-        { "kind": "server", "cells": [6] },
-        { "kind": "desk", "cells": [17] },
-        { "kind": "desk", "cells": [20] },
+        { "kind": "shelf", "cells": [5] },
+        { "kind": "screen", "cells": [17] },
+        { "kind": "desk", "cells": [27] },
         { "kind": "desk", "cells": [18] },
-        { "kind": "sofa", "cells": [27, 33] },
-        { "kind": "chair", "cells": [0] },
-        { "kind": "chair", "cells": [12] }
+        { "kind": "desk", "cells": [21] },
+        { "kind": "shelf", "cells": [35] },
+        { "kind": "shelf", "cells": [29] },
+        { "kind": "desk", "cells": [1] },
+        { "kind": "plant", "cells": [14] },
+        { "kind": "chair", "cells": [33] },
+        { "kind": "chair", "cells": [7] },
+        { "kind": "chair", "cells": [9] }
       ],
       "windows": [
-        { "cell": 3, "side": "s" },
-        { "cell": 24, "side": "w" },
-        { "cell": 35, "side": "e" }
+        { "cell": 14, "side": "s" },
+        { "cell": 16, "side": "e" },
+        { "cell": 23, "side": "e" }
       ]
     },
     "people": [
-      { "role": "manager", "name": "Aiko", "label": "A" },
-      { "role": "developer", "name": "Gus", "label": "G" },
-      { "role": "manager", "name": "Emre", "label": "E" },
-      { "role": "tester", "name": "Dara", "label": "D" },
-      { "role": "manager", "name": "Uma", "label": "U" },
-      { "role": "designer", "name": "Chloe", "label": "C" }
+      { "role": "manager", "name": "Wanda", "label": "W" },
+      { "role": "architect", "name": "Gus", "label": "G" },
+      { "role": "developer", "name": "Jade", "label": "J" },
+      { "role": "architect", "name": "Pia", "label": "P" },
+      { "role": "developer", "name": "Tara", "label": "T" },
+      { "role": "designer", "name": "Vera", "label": "V" }
     ],
     "clues": [
+      { "type": "notNextToKind", "person": 2, "kind": "desk" },
+      { "type": "direction", "person": 3, "other": 0, "direction": "east", "mode": "any" },
+      { "type": "direction", "person": 0, "other": 4, "direction": "northwest", "mode": "any" },
       {
         "type": "relativeToKind",
-        "person": 2,
-        "kind": "desk",
-        "direction": "northeast",
-        "where": "any"
+        "person": 1,
+        "kind": "plant",
+        "direction": "southeast",
+        "where": "other"
       },
-      { "type": "noRoleNextToKind", "role": "developer", "kind": "sofa" },
-      { "type": "corner", "person": 4 },
-      { "type": "rowCol", "person": 3, "axis": "row", "index": 3 },
-      { "type": "sameRoom", "person": 2, "other": 1 },
-      { "type": "roomCorner", "person": 1 },
-      { "type": "nextToKind", "person": 0, "kind": "crate" }
+      {
+        "type": "relativeToKind",
+        "person": 4,
+        "kind": "shelf",
+        "direction": "northwest",
+        "where": "other"
+      },
+      { "type": "diagonal", "person": 2, "other": 1 },
+      { "type": "onFurniture", "person": 0 }
     ],
-    "solution": [8, 30, 13, 22, 5, 27]
+    "solution": [7, 28, 23, 32, 15, 0]
   },
   {
     "id": "medium-3",
@@ -1028,97 +1037,91 @@
     "skin": "case-file",
     "tier": "hard",
     "size": 9,
-    "seed": "hard-5-4",
+    "seed": "hard-5-3",
     "layout": {
       "size": 9,
       "roomOf": [
-        2, 2, 2, 5, 5, 0, 0, 3, 3, 2, 2, 2, 5, 5, 0, 0, 3, 3, 2, 2, 2, 5, 5, 0, 0, 3, 3, 2, 2, 2, 5,
-        5, 4, 4, 4, 6, 2, 2, 2, 5, 5, 4, 4, 4, 6, 2, 2, 2, 5, 4, 4, 4, 4, 4, 2, 2, 2, 5, 4, 4, 1, 1,
-        1, 2, 2, 2, 5, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1
+        1, 1, 1, 5, 5, 5, 5, 2, 2, 1, 1, 1, 1, 5, 5, 2, 2, 2, 6, 6, 6, 6, 6, 5, 2, 2, 2, 6, 6, 6, 6,
+        6, 2, 2, 2, 2, 6, 6, 6, 6, 6, 0, 2, 2, 2, 6, 4, 4, 4, 4, 0, 2, 2, 3, 6, 4, 4, 4, 4, 0, 3, 3,
+        3, 4, 4, 4, 4, 4, 0, 3, 3, 3, 4, 4, 4, 4, 4, 0, 3, 3, 3
       ],
       "roomCount": 7,
       "rooms": [
+        { "type": "corridor", "name": "Corridor" },
+        { "type": "server-room", "name": "Server room" },
+        { "type": "lab", "name": "Lab" },
         { "type": "break-room", "name": "Break room 1" },
-        { "type": "reception", "name": "Reception" },
         { "type": "open-office", "name": "Open office" },
-        { "type": "archive", "name": "Archive 1" },
-        { "type": "break-room", "name": "Break room 2" },
-        { "type": "archive", "name": "Archive 2" },
-        { "type": "meeting-room", "name": "Meeting room" }
+        { "type": "archive", "name": "Archive" },
+        { "type": "break-room", "name": "Break room 2" }
       ],
       "objects": [
-        { "kind": "plant", "cells": [24] },
-        { "kind": "plant", "cells": [80] },
-        { "kind": "desk", "cells": [75] },
-        { "kind": "desk", "cells": [74] },
-        { "kind": "desk", "cells": [1] },
-        { "kind": "shelf", "cells": [25] },
-        { "kind": "plant", "cells": [34] },
-        { "kind": "shelf", "cells": [12] },
-        { "kind": "chair", "cells": [5] },
-        { "kind": "chair", "cells": [71] },
-        { "kind": "chair", "cells": [29] },
-        { "kind": "chair", "cells": [0] },
-        { "kind": "chair", "cells": [18] },
-        { "kind": "chair", "cells": [27] },
-        { "kind": "chair", "cells": [11] },
-        { "kind": "chair", "cells": [16] },
-        { "kind": "sofa", "cells": [32, 41] },
+        { "kind": "shelf", "cells": [50] },
+        { "kind": "server", "cells": [0] },
+        { "kind": "shelf", "cells": [32] },
+        { "kind": "screen", "cells": [33] },
+        { "kind": "plant", "cells": [71] },
+        { "kind": "desk", "cells": [63] },
+        { "kind": "shelf", "cells": [23] },
+        { "kind": "plant", "cells": [27] },
+        { "kind": "plant", "cells": [37] },
+        { "kind": "chair", "cells": [12] },
+        { "kind": "chair", "cells": [26] },
+        { "kind": "chair", "cells": [8] },
+        { "kind": "chair", "cells": [60] },
+        { "kind": "chair", "cells": [76] },
         { "kind": "chair", "cells": [58] },
-        { "kind": "chair", "cells": [4] },
-        { "kind": "chair", "cells": [3] },
-        { "kind": "chair", "cells": [21] },
-        { "kind": "chair", "cells": [35] }
+        { "kind": "chair", "cells": [67] },
+        { "kind": "chair", "cells": [5] },
+        { "kind": "chair", "cells": [30] },
+        { "kind": "sofa", "cells": [21, 20] }
       ],
       "windows": [
-        { "cell": 6, "side": "e" },
-        { "cell": 38, "side": "e" },
-        { "cell": 76, "side": "s" },
-        { "cell": 80, "side": "e" }
+        { "cell": 0, "side": "w" },
+        { "cell": 54, "side": "w" },
+        { "cell": 67, "side": "e" },
+        { "cell": 68, "side": "e" }
       ]
     },
     "people": [
-      { "role": "manager", "name": "Ravi", "label": "R" },
-      { "role": "developer", "name": "Vera", "label": "V" },
-      { "role": "analyst", "name": "Nora", "label": "N" },
-      { "role": "developer", "name": "Jade", "label": "J" },
-      { "role": "intern", "name": "Kai", "label": "K" },
-      { "role": "developer", "name": "Iris", "label": "I" },
-      { "role": "tester", "name": "Omar", "label": "O" },
-      { "role": "developer", "name": "Quinn", "label": "Q" },
-      { "role": "admin", "name": "Aiko", "label": "A" }
+      { "role": "developer", "name": "Nora", "label": "N" },
+      { "role": "architect", "name": "Viktor", "label": "V" },
+      { "role": "intern", "name": "Ravi", "label": "R" },
+      { "role": "designer", "name": "Uma", "label": "U" },
+      { "role": "architect", "name": "Zoe", "label": "Z" },
+      { "role": "designer", "name": "Quinn", "label": "Q" },
+      { "role": "analyst", "name": "Elena", "label": "E" },
+      { "role": "intern", "name": "Lena", "label": "L" },
+      { "role": "admin", "name": "Olga", "label": "O" }
     ],
     "clues": [
-      { "type": "roomCount", "room": 0, "n": 1 },
-      { "type": "direction", "person": 0, "other": 2, "direction": "east", "mode": "any" },
-      { "type": "roomSize", "person": 1, "which": "largest" },
-      { "type": "between", "person": 6, "other": 2, "third": 7, "axis": "row" },
-      { "type": "between", "person": 2, "other": 0, "third": 5, "axis": "row" },
+      { "type": "kindInLine", "person": 5, "kind": "desk", "axis": "row", "where": "other" },
+      { "type": "roomCount", "room": 1, "n": 1 },
+      { "type": "line", "person": 6, "line": "firstRow" },
       {
         "type": "and",
-        "person": 6,
+        "person": 2,
         "parts": [
           {
             "type": "relativeToKind",
-            "person": 6,
-            "kind": "sofa",
-            "direction": "southwest",
-            "where": "other"
+            "person": 2,
+            "kind": "plant",
+            "direction": "east",
+            "where": "any"
           },
-          { "type": "sameRoom", "person": 6, "other": 5 }
+          { "type": "soleOnKind", "person": 2, "kind": "sofa" }
         ]
       },
-      { "type": "kindCount", "kind": "chair", "counting": "atLeast", "n": 2 },
-      { "type": "notInRoomType", "person": 5, "roomType": "open-office" },
-      { "type": "sameRoom", "person": 2, "other": 7 },
-      { "type": "notNextToWall", "person": 7 },
-      { "type": "between", "person": 2, "other": 3, "third": 4, "axis": "row" },
-      { "type": "direction", "person": 6, "other": 5, "direction": "west", "mode": "adjacent" },
-      { "type": "cornerOfRoom", "person": 3, "room": 3 },
-      { "type": "distance", "person": 4, "other": 0, "distance": 9 },
-      { "type": "onFloor", "person": 2 }
+      { "type": "roomCorner", "person": 0 },
+      { "type": "rowCol", "person": 3, "axis": "col", "index": 1 },
+      { "type": "roomHasWindow", "person": 7, "has": false },
+      { "type": "cornerOfRoom", "person": 1, "room": 2 },
+      { "type": "sameRoom", "person": 4, "other": 2 },
+      { "type": "inRoomType", "person": 3, "roomType": "break-room" },
+      { "type": "nextToKind", "person": 0, "kind": "shelf" },
+      { "type": "nextToKind", "person": 5, "kind": "plant" }
     ],
-    "solution": [14, 27, 20, 7, 71, 40, 48, 55, 78]
+    "solution": [41, 51, 21, 28, 54, 70, 2, 13, 80]
   },
   {
     "id": "hard-6",

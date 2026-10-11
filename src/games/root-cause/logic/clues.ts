@@ -294,8 +294,17 @@ export function isStatic(clue: Clue): boolean {
   return STATIC_TYPES.has(clue.type);
 }
 
+/**
+ * An object is one unit, also a sofa or a cable tray that covers two cells: a person is next to it
+ * when a cell beside them belongs to it, but not when they stand on it themselves (the other half
+ * of the sofa is beside them then). So "next to the sofa" means beside it, and "on the sofa" is a
+ * clue of its own.
+ */
 function isNextToKind(board: Board, cell: Cell, kind: string): boolean {
-  return (board.roomNeighbors[cell] ?? []).some((next) => board.kindAt[next] === kind);
+  const own = board.objectAt[cell];
+  return (board.roomNeighbors[cell] ?? []).some(
+    (next) => board.kindAt[next] === kind && (own === undefined || board.objectAt[next] !== own),
+  );
 }
 
 function relationHolds(
@@ -379,7 +388,6 @@ function checkPerson(clue: PersonClue, context: Context, placement: readonly Cel
       return remembered(board, clue, cell, () =>
         (board.kindCells.get(clue.kind) ?? []).some(
           (other) =>
-            other !== cell &&
             (clue.axis === 'row'
               ? board.row(other) === board.row(cell)
               : board.col(other) === board.col(cell)) &&
@@ -387,11 +395,14 @@ function checkPerson(clue: PersonClue, context: Context, placement: readonly Cel
         ),
       );
     case 'relativeToKind':
+      // The direction is taken from the whole object: "north of the sofa" is north of every cell
+      // of it, so of its top cell, and never of the person's own sofa
       return remembered(board, clue, cell, () =>
-        (board.kindCells.get(clue.kind) ?? []).some(
-          (other) =>
-            directionHolds(board, cell, other, clue.direction, 'any') &&
-            relationHolds(board, cell, other, clue.where),
+        (board.kindObjects.get(clue.kind) ?? []).some(
+          (cells) =>
+            !cells.includes(cell) &&
+            cells.every((other) => directionHolds(board, cell, other, clue.direction, 'any')) &&
+            relationHolds(board, cell, cells[0] ?? cell, clue.where),
         ),
       );
     case 'corner':

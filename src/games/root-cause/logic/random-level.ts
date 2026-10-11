@@ -16,6 +16,8 @@ export const RANDOM_SIZES: Readonly<Record<Tier, readonly [number, number]>> = {
 export interface RandomSetup {
   tier: Tier | 'any';
   size: number | 'any';
+  /** The look (case file or outage), or chance */
+  skin: 'case-file' | 'outage' | 'any';
 }
 
 /** Everything a worker needs to make one level */
@@ -45,7 +47,8 @@ export function chooseJob(setup: RandomSetup, random: Random, seed: string): Job
     wanted !== undefined && wanted >= low && wanted <= high
       ? wanted
       : low + random.int(high - low + 1);
-  const skin = random.pick(['case-file', 'outage'] as const);
+  const picked = random.pick(['case-file', 'outage'] as const);
+  const skin = setup.skin === 'any' ? picked : setup.skin;
   const victimRole = random.pick(skins[skin].victimRoles);
   return { skin, tier, size, victimRole, seed };
 }

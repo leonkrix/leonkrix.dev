@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { gamePath, gamePaths, liveGames } from '../../src/games/registry';
+import { gamePath, gamePaths, liveGames, playgroundIntro } from '../../src/games/registry';
 import { distDir, readDistFile } from './helpers';
 
 /**
@@ -32,6 +32,14 @@ describe('playground', () => {
     // The contact section is numbered after the playground
     expect(home).toContain(live.length > 0 ? '05 /' : '04 /');
     expect(home.includes('05 /')).toBe(live.length > 0);
+  });
+
+  it('says the same about the playground on the home page and on the overview', async () => {
+    if (live.length === 0) {
+      return;
+    }
+    expect(await readDistFile('index.html')).toContain(playgroundIntro);
+    expect(await readDistFile('games/index.html')).toContain(playgroundIntro);
   });
 
   it('lists exactly the playground pages in the sitemap', async () => {
