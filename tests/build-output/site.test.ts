@@ -46,7 +46,14 @@ describe('every page', () => {
     const before = new RegExp(`[A-Za-z0-9,.;:!?)]<${inline}(?:\\s[^>]*)?>[A-Za-z]`);
     const after = new RegExp(`</${inline}>[A-Za-z]`);
     for (const { file, html } of pages) {
-      const text = html.replace(/<(script|style)[\s\S]*?<\/\1>/g, '');
+      // Repeated until nothing changes, so that nothing like "<scr<script></script>ipt>" is left
+      // (this only reads our own build output, but CodeQL asks for a complete removal)
+      let text = html;
+      let previous: string;
+      do {
+        previous = text;
+        text = text.replace(/<(script|style)[\s\S]*?<\/\1>/gi, '');
+      } while (text !== previous);
       expect(before.exec(text)?.[0], `${file}: no space in front of an inline element`).toBe(
         undefined,
       );
