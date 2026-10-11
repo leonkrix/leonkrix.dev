@@ -18,14 +18,18 @@ import {
 
 describe('choosing a random level', () => {
   it('keeps to the wishes of the player, and chooses the rest by chance', () => {
-    const job = chooseJob({ tier: 'medium', size: 6 }, createRandom('a'), 'a');
+    const job = chooseJob({ tier: 'medium', size: 6, skin: 'any' }, createRandom('a'), 'a');
     expect(job.tier).toBe('medium');
     expect(job.size).toBe(6);
     expect(skins[job.skin].victimRoles).toContain(job.victimRole);
 
     const seen = new Set<string>();
     for (let seed = 0; seed < 200; seed += 1) {
-      const any = chooseJob({ tier: 'any', size: 'any' }, createRandom(seed), String(seed));
+      const any = chooseJob(
+        { tier: 'any', size: 'any', skin: 'any' },
+        createRandom(seed),
+        String(seed),
+      );
       const [low, high] = RANDOM_SIZES[any.tier];
       expect(any.size).toBeGreaterThanOrEqual(low);
       expect(any.size).toBeLessThanOrEqual(high);
@@ -34,8 +38,18 @@ describe('choosing a random level', () => {
     expect(seen.size).toBe(6);
   });
 
+  it('makes the look the player asked for, and any look by chance', () => {
+    for (const skin of ['case-file', 'outage'] as const) {
+      for (let seed = 0; seed < 20; seed += 1) {
+        const job = chooseJob({ tier: 'any', size: 'any', skin }, createRandom(seed), String(seed));
+        expect(job.skin).toBe(skin);
+        expect(skins[skin].victimRoles).toContain(job.victimRole);
+      }
+    }
+  });
+
   it('ignores a size that does not exist for the tier', () => {
-    const job = chooseJob({ tier: 'easy', size: 9 }, createRandom('b'), 'b');
+    const job = chooseJob({ tier: 'easy', size: 9, skin: 'any' }, createRandom('b'), 'b');
     expect(job.size).toBeLessThanOrEqual(RANDOM_SIZES.easy[1]);
   });
 
@@ -57,7 +71,11 @@ describe('choosing a random level', () => {
 
 describe('making a level for a job', () => {
   it('makes a verified level of the wanted tier and victim, and the seed makes it again', () => {
-    const job = chooseJob({ tier: 'medium', size: 5 }, createRandom('job'), 'job-seed');
+    const job = chooseJob(
+      { tier: 'medium', size: 5, skin: 'any' },
+      createRandom('job'),
+      'job-seed',
+    );
     const record = runJob(job);
     const level = toLevel(record);
     expect(record.size).toBe(5);
@@ -107,7 +125,7 @@ describe('the stories of random levels', () => {
 });
 
 describe('the address of a random level', () => {
-  const job = chooseJob({ tier: 'easy', size: 5 }, createRandom('link'), 'link-seed');
+  const job = chooseJob({ tier: 'easy', size: 5, skin: 'any' }, createRandom('link'), 'link-seed');
 
   it('is read again as the very same job and level', () => {
     const record = runJob(job);

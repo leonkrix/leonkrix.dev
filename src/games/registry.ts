@@ -62,6 +62,10 @@ export const games: readonly GameDefinition[] = [
 /** Address of the overview page. */
 export const gamesPath = '/games/';
 
+/** The text under the heading of the Playground, on the home page and on the overview of the games */
+export const playgroundIntro =
+  'A collection of games I built myself, based on ones I like to play in my free time, some of them adapted to my interests and my field: tech words, logic, computer networks, machine learning. Each one explains how it is built, runs in your browser, loads nothing from other servers and stores nothing on your device.';
+
 export function gamePath(slug: string): string {
   return `${gamesPath}${slug}/`;
 }

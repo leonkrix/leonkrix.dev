@@ -227,14 +227,9 @@ function predicate(clue: PersonClue, context: DescribeContext, mentions: Mention
       return `is not next to ${mentions.kindOne(clue.kind)}`;
     case 'windowFront':
       return 'is in front of a window';
-    case 'kindInLine': {
-      // In the same room, the object is on another cell than the one the person stands on
-      const another =
-        clue.where === 'same' && context.kinds[clue.kind]?.occupiable === true
-          ? ' (on another cell)'
-          : '';
-      return `is in the same ${clue.axis === 'row' ? 'row' : 'column'} as ${mentions.kindOne(clue.kind)} in ${clue.where === 'same' ? 'the same room' : 'another room'}${another}`;
-    }
+    case 'kindInLine':
+      // The object only has to be in the row or column, a person on it is in it too
+      return `is in the same ${clue.axis === 'row' ? 'row' : 'column'} as ${mentions.kindOne(clue.kind)} in ${clue.where === 'same' ? 'the same room' : 'another room'}`;
     case 'relativeToKind':
       return `is ${DIRECTION_TEXT[clue.direction]} of ${mentions.kindOne(clue.kind)}${relationText(clue.where)}`;
     case 'corner':

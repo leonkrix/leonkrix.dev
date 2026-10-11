@@ -42,6 +42,8 @@ export class Board {
   readonly smallestRoom: number | undefined;
   /** All cells that hold an object of a kind */
   readonly kindCells: ReadonlyMap<string, readonly Cell[]>;
+  /** The cells of every object of a kind, one list per object (a sofa is one object of two cells) */
+  readonly kindObjects: ReadonlyMap<string, readonly (readonly Cell[])[]>;
   /** The number of the object (in the layout) on a cell, if any */
   readonly objectAt: readonly (number | undefined)[];
   /** How many objects there are of a kind */
@@ -78,8 +80,10 @@ export class Board {
     const objectAt: (number | undefined)[] = Array.from({ length: this.cellCount });
     const kindCells = new Map<string, Cell[]>();
     const objectCount = new Map<string, number>();
+    const kindObjects = new Map<string, Cell[][]>();
     layout.objects.forEach((object, index) => {
       objectCount.set(object.kind, (objectCount.get(object.kind) ?? 0) + 1);
+      kindObjects.set(object.kind, [...(kindObjects.get(object.kind) ?? []), [...object.cells]]);
       for (const cell of object.cells) {
         objectAt[cell] = index;
         kindCells.set(object.kind, [...(kindCells.get(object.kind) ?? []), cell]);
@@ -87,6 +91,7 @@ export class Board {
     });
     this.objectAt = objectAt;
     this.kindCells = kindCells;
+    this.kindObjects = kindObjects;
     this.objectCount = objectCount;
 
     const windowCells = new Set<Cell>();

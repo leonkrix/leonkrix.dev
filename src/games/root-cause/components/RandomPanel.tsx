@@ -53,6 +53,7 @@ export function RandomPanel({ setup, run, error, onSetup, onStart, onCancel }: R
               const tier = event.target.value as Tier | 'any';
               const allowed = sizesFor(tier);
               onSetup({
+                ...setup,
                 tier,
                 size: setup.size !== 'any' && allowed.includes(setup.size) ? setup.size : 'any',
               });
@@ -71,7 +72,7 @@ export function RandomPanel({ setup, run, error, onSetup, onStart, onCancel }: R
             disabled={making}
             onChange={(event) => {
               onSetup({
-                tier: setup.tier,
+                ...setup,
                 size: event.target.value === 'any' ? 'any' : Number(event.target.value),
               });
             }}
@@ -82,6 +83,20 @@ export function RandomPanel({ setup, run, error, onSetup, onStart, onCancel }: R
                 {size}×{size}
               </option>
             ))}
+          </select>
+        </label>
+        <label className="rc-field">
+          <span className="sr-only">Look of the level</span>
+          <select
+            value={setup.skin}
+            disabled={making}
+            onChange={(event) => {
+              onSetup({ ...setup, skin: event.target.value as RandomSetup['skin'] });
+            }}
+          >
+            <option value="any">Any look</option>
+            <option value="case-file">Case file</option>
+            <option value="outage">Outage</option>
           </select>
         </label>
         {making ? (
