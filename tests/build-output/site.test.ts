@@ -122,6 +122,16 @@ describe('projects section', () => {
     expect(projectsHtml().match(/<article\b/g)?.length).toBe(sources.length);
   });
 
+  it('shows an animated picture exactly on the cards of the projects that have one', () => {
+    const withArt = sources.filter((source) => /^art: [a-z]+$/m.test(source)).length;
+    expect(withArt).toBeGreaterThan(0);
+    const html = projectsHtml();
+    // Pure SVG, hidden from assistive technology, and nothing that loads or runs by itself
+    const arts = html.match(/<div class="proj-art[^"]*"[^>]*aria-hidden="true"/g) ?? [];
+    expect(arts).toHaveLength(withArt);
+    expect(html).not.toMatch(/<(?:img|video|canvas|iframe)[\s>]/);
+  });
+
   it('links to GitHub only for public projects', () => {
     const publicCount = sources.filter((source) => /^\s+status: public$/m.test(source)).length;
     const githubLinks = projectsHtml().match(/href="https:\/\/github\.com\//g)?.length ?? 0;

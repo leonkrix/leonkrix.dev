@@ -1,3 +1,4 @@
+art: pipeline
 title: leonkrix.dev
 subtitle: This portfolio website
 kind: project
@@ -9,8 +10,6 @@ stats:
     label: Lighthouse score in every category (mobile, enforced in CI)
   - value: '1000+'
     label: automated tests (unit, build output, browser, accessibility)
-  - value: '0'
-    label: third-party scripts, fonts or trackers
 highlights:
   - Static portfolio built with Astro, TypeScript, React islands and Tailwind CSS, hosted on Cloudflare. Its content is typed YAML that is validated at build time, so a typo fails the build instead of shipping.
   - Every change goes through a pull request and automated gates before it goes live, from linting, type checks and unit tests to build-output checks (security headers, CSP, legal pages), end-to-end tests with accessibility scans, Lighthouse budgets, CodeQL, dependency review and OpenSSF Scorecard. After the deployment a live check of the published site (headers, redirects, legal pages, contact form, certificate, domain, mail DNS) runs every few hours, plus a weekly link check.

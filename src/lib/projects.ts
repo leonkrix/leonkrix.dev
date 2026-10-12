@@ -32,6 +32,10 @@ const code = z.discriminatedUnion('status', [
   z.object({ status: z.literal('none') }),
 ]);
 
+/** The small animated pictures a project card can show (see components/project-art) */
+export const projectArts = ['tetrys', 'routing', 'defuze', 'grades', 'pipeline'] as const;
+export type ProjectArt = (typeof projectArts)[number];
+
 export const projectSchema = z
   .object({
     title: z.string().min(1),
@@ -44,14 +48,16 @@ export const projectSchema = z
     start: year,
     end: year.optional(),
     highlights: z.array(z.string().min(1)).min(1).max(5),
-    /** Optional key figures shown as a strip, e.g. { value: "−47%", label: "mean delay" } */
+    /** Optional key figures shown as a strip (at most three, so the box stays small and the picture beside it too), e.g. { value: "−47%", label: "mean delay" } */
     stats: z
       .array(z.object({ value: z.string().min(1), label: z.string().min(1) }))
       .min(1)
-      .max(4)
+      .max(3)
       .optional(),
     technologies: z.array(z.enum(technologyIds)).min(1),
     code,
+    /** Optional animated picture on the card */
+    art: z.enum(projectArts).optional(),
     /** Short extra remark shown next to the code status, e.g. "No longer available." */
     note: z.string().min(1).optional(),
   })

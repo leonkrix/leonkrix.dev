@@ -123,6 +123,78 @@ test.describe('reduced motion', () => {
     );
     expect(scrollBehavior).toBe('auto');
   });
+
+  test('stops the SVG drift of the network at its first position', async ({ page }) => {
+    await page.goto('/');
+    const svg = page.locator('#project-master-thesis .proj-art svg');
+    await expect(svg).toBeAttached();
+    await expect
+      .poll(() => svg.evaluate((element) => (element as SVGSVGElement).animationsPaused()))
+      .toBe(true);
+    expect(await svg.evaluate((element) => (element as SVGSVGElement).getCurrentTime())).toBe(0);
+  });
+
+  test('keeps the pictures on the project cards still', async ({ page }) => {
+    await page.goto('/');
+    const art = page.locator('.proj-art').first();
+    await expect(art).toBeAttached();
+    const running = await art.evaluate(
+      (element) => element.getAnimations({ subtree: true }).length,
+    );
+    expect(running).toBe(0);
+  });
+});
+
+test.describe('project pictures', () => {
+  test('keep the SVG drift of the network moving on screen, and still off screen', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    const svg = page.locator('#project-master-thesis .proj-art svg');
+    const paused = (): Promise<boolean> =>
+      svg.evaluate((element) => (element as SVGSVGElement).animationsPaused());
+    // (on a narrow screen the picture is below the title, so the picture itself is scrolled to)
+    await svg.scrollIntoViewIfNeeded();
+    await expect.poll(paused).toBe(false);
+    // The nodes really move (the position of a node changes with the time of the animation)
+    const place = (): Promise<string> =>
+      svg.evaluate((element) => {
+        const circle = element.querySelector('circle');
+        return circle === null
+          ? ''
+          : `${String(circle.cx.animVal.value)} ${String(circle.cy.animVal.value)}`;
+      });
+    const first = await place();
+    await svg.evaluate((element) => {
+      (element as SVGSVGElement).setCurrentTime(7.3);
+    });
+    expect(await place()).not.toBe(first);
+    await page.evaluate(() => {
+      window.scrollTo(0, 0);
+    });
+    await expect.poll(paused).toBe(true);
+  });
+
+  test('run on the cards, and stop while they are off screen', async ({ page }) => {
+    await page.goto('/');
+    const art = page.locator('.proj-art').first();
+    await art.scrollIntoViewIfNeeded();
+    await expect(art).not.toHaveAttribute('data-paused', '');
+    expect(
+      await art.evaluate((element) => element.getAnimations({ subtree: true }).length),
+    ).toBeGreaterThan(0);
+    await page.evaluate(() => {
+      window.scrollTo(0, 0);
+    });
+    await expect(art).toHaveAttribute('data-paused', '');
+    expect(
+      await art.evaluate((element) =>
+        element
+          .getAnimations({ subtree: true })
+          .every((animation) => animation.playState === 'paused'),
+      ),
+    ).toBe(true);
+  });
 });
 
 test.describe('legal pages in two languages', () => {

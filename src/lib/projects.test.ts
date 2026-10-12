@@ -53,10 +53,10 @@ describe('projectSchema', () => {
     expect(projectSchema.safeParse(project).success).toBe(true);
   });
 
-  it('rejects empty or too many key figures', () => {
+  it('rejects empty or too many key figures (at most three)', () => {
     const stat = { value: '1', label: 'x' };
     expect(projectSchema.safeParse({ ...valid, stats: [] }).success).toBe(false);
-    expect(projectSchema.safeParse({ ...valid, stats: Array(5).fill(stat) }).success).toBe(false);
+    expect(projectSchema.safeParse({ ...valid, stats: Array(4).fill(stat) }).success).toBe(false);
   });
 
   it('rejects an end year before the start year', () => {

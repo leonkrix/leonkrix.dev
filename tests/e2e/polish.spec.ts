@@ -91,10 +91,14 @@ test.describe('availability badge', () => {
 
     const arrow = badge.locator('svg').last();
     await expect.poll(() => arrow.evaluate((el) => el.getBoundingClientRect().width)).toBe(0);
-    await badge.hover();
-    await expect
-      .poll(() => arrow.evaluate((el) => el.getBoundingClientRect().width), { timeout: 2000 })
-      .toBeGreaterThan(8);
+    // Under load the page can scroll a little after the pointer has arrived (the browser then keeps
+    // the old hover state until the pointer moves), so the pointer goes over the badge again
+    await expect(async () => {
+      await badge.hover();
+      await expect
+        .poll(() => arrow.evaluate((el) => el.getBoundingClientRect().width), { timeout: 1500 })
+        .toBeGreaterThan(8);
+    }).toPass({ timeout: 10_000 });
   });
 
   test('still leads to the contact section', async ({ page }) => {

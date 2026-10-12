@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -14,6 +15,45 @@ describe('repository guards', () => {
       expect(existsSync(join(root, name))).toBe(false);
     },
   );
+
+  it('clears the saved content of the content collections before dev and build, so a changed schema is never served from stale entries', () => {
+    const scripts = (
+      JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as {
+        scripts: Record<string, string>;
+      }
+    ).scripts;
+    expect(scripts.dev).toContain('scripts/clear-content-cache.mjs');
+    expect(scripts.build).toContain('scripts/clear-content-cache.mjs');
+    expect(readFileSync(join(root, 'scripts', 'build-with-form.mjs'), 'utf8')).toContain(
+      "import './clear-content-cache.mjs'",
+    );
+    expect(existsSync(join(root, 'scripts', 'clear-content-cache.mjs'))).toBe(true);
+  });
+
+  it('draws every picture of the project cards in the same coordinates and with the same label size, so that text looks equally big in every card', () => {
+    const folder = join(root, 'src', 'components', 'project-art');
+    const pictures = readdirSync(folder).filter(
+      (name) => name.endsWith('.astro') && name !== 'ProjectArt.astro',
+    );
+    expect(pictures.length).toBeGreaterThan(0);
+    for (const name of pictures) {
+      const source = readFileSync(join(folder, name), 'utf8');
+      expect(source, name).toContain('viewBox="0 0 240 200"');
+      if (source.includes('<text')) {
+        expect(source, name).toContain('font-size: 8.5px;');
+      }
+    }
+  });
+
+  it('has the Defuze picture that its generator makes (so the script and the file cannot drift apart)', () => {
+    // The script exits with an error if the file is not what it makes
+    expect(() =>
+      execFileSync(process.execPath, ['scripts/generate-defuze-picture.mjs', '--check'], {
+        cwd: root,
+        stdio: 'pipe',
+      }),
+    ).not.toThrow();
+  });
 
   it('has no hidden bidirectional or control characters in source files (Trojan Source)', () => {
     // Such characters make code look different from what it does. Write them as escapes

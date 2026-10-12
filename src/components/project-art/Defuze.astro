@@ -1,0 +1,1674 @@
+---
+// Made by scripts/generate-defuze-picture.mjs (change the script, not this file).
+//
+// The project Defuze in twelve seconds, in two parts. First a timeline of rounds: every round has a
+// bar that shows how likely the Counter-Terrorists (blue) or the Terrorists (amber) were to win it,
+// as the model predicted at the start of the round, and a dot for the team that really won it.
+// Then the picture zooms into one round and shows the replay from above: the players run over a
+// stylized map at the same speed and then keep moving in small steps (only the planter stands still
+// while planting, and the dead do not move). The teams meet at site A and kill each other (the
+// dead turn into a cross in their color; some kills happen at almost the same time, some a little
+// later), a Terrorist plants the bomb, which appears next to that player, and the prediction is made
+// again: as in the project, it is made twice, at the start of the round and at the bomb plant, and
+// the bar at the bottom changes at the second moment.
+//
+// Pure CSS and SVG. All pictures of the project cards use the same coordinates (240 by 200) and
+// the same label size, so that text looks the same size in every card. The base style of every part
+// is the frame that tells the story (used with reduced motion, and before the animation starts:
+// the bomb is planted, the dead are crosses and the prediction has changed); the keyframes build
+// the scene up and the whole scene fades out at the end of the loop. The numbers come from a
+// script that worked out the times from the paths, the speeds and the events (kills: ct0 7.8, t1 7.85, ct3 8.2, t3 8.45, ct2 8.55
+// seconds; the plant at 8.5 seconds).
+---
+
+<svg
+  viewBox="0 0 240 200"
+  class="defuze block h-full w-full"
+  preserveAspectRatio="xMidYMid meet"
+  focusable="false"
+>
+  <g class="df-scene">
+    <text class="df-title" x="5" y="10">
+      CS2 Demo Replay
+    </text>
+
+    <!-- Part 1: the rounds, each with the predicted chance of the two teams and the real winner -->
+    <g class="df-strip">
+      <path class="df-half" d="M20 80H219" />
+      <text class="df-half-label" x="221" y="83">
+        50%
+      </text>
+      <g class="df-tile df-tile-0">
+        <rect class="df-t" x="22.5" y="52" width="15" height="56" rx="2.5" />
+        <rect class="df-ct" x="22.5" y="52" width="15" height="34.72" rx="2.5" />
+        <rect class="df-ct" x="22.5" y="83.72" width="15" height="3" />
+      </g>
+      <g class="df-tile df-tile-1">
+        <rect class="df-t" x="42.5" y="52" width="15" height="56" rx="2.5" />
+        <rect class="df-ct" x="42.5" y="52" width="15" height="21.28" rx="2.5" />
+        <rect class="df-ct" x="42.5" y="70.28" width="15" height="3" />
+      </g>
+      <g class="df-tile df-tile-2">
+        <rect class="df-t" x="62.5" y="52" width="15" height="56" rx="2.5" />
+        <rect class="df-ct" x="62.5" y="52" width="15" height="39.2" rx="2.5" />
+        <rect class="df-ct" x="62.5" y="88.2" width="15" height="3" />
+      </g>
+      <g class="df-tile df-tile-3">
+        <rect class="df-t" x="82.5" y="52" width="15" height="56" rx="2.5" />
+        <rect class="df-ct" x="82.5" y="52" width="15" height="25.2" rx="2.5" />
+        <rect class="df-ct" x="82.5" y="74.2" width="15" height="3" />
+      </g>
+      <g class="df-tile df-tile-4">
+        <rect class="df-t" x="102.5" y="52" width="15" height="56" rx="2.5" />
+        <rect class="df-ct" x="102.5" y="52" width="15" height="16.8" rx="2.5" />
+        <rect class="df-ct" x="102.5" y="65.8" width="15" height="3" />
+      </g>
+      <g class="df-tile df-tile-5">
+        <rect class="df-t" x="122.5" y="52" width="15" height="56" rx="2.5" />
+        <rect class="df-ct" x="122.5" y="52" width="15" height="32.48" rx="2.5" />
+        <rect class="df-ct" x="122.5" y="81.48" width="15" height="3" />
+      </g>
+      <g class="df-tile df-tile-6">
+        <rect class="df-t" x="142.5" y="52" width="15" height="56" rx="2.5" />
+        <rect class="df-ct" x="142.5" y="52" width="15" height="30.8" rx="2.5" />
+        <rect class="df-ct" x="142.5" y="79.8" width="15" height="3" />
+      </g>
+      <g class="df-tile df-tile-7">
+        <rect class="df-t" x="162.5" y="52" width="15" height="56" rx="2.5" />
+        <rect class="df-ct" x="162.5" y="52" width="15" height="36.96" rx="2.5" />
+        <rect class="df-ct" x="162.5" y="85.96" width="15" height="3" />
+      </g>
+      <g class="df-tile df-tile-8">
+        <rect class="df-t" x="182.5" y="52" width="15" height="56" rx="2.5" />
+        <rect class="df-ct" x="182.5" y="52" width="15" height="22.96" rx="2.5" />
+        <rect class="df-ct" x="182.5" y="71.96" width="15" height="3" />
+      </g>
+      <g class="df-tile df-tile-9">
+        <rect class="df-t" x="202.5" y="52" width="15" height="56" rx="2.5" />
+        <rect class="df-ct" x="202.5" y="52" width="15" height="29.12" rx="2.5" />
+        <rect class="df-ct" x="202.5" y="78.12" width="15" height="3" />
+      </g>
+      <rect class="df-select" x="139.5" y="49" width="21" height="62" rx="4"></rect>
+      <g class="df-meta">
+        <circle class="df-win df-ct" cx="30" cy="119" r="3.2" />
+        <text class="df-num" x="30" y="134">
+          1
+        </text>
+        <circle class="df-win df-t" cx="50" cy="119" r="3.2" />
+        <text class="df-num" x="50" y="134">
+          2
+        </text>
+        <circle class="df-win df-ct" cx="70" cy="119" r="3.2" />
+        <text class="df-num" x="70" y="134">
+          3
+        </text>
+        <circle class="df-win df-ct" cx="90" cy="119" r="3.2" />
+        <text class="df-num" x="90" y="134">
+          4
+        </text>
+        <circle class="df-win df-t" cx="110" cy="119" r="3.2" />
+        <text class="df-num" x="110" y="134">
+          5
+        </text>
+        <circle class="df-win df-ct" cx="130" cy="119" r="3.2" />
+        <text class="df-num" x="130" y="134">
+          6
+        </text>
+        <circle class="df-win df-t" cx="150" cy="119" r="3.2" />
+        <text class="df-num" x="150" y="134">
+          7
+        </text>
+        <circle class="df-win df-ct" cx="170" cy="119" r="3.2" />
+        <text class="df-num" x="170" y="134">
+          8
+        </text>
+        <circle class="df-win df-t" cx="190" cy="119" r="3.2" />
+        <text class="df-num" x="190" y="134">
+          9
+        </text>
+        <circle class="df-win df-t" cx="210" cy="119" r="3.2" />
+        <text class="df-num" x="210" y="134">
+          10
+        </text>
+        <text class="df-legend" x="120" y="160">
+          Bars: Prediction · Dots: Winner
+        </text>
+      </g>
+    </g>
+
+    <!-- Part 2: the picture zooms into the selected round: the replay from above -->
+    <g class="df-panel">
+      <rect class="df-map" x="12" y="22" width="216" height="128" rx="8"></rect>
+      <rect class="df-wall" x="96" y="62" width="44" height="24" rx="3"></rect>
+      <rect class="df-wall" x="40" y="86" width="34" height="20" rx="3"></rect>
+      <rect class="df-wall" x="46" y="120" width="26" height="18" rx="3"></rect>
+      <rect class="df-wall" x="146" y="96" width="22" height="16" rx="3"></rect>
+      <rect class="df-wall" x="60" y="36" width="26" height="16" rx="3"></rect>
+      <rect class="df-spawn df-spawn-ct" x="98" y="28" width="40" height="18" rx="5"></rect>
+      <rect class="df-spawn df-spawn-t" x="98" y="120" width="40" height="24" rx="5"></rect>
+      <rect class="df-site" x="176" y="34" width="30" height="30" rx="6"></rect>
+      <rect class="df-site" x="22" y="34" width="30" height="30" rx="6"></rect>
+      <text class="df-site-label" x="191" y="53">
+        A
+      </text>
+      <text class="df-site-label" x="37" y="53">
+        B
+      </text>
+
+      <!-- The bomb, next to the Terrorist who plants it at site A -->
+      <g class="df-bomb">
+        <circle class="df-bomb-ring" cx="194.23" cy="56.35" r="4"></circle>
+        <rect class="df-bomb-core" x="191.23" y="53.35" width="6" height="6" rx="1.5"></rect>
+      </g>
+
+      <!-- The dead: a cross in the color of their team where they fell -->
+      <g transform="translate(181.46 41.81)">
+        <path class="df-x df-ct df-xd0" d="M-3.2 -3.2l6.4 6.4M3.2 -3.2l-6.4 6.4" />
+      </g>
+      <g transform="translate(204.56 39.64)">
+        <path class="df-x df-ct df-xd2" d="M-3.2 -3.2l6.4 6.4M3.2 -3.2l-6.4 6.4" />
+      </g>
+      <g transform="translate(169.68 71.1)">
+        <path class="df-x df-ct df-xd3" d="M-3.2 -3.2l6.4 6.4M3.2 -3.2l-6.4 6.4" />
+      </g>
+      <g transform="translate(193.7 71.6)">
+        <path class="df-x df-t df-xd6" d="M-3.2 -3.2l6.4 6.4M3.2 -3.2l-6.4 6.4" />
+      </g>
+      <g transform="translate(201.97 88.1)">
+        <path class="df-x df-t df-xd8" d="M-3.2 -3.2l6.4 6.4M3.2 -3.2l-6.4 6.4" />
+      </g>
+
+      <!-- The players: 5 Counter-Terrorists (blue) and 5 Terrorists (amber) -->
+      <circle class="df-dot df-ct df-p0" cx="0" cy="0" r="3.4" />
+      <circle class="df-dot df-ct df-p1" cx="0" cy="0" r="3.4" />
+      <circle class="df-dot df-ct df-p2" cx="0" cy="0" r="3.4" />
+      <circle class="df-dot df-ct df-p3" cx="0" cy="0" r="3.4" />
+      <circle class="df-dot df-ct df-p4" cx="0" cy="0" r="3.4" />
+      <circle class="df-dot df-t df-p5" cx="0" cy="0" r="3.4" />
+      <circle class="df-dot df-t df-p6" cx="0" cy="0" r="3.4" />
+      <circle class="df-dot df-t df-p7" cx="0" cy="0" r="3.4" />
+      <circle class="df-dot df-t df-p8" cx="0" cy="0" r="3.4" />
+      <circle class="df-dot df-t df-p9" cx="0" cy="0" r="3.4" />
+
+      <!-- The prediction: the share of the blue team is the filled part. It is made at the start of
+           the round (55 per cent) and again at the bomb plant (22 per cent). -->
+      <rect class="df-bar-t" x="12" y="158" width="216" height="7" rx="3.5"></rect>
+      <rect class="df-bar-ct" x="12" y="158" width="216" height="7" rx="3.5"></rect>
+      <rect class="df-bar-flash" x="12" y="158" width="216" height="7" rx="3.5"></rect>
+      <text class="df-side df-side-ct" x="12" y="178">
+        CT
+      </text>
+      <text class="df-side df-side-t" x="228" y="178">
+        T
+      </text>
+    </g>
+
+    <!-- What is happening, in three phases -->
+    <text class="df-cap df-cap-1" x="120" y="194">
+      Round Win Probability
+    </text>
+    <text class="df-cap df-cap-2" x="120" y="194">
+      Prediction at Round Start
+    </text>
+    <text class="df-cap df-cap-3" x="120" y="194">
+      Updated at Bomb Plant
+    </text>
+  </g>
+</svg>
+
+<style>
+  /* Colors come from the tokens of the site: blue for the Counter-Terrorists, amber for the
+     Terrorists */
+  .df-title {
+    fill: var(--color-accent-2);
+    font-family: var(--font-mono), monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.02em;
+    opacity: 0.8;
+  }
+
+  .df-ct {
+    fill: var(--color-accent);
+  }
+
+  .df-t {
+    fill: var(--color-contrast);
+  }
+
+  .df-tile {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+  }
+
+  .df-half {
+    stroke: var(--color-muted);
+    stroke-width: 0.8;
+    stroke-dasharray: 2 3;
+    opacity: 0.5;
+  }
+
+  .df-half-label,
+  .df-num,
+  .df-legend {
+    fill: var(--color-muted);
+    font-family: var(--font-mono), monospace;
+    font-size: 8.5px;
+    opacity: 0.7;
+  }
+
+  .df-num {
+    text-anchor: middle;
+  }
+
+  .df-legend {
+    text-anchor: middle;
+  }
+
+  .df-select {
+    fill: none;
+    stroke: var(--color-accent-2);
+    stroke-width: 1.4;
+    opacity: 0;
+  }
+
+  .df-map {
+    fill: color-mix(in srgb, var(--color-surface) 70%, transparent);
+    stroke: var(--color-border);
+    stroke-width: 1.2;
+  }
+
+  .df-wall {
+    fill: var(--color-border);
+    opacity: 0.85;
+  }
+
+  .df-spawn {
+    stroke-width: 1;
+    stroke-dasharray: 2.5 2.5;
+  }
+
+  .df-spawn-ct {
+    fill: color-mix(in srgb, var(--color-accent) 8%, transparent);
+    stroke: color-mix(in srgb, var(--color-accent) 45%, transparent);
+  }
+
+  .df-spawn-t {
+    fill: color-mix(in srgb, var(--color-contrast) 8%, transparent);
+    stroke: color-mix(in srgb, var(--color-contrast) 45%, transparent);
+  }
+
+  .df-site {
+    fill: color-mix(in srgb, var(--color-accent-2) 8%, transparent);
+    stroke: var(--color-accent-2);
+    stroke-width: 1.2;
+    stroke-dasharray: 3 2.5;
+  }
+
+  .df-site-label {
+    fill: var(--color-accent-2);
+    font-family: var(--font-mono), monospace;
+    font-size: 8.5px;
+    text-anchor: middle;
+    opacity: 0.8;
+  }
+
+  .df-bomb-core {
+    fill: var(--color-danger);
+  }
+
+  .df-bomb-ring {
+    fill: none;
+    stroke: var(--color-danger);
+    stroke-width: 1.2;
+    transform-box: fill-box;
+    transform-origin: center;
+    opacity: 0.6;
+  }
+
+  /* A cross for a dead player, in the color of the team */
+  .df-x {
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+
+  .df-x.df-ct {
+    stroke: var(--color-accent);
+  }
+
+  .df-x.df-t {
+    stroke: var(--color-contrast);
+  }
+
+  .df-xd0,
+  .df-xd1,
+  .df-xd2,
+  .df-xd3,
+  .df-xd4,
+  .df-xd5,
+  .df-xd6,
+  .df-xd7,
+  .df-xd8,
+  .df-xd9 {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .df-win {
+    stroke: none;
+  }
+
+  /* The frame that tells the story: the bomb is planted, the dead are crosses, the survivors stand
+     where they are after the plant */
+  .df-dot {
+    stroke: var(--color-bg);
+    stroke-width: 0.8;
+  }
+
+  .df-p0 {
+    transform: translate(181.46px, 41.81px);
+    opacity: 0;
+  }
+
+  .df-p1 {
+    transform: translate(145.23px, 66.02px);
+    opacity: 1;
+  }
+
+  .df-p2 {
+    transform: translate(204.56px, 39.64px);
+    opacity: 0;
+  }
+
+  .df-p3 {
+    transform: translate(169.68px, 71.1px);
+    opacity: 0;
+  }
+
+  .df-p4 {
+    transform: translate(43.79px, 49.66px);
+    opacity: 1;
+  }
+
+  .df-p5 {
+    transform: translate(190.59px, 52.81px);
+    opacity: 1;
+  }
+
+  .df-p6 {
+    transform: translate(193.7px, 71.6px);
+    opacity: 0;
+  }
+
+  .df-p7 {
+    transform: translate(165.02px, 74.52px);
+    opacity: 1;
+  }
+
+  .df-p8 {
+    transform: translate(201.97px, 88.1px);
+    opacity: 0;
+  }
+
+  .df-p9 {
+    transform: translate(68.8px, 87.81px);
+    opacity: 1;
+  }
+
+  .df-bar-t {
+    fill: var(--color-contrast);
+  }
+
+  .df-bar-ct {
+    fill: var(--color-accent);
+    transform-box: fill-box;
+    transform-origin: 0% 50%;
+    transform: scaleX(0.22);
+  }
+
+  .df-bar-flash {
+    fill: var(--color-fg);
+    opacity: 0;
+  }
+
+  .df-side {
+    font-family: var(--font-mono), monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.02em;
+    opacity: 0.85;
+  }
+
+  .df-side-ct {
+    fill: var(--color-accent);
+  }
+
+  .df-side-t {
+    fill: var(--color-contrast);
+    text-anchor: end;
+  }
+
+  .df-cap {
+    font-family: var(--font-mono), monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.02em;
+    text-anchor: middle;
+    opacity: 0;
+  }
+
+  .df-cap-1,
+  .df-cap-2 {
+    fill: var(--color-muted);
+  }
+
+  .df-cap-3 {
+    fill: var(--color-contrast);
+    opacity: 0.95;
+  }
+
+  /* The rounds are not part of the still frame */
+  .df-strip {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .df-panel {
+      transform-origin: 150px 80px;
+    }
+
+    .df-scene {
+      animation: defuze-scene 12s linear infinite;
+    }
+
+    .df-strip {
+      animation: defuze-strip 12s linear infinite;
+    }
+
+    .df-meta {
+      animation: defuze-meta 12s linear infinite;
+    }
+
+    .df-tile-0 {
+      animation: defuze-tile-0 12s ease-out infinite;
+    }
+
+    .df-tile-1 {
+      animation: defuze-tile-1 12s ease-out infinite;
+    }
+
+    .df-tile-2 {
+      animation: defuze-tile-2 12s ease-out infinite;
+    }
+
+    .df-tile-3 {
+      animation: defuze-tile-3 12s ease-out infinite;
+    }
+
+    .df-tile-4 {
+      animation: defuze-tile-4 12s ease-out infinite;
+    }
+
+    .df-tile-5 {
+      animation: defuze-tile-5 12s ease-out infinite;
+    }
+
+    .df-tile-6 {
+      animation: defuze-tile-6 12s ease-out infinite;
+    }
+
+    .df-tile-7 {
+      animation: defuze-tile-7 12s ease-out infinite;
+    }
+
+    .df-tile-8 {
+      animation: defuze-tile-8 12s ease-out infinite;
+    }
+
+    .df-tile-9 {
+      animation: defuze-tile-9 12s ease-out infinite;
+    }
+
+    .df-select {
+      animation: defuze-select 12s linear infinite;
+    }
+
+    .df-panel {
+      animation: defuze-panel 12s linear infinite;
+    }
+
+    .df-p0 {
+      animation: defuze-p0 12s linear infinite;
+    }
+
+    .df-xd0 {
+      animation: defuze-x0 12s ease-out infinite;
+    }
+
+    .df-p1 {
+      animation: defuze-p1 12s linear infinite;
+    }
+
+    .df-p2 {
+      animation: defuze-p2 12s linear infinite;
+    }
+
+    .df-xd2 {
+      animation: defuze-x2 12s ease-out infinite;
+    }
+
+    .df-p3 {
+      animation: defuze-p3 12s linear infinite;
+    }
+
+    .df-xd3 {
+      animation: defuze-x3 12s ease-out infinite;
+    }
+
+    .df-p4 {
+      animation: defuze-p4 12s linear infinite;
+    }
+
+    .df-p5 {
+      animation: defuze-p5 12s linear infinite;
+    }
+
+    .df-p6 {
+      animation: defuze-p6 12s linear infinite;
+    }
+
+    .df-xd6 {
+      animation: defuze-x6 12s ease-out infinite;
+    }
+
+    .df-p7 {
+      animation: defuze-p7 12s linear infinite;
+    }
+
+    .df-p8 {
+      animation: defuze-p8 12s linear infinite;
+    }
+
+    .df-xd8 {
+      animation: defuze-x8 12s ease-out infinite;
+    }
+
+    .df-p9 {
+      animation: defuze-p9 12s linear infinite;
+    }
+
+    .df-bomb-core {
+      animation: defuze-bomb 12s linear infinite;
+    }
+
+    .df-bomb-ring {
+      animation: defuze-bomb-ring 12s ease-out infinite;
+    }
+
+    .df-bar-ct {
+      animation: defuze-bar 12s ease-in-out infinite;
+    }
+
+    .df-bar-flash {
+      animation: defuze-flash 12s linear infinite;
+    }
+
+    .df-cap-1 {
+      animation: defuze-cap-1 12s linear infinite;
+    }
+
+    .df-cap-2 {
+      animation: defuze-cap-2 12s linear infinite;
+    }
+
+    .df-cap-3 {
+      animation: defuze-cap-3 12s linear infinite;
+    }
+  }
+
+  @keyframes defuze-scene {
+    0% {
+      opacity: 0;
+    }
+    3.3% {
+      opacity: 1;
+    }
+    93.3% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes defuze-strip {
+    0% {
+      opacity: 0;
+    }
+    4.2% {
+      opacity: 1;
+    }
+    35.8% {
+      opacity: 1;
+    }
+    39.2% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes defuze-meta {
+    0% {
+      opacity: 0;
+    }
+    22.5% {
+      opacity: 0;
+    }
+    25.8% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes defuze-tile-0 {
+    0% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    4.2% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    7.1% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+  }
+
+  @keyframes defuze-tile-1 {
+    0% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    6% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    8.9% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+  }
+
+  @keyframes defuze-tile-2 {
+    0% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    7.8% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    10.8% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+  }
+
+  @keyframes defuze-tile-3 {
+    0% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    9.7% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    12.6% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+  }
+
+  @keyframes defuze-tile-4 {
+    0% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    11.5% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    14.4% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+  }
+
+  @keyframes defuze-tile-5 {
+    0% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    13.3% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    16.3% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+  }
+
+  @keyframes defuze-tile-6 {
+    0% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    15.2% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    18.1% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+  }
+
+  @keyframes defuze-tile-7 {
+    0% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    17% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    19.9% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+  }
+
+  @keyframes defuze-tile-8 {
+    0% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    18.8% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    21.8% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+  }
+
+  @keyframes defuze-tile-9 {
+    0% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    20.7% {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+    23.6% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+  }
+
+  @keyframes defuze-select {
+    0% {
+      opacity: 0;
+    }
+    28.3% {
+      opacity: 0;
+    }
+    30.8% {
+      opacity: 1;
+    }
+    35.8% {
+      opacity: 1;
+    }
+    38.3% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes defuze-panel {
+    0% {
+      opacity: 0;
+      transform: scale(0.09);
+    }
+    34.2% {
+      opacity: 0;
+      transform: scale(0.09);
+      animation-timing-function: ease-out;
+    }
+    40% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes defuze-p0 {
+    0% {
+      transform: translate(106px, 34px);
+      opacity: 1;
+    }
+    40.8% {
+      transform: translate(106px, 34px);
+      opacity: 1;
+    }
+    49.5% {
+      transform: translate(150.02px, 46px);
+      opacity: 1;
+    }
+    55.5% {
+      transform: translate(182px, 46px);
+      opacity: 1;
+    }
+    59.4% {
+      transform: translate(186.68px, 45.71px);
+      opacity: 1;
+    }
+    62.7% {
+      transform: translate(184.03px, 42.85px);
+      opacity: 1;
+    }
+    64.6% {
+      transform: translate(181.93px, 42px);
+      opacity: 1;
+    }
+    65% {
+      transform: translate(181.46px, 41.81px);
+      opacity: 0.5;
+    }
+    65.4% {
+      transform: translate(181.46px, 41.81px);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(181.46px, 41.81px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes defuze-x0 {
+    0% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    64.6% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    66.7% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes defuze-p1 {
+    0% {
+      transform: translate(114px, 40px);
+      opacity: 1;
+    }
+    41.7% {
+      transform: translate(114px, 40px);
+      opacity: 1;
+    }
+    48% {
+      transform: translate(142.02px, 58.01px);
+      opacity: 1;
+    }
+    51.5% {
+      transform: translate(157.99px, 67.99px);
+      opacity: 1;
+    }
+    56.1% {
+      transform: translate(152.55px, 67.46px);
+      opacity: 1;
+    }
+    59.2% {
+      transform: translate(149.82px, 64.98px);
+      opacity: 1;
+    }
+    63.7% {
+      transform: translate(144.59px, 66.17px);
+      opacity: 1;
+    }
+    67.1% {
+      transform: translate(148.7px, 65.65px);
+      opacity: 1;
+    }
+    75.1% {
+      transform: translate(158px, 68px);
+      opacity: 1;
+    }
+    79.7% {
+      transform: translate(152.55px, 67.46px);
+      opacity: 1;
+    }
+    82.7% {
+      transform: translate(149.83px, 64.98px);
+      opacity: 1;
+    }
+    87.2% {
+      transform: translate(144.59px, 66.17px);
+      opacity: 1;
+    }
+    90.7% {
+      transform: translate(148.69px, 65.65px);
+      opacity: 1;
+    }
+    98.7% {
+      transform: translate(158px, 68px);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(156.4px, 67.84px);
+      opacity: 1;
+    }
+  }
+
+  @keyframes defuze-p2 {
+    0% {
+      transform: translate(122px, 34px);
+      opacity: 1;
+    }
+    41.3% {
+      transform: translate(122px, 34px);
+      opacity: 1;
+    }
+    44% {
+      transform: translate(136px, 38px);
+      opacity: 1;
+    }
+    55.4% {
+      transform: translate(196px, 42px);
+      opacity: 1;
+    }
+    58.3% {
+      transform: translate(198.12px, 39.23px);
+      opacity: 1;
+    }
+    61.3% {
+      transform: translate(201.6px, 40.31px);
+      opacity: 1;
+    }
+    64.2% {
+      transform: translate(203.88px, 42.82px);
+      opacity: 1;
+    }
+    68.7% {
+      transform: translate(207.53px, 38.82px);
+      opacity: 1;
+    }
+    70.8% {
+      transform: translate(205.05px, 39.51px);
+      opacity: 1;
+    }
+    71.3% {
+      transform: translate(204.56px, 39.64px);
+      opacity: 0.5;
+    }
+    71.7% {
+      transform: translate(204.56px, 39.64px);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(204.56px, 39.64px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes defuze-x2 {
+    0% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    70.8% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    72.9% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes defuze-p3 {
+    0% {
+      transform: translate(130px, 40px);
+      opacity: 1;
+    }
+    42.1% {
+      transform: translate(130px, 40px);
+      opacity: 1;
+    }
+    48.2% {
+      transform: translate(159.99px, 51.99px);
+      opacity: 1;
+    }
+    50.9% {
+      transform: translate(170px, 62px);
+      opacity: 1;
+    }
+    54.9% {
+      transform: translate(173.38px, 65.44px);
+      opacity: 1;
+    }
+    58.6% {
+      transform: translate(172.08px, 69.68px);
+      opacity: 1;
+    }
+    61.4% {
+      transform: translate(168.77px, 69.72px);
+      opacity: 1;
+    }
+    65.4% {
+      transform: translate(169.56px, 74.56px);
+      opacity: 1;
+    }
+    67.9% {
+      transform: translate(169.66px, 71.6px);
+      opacity: 1;
+    }
+    68.3% {
+      transform: translate(169.68px, 71.1px);
+      opacity: 0.5;
+    }
+    68.8% {
+      transform: translate(169.68px, 71.1px);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(169.68px, 71.1px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes defuze-x3 {
+    0% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    67.9% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    70% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes defuze-p4 {
+    0% {
+      transform: translate(110px, 42px);
+      opacity: 1;
+    }
+    42.5% {
+      transform: translate(110px, 42px);
+      opacity: 1;
+    }
+    49% {
+      transform: translate(76px, 46px);
+      opacity: 1;
+    }
+    55.1% {
+      transform: translate(44px, 50px);
+      opacity: 1;
+    }
+    58.3% {
+      transform: translate(41.97px, 46.75px);
+      opacity: 1;
+    }
+    61.2% {
+      transform: translate(38.58px, 45.87px);
+      opacity: 1;
+    }
+    64.7% {
+      transform: translate(41.97px, 48.29px);
+      opacity: 1;
+    }
+    67.2% {
+      transform: translate(43.62px, 45.78px);
+      opacity: 1;
+    }
+    70.7% {
+      transform: translate(44px, 50px);
+      opacity: 1;
+    }
+    73.9% {
+      transform: translate(41.96px, 46.75px);
+      opacity: 1;
+    }
+    76.8% {
+      transform: translate(38.58px, 45.87px);
+      opacity: 1;
+    }
+    80.3% {
+      transform: translate(41.97px, 48.29px);
+      opacity: 1;
+    }
+    82.8% {
+      transform: translate(43.62px, 45.78px);
+      opacity: 1;
+    }
+    86.3% {
+      transform: translate(44px, 50px);
+      opacity: 1;
+    }
+    89.5% {
+      transform: translate(41.97px, 46.75px);
+      opacity: 1;
+    }
+    92.4% {
+      transform: translate(38.58px, 45.87px);
+      opacity: 1;
+    }
+    95.9% {
+      transform: translate(41.97px, 48.29px);
+      opacity: 1;
+    }
+    98.4% {
+      transform: translate(43.62px, 45.78px);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(43.79px, 47.66px);
+      opacity: 1;
+    }
+  }
+
+  @keyframes defuze-p5 {
+    0% {
+      transform: translate(112px, 126px);
+      opacity: 1;
+    }
+    40.8% {
+      transform: translate(112px, 126px);
+      opacity: 1;
+    }
+    51.1% {
+      transform: translate(165.99px, 128px);
+      opacity: 1;
+    }
+    66% {
+      transform: translate(186px, 52.01px);
+      opacity: 1;
+    }
+    67.9% {
+      transform: translate(186.23px, 54.35px);
+      opacity: 1;
+    }
+    80% {
+      transform: translate(186.23px, 54.35px);
+      opacity: 1;
+    }
+    81.9% {
+      transform: translate(186.44px, 56.57px);
+      opacity: 1;
+    }
+    86.2% {
+      transform: translate(190.03px, 52.8px);
+      opacity: 1;
+    }
+    90.4% {
+      transform: translate(195.1px, 52.91px);
+      opacity: 1;
+    }
+    93.3% {
+      transform: translate(195.84px, 49.55px);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(188.03px, 51.5px);
+      opacity: 1;
+    }
+  }
+
+  @keyframes defuze-p6 {
+    0% {
+      transform: translate(120px, 132px);
+      opacity: 1;
+    }
+    41.7% {
+      transform: translate(120px, 132px);
+      opacity: 1;
+    }
+    52.3% {
+      transform: translate(176px, 128px);
+      opacity: 1;
+    }
+    63% {
+      transform: translate(192px, 74px);
+      opacity: 1;
+    }
+    65% {
+      transform: translate(193.42px, 72.01px);
+      opacity: 1;
+    }
+    65.4% {
+      transform: translate(193.7px, 71.6px);
+      opacity: 0.5;
+    }
+    65.8% {
+      transform: translate(193.7px, 71.6px);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(193.7px, 71.6px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes defuze-x6 {
+    0% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    65% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    67.1% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes defuze-p7 {
+    0% {
+      transform: translate(104px, 130px);
+      opacity: 1;
+    }
+    42.5% {
+      transform: translate(104px, 130px);
+      opacity: 1;
+    }
+    53.2% {
+      transform: translate(160px, 124px);
+      opacity: 1;
+    }
+    62.7% {
+      transform: translate(166px, 74px);
+      opacity: 1;
+    }
+    66.4% {
+      transform: translate(162.13px, 76.04px);
+      opacity: 1;
+    }
+    70.1% {
+      transform: translate(159.89px, 79.94px);
+      opacity: 1;
+    }
+    73.6% {
+      transform: translate(158.35px, 76.09px);
+      opacity: 1;
+    }
+    76.6% {
+      transform: translate(156.3px, 79.11px);
+      opacity: 1;
+    }
+    85.7% {
+      transform: translate(166px, 74px);
+      opacity: 1;
+    }
+    89.4% {
+      transform: translate(162.13px, 76.04px);
+      opacity: 1;
+    }
+    93.1% {
+      transform: translate(159.89px, 79.94px);
+      opacity: 1;
+    }
+    96.6% {
+      transform: translate(158.35px, 76.09px);
+      opacity: 1;
+    }
+    99.7% {
+      transform: translate(156.3px, 79.11px);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(156.67px, 78.91px);
+      opacity: 1;
+    }
+  }
+
+  @keyframes defuze-p8 {
+    0% {
+      transform: translate(128px, 126px);
+      opacity: 1;
+    }
+    41.3% {
+      transform: translate(128px, 126px);
+      opacity: 1;
+    }
+    51.1% {
+      transform: translate(180px, 125.99px);
+      opacity: 1;
+    }
+    61% {
+      transform: translate(200px, 78px);
+      opacity: 1;
+    }
+    63.7% {
+      transform: translate(200.74px, 81.26px);
+      opacity: 1;
+    }
+    66.6% {
+      transform: translate(199.29px, 84.32px);
+      opacity: 1;
+    }
+    70% {
+      transform: translate(201.68px, 87.69px);
+      opacity: 1;
+    }
+    70.4% {
+      transform: translate(201.97px, 88.1px);
+      opacity: 0.5;
+    }
+    70.8% {
+      transform: translate(201.97px, 88.1px);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(201.97px, 88.1px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes defuze-x8 {
+    0% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    70% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    72.1% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes defuze-p9 {
+    0% {
+      transform: translate(134px, 132px);
+      opacity: 1;
+    }
+    42.1% {
+      transform: translate(134px, 132px);
+      opacity: 1;
+    }
+    50.2% {
+      transform: translate(96px, 112px);
+      opacity: 1;
+    }
+    58% {
+      transform: translate(64px, 86px);
+      opacity: 1;
+    }
+    61% {
+      transform: translate(67.41px, 87.24px);
+      opacity: 1;
+    }
+    64.3% {
+      transform: translate(70.98px, 88.7px);
+      opacity: 1;
+    }
+    68.7% {
+      transform: translate(72.14px, 83.49px);
+      opacity: 1;
+    }
+    72.1% {
+      transform: translate(76.16px, 83.83px);
+      opacity: 1;
+    }
+    82.4% {
+      transform: translate(64px, 86px);
+      opacity: 1;
+    }
+    85.4% {
+      transform: translate(67.42px, 87.24px);
+      opacity: 1;
+    }
+    88.6% {
+      transform: translate(70.99px, 88.7px);
+      opacity: 1;
+    }
+    93.1% {
+      transform: translate(72.13px, 83.49px);
+      opacity: 1;
+    }
+    96.5% {
+      transform: translate(76.17px, 83.84px);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(71.97px, 84.58px);
+      opacity: 1;
+    }
+  }
+
+  @keyframes defuze-bomb {
+    0% {
+      opacity: 0;
+    }
+    70.4% {
+      opacity: 0;
+    }
+    71.7% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes defuze-bomb-ring {
+    0% {
+      opacity: 0;
+      transform: scale(1);
+    }
+    70.4% {
+      opacity: 0;
+      transform: scale(1);
+    }
+    71.3% {
+      opacity: 0.9;
+      transform: scale(1);
+    }
+    76.7% {
+      opacity: 0;
+      transform: scale(3);
+    }
+    77.1% {
+      opacity: 0.9;
+      transform: scale(1);
+    }
+    82.5% {
+      opacity: 0;
+      transform: scale(3);
+    }
+    82.9% {
+      opacity: 0.9;
+      transform: scale(1);
+    }
+    88.3% {
+      opacity: 0;
+      transform: scale(3);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(3);
+    }
+  }
+
+  @keyframes defuze-bar {
+    0% {
+      transform: scaleX(0.55);
+    }
+    70.8% {
+      transform: scaleX(0.55);
+    }
+    75.8% {
+      transform: scaleX(0.22);
+    }
+    100% {
+      transform: scaleX(0.22);
+    }
+  }
+
+  @keyframes defuze-flash {
+    0% {
+      opacity: 0;
+    }
+    70.8% {
+      opacity: 0;
+    }
+    72.5% {
+      opacity: 0.35;
+    }
+    78.3% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes defuze-cap-1 {
+    0% {
+      opacity: 0;
+    }
+    7.5% {
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.85;
+    }
+    34.2% {
+      opacity: 0.85;
+    }
+    36.7% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes defuze-cap-2 {
+    0% {
+      opacity: 0;
+    }
+    41.7% {
+      opacity: 0;
+    }
+    44.2% {
+      opacity: 0.9;
+    }
+    68.3% {
+      opacity: 0.9;
+    }
+    70.4% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes defuze-cap-3 {
+    0% {
+      opacity: 0;
+    }
+    71.7% {
+      opacity: 0;
+    }
+    74.2% {
+      opacity: 0.95;
+    }
+    100% {
+      opacity: 0.95;
+    }
+  }
+</style>

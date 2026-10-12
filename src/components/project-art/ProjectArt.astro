@@ -1,0 +1,84 @@
+---
+// The small animated picture on a project card (the right side of the card on wide screens, a
+// strip below the subtitle on narrow ones). Every picture is pure CSS and SVG, a few seconds in a
+// loop, calm and in the colors of the site; it carries no information that the text does not
+// have, so it is hidden from assistive technology. With reduced motion a picture stays still and
+// shows a frame that tells the story. A tiny script pauses a picture while it is off screen (and
+// stops the SVG animation of a picture with reduced motion, which CSS cannot do).
+import Defuze from '@/components/project-art/Defuze.astro';
+import Grades from '@/components/project-art/Grades.astro';
+import Pipeline from '@/components/project-art/Pipeline.astro';
+import Routing from '@/components/project-art/Routing.astro';
+import Tetrys from '@/components/project-art/Tetrys.astro';
+import { type ProjectArt } from '@/lib/projects';
+
+interface Props {
+  art: ProjectArt;
+}
+
+const { art } = Astro.props;
+---
+
+<div
+  class="proj-art edge relative h-48 overflow-hidden rounded-lg border border-border bg-bg/50 md:h-full md:min-h-52"
+  aria-hidden="true"
+>
+  {art === 'tetrys' && <Tetrys />}
+  {art === 'routing' && <Routing />}
+  {art === 'defuze' && <Defuze />}
+  {art === 'grades' && <Grades />}
+  {art === 'pipeline' && <Pipeline />}
+</div>
+
+<script>
+  // A picture only runs while it can be seen (saves battery, and the loop starts where it should).
+  // The CSS animations are paused with a style rule; the drift of a picture is an SVG animation,
+  // which a style rule cannot stop, so it is paused here, also for reduced motion (then at its
+  // first position, which is the place of every node in the still frame).
+  const arts = document.querySelectorAll<HTMLElement>('.proj-art');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  const update = (element: HTMLElement): void => {
+    const svg = element.querySelector('svg');
+    if (svg === null || typeof svg.pauseAnimations !== 'function') {
+      return;
+    }
+    if (reduced.matches) {
+      svg.pauseAnimations();
+      svg.setCurrentTime(0);
+    } else if (element.hasAttribute('data-paused')) {
+      svg.pauseAnimations();
+    } else {
+      svg.unpauseAnimations();
+    }
+  };
+
+  if ('IntersectionObserver' in window && arts.length > 0) {
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target instanceof HTMLElement) {
+          entry.target.toggleAttribute('data-paused', !entry.isIntersecting);
+          update(entry.target);
+        }
+      }
+    });
+    for (const element of arts) {
+      observer.observe(element);
+    }
+  } else {
+    for (const element of arts) {
+      update(element);
+    }
+  }
+  reduced.addEventListener('change', () => {
+    for (const element of arts) {
+      update(element);
+    }
+  });
+</script>
+
+<style is:global>
+  .proj-art[data-paused] * {
+    animation-play-state: paused !important;
+  }
+</style>
