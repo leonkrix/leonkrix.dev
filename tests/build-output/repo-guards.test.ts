@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -42,6 +43,16 @@ describe('repository guards', () => {
         expect(source, name).toContain('font-size: 8.5px;');
       }
     }
+  });
+
+  it('has the Defuze picture that its generator makes (so the script and the file cannot drift apart)', () => {
+    // The script exits with an error if the file is not what it makes
+    expect(() =>
+      execFileSync(process.execPath, ['scripts/generate-defuze-picture.mjs', '--check'], {
+        cwd: root,
+        stdio: 'pipe',
+      }),
+    ).not.toThrow();
   });
 
   it('has no hidden bidirectional or control characters in source files (Trojan Source)', () => {
