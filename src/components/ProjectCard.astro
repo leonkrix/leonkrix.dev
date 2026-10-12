@@ -54,16 +54,22 @@ const { project } = Astro.props;
         ))}
       </dl>
     )}
+    {/* The highlights: below everything, or (when there are no key figures) beside the picture */}
+    <ul
+      class:list={[
+        'mt-5 space-y-2.5 text-muted',
+        project.art && project.stats && 'md:col-span-2 md:row-start-3',
+        project.art && !project.stats && 'md:col-start-1 md:row-start-2',
+      ]}
+    >
+      {project.highlights.map((highlight) => (
+        <li class="flex gap-3">
+          <span aria-hidden="true" class="mt-2.5 size-1 shrink-0 rounded-full bg-accent-2" />
+          <span>{highlight}</span>
+        </li>
+      ))}
+    </ul>
   </div>
-
-  <ul class="mt-5 space-y-2.5 text-muted">
-    {project.highlights.map((highlight) => (
-      <li class="flex gap-3">
-        <span aria-hidden="true" class="mt-2.5 size-1 shrink-0 rounded-full bg-accent-2" />
-        <span>{highlight}</span>
-      </li>
-    ))}
-  </ul>
 
   <TechList class="mt-6" items={project.technologies} />
 

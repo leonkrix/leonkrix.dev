@@ -6,6 +6,7 @@
 // shows a frame that tells the story. A tiny script pauses a picture while it is off screen (and
 // stops the SVG animation of a picture with reduced motion, which CSS cannot do).
 import Defuze from '@/components/project-art/Defuze.astro';
+import Grades from '@/components/project-art/Grades.astro';
 import Routing from '@/components/project-art/Routing.astro';
 import Tetrys from '@/components/project-art/Tetrys.astro';
 import { type ProjectArt } from '@/lib/projects';
@@ -24,6 +25,7 @@ const { art } = Astro.props;
   {art === 'tetrys' && <Tetrys />}
   {art === 'routing' && <Routing />}
   {art === 'defuze' && <Defuze />}
+  {art === 'grades' && <Grades />}
 </div>
 
 <script>
