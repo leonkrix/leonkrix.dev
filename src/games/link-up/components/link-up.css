@@ -1,0 +1,594 @@
+/* Styles of the Link Up game. Plain CSS on the design tokens of the site (src/styles/global.css).
+   The moving parts are CSS animations (and a short slide of the tiles made in the component);
+   reduced motion is handled at the end of the file. */
+
+.lu {
+  --lu-gap: 0.5rem;
+  --lu-tile: clamp(3.8rem, 15vw, 4.6rem);
+  --lu-wrong: var(--color-danger);
+  display: grid;
+  gap: 0.75rem;
+  max-width: 34rem;
+  margin-inline: auto;
+}
+
+/* The four colors of the groups, in the order the groups are found */
+.lu [data-color='0'] {
+  --lu-color: var(--color-accent);
+}
+
+.lu [data-color='1'] {
+  --lu-color: var(--color-accent-2);
+}
+
+.lu [data-color='2'] {
+  --lu-color: var(--color-contrast);
+}
+
+.lu [data-color='3'] {
+  --lu-color: var(--color-status);
+}
+
+/* ---- Mistakes and buttons ---- */
+
+.lu-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.lu-mistakes {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.lu-mistakes-label {
+  margin-right: 0.25rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.lu-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border: 1.5px solid var(--color-accent-2);
+  border-radius: 50%;
+  background-color: var(--color-accent-2);
+  transition:
+    background-color 250ms ease,
+    border-color 250ms ease;
+}
+
+.lu-dot[data-lost] {
+  border-color: var(--color-border);
+  background-color: transparent;
+  animation: lu-dot-out 520ms ease;
+}
+
+.lu-actions,
+.lu-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.lu-footer {
+  justify-content: center;
+}
+
+.lu button:not(.lu-tile, .lu-chip) {
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background-color: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  color: var(--color-fg);
+  font-size: 0.85rem;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.lu button:not(.lu-tile, .lu-chip):hover:not(:disabled) {
+  border-color: var(--color-accent-2);
+  transform: translateY(-1px);
+}
+
+.lu button:not(.lu-tile, .lu-chip):active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+}
+
+.lu button:not(.lu-tile, .lu-chip)[data-primary] {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.lu button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* A short message above the board: "One away!" */
+.lu-toast {
+  display: grid;
+  place-items: center;
+  height: 1.6rem;
+}
+
+.lu-toast-text {
+  padding: 0.1rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background-color: var(--color-surface);
+  font-size: 0.85rem;
+  animation: lu-toast 1800ms ease both;
+}
+
+/* ---- The board: groups that were found, and the tiles that are left ---- */
+
+.lu-board {
+  display: grid;
+  gap: var(--lu-gap);
+}
+
+.lu-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--lu-gap);
+}
+
+.lu-tile {
+  display: grid;
+  place-items: center;
+  min-height: var(--lu-tile);
+  padding: 0.3rem 0.2rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+  background-color: color-mix(in srgb, var(--color-surface) 75%, transparent);
+  color: var(--color-fg);
+  font-size: clamp(0.6rem, 2.7vw, 0.95rem);
+  font-weight: 500;
+  line-height: 1.15;
+  text-align: center;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.lu-tile:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--color-accent-2) 70%, var(--color-border));
+  transform: translateY(-1px);
+}
+
+.lu-tile:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.lu-tile:disabled {
+  cursor: default;
+}
+
+/* A picked tile lifts a little and lights up (not by color alone: it also moves and is outlined) */
+.lu-tile[data-picked] {
+  border-color: var(--color-fg);
+  background-color: color-mix(in srgb, var(--color-fg) 14%, var(--color-surface));
+  box-shadow: 0 0.4rem 1rem rgb(0 0 0 / 0.35);
+  transform: translateY(-2px);
+  animation: lu-pick 220ms ease;
+}
+
+/* The tiles come in one after the other when a puzzle starts */
+.lu[data-fresh] .lu-tile {
+  animation: lu-tile-in 460ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(var(--i) * 30ms);
+}
+
+/* The reactions to a group that was handed in */
+.lu .lu-tile[data-react='wrong'] {
+  border-color: var(--lu-wrong);
+  background-color: color-mix(in srgb, var(--lu-wrong) 18%, var(--color-surface));
+  animation: lu-shake 560ms ease;
+}
+
+.lu .lu-tile[data-react='oneAway'],
+.lu .lu-tile[data-react='repeat'] {
+  border-color: var(--color-contrast);
+  background-color: color-mix(in srgb, var(--color-contrast) 14%, var(--color-surface));
+  animation: lu-hop 560ms ease;
+}
+
+.lu .lu-tile[data-react='correct'] {
+  border-color: var(--lu-color);
+  background-color: color-mix(in srgb, var(--lu-color) 38%, var(--color-surface));
+  box-shadow: 0 0 1.4rem color-mix(in srgb, var(--lu-color) 55%, transparent);
+  animation: lu-flash 700ms ease both;
+}
+
+/* A group that was found: a bar in the color of the group, with its name and its terms */
+.lu-found {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--lu-tile);
+  padding: 0.4rem 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--lu-color);
+  border-radius: 0.6rem;
+  background-color: color-mix(in srgb, var(--lu-color) 30%, var(--color-surface));
+  text-align: center;
+  animation: lu-found-in 640ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* A light that sweeps over the bar once */
+.lu-found::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--color-fg) 38%, transparent) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  animation: lu-sweep 900ms ease 120ms forwards;
+  pointer-events: none;
+}
+
+.lu-found h2 {
+  font-size: clamp(0.7rem, 2.8vw, 0.85rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lu-found-terms {
+  margin-top: 0.15rem;
+  font-size: clamp(0.62rem, 2.6vw, 0.82rem);
+  line-height: 1.3;
+  color: color-mix(in srgb, var(--color-fg) 85%, transparent);
+}
+
+.lu-chip {
+  display: inline;
+  padding: 0 0.1rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: help;
+  text-decoration: underline dotted transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 160ms ease;
+}
+
+.lu-chip:hover,
+.lu-chip:focus-visible {
+  text-decoration-color: currentcolor;
+}
+
+/* The groups that the game shows after the last mistake: not found by the player */
+.lu-found[data-missed] {
+  border-style: dashed;
+  background-color: color-mix(in srgb, var(--lu-color) 14%, var(--color-surface));
+}
+
+/* A win: the four bars light up one after the other */
+.lu[data-won] .lu-found:nth-of-type(1) {
+  animation:
+    lu-found-in 640ms cubic-bezier(0.2, 0.8, 0.2, 1) both,
+    lu-wave 1000ms ease-in-out 200ms 1;
+}
+
+.lu[data-won] .lu-found:nth-of-type(2) {
+  animation:
+    lu-found-in 640ms cubic-bezier(0.2, 0.8, 0.2, 1) both,
+    lu-wave 1000ms ease-in-out 380ms 1;
+}
+
+.lu[data-won] .lu-found:nth-of-type(3) {
+  animation:
+    lu-found-in 640ms cubic-bezier(0.2, 0.8, 0.2, 1) both,
+    lu-wave 1000ms ease-in-out 560ms 1;
+}
+
+.lu[data-won] .lu-found:nth-of-type(4) {
+  animation:
+    lu-found-in 640ms cubic-bezier(0.2, 0.8, 0.2, 1) both,
+    lu-wave 1000ms ease-in-out 740ms 1;
+}
+
+/* ---- What a term means (the line under the board) ---- */
+
+.lu-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  /* Room for two lines (more on a narrow screen), so the text never moves what is below it */
+  min-height: 4rem;
+  padding: 0.6rem 0.6rem 0.6rem 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+  background-color: color-mix(in srgb, var(--color-surface) 55%, transparent);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--color-muted);
+}
+
+@media (max-width: 30rem) {
+  .lu-info {
+    min-height: 5.3rem;
+  }
+}
+
+/* The longest definition needs one more line on the narrowest phones */
+@media (max-width: 22.4rem) {
+  .lu-info {
+    min-height: 6.5rem;
+  }
+}
+
+.lu-info p {
+  flex: 1;
+}
+
+/* The eye: shows or blurs the definitions */
+.lu button.lu-eye {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 50%;
+  color: var(--color-muted);
+}
+
+.lu button.lu-eye[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--color-accent-2) 55%, var(--color-border));
+  color: var(--color-accent-2);
+}
+
+.lu-definition {
+  transition: filter 220ms ease;
+}
+
+.lu-definition[data-blurred] {
+  filter: blur(0.32rem);
+  user-select: none;
+}
+
+.lu-info strong {
+  color: var(--color-fg);
+}
+
+.lu-info-hint {
+  color: var(--color-muted);
+}
+
+/* ---- The end of a game ---- */
+
+/* The space for the result is kept free from the start (two lines of text on a narrow screen) */
+.lu-end {
+  min-height: 5.2rem;
+}
+
+@media (max-width: 30rem) {
+  .lu-end {
+    min-height: 6.2rem;
+  }
+}
+
+.lu-result {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.7rem 1.1rem;
+  border: 1px solid var(--color-accent);
+  border-radius: 0.8rem;
+  background-color: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+  text-align: center;
+  animation: lu-result-in 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.lu-result[data-status='lost'] {
+  border-color: var(--color-danger);
+  background-color: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
+}
+
+.lu-result h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.lu-result p {
+  color: var(--color-muted);
+}
+
+.lu-result:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* ---- Animations ---- */
+
+@keyframes lu-pick {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.06);
+  }
+  100% {
+    transform: translateY(-2px) scale(1);
+  }
+}
+
+@keyframes lu-tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes lu-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  15% {
+    transform: translateX(-7px);
+  }
+  30% {
+    transform: translateX(6px);
+  }
+  45% {
+    transform: translateX(-5px);
+  }
+  60% {
+    transform: translateX(4px);
+  }
+  75% {
+    transform: translateX(-2px);
+  }
+}
+
+@keyframes lu-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-9px);
+  }
+  55% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes lu-flash {
+  0% {
+    transform: translateY(-2px) scale(1);
+  }
+  40% {
+    transform: translateY(-3px) scale(1.09);
+  }
+  100% {
+    transform: translateY(0) scale(1.02);
+    opacity: 0.35;
+  }
+}
+
+@keyframes lu-found-in {
+  from {
+    opacity: 0;
+    transform: scaleY(0.45) translateY(-0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes lu-sweep {
+  to {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes lu-wave {
+  0%,
+  100% {
+    box-shadow: 0 0 0 transparent;
+    transform: none;
+  }
+  50% {
+    box-shadow: 0 0 1.6rem color-mix(in srgb, var(--lu-color) 70%, transparent);
+    transform: scale(1.025);
+  }
+}
+
+@keyframes lu-result-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.8rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes lu-toast {
+  0% {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  12%,
+  80% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-0.3rem);
+  }
+}
+
+@keyframes lu-dot-out {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.6);
+    background-color: var(--color-danger);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lu *,
+  .lu *::before,
+  .lu *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .lu-found::after {
+    display: none;
+  }
+}
+
+/* While the first puzzle is fetched: the same height as the finished game (measured), so that
+   nothing below it jumps when the board appears */
+.lu-loading {
+  display: grid;
+  min-height: 38.8rem;
+  place-items: center;
+  color: var(--color-muted);
+}
+
+@media (max-width: 30rem) {
+  .lu-loading {
+    min-height: 39.8rem;
+  }
+}

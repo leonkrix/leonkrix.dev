@@ -15,7 +15,7 @@ The games of the Playground section.
 src/games/<slug>/
   README.md        rules, design decisions, data sources and licenses, how to add words or levels, how to test
   GamePage.astro   the page: <GameLayout game={game}> with the game (React island) and the panel texts as slots
-  Preview.astro    the animated tile preview (pure CSS and SVG, mark moving parts with class "anim")
+  Preview.astro    the animated tile preview (pure CSS and SVG; the best ones play a short version of the game itself, see the previews of Link Up and Root Cause)
   logic/           pure TypeScript: no DOM, no React, no browser storage, unit tested
   data/            word lists, levels, vectors (with data tests)
   components/      React components of the island
@@ -28,10 +28,11 @@ src/games/<slug>/
 - English only, unlimited play, no daily mode, **nothing stored on the device** (no cookies, `localStorage`, `sessionStorage`, IndexedDB, cache storage). The site-wide storage guard fails the build otherwise.
 - Own names, own art, own texts. Data sources go into [THIRD_PARTY.md](../../THIRD_PARTY.md) with their license.
 - Keyboard playable, results announced to screen readers, never color alone, reduced motion honored.
-- The home page loads no game JavaScript. A game page loads React and its data on its own page only.
+- The home page loads no game JavaScript. A game page loads React and its data on its own page only. Big data is split into files that are fetched when they are needed (Link Up: only the files of the four categories of a puzzle).
+- Nothing on the page may move while the game is played: reserve the space of results, messages and definitions up front, and test it (Link Up watches the layout on every frame, see its e2e test).
 - Before a game goes live:
   1. set its budget in `GAME_BUDGETS` in `scripts/lighthouse.mjs` (measure first, `pnpm lighthouse` fails without an entry),
-  2. add its page to the live check (`scripts/live-check.ts`),
+  2. check the live check: it reads the game pages from the sitemap by itself, so extend `scripts/live-check.ts` only if the game needs more (an API, a special header),
   3. update the portfolio (technologies, the website project entry, About text) and THIRD_PARTY.md,
   4. run `pnpm check`, `pnpm test:e2e` and `pnpm lighthouse`.
 

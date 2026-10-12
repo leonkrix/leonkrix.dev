@@ -1,0 +1,203 @@
+---
+// The tile of the game on the Playground section: it plays the game in a few seconds, the way the
+// game does. Sixteen grey tiles lie mixed up. Four of a kind light up one after the other, take
+// their color and glide into the first row; the other tiles move on to fill the gaps below it.
+// Then the next group goes into the second row, and so on. It plays when the tile appears, and
+// again whenever it is pointed at or focused. Pure CSS, no script. The final colors and places are
+// also the normal look, so the tile is right without any motion.
+
+// The group of the tile that starts at each of the 16 places of the board (numbered row by row):
+// four of each, mixed up.
+const groupAt = [2, 0, 3, 1, 1, 3, 0, 2, 0, 2, 1, 3, 3, 1, 2, 0];
+const COLUMNS = 4;
+
+interface Tile {
+  group: number;
+  /** Where it ends up: the number of its group is its row, this is its column */
+  column: number;
+  /** The place it has at the start, and after the first, second and third group went to its row */
+  places: number[];
+}
+
+const tiles: Tile[] = groupAt.map((group, place) => ({
+  group,
+  column: groupAt.slice(0, place).filter((other) => other === group).length,
+  places: [place],
+}));
+// After each group, the tiles that are left move up to fill the gaps below the finished rows
+for (let finished = 0; finished < 3; finished += 1) {
+  const waiting = tiles.filter((tile) => tile.group > finished);
+  for (const tile of tiles) {
+    tile.places.push(
+      tile.group <= finished
+        ? tile.group * COLUMNS + tile.column
+        : (finished + 1) * COLUMNS + waiting.indexOf(tile),
+    );
+  }
+}
+for (const tile of tiles) {
+  tile.places.push(tile.group * COLUMNS + tile.column);
+}
+
+/** The custom properties of a tile: its group, its place in the group, and where it is at each stage */
+function style(tile: Tile): string {
+  const final = tile.group * COLUMNS + tile.column;
+  const parts = [`--g: ${String(tile.group)}`, `--k: ${String(tile.column)}`];
+  tile.places.forEach((place, stage) => {
+    parts.push(
+      `--x${String(stage)}: ${String((place % COLUMNS) - (final % COLUMNS))}`,
+      `--y${String(stage)}: ${String(Math.floor(place / COLUMNS) - Math.floor(final / COLUMNS))}`,
+    );
+  });
+  return parts.join('; ');
+}
+
+// The tiles in the order of their final places, so that the page is right without any style
+const inFinalOrder = [...tiles].sort(
+  (a, b) => a.group * COLUMNS + a.column - (b.group * COLUMNS + b.column),
+);
+---
+
+<div class="pv" aria-hidden="true">
+  {inFinalOrder.map((tile) => (
+    <span class="pv-tile" data-group={tile.group} style={style(tile)} />
+  ))}
+</div>
+
+<style>
+  .pv {
+    --pv-w: 2.7rem;
+    --pv-h: 1.35rem;
+    --pv-gap: 0.3rem;
+    --pv-step-x: calc(var(--pv-w) + var(--pv-gap));
+    --pv-step-y: calc(var(--pv-h) + var(--pv-gap));
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(4, var(--pv-w));
+    grid-auto-rows: var(--pv-h);
+    gap: var(--pv-gap);
+    place-content: center;
+  }
+
+  .pv-tile {
+    display: block;
+    border: 2px solid var(--pv-color);
+    border-radius: 0.3rem;
+    background-color: color-mix(in srgb, var(--pv-color) 55%, transparent);
+    /* Two animations per round: a tile lights up (one after the other within its group), and it
+       moves through the stages of the game for the whole time (see lup-move). The last two entries
+       are the same animations under other names, switched on by pointing at the tile: a changed
+       name starts over from the beginning, while the first two (unchanged) are not restarted by
+       leaving the tile again. Before its turn a tile waits in its first state (grey). */
+    animation-name: lup-flash, lup-move, none, none;
+    animation-duration: 360ms, 2200ms, 360ms, 2200ms;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+    animation-delay:
+      calc(var(--g) * 650ms + var(--k) * 55ms), 0ms, calc(var(--g) * 650ms + var(--k) * 55ms), 0ms;
+  }
+
+  .pv-tile[data-group='0'] {
+    --pv-color: var(--color-accent);
+  }
+
+  .pv-tile[data-group='1'] {
+    --pv-color: var(--color-accent-2);
+  }
+
+  .pv-tile[data-group='2'] {
+    --pv-color: var(--color-contrast);
+  }
+
+  .pv-tile[data-group='3'] {
+    --pv-color: var(--color-status);
+  }
+
+  /* A tile that is waiting to be revealed has not started yet: it begins when it appears */
+  :global(.reveal-pending) .pv-tile {
+    animation-name: none, none, none, none;
+  }
+
+  :global(.game-tile):hover .pv-tile,
+  :global(.game-tile):focus-visible .pv-tile {
+    animation-name: lup-flash, lup-move, lup-flash-again, lup-move-again;
+  }
+
+  /* The names start with "lup-": keyframes are not scoped to a component. A tile lights up (a
+     lifted white outline), then settles into the color of its group (its normal style). */
+  @keyframes lup-flash {
+    0% {
+      scale: 1;
+      border-color: var(--color-border);
+      background-color: transparent;
+    }
+    45% {
+      scale: 1.14;
+      border-color: var(--color-fg);
+      background-color: color-mix(in srgb, var(--color-fg) 16%, transparent);
+    }
+  }
+
+  @keyframes lup-flash-again {
+    0% {
+      scale: 1;
+      border-color: var(--color-border);
+      background-color: transparent;
+    }
+    45% {
+      scale: 1.14;
+      border-color: var(--color-fg);
+      background-color: color-mix(in srgb, var(--color-fg) 16%, transparent);
+    }
+  }
+
+  /* The places of a tile (in steps of one place, from its final place): at the start, after the
+     first group went to the first row, after the second, and after the third. A group moves 415
+     milliseconds after its first tile lit up, every 650 milliseconds, and the move takes 360. */
+  @keyframes lup-move {
+    0%,
+    18.9% {
+      translate: calc(var(--x0) * var(--pv-step-x)) calc(var(--y0) * var(--pv-step-y));
+    }
+    35.2%,
+    48.4% {
+      translate: calc(var(--x1) * var(--pv-step-x)) calc(var(--y1) * var(--pv-step-y));
+    }
+    64.8%,
+    77.9% {
+      translate: calc(var(--x2) * var(--pv-step-x)) calc(var(--y2) * var(--pv-step-y));
+    }
+    94.3%,
+    100% {
+      translate: 0 0;
+    }
+  }
+
+  @keyframes lup-move-again {
+    0%,
+    18.9% {
+      translate: calc(var(--x0) * var(--pv-step-x)) calc(var(--y0) * var(--pv-step-y));
+    }
+    35.2%,
+    48.4% {
+      translate: calc(var(--x1) * var(--pv-step-x)) calc(var(--y1) * var(--pv-step-y));
+    }
+    64.8%,
+    77.9% {
+      translate: calc(var(--x2) * var(--pv-step-x)) calc(var(--y2) * var(--pv-step-y));
+    }
+    94.3%,
+    100% {
+      translate: 0 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pv-tile,
+    :global(.game-tile):hover .pv-tile,
+    :global(.game-tile):focus-visible .pv-tile {
+      animation: none;
+    }
+  }
+</style>

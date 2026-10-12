@@ -1,0 +1,114 @@
+---
+import { type GameDefinition } from '@/games/registry';
+import GameLayout from '@/layouts/GameLayout.astro';
+
+import LinkUp from './components/LinkUp';
+
+interface Props {
+  game: GameDefinition;
+}
+
+const { game } = Astro.props;
+---
+
+<GameLayout game={game}>
+  {/* Starts the first puzzle (and fetches its words) while the game is still loading */}
+  <script>
+    import { firstGame } from './logic/first-game';
+
+    firstGame().catch(() => {
+      // The game shows the error itself
+    });
+  </script>
+  {/* Rendered in the browser only: the puzzle is random */}
+  <LinkUp client:only="react">
+    <p
+      slot="fallback"
+      class="grid min-h-[38.8rem] place-items-center text-muted [@media(max-width:30rem)]:min-h-[39.8rem]"
+    >
+      Loading the game...
+    </p>
+  </LinkUp>
+  <noscript>
+    <p class="text-muted">
+      This game needs JavaScript to run. Nothing is sent anywhere, it all happens in your browser.
+    </p>
+  </noscript>
+
+  <div slot="rules">
+    <p>
+      Sixteen terms belong to <strong>four hidden groups of four</strong>. Pick four terms that you
+      think belong together. When the fourth one is picked, the group is checked by itself.
+    </p>
+    <ul>
+      <li>
+        <strong>Right:</strong> the four tiles light up in a color, glide to the top and show the
+        name of the group. The other tiles move up.
+      </li>
+      <li>
+        <strong>Wrong:</strong> the tiles shake, and you lose one of your four tries. The same wrong
+        group again costs nothing.
+      </li>
+      <li>
+        <strong>One away:</strong> three of your four tiles belong together. You get a hint, and it
+        still counts as a mistake.
+      </li>
+      <li>
+        <strong>Out of tries:</strong> the missing groups are shown one after the other.
+      </li>
+    </ul>
+    <p>
+      Not sure what a term means? Point at it, or focus it with the keyboard: a line under the board
+      says what it is. The eye next to that line blurs the definitions if you want a harder game.
+      You can do that for the terms of the groups you found, too. A puzzle is made from over 200
+      topics (sorting algorithms, HTTP methods, Git commands, Linux distributions, fonts, optimizers
+      and many more), and only terms that clearly belong to one topic are mixed, so every puzzle has
+      exactly one solution.
+    </p>
+    <p>
+      Rounds are unlimited and nothing is saved. The link of a puzzle opens the same puzzle for
+      whoever you send it to. You can also add <code>?seed=anything</code> to the address.
+    </p>
+  </div>
+
+  <div slot="keys">
+    <ul>
+      <li>
+        <kbd>Tab</kbd> moves into the board, then the arrow keys <kbd>←</kbd> <kbd>↑</kbd>
+        <kbd>→</kbd> <kbd>↓</kbd> move between the tiles
+      </li>
+      <li>
+        <kbd>Space</kbd> or <kbd>Enter</kbd> picks a tile (or puts it back)
+      </li>
+      <li>
+        <kbd>Home</kbd> and <kbd>End</kbd> jump to the first and the last tile
+      </li>
+      <li>
+        <kbd>Esc</kbd> puts all picked tiles back
+      </li>
+    </ul>
+    <p>
+      The fourth picked tile hands the group in by itself. Everything that happens is announced to
+      screen readers.
+    </p>
+  </div>
+
+  <div slot="built">
+    <p>
+      The rules are small, pure TypeScript functions with unit tests: making a puzzle from random
+      numbers, counting the solutions of a puzzle, and the game as a value that is never changed
+      (picking, handing in, mistakes, losing and showing the missing groups). The user interface is
+      a React component that only draws what the rules say.
+    </p>
+    <p>
+      The topics, the terms and their short definitions are written for this site. A puzzle is only
+      shown after it was checked: a separate function counts every way to sort the sixteen tiles
+      into the four groups, and it must find exactly one. Every term belongs to exactly one topic,
+      and a list of topics that must never meet (HTTP DELETE is also an SQL command) keeps the
+      answer clear. Tests check every term (a short definition that does not give the term away, no
+      duplicates) and generate hundreds of puzzles. The animations are CSS, plus a short slide of
+      the tiles that is measured and played in the browser, and they all stop when your system asks
+      for reduced motion. Nothing is stored on your device.
+    </p>
+  </div>
+</GameLayout>
