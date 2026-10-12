@@ -29,6 +29,21 @@ describe('repository guards', () => {
     expect(existsSync(join(root, 'scripts', 'clear-content-cache.mjs'))).toBe(true);
   });
 
+  it('draws every picture of the project cards in the same coordinates and with the same label size, so that text looks equally big in every card', () => {
+    const folder = join(root, 'src', 'components', 'project-art');
+    const pictures = readdirSync(folder).filter(
+      (name) => name.endsWith('.astro') && name !== 'ProjectArt.astro',
+    );
+    expect(pictures.length).toBeGreaterThan(0);
+    for (const name of pictures) {
+      const source = readFileSync(join(folder, name), 'utf8');
+      expect(source, name).toContain('viewBox="0 0 240 200"');
+      if (source.includes('<text')) {
+        expect(source, name).toContain('font-size: 8.5px;');
+      }
+    }
+  });
+
   it('has no hidden bidirectional or control characters in source files (Trojan Source)', () => {
     // Such characters make code look different from what it does. Write them as escapes
     // (the code U+202E written as a backslash u escape in a string) when a test needs them.

@@ -1,0 +1,508 @@
+---
+// The master thesis in ten seconds: joint route allocation in a flying network. The nodes drift on
+// the spot, like drones that hold their place, and the links and the flows are fixed to them: every
+// end of a link and every corner of a flow follows its node exactly. The color of a link tells its
+// quality: green is good, amber is mediocre, red is weak. Two flows (blue and cyan, each drawn as a
+// line beside its route, so the color of the link stays visible) are routed once, at the same time:
+// a short one over the top and down to the middle, a long one around the bottom (load balancing,
+// the two share no link). Their shortest paths would lead through the middle, and the links there
+// degrade one after the other and turn red: the learned routing had avoided them from the start.
+// The mediocre amber links stay amber.
+//
+// Pure CSS and SVG. All pictures of the project cards use the same coordinates (240 by 200) and
+// the same label size, so that text looks the same size in every card. The base style of every part
+// is the frame that tells the story (used with reduced motion, and before the animation starts:
+// the flows are drawn and the two links are red); the keyframes build the scene up and the whole
+// scene fades out at the end of the loop. The times are in the comments (the loop is 10 seconds, so
+// 10 per cent are one second).
+//
+// The drift is an SVG animation (CSS cannot move the two ends of a link independently), made from
+// the same list of positions for a node, for the links that end in it and for the flows that run
+// over it, with the same time, so they cannot drift apart. `ProjectArt.astro` pauses it off screen
+// and with reduced motion (the first position of every node is its place in the still frame).
+
+interface Node {
+  x: number;
+  y: number;
+  /** The end of a flow: bigger, and in the color of the flow */
+  end?: 1 | 2;
+}
+
+// An irregular network: different distances, at most three links per node, except for the middle
+// node where the two flows meet in the shortest paths
+const nodes: Record<string, Node> = {
+  a: { x: 14, y: 70, end: 1 },
+  b: { x: 58, y: 26 },
+  c: { x: 118, y: 16 },
+  d: { x: 180, y: 34 },
+  e: { x: 222, y: 88, end: 1 },
+  m: { x: 74, y: 98 },
+  n: { x: 136, y: 94 },
+  s: { x: 20, y: 146, end: 2 },
+  q1: { x: 58, y: 174 },
+  q2: { x: 108, y: 154 },
+  q3: { x: 150, y: 176 },
+  q4: { x: 190, y: 150 },
+  t: { x: 226, y: 146, end: 2 },
+};
+const ids = Object.keys(nodes);
+
+// ok: green, warn: amber (stays), weak-a and weak-b: green first, then amber, then red
+const links: [string, string, 'ok' | 'warn' | 'weak-a' | 'weak-b'][] = [
+  ['a', 'b', 'ok'],
+  ['b', 'c', 'ok'],
+  ['c', 'd', 'warn'],
+  ['d', 'e', 'ok'],
+  ['c', 'n', 'ok'],
+  ['a', 'm', 'ok'],
+  ['a', 's', 'ok'],
+  ['s', 'm', 'ok'],
+  ['m', 'n', 'weak-a'],
+  ['n', 'e', 'ok'],
+  ['n', 't', 'weak-b'],
+  ['s', 'q1', 'ok'],
+  ['q1', 'q2', 'ok'],
+  ['q2', 'q3', 'warn'],
+  ['q3', 'q4', 'ok'],
+  ['q4', 't', 'ok'],
+];
+
+// The two flows: the short one over the top and down to the middle, the long one around the bottom
+const flow1 = ['a', 'b', 'c', 'n', 'e'];
+const flow2 = ['s', 'q1', 'q2', 'q3', 'q4', 't'];
+
+// The drift: every node gets its own list of positions (a few units from its place, and one node
+// reaches further than another), the first one is the place itself and the last one the same
+// again, so the loop is closed. The moments of the positions are not evenly spaced either (the same
+// for all nodes, so that the links can follow them), and the whole loop is slow. The numbers come
+// from a fixed seed, so the picture is the same at every build.
+const STEPS = 12;
+const LOOP_SECONDS = 22;
+function seeded(seed: number): () => number {
+  let state = seed;
+  return () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let value = Math.imul(state ^ (state >>> 15), 1 | state);
+    value ^= value + Math.imul(value ^ (value >>> 7), 61 | value);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const random = seeded(20261011);
+const drift: Record<string, { dx: number; dy: number }[]> = {};
+for (const id of ids) {
+  // How far this node wanders: between 1.8 and 4.2 units
+  const reach = 1.8 + random() * 2.4;
+  drift[id] = Array.from({ length: STEPS + 1 }, (_, step) =>
+    step === 0 || step === STEPS
+      ? { dx: 0, dy: 0 }
+      : { dx: (random() * 2 - 1) * reach, dy: (random() * 2 - 1) * reach },
+  );
+}
+// The moments of the positions: the time between two of them varies by a factor of three
+const weights = Array.from({ length: STEPS }, () => 0.5 + random() * 1.5);
+const total = weights.reduce((sum, weight) => sum + weight, 0);
+const moments = [0];
+for (const weight of weights) {
+  moments.push((moments.at(-1) ?? 0) + weight / total);
+}
+moments[STEPS] = 1;
+
+const at = (id: string, step: number): [number, number] => {
+  const node = nodes[id] ?? { x: 0, y: 0 };
+  const offset = drift[id]?.[step] ?? { dx: 0, dy: 0 };
+  return [node.x + offset.dx, node.y + offset.dy];
+};
+const num = (value: number): string => String(Math.round(value * 100) / 100);
+const point = (id: string, step: number): string => at(id, step).map(num).join(' ');
+// (the core rule no-unused-vars takes the parameter name of a function type for an unused variable)
+// eslint-disable-next-line no-unused-vars
+const values = (make: (step: number) => string): string =>
+  Array.from({ length: STEPS + 1 }, (_, step) => make(step)).join(';');
+const OFFSET = 3.6;
+/**
+ * The route of a flow as a line beside the nodes: every piece runs parallel to its link, at the
+ * same distance, and the corners are mitered. `side` is the side of the direction of travel (1: to
+ * the left of the direction, which is above a link that runs to the right; -1: to the right).
+ */
+function offsetRoute(path: string[], step: number, side: 1 | -1): string {
+  const points = path.map((id) => at(id, step));
+  const normals = points.slice(1).map((end, index) => {
+    const start = points[index] ?? end;
+    const dx = end[0] - start[0];
+    const dy = end[1] - start[1];
+    const length = Math.hypot(dx, dy) || 1;
+    return [(side * dy) / length, (-side * dx) / length] as const;
+  });
+  return points
+    .map(([x, y], index) => {
+      const before = normals[index - 1];
+      const after = normals[index];
+      let nx: number;
+      let ny: number;
+      let scale = OFFSET;
+      if (before !== undefined && after !== undefined) {
+        // The corner of two parallel lines, at the same distance from both (not too far out)
+        nx = before[0] + after[0];
+        ny = before[1] + after[1];
+        scale = Math.min(OFFSET / (1 + before[0] * after[0] + before[1] * after[1]), OFFSET * 2.5);
+      } else {
+        // The first and the last point: straight out from the only piece next to it
+        const only = before ?? after;
+        nx = only?.[0] ?? 0;
+        ny = only?.[1] ?? 0;
+      }
+      return `${index === 0 ? 'M' : 'L'}${num(x + nx * scale)} ${num(y + ny * scale)}`;
+    })
+    .join('');
+}
+
+// One timing for everything that drifts: the same period, the same sample points, the same easing
+const timing = {
+  dur: `${String(LOOP_SECONDS)}s`,
+  repeatCount: 'indefinite',
+  calcMode: 'spline',
+  keyTimes: moments.map((moment) => String(Math.round(moment * 10000) / 10000)).join(';'),
+  keySplines: Array.from({ length: STEPS }, () => '0.45 0 0.55 1').join(';'),
+};
+---
+
+<svg
+  viewBox="0 0 240 200"
+  class="routing block h-full w-full"
+  preserveAspectRatio="xMidYMid meet"
+  focusable="false"
+>
+  <g class="rt-scene">
+    <!-- The links: green is good, amber is mediocre and stays so, red is weak. Two links in the
+         middle (on the shortest paths of both flows) start green and degrade. -->
+    {links.map(([from, to, kind]) => (
+      <path
+        class={`rt-link rt-${kind === 'ok' ? 'ok' : kind === 'warn' ? 'warn' : `weak rt-${kind}`}`}
+        d={`M${point(from, 0)}L${point(to, 0)}`}
+      >
+        <animate
+          attributeName="d"
+          values={values((step) => `M${point(from, step)}L${point(to, step)}`)}
+          {...timing}
+        />
+      </path>
+    ))}
+
+    <!-- The two flows, routed once and at the same time: a line beside the route, drawn in, with
+         moving dashes on it (traffic) -->
+    <g>
+      {['rt-flow rt-flow-1', 'rt-run'].map((className) => (
+        <path class={className} pathLength="100" d={offsetRoute(flow1, 0, 1)}>
+          <animate
+            attributeName="d"
+            values={values((step) => offsetRoute(flow1, step, 1))}
+            {...timing}
+          />
+        </path>
+      ))}
+    </g>
+    <g>
+      {['rt-flow rt-flow-2', 'rt-run'].map((className) => (
+        <path class={className} pathLength="100" d={offsetRoute(flow2, 0, -1)}>
+          <animate
+            attributeName="d"
+            values={values((step) => offsetRoute(flow2, step, -1))}
+            {...timing}
+          />
+        </path>
+      ))}
+    </g>
+
+    <!-- The nodes, and the ends of the two flows -->
+    {ids.map((id) => {
+      const end = nodes[id]?.end;
+      const [cx, cy] = at(id, 0);
+      return (
+        <circle
+          class={end === undefined ? 'rt-node' : `rt-end rt-end-${String(end)}`}
+          cx={num(cx)}
+          cy={num(cy)}
+          r={end === undefined ? 4.5 : 6}
+        >
+          <animate attributeName="cx" values={values((step) => num(at(id, step)[0]))} {...timing} />
+          <animate attributeName="cy" values={values((step) => num(at(id, step)[1]))} {...timing} />
+        </circle>
+      );
+    })}
+
+    <!-- What the picture shows, always there -->
+    <text class="rt-title" x="5" y="10">
+      UAV Swarm
+    </text>
+
+    <!-- What is happening, in three phases -->
+    <text class="rt-cap rt-cap-1" x="120" y="194">
+      Joint Allocation
+    </text>
+    <text class="rt-cap rt-cap-2" x="120" y="194">
+      Links Degrade Over Time
+    </text>
+    <text class="rt-cap rt-cap-3" x="120" y="194">
+      Weak Links Avoided
+    </text>
+  </g>
+</svg>
+
+<style>
+  /* Colors come from the tokens of the site */
+  .rt-link {
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    opacity: 0.9;
+  }
+
+  .rt-ok {
+    stroke: var(--color-status);
+  }
+
+  .rt-warn {
+    stroke: var(--color-contrast);
+  }
+
+  /* The frame that tells the story: the two links in the middle have turned red */
+  .rt-weak {
+    stroke: var(--color-danger);
+  }
+
+  .rt-node {
+    fill: var(--color-surface);
+    stroke: var(--color-muted);
+    stroke-width: 1.2;
+  }
+
+  .rt-end {
+    fill: var(--color-surface);
+    stroke-width: 1.8;
+  }
+
+  .rt-end-1 {
+    stroke: var(--color-accent);
+  }
+
+  .rt-end-2 {
+    stroke: var(--color-accent-2);
+  }
+
+  /* A flow is a line beside its route, parallel to every link and always at the same distance
+     (calculated in the script above), so the link stays visible */
+  .rt-flow {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.9;
+  }
+
+  .rt-flow-1 {
+    stroke: var(--color-accent);
+  }
+
+  .rt-flow-2 {
+    stroke: var(--color-accent-2);
+  }
+
+  /* Moving dashes on a flow: the traffic */
+  .rt-run {
+    fill: none;
+    stroke: var(--color-fg);
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    stroke-dasharray: 1.2 7;
+    opacity: 0.6;
+  }
+
+  /* The title in the corner: like the labels of the other pictures */
+  .rt-title {
+    fill: var(--color-accent-2);
+    font-family: var(--font-mono), monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.02em;
+    opacity: 0.8;
+  }
+
+  .rt-cap {
+    font-family: var(--font-mono), monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.02em;
+    text-anchor: middle;
+    opacity: 0;
+  }
+
+  .rt-cap-1 {
+    fill: var(--color-muted);
+  }
+
+  .rt-cap-2 {
+    fill: var(--color-danger);
+  }
+
+  .rt-cap-3 {
+    fill: var(--color-status);
+    opacity: 0.95;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .rt-scene {
+      animation: routing-scene 10s linear infinite;
+    }
+
+    .rt-weak-a {
+      animation: routing-weak-a 10s linear infinite;
+    }
+
+    .rt-weak-b {
+      animation: routing-weak-b 10s linear infinite;
+    }
+
+    .rt-flow {
+      stroke-dasharray: 100;
+      animation: routing-draw 10s linear infinite;
+    }
+
+    .rt-run {
+      animation:
+        routing-run 0.8s linear infinite,
+        routing-run-in 10s linear infinite;
+    }
+
+    .rt-cap-1 {
+      animation: routing-cap-1 10s linear infinite;
+    }
+
+    .rt-cap-2 {
+      animation: routing-cap-2 10s linear infinite;
+    }
+
+    .rt-cap-3 {
+      animation: routing-cap-3 10s linear infinite;
+    }
+  }
+
+  /* The whole scene builds up and fades out, so the loop has no visible seam */
+  @keyframes routing-scene {
+    0% {
+      opacity: 0;
+    }
+    3%,
+    93% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  /* The two links in the middle degrade: green, then amber, then red (first at 4 s, then 5.5 s) */
+  @keyframes routing-weak-a {
+    0%,
+    38% {
+      stroke: var(--color-status);
+    }
+    42%,
+    45% {
+      stroke: var(--color-contrast);
+    }
+    49%,
+    100% {
+      stroke: var(--color-danger);
+    }
+  }
+
+  @keyframes routing-weak-b {
+    0%,
+    53% {
+      stroke: var(--color-status);
+    }
+    57%,
+    60% {
+      stroke: var(--color-contrast);
+    }
+    64%,
+    100% {
+      stroke: var(--color-danger);
+    }
+  }
+
+  /* Both flows are routed at the same time: drawn in from 1 s to 2.2 s, nothing changes after */
+  @keyframes routing-draw {
+    0%,
+    9% {
+      stroke-dashoffset: 100;
+      opacity: 0;
+    }
+    10% {
+      stroke-dashoffset: 100;
+      opacity: 0.9;
+    }
+    22%,
+    100% {
+      stroke-dashoffset: 0;
+      opacity: 0.9;
+    }
+  }
+
+  @keyframes routing-run {
+    to {
+      stroke-dashoffset: -8.2;
+    }
+  }
+
+  @keyframes routing-run-in {
+    0%,
+    20% {
+      opacity: 0;
+    }
+    26%,
+    100% {
+      opacity: 0.6;
+    }
+  }
+
+  /* The three words: joint allocation (1 s), links degrade (4 s), weak links avoided (6.8 s) */
+  @keyframes routing-cap-1 {
+    0%,
+    6% {
+      opacity: 0;
+    }
+    9%,
+    36% {
+      opacity: 0.85;
+    }
+    39%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes routing-cap-2 {
+    0%,
+    38% {
+      opacity: 0;
+    }
+    42%,
+    64% {
+      opacity: 0.95;
+    }
+    67%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes routing-cap-3 {
+    0%,
+    66% {
+      opacity: 0;
+    }
+    70%,
+    100% {
+      opacity: 0.95;
+    }
+  }
+</style>
