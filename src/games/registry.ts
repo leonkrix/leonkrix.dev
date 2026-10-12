@@ -55,7 +55,7 @@ export const games: readonly GameDefinition[] = [
     tag: 'Words',
     description: 'Sort sixteen terms into four hidden groups.',
     icon: 'lucide:link',
-    status: 'hidden',
+    status: 'live',
   },
 ];
 

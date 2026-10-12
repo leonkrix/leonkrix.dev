@@ -1,6 +1,6 @@
 /**
- * The vocabulary shared by the word games (Tech Words now, Link Up later): one term with a
- * category and a short definition in our own words. The lists themselves live with the games.
+ * The vocabulary of the word games (so far only Tech Words uses it): one term with a category
+ * and a short definition in our own words. Link Up has its own, finer data.
  */
 
 export const techCategories = [

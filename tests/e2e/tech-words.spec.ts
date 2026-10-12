@@ -138,9 +138,13 @@ test.describe('Tech Words', () => {
 
     // After the button was used, Enter must not press it again but hand in the guess
     await page.getByRole('button', { name: 'New round' }).first().click();
-    await page.keyboard.type('ab');
-    await page.keyboard.press('Enter');
-    await expect(page.getByRole('status')).toHaveText('Not enough letters');
+    // The new round starts after its word list was fetched, and keys that come earlier are ignored
+    // (an Enter then starts yet another round): try again until the round is there
+    await expect(async () => {
+      await page.keyboard.type('ab');
+      await page.keyboard.press('Enter');
+      await expect(page.getByRole('status')).toHaveText('Not enough letters', { timeout: 700 });
+    }).toPass();
   });
 
   test('does not move anything while messages and the result come and go', async ({ page }) => {

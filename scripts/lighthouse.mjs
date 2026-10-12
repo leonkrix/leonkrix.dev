@@ -40,16 +40,20 @@ const BUDGETS = {
  */
 const GAME_BUDGETS = {
   // Measured on 2026-10-09 (React, the game, the five-letter list): scripts 96 KB, stylesheets 12.8 KB, total 203 KB
-  'tech-words': { script: 130 * 1024, stylesheet: 20 * 1024, total: 260 * 1024 },
+  // Re-measured on 2026-10-12: the stylesheet is shared by the Playground pages and holds the CSS of every game (Link Up added about 3 KB), so every game page has the same stylesheet limit
+  'tech-words': { script: 130 * 1024, stylesheet: 24 * 1024, total: 260 * 1024 },
   // Measured on 2026-10-10 (React, the game, the 18 levels, the generator is a separate worker file that is only loaded for a random level): scripts 100 KB, stylesheets 17.7 KB, total 212 KB
   'root-cause': { script: 130 * 1024, stylesheet: 24 * 1024, total: 260 * 1024 },
+  // Measured on 2026-10-12 (React, the game, about 240 categories: the data is split into 14 files and only the files of the four categories of a puzzle are fetched, usually three or four): scripts 111 KB, stylesheets 21.1 KB, total 227 KB
+  'link-up': { script: 130 * 1024, stylesheet: 24 * 1024, total: 260 * 1024 },
 };
 
 /** The pages to test: the home page, and the Playground pages once a game is live. */
 async function listPages() {
   const pages = [{ path: '/', budgets: BUDGETS }];
   if (existsSync('dist/games/index.html')) {
-    pages.push({ path: '/games/', budgets: BUDGETS });
+    // The overview loads the shared Playground stylesheet (2026-10-12: 20.9 KB, all games in one file)
+    pages.push({ path: '/games/', budgets: { ...BUDGETS, stylesheet: 24 * 1024 } });
   }
   if (existsSync('dist/games')) {
     const folders = await readdir('dist/games', { withFileTypes: true });

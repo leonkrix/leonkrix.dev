@@ -16,6 +16,7 @@ Personal portfolio. A minimal, dark, fast and privacy-friendly static site: no c
 
 - [Astro](https://astro.build) (static output), TypeScript (strict), Tailwind CSS v4, React islands where needed
 - Content as typed YAML (projects, experience) validated with Zod at build time
+- A small Playground of browser games (Tech Words, Root Cause, Link Up): pure TypeScript logic with unit tests, generators that prove every puzzle has one solution, keyboard play, and nothing stored on the device
 - Contact form without any third-party service: a Cloudflare Pages Function validates the message (shared rules, signed time token, honeypot, rate limit in KV) and sends it through the own IONOS mailbox
 - Hosted on Cloudflare (Git integration), every change goes through a pull request
 
@@ -55,25 +56,26 @@ pnpm test:e2e     # browser tests (first time: pnpm exec playwright install chro
 pnpm lighthouse   # performance, accessibility, best practices and SEO budgets
 ```
 
-| Script                 | Purpose                                                                                        |
-| ---------------------- | ---------------------------------------------------------------------------------------------- |
-| `pnpm dev`             | Start the dev server                                                                           |
-| `pnpm build`           | Production build to `dist/`                                                                    |
-| `pnpm preview`         | Serve the production build                                                                     |
-| `pnpm lint`            | ESLint (generates the Astro types first)                                                       |
-| `pnpm format:check`    | Prettier check                                                                                 |
-| `pnpm typecheck`       | `astro check` for the site and `tsc` for the Cloudflare Functions                              |
-| `pnpm test`            | Unit tests (Vitest)                                                                            |
-| `pnpm test:dist`       | Checks against the production build in `dist/`                                                 |
-| `pnpm check`           | Lint, format check, types, unit tests, build and build-output checks                           |
-| `pnpm build:form`      | Build with the contact form switched on (used by `test:e2e` and `lighthouse`)                  |
-| `pnpm test:e2e`        | Playwright end-to-end tests (builds first)                                                     |
-| `pnpm lighthouse`      | Lighthouse quality gate (builds first, needs Chrome)                                           |
-| `pnpm live-check`      | Check the published site from the outside (`--base` for another address)                       |
-| `pnpm check-links`     | Check the external links on the published pages (`--dir dist` for a local build)               |
-| `pnpm og`              | Regenerate the link preview image `public/og.png` (needs the Playwright browser)               |
-| `pnpm dev:functions`   | Build, then run site and Cloudflare Functions locally (Wrangler, port 8788), needs `.dev.vars` |
-| `pnpm build:functions` | Check that the Cloudflare Functions bundle                                                     |
+| Script                 | Purpose                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------ |
+| `pnpm dev`             | Start the dev server                                                                             |
+| `pnpm build`           | Production build to `dist/`                                                                      |
+| `pnpm preview`         | Serve the production build                                                                       |
+| `pnpm lint`            | ESLint (generates the Astro types first)                                                         |
+| `pnpm format:check`    | Prettier check                                                                                   |
+| `pnpm typecheck`       | `astro check` for the site and `tsc` for the Cloudflare Functions                                |
+| `pnpm test`            | Unit tests (Vitest)                                                                              |
+| `pnpm test:dist`       | Checks against the production build in `dist/`                                                   |
+| `pnpm check`           | Lint, format check, types, unit tests, build and build-output checks                             |
+| `pnpm build:form`      | Build with the contact form switched on (used by `test:e2e` and `lighthouse`)                    |
+| `pnpm test:e2e`        | Playwright end-to-end tests (builds first)                                                       |
+| `pnpm lighthouse`      | Lighthouse quality gate (builds first, needs Chrome)                                             |
+| `pnpm live-check`      | Check the published site from the outside (`--base` for another address)                         |
+| `pnpm check-links`     | Check the external links on the published pages (`--dir dist` for a local build)                 |
+| `pnpm levels`          | Make the Root Cause level pool again (runs through Vitest, takes minutes, keeps existing levels) |
+| `pnpm og`              | Regenerate the link preview image `public/og.png` (needs the Playwright browser)                 |
+| `pnpm dev:functions`   | Build, then run site and Cloudflare Functions locally (Wrangler, port 8788), needs `.dev.vars`   |
+| `pnpm build:functions` | Check that the Cloudflare Functions bundle                                                       |
 
 Copy `.env.example` to `.env` to try the address of the legal notice locally. Real values are never committed; in production they are Cloudflare build variables.
 
@@ -91,7 +93,7 @@ src/
 functions/      Cloudflare Pages Functions (contact form API) with their own tsconfig
 public/         robots.txt, favicon, security headers (_headers)
 tests/          Build-output checks (Vitest) and end-to-end tests (Playwright)
-scripts/        Lighthouse quality gate and the build with the contact form
+scripts/        Lighthouse gate, live and link checks, build with the contact form, generators for the preview image, the Defuze picture and the Root Cause levels
 .github/        CI, CodeQL, security workflows and Dependabot
 ```
 
