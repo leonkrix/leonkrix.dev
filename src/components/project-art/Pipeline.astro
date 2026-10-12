@@ -1,0 +1,1026 @@
+---
+// This website in ten seconds: the pipeline that every change runs through, and what comes out of
+// it. The six steps are the jobs of the CI (lint and format, types, tests, build, end-to-end tests,
+// Lighthouse); they turn from grey to amber (running) to green one after the other. When all are
+// green the gate "CI passed" (the one check that the repository requires) turns green, the change is
+// deployed, and the page builds up in a browser window: the wordmark, the heading, the availability
+// badge, the buttons and a gauge for the quality bar of the pipeline (Lighthouse 95 and more).
+//
+// Pure CSS and SVG. All pictures of the project cards use the same coordinates (240 by 200) and the
+// same label size, so that text looks the same size in every card. The base style of every part is
+// the frame that tells the story (used with reduced motion, and before the animation starts: all
+// steps are green and the page is complete); the keyframes build the scene up and the whole scene
+// fades out at the end of the loop. The keyframes were written out from the times in the comments
+// of each part (the loop is 10 seconds, so 10 per cent are one second): steps 0.9 s to 3.65 s (every
+// 0.55 s, 0.45 s of running each), the gate at 4.3 s, the deploy at 5 s, the window at
+// 5.2 s and the page from 5.7 s to 7.6 s.
+---
+
+<svg
+  viewBox="0 0 240 200"
+  class="pipeline block h-full w-full"
+  preserveAspectRatio="xMidYMid meet"
+  focusable="false"
+>
+  <g class="pl-scene">
+    <text class="pl-title" x="5" y="10">
+      leonkrix.dev CI/CD
+    </text>
+
+    <!-- The steps of the pipeline: grey, then amber while it runs, then green with a tick -->
+    <g class="pl-chip pl-chip-0">
+      <rect class="pl-chip-box" x="6" y="22" width="34" height="18" rx="5" />
+      <text class="pl-chip-label" x="23" y="34">
+        Lint
+      </text>
+      <circle class="pl-tick-dot" cx="38" cy="23" r="3.6" />
+      <path class="pl-tick-mark" d="M36.2 23l1.5 1.5 2.6 -2.9" />
+    </g>
+    <g class="pl-chip pl-chip-1">
+      <rect class="pl-chip-box" x="44.8" y="22" width="34" height="18" rx="5" />
+      <text class="pl-chip-label" x="61.8" y="34">
+        Types
+      </text>
+      <circle class="pl-tick-dot" cx="76.8" cy="23" r="3.6" />
+      <path class="pl-tick-mark" d="M75 23l1.5 1.5 2.6 -2.9" />
+    </g>
+    <g class="pl-chip pl-chip-2">
+      <rect class="pl-chip-box" x="83.6" y="22" width="34" height="18" rx="5" />
+      <text class="pl-chip-label" x="100.6" y="34">
+        Tests
+      </text>
+      <circle class="pl-tick-dot" cx="115.6" cy="23" r="3.6" />
+      <path class="pl-tick-mark" d="M113.8 23l1.5 1.5 2.6 -2.9" />
+    </g>
+    <g class="pl-chip pl-chip-3">
+      <rect class="pl-chip-box" x="122.4" y="22" width="34" height="18" rx="5" />
+      <text class="pl-chip-label" x="139.4" y="34">
+        Build
+      </text>
+      <circle class="pl-tick-dot" cx="154.4" cy="23" r="3.6" />
+      <path class="pl-tick-mark" d="M152.6 23l1.5 1.5 2.6 -2.9" />
+    </g>
+    <g class="pl-chip pl-chip-4">
+      <rect class="pl-chip-box" x="161.2" y="22" width="34" height="18" rx="5" />
+      <text class="pl-chip-label" x="178.2" y="34">
+        E2E
+      </text>
+      <circle class="pl-tick-dot" cx="193.2" cy="23" r="3.6" />
+      <path class="pl-tick-mark" d="M191.4 23l1.5 1.5 2.6 -2.9" />
+    </g>
+    <g class="pl-chip pl-chip-5">
+      <rect class="pl-chip-box" x="200" y="22" width="34" height="18" rx="5" />
+      <text class="pl-chip-label" x="217" y="34">
+        Perf
+      </text>
+      <circle class="pl-tick-dot" cx="232" cy="23" r="3.6" />
+      <path class="pl-tick-mark" d="M230.2 23l1.5 1.5 2.6 -2.9" />
+    </g>
+
+    <!-- The gate: all steps must be green -->
+    <path
+      class="pl-ticks"
+      d="M23 40V44H217V40M120 44V48M23 40V44M61.8 40V44M100.6 40V44M139.4 40V44M178.2 40V44M217 40V44"
+    />
+    <g class="pl-gate">
+      <rect class="pl-gate-box" x="62" y="48" width="116" height="13" rx="6.5" />
+      <text class="pl-gate-label" x="120" y="57.5">
+        CI passed
+      </text>
+    </g>
+
+    <!-- The deploy: from the gate to the page -->
+    <g class="pl-deploy">
+      <path class="pl-flow" d="M120 62V77" />
+      <path class="pl-arrow" d="M116.5 75.5L120 79.5L123.5 75.5Z" />
+      <text class="pl-deploy-label" x="128" y="73">
+        Deploy
+      </text>
+    </g>
+
+    <!-- The page in a browser window -->
+    <g class="pl-site">
+      <rect class="pl-window" x="40" y="80" width="160" height="104" rx="8" />
+      <path class="pl-bar" d="M40 96H200" />
+      <circle class="pl-dot" cx="50" cy="88" r="2" />
+      <circle class="pl-dot" cx="57" cy="88" r="2" />
+      <circle class="pl-dot" cx="64" cy="88" r="2" />
+      <rect class="pl-url" x="74" y="83" width="118" height="10" rx="5" />
+      <text class="pl-url-text" x="80" y="90.5">
+        leonkrix.dev
+      </text>
+
+      <g class="pl-mark">
+        <path class="pl-chevron" d="M52 107L56 110L52 113" />
+        <text class="pl-wordmark" x="60" y="113">
+          leonkrix_
+        </text>
+        <rect class="pl-nav" x="150" y="109" width="10" height="2.5" rx="1.25" />
+        <rect class="pl-nav" x="164" y="109" width="10" height="2.5" rx="1.25" />
+        <rect class="pl-nav" x="178" y="109" width="10" height="2.5" rx="1.25" />
+      </g>
+      <rect class="pl-h1" x="52" y="124" width="100" height="7" rx="3.5" />
+      <rect class="pl-h2" x="52" y="135" width="64" height="7" rx="3.5" />
+      <g class="pl-sub">
+        <rect class="pl-line" x="52" y="148" width="110" height="3" rx="1.5" />
+        <rect class="pl-line" x="52" y="154" width="84" height="3" rx="1.5" />
+      </g>
+      <g class="pl-badge">
+        <rect class="pl-badge-box" x="52" y="164" width="52" height="10" rx="5" />
+        <circle class="pl-badge-dot" cx="59" cy="169" r="2" />
+        <rect class="pl-line" x="65" y="167.5" width="34" height="3" rx="1.5" />
+      </g>
+      <g class="pl-btn">
+        <rect class="pl-btn-main" x="110" y="164" width="32" height="10" rx="5" />
+        <rect class="pl-btn-ghost" x="146" y="164" width="30" height="10" rx="5" />
+      </g>
+      <g class="pl-gauge">
+        <circle class="pl-ring" cx="176" cy="132" r="10" />
+        <text class="pl-gauge-text" x="176" y="135.5">
+          95+
+        </text>
+      </g>
+    </g>
+
+    <!-- What is happening, in three phases -->
+    <text class="pl-cap pl-cap-1" x="120" y="194">
+      Every Change Runs the Pipeline
+    </text>
+    <text class="pl-cap pl-cap-2" x="120" y="194">
+      CI Passed, Then Deploy
+    </text>
+    <text class="pl-cap pl-cap-3" x="120" y="194">
+      Live on leonkrix.dev
+    </text>
+  </g>
+</svg>
+
+<style>
+  /* Colors come from the tokens of the site */
+  .pl-title,
+  .pl-chip-label,
+  .pl-gate-label,
+  .pl-deploy-label,
+  .pl-url-text,
+  .pl-wordmark,
+  .pl-gauge-text,
+  .pl-cap {
+    font-family: var(--font-mono), monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.02em;
+  }
+
+  .pl-title {
+    fill: var(--color-accent-2);
+    opacity: 0.8;
+  }
+
+  /* The frame that tells the story: every step is green */
+  .pl-chip-box {
+    stroke-width: 1.2;
+    stroke: var(--color-status);
+    fill: color-mix(in srgb, var(--color-status) 14%, transparent);
+  }
+
+  .pl-chip-label {
+    fill: var(--color-fg);
+    text-anchor: middle;
+    opacity: 0.85;
+  }
+
+  .pl-tick-dot {
+    fill: var(--color-status);
+  }
+
+  .pl-tick-mark {
+    fill: none;
+    stroke: var(--color-bg);
+    stroke-width: 1.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .pl-tick-dot,
+  .pl-tick-mark {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .pl-ticks {
+    fill: none;
+    stroke: var(--color-status);
+    stroke-width: 1;
+    opacity: 0.5;
+  }
+
+  .pl-gate-box {
+    fill: color-mix(in srgb, var(--color-status) 14%, transparent);
+    stroke: var(--color-status);
+    stroke-width: 1.2;
+  }
+
+  .pl-gate {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .pl-gate-label {
+    fill: var(--color-status);
+    text-anchor: middle;
+  }
+
+  .pl-flow {
+    fill: none;
+    stroke: var(--color-accent-2);
+    stroke-width: 1.4;
+    stroke-dasharray: 3 3;
+  }
+
+  .pl-arrow {
+    fill: var(--color-accent-2);
+  }
+
+  .pl-deploy-label {
+    fill: var(--color-accent-2);
+  }
+
+  .pl-window {
+    fill: color-mix(in srgb, var(--color-surface) 75%, transparent);
+    stroke: var(--color-border);
+    stroke-width: 1.2;
+  }
+
+  .pl-bar {
+    stroke: var(--color-border);
+    stroke-width: 1;
+  }
+
+  .pl-dot {
+    fill: var(--color-muted);
+    opacity: 0.6;
+  }
+
+  .pl-url {
+    fill: var(--color-bg);
+    stroke: var(--color-border);
+    stroke-width: 0.8;
+  }
+
+  .pl-url-text {
+    fill: var(--color-muted);
+  }
+
+  .pl-chevron {
+    fill: none;
+    stroke: var(--color-accent);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .pl-wordmark {
+    fill: var(--color-fg);
+  }
+
+  .pl-nav {
+    fill: var(--color-muted);
+    opacity: 0.6;
+  }
+
+  .pl-h1 {
+    fill: var(--color-fg);
+    opacity: 0.85;
+  }
+
+  .pl-h2 {
+    fill: var(--color-accent-2);
+    opacity: 0.9;
+  }
+
+  .pl-h1,
+  .pl-h2,
+  .pl-sub {
+    transform-box: fill-box;
+    transform-origin: 0% 50%;
+  }
+
+  .pl-line {
+    fill: var(--color-muted);
+    opacity: 0.6;
+  }
+
+  .pl-badge-box {
+    fill: none;
+    stroke: var(--color-status);
+    stroke-width: 1;
+    opacity: 0.8;
+  }
+
+  .pl-badge-dot {
+    fill: var(--color-status);
+  }
+
+  .pl-btn-main {
+    fill: var(--color-accent);
+  }
+
+  .pl-btn-ghost {
+    fill: none;
+    stroke: var(--color-border);
+    stroke-width: 1;
+  }
+
+  .pl-ring {
+    fill: none;
+    stroke: var(--color-status);
+    stroke-width: 2;
+  }
+
+  .pl-gauge {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .pl-gauge-text {
+    fill: var(--color-status);
+    text-anchor: middle;
+  }
+
+  .pl-cap {
+    text-anchor: middle;
+    opacity: 0;
+  }
+
+  .pl-cap-1,
+  .pl-cap-2 {
+    fill: var(--color-muted);
+  }
+
+  .pl-cap-3 {
+    fill: var(--color-status);
+    opacity: 0.95;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .pl-scene {
+      animation: pipeline-scene 10s linear infinite;
+    }
+
+    .pl-chip-0 .pl-chip-box {
+      animation: pipeline-chip-0 10s linear infinite;
+    }
+
+    .pl-chip-0 .pl-tick-dot,
+    .pl-chip-0 .pl-tick-mark {
+      animation: pipeline-tick-0 10s ease-out infinite;
+    }
+
+    .pl-chip-1 .pl-chip-box {
+      animation: pipeline-chip-1 10s linear infinite;
+    }
+
+    .pl-chip-1 .pl-tick-dot,
+    .pl-chip-1 .pl-tick-mark {
+      animation: pipeline-tick-1 10s ease-out infinite;
+    }
+
+    .pl-chip-2 .pl-chip-box {
+      animation: pipeline-chip-2 10s linear infinite;
+    }
+
+    .pl-chip-2 .pl-tick-dot,
+    .pl-chip-2 .pl-tick-mark {
+      animation: pipeline-tick-2 10s ease-out infinite;
+    }
+
+    .pl-chip-3 .pl-chip-box {
+      animation: pipeline-chip-3 10s linear infinite;
+    }
+
+    .pl-chip-3 .pl-tick-dot,
+    .pl-chip-3 .pl-tick-mark {
+      animation: pipeline-tick-3 10s ease-out infinite;
+    }
+
+    .pl-chip-4 .pl-chip-box {
+      animation: pipeline-chip-4 10s linear infinite;
+    }
+
+    .pl-chip-4 .pl-tick-dot,
+    .pl-chip-4 .pl-tick-mark {
+      animation: pipeline-tick-4 10s ease-out infinite;
+    }
+
+    .pl-chip-5 .pl-chip-box {
+      animation: pipeline-chip-5 10s linear infinite;
+    }
+
+    .pl-chip-5 .pl-tick-dot,
+    .pl-chip-5 .pl-tick-mark {
+      animation: pipeline-tick-5 10s ease-out infinite;
+    }
+
+    .pl-gate {
+      animation: pipeline-gate 10s ease-out infinite;
+    }
+
+    .pl-ticks {
+      animation: pipeline-ticks 10s linear infinite;
+    }
+
+    .pl-deploy {
+      animation: pipeline-deploy 10s linear infinite;
+    }
+
+    .pl-site {
+      animation: pipeline-site 10s ease-out infinite;
+    }
+
+    .pl-mark {
+      animation: pipeline-mark 10s linear infinite;
+    }
+
+    .pl-h1 {
+      animation: pipeline-h1 10s ease-out infinite;
+    }
+
+    .pl-h2 {
+      animation: pipeline-h2 10s ease-out infinite;
+    }
+
+    .pl-sub {
+      animation: pipeline-sub 10s ease-out infinite;
+    }
+
+    .pl-badge {
+      animation: pipeline-badge 10s linear infinite;
+    }
+
+    .pl-btn {
+      animation: pipeline-btn 10s linear infinite;
+    }
+
+    .pl-gauge {
+      animation: pipeline-gauge 10s ease-out infinite;
+    }
+
+    .pl-cap-1 {
+      animation: pipeline-cap-1 10s linear infinite;
+    }
+
+    .pl-cap-2 {
+      animation: pipeline-cap-2 10s linear infinite;
+    }
+
+    .pl-cap-3 {
+      animation: pipeline-cap-3 10s linear infinite;
+    }
+
+    .pl-flow {
+      animation: pipeline-flow 0.7s linear infinite;
+    }
+  }
+
+  @keyframes pipeline-flow {
+    to {
+      stroke-dashoffset: -6;
+    }
+  }
+
+  @keyframes pipeline-scene {
+    0% {
+      opacity: 0;
+    }
+    4% {
+      opacity: 1;
+    }
+    93% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes pipeline-chip-0 {
+    0% {
+      stroke: var(--color-border);
+      fill: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    }
+    9% {
+      stroke: var(--color-border);
+      fill: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    }
+    10% {
+      stroke: var(--color-contrast);
+      fill: color-mix(in srgb, var(--color-contrast) 12%, transparent);
+    }
+    13.5% {
+      stroke: var(--color-contrast);
+      fill: color-mix(in srgb, var(--color-contrast) 12%, transparent);
+    }
+    14.5% {
+      stroke: var(--color-status);
+      fill: color-mix(in srgb, var(--color-status) 14%, transparent);
+    }
+    100% {
+      stroke: var(--color-status);
+      fill: color-mix(in srgb, var(--color-status) 14%, transparent);
+    }
+  }
+
+  @keyframes pipeline-tick-0 {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    13.5% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    15.5% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes pipeline-chip-1 {
+    0% {
+      stroke: var(--color-border);
+      fill: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    }
+    14.5% {
+      stroke: var(--color-border);
+      fill: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    }
+    15.5% {
+      stroke: var(--color-contrast);
+      fill: color-mix(in srgb, var(--color-contrast) 12%, transparent);
+    }
+    19% {
+      stroke: var(--color-contrast);
+      fill: color-mix(in srgb, var(--color-contrast) 12%, transparent);
+    }
+    20% {
+      stroke: var(--color-status);
+      fill: color-mix(in srgb, var(--color-status) 14%, transparent);
+    }
+    100% {
+      stroke: var(--color-status);
+      fill: color-mix(in srgb, var(--color-status) 14%, transparent);
+    }
+  }
+
+  @keyframes pipeline-tick-1 {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    19% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    21% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes pipeline-chip-2 {
+    0% {
+      stroke: var(--color-border);
+      fill: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    }
+    20% {
+      stroke: var(--color-border);
+      fill: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    }
+    21% {
+      stroke: var(--color-contrast);
+      fill: color-mix(in srgb, var(--color-contrast) 12%, transparent);
+    }
+    24.5% {
+      stroke: var(--color-contrast);
+      fill: color-mix(in srgb, var(--color-contrast) 12%, transparent);
+    }
+    25.5% {
+      stroke: var(--color-status);
+      fill: color-mix(in srgb, var(--color-status) 14%, transparent);
+    }
+    100% {
+      stroke: var(--color-status);
+      fill: color-mix(in srgb, var(--color-status) 14%, transparent);
+    }
+  }
+
+  @keyframes pipeline-tick-2 {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    24.5% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    26.5% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes pipeline-chip-3 {
+    0% {
+      stroke: var(--color-border);
+      fill: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    }
+    25.5% {
+      stroke: var(--color-border);
+      fill: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    }
+    26.5% {
+      stroke: var(--color-contrast);
+      fill: color-mix(in srgb, var(--color-contrast) 12%, transparent);
+    }
+    30% {
+      stroke: var(--color-contrast);
+      fill: color-mix(in srgb, var(--color-contrast) 12%, transparent);
+    }
+    31% {
+      stroke: var(--color-status);
+      fill: color-mix(in srgb, var(--color-status) 14%, transparent);
+    }
+    100% {
+      stroke: var(--color-status);
+      fill: color-mix(in srgb, var(--color-status) 14%, transparent);
+    }
+  }
+
+  @keyframes pipeline-tick-3 {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    30% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    32% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes pipeline-chip-4 {
+    0% {
+      stroke: var(--color-border);
+      fill: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    }
+    31% {
+      stroke: var(--color-border);
+      fill: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    }
+    32% {
+      stroke: var(--color-contrast);
+      fill: color-mix(in srgb, var(--color-contrast) 12%, transparent);
+    }
+    35.5% {
+      stroke: var(--color-contrast);
+      fill: color-mix(in srgb, var(--color-contrast) 12%, transparent);
+    }
+    36.5% {
+      stroke: var(--color-status);
+      fill: color-mix(in srgb, var(--color-status) 14%, transparent);
+    }
+    100% {
+      stroke: var(--color-status);
+      fill: color-mix(in srgb, var(--color-status) 14%, transparent);
+    }
+  }
+
+  @keyframes pipeline-tick-4 {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    35.5% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    37.5% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes pipeline-chip-5 {
+    0% {
+      stroke: var(--color-border);
+      fill: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    }
+    36.5% {
+      stroke: var(--color-border);
+      fill: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    }
+    37.5% {
+      stroke: var(--color-contrast);
+      fill: color-mix(in srgb, var(--color-contrast) 12%, transparent);
+    }
+    41% {
+      stroke: var(--color-contrast);
+      fill: color-mix(in srgb, var(--color-contrast) 12%, transparent);
+    }
+    42% {
+      stroke: var(--color-status);
+      fill: color-mix(in srgb, var(--color-status) 14%, transparent);
+    }
+    100% {
+      stroke: var(--color-status);
+      fill: color-mix(in srgb, var(--color-status) 14%, transparent);
+    }
+  }
+
+  @keyframes pipeline-tick-5 {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    41% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    43% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes pipeline-gate {
+    0% {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    43% {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    46% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes pipeline-ticks {
+    0% {
+      opacity: 0;
+    }
+    42% {
+      opacity: 0;
+    }
+    45% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes pipeline-deploy {
+    0% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 0;
+    }
+    53% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes pipeline-site {
+    0% {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    52% {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    56.5% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pipeline-mark {
+    0% {
+      opacity: 0;
+    }
+    57% {
+      opacity: 0;
+    }
+    60% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes pipeline-h1 {
+    0% {
+      opacity: 0;
+      transform: scaleX(0.05);
+    }
+    60% {
+      opacity: 0;
+      transform: scaleX(0.05);
+    }
+    63.5% {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+  }
+
+  @keyframes pipeline-h2 {
+    0% {
+      opacity: 0;
+      transform: scaleX(0.05);
+    }
+    62% {
+      opacity: 0;
+      transform: scaleX(0.05);
+    }
+    65.5% {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+  }
+
+  @keyframes pipeline-sub {
+    0% {
+      opacity: 0;
+      transform: scaleX(0.05);
+    }
+    64% {
+      opacity: 0;
+      transform: scaleX(0.05);
+    }
+    67.5% {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+  }
+
+  @keyframes pipeline-badge {
+    0% {
+      opacity: 0;
+    }
+    66% {
+      opacity: 0;
+    }
+    69% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes pipeline-btn {
+    0% {
+      opacity: 0;
+    }
+    68% {
+      opacity: 0;
+    }
+    71% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes pipeline-gauge {
+    0% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    72% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    76% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes pipeline-cap-1 {
+    0% {
+      opacity: 0;
+    }
+    8% {
+      opacity: 0;
+    }
+    11% {
+      opacity: 0.85;
+    }
+    42% {
+      opacity: 0.85;
+    }
+    45% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes pipeline-cap-2 {
+    0% {
+      opacity: 0;
+    }
+    45% {
+      opacity: 0;
+    }
+    48% {
+      opacity: 0.95;
+    }
+    61% {
+      opacity: 0.95;
+    }
+    64% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes pipeline-cap-3 {
+    0% {
+      opacity: 0;
+    }
+    64% {
+      opacity: 0;
+    }
+    67% {
+      opacity: 0.95;
+    }
+    100% {
+      opacity: 0.95;
+    }
+  }
+</style>
