@@ -70,6 +70,20 @@
     <text class="tx-label tx-label-right" x="167" y="180">
       Receiver
     </text>
+
+    <!-- What is happening, in four phases -->
+    <text class="tx-cap tx-cap-1" x="120" y="194">
+      Packets Are Sent, One Is Lost
+    </text>
+    <text class="tx-cap tx-cap-2" x="120" y="194">
+      Coded Packet Generated and Sent
+    </text>
+    <text class="tx-cap tx-cap-3" x="120" y="194">
+      Lost Packet Recovered
+    </text>
+    <text class="tx-cap tx-cap-4" x="120" y="194">
+      ACKs Clear the Window
+    </text>
     <!-- The coded packet is made from the window -->
     <line class="tx-emit" x1="40" y1="139" x2="40" y2="78"></line>
 
@@ -223,6 +237,30 @@
     opacity: 0;
   }
 
+  /* The phases at the bottom, like the other pictures. The frame that tells the story shows the
+     second one: the coded packet is on its way. */
+  .tx-cap {
+    font-family: var(--font-mono), monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.02em;
+    text-anchor: middle;
+    opacity: 0;
+  }
+
+  .tx-cap-1,
+  .tx-cap-4 {
+    fill: var(--color-muted);
+  }
+
+  .tx-cap-2 {
+    fill: var(--color-contrast);
+    opacity: 0.95;
+  }
+
+  .tx-cap-3 {
+    fill: var(--color-status);
+  }
+
   .tx-lost {
     fill: none;
     stroke: var(--color-danger);
@@ -361,6 +399,22 @@
 
     .tx-glow {
       animation: tetrys-glow 10s ease-in-out infinite;
+    }
+
+    .tx-cap-1 {
+      animation: tetrys-cap-1 10s linear infinite;
+    }
+
+    .tx-cap-2 {
+      animation: tetrys-cap-2 10s linear infinite;
+    }
+
+    .tx-cap-3 {
+      animation: tetrys-cap-3 10s linear infinite;
+    }
+
+    .tx-cap-4 {
+      animation: tetrys-cap-4 10s linear infinite;
     }
   }
 
@@ -816,6 +870,65 @@
     82%,
     100% {
       opacity: 0;
+    }
+  }
+
+  /* The phases: packets are sent and one is lost (0.5 s), the coded packet is generated and sent
+     (3.9 s, in the rhythm of the packets), the lost packet is recovered (6 s, without sending it
+     again), the acks clear the window (8.2 s) */
+  @keyframes tetrys-cap-1 {
+    0%,
+    4% {
+      opacity: 0;
+    }
+    7%,
+    37% {
+      opacity: 0.85;
+    }
+    39%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes tetrys-cap-2 {
+    0%,
+    39% {
+      opacity: 0;
+    }
+    42%,
+    56% {
+      opacity: 0.95;
+    }
+    58%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes tetrys-cap-3 {
+    0%,
+    59% {
+      opacity: 0;
+    }
+    62%,
+    78% {
+      opacity: 0.95;
+    }
+    80%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes tetrys-cap-4 {
+    0%,
+    80% {
+      opacity: 0;
+    }
+    83%,
+    100% {
+      opacity: 0.85;
     }
   }
 </style>
