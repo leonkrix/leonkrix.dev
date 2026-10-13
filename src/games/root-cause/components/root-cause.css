@@ -1040,6 +1040,25 @@
   background: color-mix(in srgb, var(--color-accent) 24%, transparent);
 }
 
+/* The place of the progress, an error or the short text that stands there before: it never changes
+   its height, so nothing below it moves */
+.rc-random-status {
+  min-height: 5.4rem;
+}
+
+@media (max-width: 40rem) {
+  .rc-random-status {
+    min-height: 7.4rem;
+  }
+}
+
+.rc-random-status-idle {
+  margin-top: 0.7rem;
+  max-width: 32rem;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
 .rc-progress {
   margin-top: 0.7rem;
   max-width: 32rem;
@@ -1367,7 +1386,7 @@
 .rc-status-hint[data-hint] {
   flex-direction: column;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0.35rem;
   border-style: solid;
   border-color: color-mix(in srgb, var(--color-accent-2) 55%, var(--color-border));

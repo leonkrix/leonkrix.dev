@@ -39,7 +39,7 @@ export const spokenLanguages = [
 export const now = {
   updated: '2026-10',
   items: [
-    'Building the Playground of this site: Tech Words, Root Cause and Link Up are live, more games are on their way',
+    'Building the Playground of this site: Tech Words, Root Cause, Link Up and Word Radar are live, more games are on their way',
     'Polishing this website and its tooling',
   ],
   searching: 'Looking for my next role as a software engineer',

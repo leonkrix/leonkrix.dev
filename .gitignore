@@ -13,6 +13,9 @@ dist/
 # Local secrets for Cloudflare Functions (contact form), read by Wrangler
 .dev.vars
 
+# Raw downloads for generated game data (GloVe, WordNet), never committed: see src/games/word-radar/README.md
+data-raw/
+
 # Tests and coverage
 coverage/
 playwright-report/

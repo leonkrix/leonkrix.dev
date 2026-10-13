@@ -1,8 +1,13 @@
 ---
+// The styles of the game belong to the page: the picture of the game that the page renders on the
+// server and the game itself use the same ones, which are sent once
+import './components/root-cause.css';
+
 import { type GameDefinition } from '@/games/registry';
 import GameLayout from '@/layouts/GameLayout.astro';
 
 import RootCause from './components/RootCause';
+import RootCauseSkeleton from './components/RootCauseSkeleton';
 
 interface Props {
   game: GameDefinition;
@@ -14,9 +19,7 @@ const { game } = Astro.props;
 <GameLayout game={game}>
   {/* Rendered in the browser only: nothing of the game is worth sending as HTML first */}
   <RootCause client:only="react">
-    <p slot="fallback" class="grid min-h-[36rem] place-items-center text-muted">
-      Loading the game...
-    </p>
+    <RootCauseSkeleton slot="fallback" />
   </RootCause>
   <noscript>
     <p class="text-muted">

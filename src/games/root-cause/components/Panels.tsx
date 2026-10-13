@@ -174,7 +174,7 @@ export function ClueList({ items, fulfilled, contradicted, hinted }: CluesProps)
     ...items.filter((item) => fulfilled.has(item.index)),
   ];
   return (
-    <ol className="rc-clues">
+    <ol className="rc-clues" data-layout-fluid>
       {ordered.map((item) => {
         const done = fulfilled.has(item.index);
         const wrong = contradicted.has(item.index);

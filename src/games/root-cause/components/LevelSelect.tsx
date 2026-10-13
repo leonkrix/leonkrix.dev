@@ -5,7 +5,7 @@ import { type Tier } from '../logic/types';
 import { type LevelRecord } from '../pool';
 import { RandomPanel } from './RandomPanel';
 import { SkinIcon } from './SkinIcon';
-import { type Run } from './useGenerator';
+import type { Run } from './useGenerator';
 
 const TIERS: readonly { tier: Tier; blurb: string }[] = [
   { tier: 'easy', blurb: 'Simple clues on a small map. A good place to learn the rules.' },

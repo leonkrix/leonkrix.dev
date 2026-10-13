@@ -47,7 +47,7 @@ export const games: readonly GameDefinition[] = [
     tag: 'ML',
     description: 'Find the secret word by how close your guesses are in meaning.',
     icon: 'lucide:radar',
-    status: 'hidden',
+    status: 'live',
   },
   {
     slug: 'link-up',

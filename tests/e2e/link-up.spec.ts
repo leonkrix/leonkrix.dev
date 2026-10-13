@@ -4,7 +4,7 @@ import { type Page } from '@playwright/test';
 import { categories, conflicts } from '../../src/games/link-up/data';
 import { generatePuzzle } from '../../src/games/link-up/logic/puzzle';
 import { createRandom } from '../../src/games/shared/random';
-import { expect, test } from './fixtures';
+import { expect, gameReady, test } from './fixtures';
 
 const PATH = '/games/link-up/';
 const SEED = 20261012;
@@ -19,6 +19,7 @@ function termsOf(group: number): string[] {
 
 async function open(page: Page, query = `seed=${String(SEED)}`): Promise<void> {
   await page.goto(`${PATH}?${query}`);
+  await gameReady(page);
   await expect(page.getByRole('group', { name: /Terms, pick four/ })).toBeVisible();
   // The tiles come in one after the other, and the board is ready when that is over
   await expect(page.locator('.lu[data-fresh]')).toHaveCount(0, { timeout: 5000 });
@@ -51,89 +52,6 @@ function twoAndTwo(first: number, second: number): string[] {
 
 const mistakes = (page: Page): ReturnType<Page['getByRole']> =>
   page.getByRole('img', { name: /mistakes? left/ });
-
-/**
- * Watches the layout on every frame, so that a jump of a single frame is found too: where the
- * main parts of the game are on the page (not on the screen, which scrolls while clicking), how big
- * they are and how big the page is.
- */
-async function startTracking(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    const boxes: Record<string, string> = {
-      bar: '.lu-bar',
-      toast: '.lu-toast',
-      board: '.lu-board',
-      info: '.lu-info',
-      end: '.lu-end',
-      footer: '.lu-footer',
-    };
-    // Buttons lift a little when pointed at: that is an effect, not a change of the layout, so
-    // their place is taken from the layout (offsets) and not from the box they are drawn in
-    const placed = (element: HTMLElement): { top: number; left: number } => {
-      let top = 0;
-      let left = 0;
-      for (
-        let node: HTMLElement | null = element;
-        node !== null;
-        node = node.offsetParent as HTMLElement | null
-      ) {
-        top += node.offsetTop;
-        left += node.offsetLeft;
-      }
-      return { top, left };
-    };
-    const seen: Record<string, [number, number]> = {};
-    const note = (key: string, value: number): void => {
-      const range = seen[key];
-      if (range === undefined) {
-        seen[key] = [value, value];
-      } else {
-        range[0] = Math.min(range[0], value);
-        range[1] = Math.max(range[1], value);
-      }
-    };
-    const tracker = { seen, stop: false };
-    (window as unknown as { __layout: typeof tracker }).__layout = tracker;
-    const sample = (): void => {
-      for (const [key, selector] of Object.entries(boxes)) {
-        const box = document.querySelector(selector)?.getBoundingClientRect();
-        if (box !== undefined) {
-          note(`${key} top`, box.top + window.scrollY);
-          note(`${key} left`, box.left + window.scrollX);
-          note(`${key} height`, box.height);
-          note(`${key} width`, box.width);
-        }
-      }
-      document.querySelectorAll<HTMLElement>('.lu-footer button').forEach((button, index) => {
-        const place = placed(button);
-        note(`footer button ${String(index)} top`, place.top);
-        note(`footer button ${String(index)} left`, place.left);
-      });
-      note('page height', document.documentElement.scrollHeight);
-      note('page width', document.documentElement.scrollWidth);
-      if (!tracker.stop) {
-        window.requestAnimationFrame(sample);
-      }
-    };
-    sample();
-  });
-}
-
-/** Fails if anything that was watched has moved or changed its size by more than half a pixel. */
-async function expectNothingMoved(page: Page): Promise<void> {
-  const seen = await page.evaluate(() => {
-    const tracker = (
-      window as unknown as { __layout: { seen: Record<string, [number, number]>; stop: boolean } }
-    ).__layout;
-    tracker.stop = true;
-    return tracker.seen;
-  });
-  const moved = Object.entries(seen)
-    .filter(([, [low, high]]) => high - low > 0.5)
-    .map(([key, [low, high]]) => `${key}: ${String(low)} to ${String(high)}`);
-  expect(moved).toEqual([]);
-  expect(Object.keys(seen).length).toBeGreaterThan(20);
-}
 
 test.describe('Link Up', () => {
   test('shows sixteen terms, four tries and what to do', async ({ page }) => {
@@ -230,9 +148,8 @@ test.describe('Link Up', () => {
     await expect(page.getByRole('heading', { name: 'Solved!' })).toHaveCount(0);
   });
 
-  test('moves nothing on the page at any moment of a won game', async ({ page }) => {
+  test('moves nothing on the page at any moment of a won game', async ({ page, layoutShifts }) => {
     await open(page);
-    await startTracking(page);
     // Pointing at terms (definitions of different lengths), a wrong group, one away, the eye
     await tile(page, termsOf(0)[0] ?? '').hover();
     await page.getByRole('button', { name: 'Show definitions' }).click();
@@ -250,12 +167,11 @@ test.describe('Link Up', () => {
     }
     await expect(page.getByRole('heading', { name: 'Solved!' })).toBeVisible();
     await settled(page);
-    await expectNothingMoved(page);
+    expect(layoutShifts).toEqual([]);
   });
 
-  test('moves nothing on the page at any moment of a lost game', async ({ page }) => {
+  test('moves nothing on the page at any moment of a lost game', async ({ page, layoutShifts }) => {
     await open(page);
-    await startTracking(page);
     await pick(page, termsOf(1));
     await expect(page.getByRole('region', { name: puzzle.groups[1]?.name ?? '' })).toBeVisible();
     const [a, b, c] = [termsOf(0), termsOf(2), termsOf(3)];
@@ -276,13 +192,12 @@ test.describe('Link Up', () => {
     });
     await expect(page.getByRole('region', { name: /not found/ })).toHaveCount(3);
     await settled(page);
-    await expectNothingMoved(page);
+    expect(layoutShifts).toEqual([]);
   });
 
-  test('moves nothing on the narrowest phones either', async ({ page }) => {
+  test('moves nothing on the narrowest phones either', async ({ page, layoutShifts }) => {
     await page.setViewportSize({ width: 320, height: 700 });
     await open(page);
-    await startTracking(page);
     await tile(page, termsOf(2)[1] ?? '').hover();
     await pick(page, twoAndTwo(0, 3));
     await expect(mistakes(page)).toHaveAccessibleName('3 mistakes left');
@@ -294,7 +209,7 @@ test.describe('Link Up', () => {
     }
     await expect(page.getByRole('heading', { name: 'Solved!' })).toBeVisible();
     await settled(page);
-    await expectNothingMoved(page);
+    expect(layoutShifts).toEqual([]);
   });
 
   test('blurs the definitions with the eye, and shows them again', async ({ page }) => {

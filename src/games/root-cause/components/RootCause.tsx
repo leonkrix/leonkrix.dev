@@ -1,5 +1,3 @@
-import './root-cause.css';
-
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 import levelsJson from '../data/levels.json';

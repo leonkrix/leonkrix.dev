@@ -1,0 +1,269 @@
+---
+// The tile of the game on the Playground section: a radar. Guesses pop up as dots, from cold and
+// far away to hot and close, and the last one lands in the middle, where the hidden word is. A
+// light sweeps round while it plays. It plays when the tile appears, and again whenever it is
+// pointed at or focused. Pure CSS, no script. The final picture (all dots, the middle green) is
+// also the normal look, so the tile is right without any motion.
+
+// Where the dots are (from the middle, in the units of the picture), their color and their turn
+const dots = [
+  { x: 62, y: -48, color: 'var(--color-muted)' },
+  { x: -66, y: 30, color: 'var(--color-accent)' },
+  { x: -34, y: -42, color: 'var(--color-accent-2)' },
+  { x: 38, y: 26, color: 'var(--color-accent-2)' },
+  { x: -20, y: 20, color: 'var(--color-contrast)' },
+  { x: 14, y: -10, color: 'var(--color-danger)' },
+];
+---
+
+<div class="pv" aria-hidden="true">
+  <div class="pv-radar">
+    <svg viewBox="-100 -100 200 200" focusable="false">
+      <circle class="pv-disc" r="94"></circle>
+      <circle class="pv-ring" r="30"></circle>
+      <circle class="pv-ring" r="58"></circle>
+      <circle class="pv-ring" r="86"></circle>
+      <line class="pv-axis" x1="-94" y1="0" x2="94" y2="0"></line>
+      <line class="pv-axis" x1="0" y1="-94" x2="0" y2="94"></line>
+      {dots.map((dot, index) => (
+        <g transform={`translate(${String(dot.x)} ${String(dot.y)})`}>
+          <circle class="pv-dot" r="6" style={`--c: ${dot.color}; --i: ${String(index)}`} />
+        </g>
+      ))}
+      <circle class="pv-found" r="7"></circle>
+      <circle class="pv-burst" r="7"></circle>
+    </svg>
+    <div class="pv-sweep"></div>
+  </div>
+</div>
+
+<style>
+  .pv {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  .pv-radar {
+    position: relative;
+    width: 10.5rem;
+    height: 10.5rem;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .pv-disc {
+    fill: color-mix(in srgb, var(--color-bg) 80%, var(--color-surface));
+    stroke: var(--color-border);
+    stroke-width: 1;
+  }
+
+  .pv-ring {
+    fill: none;
+    stroke: var(--color-border);
+    stroke-width: 1;
+  }
+
+  .pv-axis {
+    stroke: var(--color-border);
+    stroke-width: 0.6;
+    stroke-dasharray: 3 4;
+    opacity: 0.7;
+  }
+
+  /* The beam: a cone of light with a fading tail, turning once round the middle. The disc has the
+       radius 94 of 100, so the beam is inset by 3 percent */
+  .pv-sweep {
+    position: absolute;
+    inset: 3%;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0turn,
+      transparent 0.62turn,
+      color-mix(in srgb, var(--color-accent-2) 6%, transparent) 0.7turn,
+      color-mix(in srgb, var(--color-accent-2) 24%, transparent) 0.92turn,
+      color-mix(in srgb, var(--color-accent-2) 52%, transparent) 0.995turn,
+      var(--color-accent-2) 1turn
+    );
+    mask-image: radial-gradient(circle, transparent 0, #000 4%);
+    animation-name: pvr-sweep, none;
+    animation-duration: 2600ms;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    /* Before it starts and after it ended the beam is gone: it only plays while the dots appear */
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .pv-dot {
+    fill: var(--c);
+    stroke: var(--color-bg);
+    stroke-width: 1.5;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation-name: pvr-pop, none;
+    animation-duration: 420ms;
+    animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1.4);
+    animation-fill-mode: backwards;
+    animation-delay: calc(var(--i) * 330ms + 150ms);
+  }
+
+  .pv-found {
+    fill: var(--color-status);
+    stroke: var(--color-bg);
+    stroke-width: 1.5;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation-name: pvr-pop, none;
+    animation-duration: 520ms;
+    animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1.4);
+    animation-fill-mode: backwards;
+    animation-delay: 2250ms;
+  }
+
+  .pv-burst {
+    fill: none;
+    stroke: var(--color-status);
+    stroke-width: 1.2;
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation-name: pvr-burst, none;
+    animation-duration: 900ms;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+    animation-delay: 2250ms;
+  }
+
+  /* A tile that is waiting to be revealed has not started yet: it begins when it appears */
+  :global(.reveal-pending) .pv-sweep,
+  :global(.reveal-pending) .pv-dot,
+  :global(.reveal-pending) .pv-found,
+  :global(.reveal-pending) .pv-burst {
+    animation-name: none, none;
+  }
+
+  /* Pointing at the tile plays it again: the same animations under other names start from the start */
+  :global(.game-tile):hover .pv-sweep,
+  :global(.game-tile):focus-visible .pv-sweep {
+    animation-name: pvr-sweep, pvr-sweep-again;
+  }
+
+  :global(.game-tile):hover .pv-dot,
+  :global(.game-tile):focus-visible .pv-dot,
+  :global(.game-tile):hover .pv-found,
+  :global(.game-tile):focus-visible .pv-found {
+    animation-name: pvr-pop, pvr-pop-again;
+  }
+
+  :global(.game-tile):hover .pv-burst,
+  :global(.game-tile):focus-visible .pv-burst {
+    animation-name: pvr-burst, pvr-burst-again;
+  }
+
+  /* The names start with "pvr-": keyframes are not scoped to a component */
+  @keyframes pvr-sweep {
+    0% {
+      opacity: 1;
+      transform: rotate(0deg);
+    }
+    92% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes pvr-sweep-again {
+    0% {
+      opacity: 1;
+      transform: rotate(0deg);
+    }
+    92% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes pvr-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.1);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes pvr-pop-again {
+    from {
+      opacity: 0;
+      transform: scale(0.1);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes pvr-burst {
+    0% {
+      opacity: 0;
+      transform: scale(1);
+    }
+    10% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: scale(6);
+    }
+  }
+
+  @keyframes pvr-burst-again {
+    0% {
+      opacity: 0;
+      transform: scale(1);
+    }
+    10% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: scale(6);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pv-sweep,
+    .pv-dot,
+    .pv-found,
+    .pv-burst,
+    :global(.game-tile):hover .pv-sweep,
+    :global(.game-tile):hover .pv-dot,
+    :global(.game-tile):hover .pv-found,
+    :global(.game-tile):hover .pv-burst,
+    :global(.game-tile):focus-visible .pv-sweep,
+    :global(.game-tile):focus-visible .pv-dot,
+    :global(.game-tile):focus-visible .pv-found,
+    :global(.game-tile):focus-visible .pv-burst {
+      animation: none;
+    }
+
+    .pv-sweep {
+      display: none;
+    }
+  }
+</style>

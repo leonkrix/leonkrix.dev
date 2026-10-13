@@ -1,0 +1,121 @@
+---
+// The styles of the game belong to the page: the picture of the game that the page renders on the
+// server and the game itself use the same ones, which are sent once
+import './components/word-radar.css';
+
+import { type GameDefinition } from '@/games/registry';
+import GameLayout from '@/layouts/GameLayout.astro';
+
+import WordRadar from './components/WordRadar';
+import WordRadarSkeleton from './components/WordRadarSkeleton';
+
+interface Props {
+  game: GameDefinition;
+}
+
+const { game } = Astro.props;
+---
+
+<GameLayout game={game}>
+  {/* Starts fetching the words (about 2 MB) while the game itself is still loading */}
+  <script>
+    import { loadWordData } from './data/load';
+
+    loadWordData().catch(() => {
+      // The game shows the error itself
+    });
+  </script>
+  {/* Rendered in the browser only: the hidden word is random */}
+  <WordRadar client:only="react">
+    <WordRadarSkeleton slot="fallback" />
+  </WordRadar>
+  <noscript>
+    <p class="text-muted">
+      This game needs JavaScript to run. Nothing is sent anywhere, it all happens in your browser.
+    </p>
+  </noscript>
+
+  <div slot="rules">
+    <p>
+      A word is hidden. Type any word you like: the game tells you how <strong>close</strong> it is
+      to the hidden word in <strong>meaning</strong>, as a <strong>rank</strong>. Rank 1 is the
+      hidden word itself, rank 2 is the word that is nearest to it, and so on out of about 30,000
+      common English words. A lower rank is better.
+    </p>
+    <ul>
+      <li>
+        <strong>The radar</strong> shows your guesses as dots. The hidden word is in the middle, the
+        closer a guess is in meaning the closer its dot is to the middle. The rings mark rank 10,
+        100, 1,000 and 10,000.
+      </li>
+      <li>
+        <strong>The list</strong> sorts your guesses by rank, with a bar and a word for how close
+        they are: Burning (top 10), Hot (top 100), Warm (top 1,000), Cool (top 5,000) and Cold.
+      </li>
+      <li>
+        <strong>Hint</strong> gives you a word that is closer than your best guess.{' '}
+        <strong>Give up</strong> shows the hidden word.
+      </li>
+      <li>
+        When the round is over, the <strong>map</strong> shows where your guesses were compared to
+        the hidden word, and the list shows the words that were nearest to it.
+      </li>
+    </ul>
+    <p>
+      Think in meanings, not in letters: <em>wolf</em> is much closer to <em>dog</em> than{' '}
+      <em>dot</em> is. Only words from the word list work; if a word is refused, try the singular or
+      another form. Rounds are unlimited and nothing is saved. The link of a round opens the same
+      hidden word for whoever you send it to.
+    </p>
+  </div>
+
+  <div slot="keys">
+    <ul>
+      <li>
+        <kbd>Enter</kbd> hands in the word you typed
+      </li>
+      <li>
+        <kbd>Esc</kbd> empties the field
+      </li>
+      <li>
+        <kbd>Tab</kbd> moves between the field, the buttons and the lists
+      </li>
+    </ul>
+    <p>
+      The radar is a picture of the list: everything it shows is also in the list, which screen
+      readers can read. Each guess is announced with its rank and how close it is.
+    </p>
+  </div>
+
+  <div slot="built">
+    <p>
+      How can a computer know that <em>wolf</em> is close to <em>dog</em>? It reads numbers. The
+      game uses <strong>GloVe</strong> word vectors from Stanford University: every word is a list
+      of 100 numbers that was learned from billions of words of text, so that words that appear in
+      similar places get similar numbers. The closeness of two words is the{' '}
+      <strong>cosine similarity</strong> of their numbers (the angle between the two lists, seen as
+      arrows).
+    </p>
+    <p>
+      The numbers were prepared once, offline, with a script that is part of the repository: the
+      30,000 commonest words that are ordinary English words in <strong>WordNet</strong> (this
+      leaves out names and little words such as <em>the</em>), shrunk from 100 to 64 numbers with a{' '}
+      <strong>principal component analysis</strong> (it keeps the directions in which the words
+      differ most, 82.5 percent of the variation), and stored as whole numbers from -127 to 127.
+      That makes about 2 MB. The hidden words are everyday things from WordNet (animals, objects,
+      food, plants, parts of the body, materials), checked by a list of words that must not be
+      hidden.
+    </p>
+    <p>
+      At the start of a round the browser compares the hidden word with all 30,000 words, sorts them
+      (a few milliseconds) and so knows the rank of every possible guess. The direction of a dot
+      around the radar comes from how the word differs from the hidden word, seen on a plane that is
+      found from the 300 words that are nearest to the hidden word, so that words that are related
+      to it in similar ways tend to lie near each other. The map after the round uses a principal
+      component analysis of the words of this round, calculated in the browser. The logic is small
+      pure TypeScript functions with unit tests; the data has tests, too (for example that{' '}
+      <em>king</em> is closer to <em>queen</em> than to <em>banana</em>). Nothing is sent anywhere
+      and nothing is stored on your device.
+    </p>
+  </div>
+</GameLayout>
