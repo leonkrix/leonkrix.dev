@@ -48,6 +48,9 @@ describe('the explanation of a hint', () => {
           const left = counts(hint.steps);
           expect(left, id).toEqual([...left].sort((a, b) => b - a));
           expect(left.at(-1) ?? 0, id).toBeGreaterThanOrEqual(hint.cells.length);
+          // Only the steps that are needed: the cells of the hint are reached by the last step with a count and not before
+          expect(left.filter((n) => n === hint.cells.length).length, id).toBeLessThanOrEqual(1);
+
           // The hint marks every clue that limits the person
           const first = hint.steps[0];
           for (const index of first?.kind === 'clues' ? first.clues : []) {

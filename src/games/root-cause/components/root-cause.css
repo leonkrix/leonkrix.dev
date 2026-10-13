@@ -449,36 +449,56 @@
   pointer-events: none;
 }
 
+/* A window is a bright bar on a wall, the same size and the same distance from the ends of the
+   wall on every side (15 percent of the cell on both ends). Between two rooms it is centered on the
+   wall (the wall is 2 pixels of each cell, so the middle is 2 pixels out), and so it belongs to both
+   rooms; at the edge of the map it lies flush against the outer edge (the cell has a 1 pixel line) */
 .rc-window {
+  --rc-win-t: max(3px, calc(100cqw / var(--n) * 0.07));
   position: absolute;
-  z-index: 1;
+  z-index: 3;
+  border-radius: 999px;
   background: var(--rc-window);
-  box-shadow: 0 0 0.5rem color-mix(in srgb, var(--rc-window) 70%, transparent);
+  box-shadow:
+    0 0 0 1px var(--color-bg),
+    0 0 0.5rem color-mix(in srgb, var(--rc-window) 70%, transparent);
   pointer-events: none;
 }
 .rc-window[data-side='n'],
 .rc-window[data-side='s'] {
-  left: 20%;
-  width: 60%;
-  height: 6%;
+  left: 15%;
+  width: 70%;
+  height: var(--rc-win-t);
 }
 .rc-window[data-side='e'],
 .rc-window[data-side='w'] {
-  top: 20%;
-  height: 60%;
-  width: 6%;
+  top: 15%;
+  height: 70%;
+  width: var(--rc-win-t);
 }
 .rc-window[data-side='n'] {
-  top: 0;
+  top: -1px;
 }
 .rc-window[data-side='s'] {
-  bottom: 0;
+  bottom: -1px;
 }
 .rc-window[data-side='e'] {
-  right: 0;
+  right: -1px;
 }
 .rc-window[data-side='w'] {
-  left: 0;
+  left: -1px;
+}
+.rc-window[data-across][data-side='n'] {
+  top: calc(-2px - var(--rc-win-t) / 2);
+}
+.rc-window[data-across][data-side='s'] {
+  bottom: calc(-2px - var(--rc-win-t) / 2);
+}
+.rc-window[data-across][data-side='e'] {
+  right: calc(-2px - var(--rc-win-t) / 2);
+}
+.rc-window[data-across][data-side='w'] {
+  left: calc(-2px - var(--rc-win-t) / 2);
 }
 
 .rc-glyph {
@@ -1196,6 +1216,7 @@
 .rc-key-window span {
   width: 60%;
   height: 0.28rem;
+  border-radius: 999px;
   background: var(--rc-window);
   box-shadow: 0 0 0.4rem color-mix(in srgb, var(--rc-window) 70%, transparent);
 }
@@ -1323,24 +1344,6 @@
 .rc-person[data-noted] .rc-person-name::after {
   content: ' ✎';
   color: var(--color-accent-2);
-}
-
-/* A window between two rooms sits on the wall itself, half on each side; at the edge of the map
-   it stays inside */
-.rc-window {
-  z-index: 3;
-}
-.rc-window[data-across][data-side='n'] {
-  top: -3%;
-}
-.rc-window[data-across][data-side='s'] {
-  bottom: -3%;
-}
-.rc-window[data-across][data-side='e'] {
-  right: -3%;
-}
-.rc-window[data-across][data-side='w'] {
-  left: -3%;
 }
 
 .rc-hint-count {

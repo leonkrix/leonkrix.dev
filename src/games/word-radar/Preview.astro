@@ -19,10 +19,11 @@ const dots = [
 <div class="pv" aria-hidden="true">
   <div class="pv-radar">
     <svg viewBox="-100 -100 200 200" focusable="false">
+      <!-- The rings and the edge of the disc are equally far apart (23.5 each) -->
       <circle class="pv-disc" r="94"></circle>
-      <circle class="pv-ring" r="30"></circle>
-      <circle class="pv-ring" r="58"></circle>
-      <circle class="pv-ring" r="86"></circle>
+      <circle class="pv-ring" r="23.5"></circle>
+      <circle class="pv-ring" r="47"></circle>
+      <circle class="pv-ring" r="70.5"></circle>
       <line class="pv-axis" x1="-94" y1="0" x2="94" y2="0"></line>
       <line class="pv-axis" x1="0" y1="-94" x2="0" y2="94"></line>
       {dots.map((dot, index) => (

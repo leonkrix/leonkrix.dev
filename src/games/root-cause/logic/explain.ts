@@ -75,11 +75,62 @@ export function explain(
     return [];
   }
   const count = (step: TraceStep): number => step.cells[person]?.length ?? 0;
+  const finalCells = deductions[person]?.cells ?? [];
   const steps: ExplainStep[] = [];
   if (broken.length > 0) {
     steps.push({ kind: 'broken', clues: [...broken] });
   }
   steps.push({ kind: 'clues', clues: cluesThatLimit(level, person), cells: count(first) });
+  if (count(first) === finalCells.length) {
+    // The clues about the person alone already say it: nobody else is needed
+    steps.push({ kind: 'result', cells: finalCells });
+    return steps;
+  }
+
+  const size = level.layout.size;
+  const shares = (a: number, b: number): boolean =>
+    Math.floor(a / size) === Math.floor(b / size) || a % size === b % size;
+
+  /**
+   * Of some people who have a single cell, the ones whose rows and columns take the cells away
+   * that this step took from the person (the fewest that explain all of them). When they do not
+   * explain everything on their own (the reasoning has more than one stage), all of them stay and
+   * `complete` is false.
+   */
+  const needed = (
+    people: readonly number[],
+    from: TraceStep,
+    to: TraceStep,
+  ): { people: number[]; complete: boolean } => {
+    const kept = new Set(to.cells[person] ?? []);
+    let open = (from.cells[person] ?? []).filter((cell) => !kept.has(cell));
+    if (open.length === 0) {
+      return { people: [...people], complete: false };
+    }
+    const spot = (other: number): number | undefined => {
+      const cells = to.cells[other] ?? [];
+      return cells.length === 1 ? cells[0] : undefined;
+    };
+    const chosen: number[] = [];
+    let rest = [...people];
+    while (open.length > 0) {
+      const gains = rest.map((other) => {
+        const at = spot(other);
+        return at === undefined ? 0 : open.filter((cell) => shares(cell, at)).length;
+      });
+      const best = Math.max(...gains, 0);
+      if (best === 0) {
+        return { people: [...people], complete: false };
+      }
+      const index = gains.indexOf(best);
+      const other = rest[index] ?? 0;
+      const at = spot(other) ?? 0;
+      chosen.push(other);
+      open = open.filter((cell) => !shares(cell, at));
+      rest = rest.filter((_, position) => position !== index);
+    }
+    return { people: people.filter((other) => chosen.includes(other)), complete: true };
+  };
 
   const givenPeople = placed.flatMap((cell, other) =>
     cell !== undefined && other !== person ? [other] : [],
@@ -92,17 +143,37 @@ export function explain(
   if (givenPeople.length > 0 || pinned.length > 0) {
     // The first pass over rows and columns is what the people on the map and the single cells do
     const pass = rest[0]?.label === 'cross' ? rest[0] : undefined;
+    const taking = needed([...givenPeople, ...pinned], first, pass ?? start);
+    const known = singles(start);
+    // When the people of the step before already explain every cell that went, a chain is not needed
+    const chain =
+      pass !== undefined && !taking.complete
+        ? needed(
+            [...singles(pass)].filter((other) => other !== person && !known.has(other)),
+            start,
+            pass,
+          ).people
+        : [];
+    // With a chain after it, this step only counts what the rows and columns of its own people take
+    const own =
+      chain.length > 0
+        ? (first.cells[person] ?? []).filter(
+            (cell) =>
+              !taking.people.some((other) => {
+                const at = start.cells[other]?.[0];
+                return at !== undefined && shares(cell, at);
+              }),
+          ).length
+        : 0;
     steps.push({
       kind: 'taken',
-      placed: givenPeople,
-      pinned,
-      cells: count(pass ?? start),
+      placed: givenPeople.filter((other) => taking.people.includes(other)),
+      pinned: pinned.filter((other) => taking.people.includes(other)),
+      cells: Math.max(own, count(pass ?? start)),
     });
     if (pass !== undefined) {
-      const known = singles(start);
-      const people = [...singles(pass)].filter((other) => other !== person && !known.has(other));
-      if (people.length > 0) {
-        steps.push({ kind: 'chain', people, cells: count(pass) });
+      if (chain.length > 0) {
+        steps.push({ kind: 'chain', people: chain, cells: count(pass) });
       }
       before = pass;
       rest = rest.slice(1);
@@ -114,7 +185,11 @@ export function explain(
       break;
     }
     const known = singles(before);
-    const people = [...singles(step)].filter((other) => other !== person && !known.has(other));
+    const people = needed(
+      [...singles(step)].filter((other) => other !== person && !known.has(other)),
+      before,
+      step,
+    ).people;
     if (count(step) !== count(before) || people.length > 0) {
       const last = steps.at(-1);
       const cells = count(step);
@@ -143,7 +218,7 @@ export function explain(
     }
     before = step;
   }
-  steps.push({ kind: 'result', cells: deductions[person]?.cells ?? [] });
+  steps.push({ kind: 'result', cells: finalCells });
   return steps;
 }
 
@@ -196,6 +271,9 @@ export function explanationLines(steps: readonly ExplainStep[], words: ExplainWo
           ? `No clue limits where ${me} can be, so every free cell is possible: ${cellsText(step.cells)}.`
           : `${step.clues.length === 1 ? 'The clue' : 'The clues'} ${quoted(words, step.clues)} ${step.clues.length === 1 ? 'leaves' : 'leave'} ${cellsText(step.cells)} for ${me}.`;
       case 'taken': {
+        if (step.placed.length === 0 && step.pinned.length === 0) {
+          return `The rows and columns that the other people need are taken. ${leftText(step.cells)} for ${me}.`;
+        }
         const placed = `With ${names(words, step.placed)} on the map`;
         const pinned = `the clues leave ${names(words, step.pinned)} only one cell${step.pinned.length === 1 ? '' : ' each'}`;
         const lead =
