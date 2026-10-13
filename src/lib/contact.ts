@@ -91,30 +91,30 @@ function validateName(raw: unknown): FieldResult {
     return error('required', 'Please enter your name.');
   }
   if (CONTROL_CHARACTERS.test(value) || SPOOFING_CHARACTERS.test(value)) {
-    return error('invalid_characters', 'Your name contains characters that are not allowed.');
+    return error('invalid_characters', 'Remove special characters.');
   }
   if (countCharacters(value) < LIMITS.name.min) {
-    return error('too_short', `Your name needs at least ${String(LIMITS.name.min)} characters.`);
+    return error('too_short', `Needs at least ${String(LIMITS.name.min)} characters.`);
   }
   if (countCharacters(value) > LIMITS.name.max) {
-    return error('too_long', `Your name can have at most ${String(LIMITS.name.max)} characters.`);
+    return error('too_long', `At most ${String(LIMITS.name.max)} characters.`);
   }
   if (!HAS_LETTER_OR_DIGIT.test(value)) {
-    return error('no_letters', 'Please use letters in your name.');
+    return error('no_letters', 'Please use letters.');
   }
   return { value };
 }
 
 function validateEmail(raw: unknown): FieldResult {
   if (typeof raw !== 'string' || raw.trim().length === 0) {
-    return error('required', 'Please enter your email address.');
+    return error('required', 'Please enter your email.');
   }
   const value = raw.trim();
   if (value.length > LIMITS.email.max) {
-    return error('too_long', 'This email address is too long.');
+    return error('too_long', 'This email is too long.');
   }
   if (!isValidEmail(value)) {
-    return error('invalid_email', 'Please enter a valid email address, like name@example.com.');
+    return error('invalid_email', 'Please enter a valid email.');
   }
   return { value };
 }
@@ -130,19 +130,13 @@ function validateMessage(raw: unknown): FieldResult {
   }
   // Line breaks and tabs are fine in a message, other control characters are not
   if (CONTROL_CHARACTERS.test(value.replace(/[\n\t]/gu, '')) || SPOOFING_CHARACTERS.test(value)) {
-    return error('invalid_characters', 'Your message contains characters that are not allowed.');
+    return error('invalid_characters', 'Remove special characters.');
   }
   if (countCharacters(value) < LIMITS.message.min) {
-    return error(
-      'too_short',
-      `Your message needs at least ${String(LIMITS.message.min)} characters.`,
-    );
+    return error('too_short', `Needs at least ${String(LIMITS.message.min)} characters.`);
   }
   if (countCharacters(value) > LIMITS.message.max) {
-    return error(
-      'too_long',
-      `Your message can have at most ${String(LIMITS.message.max)} characters.`,
-    );
+    return error('too_long', `At most ${String(LIMITS.message.max)} characters.`);
   }
   return { value };
 }

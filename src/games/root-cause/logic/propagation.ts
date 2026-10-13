@@ -614,11 +614,15 @@ export interface TraceStep {
  * What can be worked out when some people are placed (correctly): for every person the cells that
  * are left and the kind of reasoning that gets there, from the clues alone up to what-if. Nothing
  * comes back if the placements contradict the clues. This is what the hints are made of.
+ * `until` 'rooms' stops before the what-if step (the cells are then what the clues and the rules
+ * about rooms leave; `by` is not worked out): much cheaper, and enough to find out which clues
+ * these two stages need.
  */
 export function deduce(
   puzzle: Puzzle,
   placed: readonly (Cell | undefined)[],
   trace?: TraceStep[],
+  until: 'rooms' | 'whatif' = 'whatif',
 ): Deduction[] | undefined {
   const engine = engineOf(puzzle);
   const state = initialState(engine);
@@ -670,6 +674,9 @@ export function deduce(
   }
   note('rooms');
   const byRooms = single();
+  if (until === 'rooms') {
+    return people.map((person) => ({ cells: candidates(state, person), by: 'open' }));
+  }
 
   // 3. what if
   for (let round = 0; round < 200; round += 1) {

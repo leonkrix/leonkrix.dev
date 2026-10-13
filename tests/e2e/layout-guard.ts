@@ -8,7 +8,8 @@
  * every frame and remembers where it was first seen (its place on the page and its size, from the
  * layout, so effects with `transform` do not count). When an element is found somewhere else, the
  * guard reports it, and the test fails when it ends. New elements are not
- * a problem in themselves, only what they push away.
+ * a problem in themselves, only what they push away. Elements that are not visible
+ * (`visibility: hidden`, `display: none`) are not watched.
  *
  * Exceptions, on purpose and few:
  * - `data-layout-fluid` marks a box whose inner parts are meant to rearrange (the tiles of a
@@ -103,6 +104,12 @@ export function layoutGuardScript(reportName: string): void {
         continue;
       }
       if (isFloating(element) || isInline(element)) {
+        continue;
+      }
+      // Nobody sees what is invisible (the confirmation of a form that waits under the form): it
+      // may fill with text, and it counts as new when it is shown
+      if (!element.checkVisibility({ visibilityProperty: true })) {
+        baselines.delete(element);
         continue;
       }
       const now = place(element);

@@ -46,11 +46,6 @@ async function fill(page: Page, values: Partial<typeof valid> = valid): Promise<
 
 const send = (page: Page) => page.getByRole('button', { name: /Send message/ });
 
-// The layout guard is off for the contact form on purpose: its messages (a field that is wrong, a
-// failed sending, the confirmation that replaces the form) are shown in place and push what is below
-// them. Reserving space for them would leave gaps in the form. Open decision, see PLAN.md.
-test.use({ layoutGuard: false });
-
 test.describe('contact form', () => {
   test('is shown with JavaScript, next to the direct contact buttons', async ({ page }) => {
     await page.goto('/');

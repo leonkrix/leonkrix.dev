@@ -45,7 +45,8 @@ Every browser test runs with the **layout guard** (`tests/e2e/layout-guard.ts`, 
 - **`data-layout-fluid`** marks a box whose inner parts are meant to rearrange (the tiles of a board, a list of words, the clues that move when they are ticked): the box itself must keep its place, what is inside is not watched. Use it sparingly.
 - What the visitor asks for is not a surprise: the guard measures anew after a resize, after a `<details>` was opened and after a change of the address (also by `history.pushState`). A game that is opened with a prepared state in its address (a level) starts at another height than its skeleton: tests open such a state from the start page instead, like a player does.
 - **Wait for the game** in tests with `gameReady(page)` (from `fixtures.ts`) before using it: until the game has taken over, the skeleton only looks like it.
-- A test that changes a page on purpose can switch the guard off with `test.use({ layoutGuard: false })` and a comment that says why (so far only the contact form, see PLAN.md).
+- A test that changes a page on purpose can switch the guard off with `test.use({ layoutGuard: false })` and a comment that says why (a build-output test insists on the comment; nothing uses it so far). What is not visible (`visibility: hidden`, `display: none`) is not watched, so something can lie invisibly on top of something else and take its place (the confirmation of the contact form lies on the form).
+- Every page of the site is in `tests/e2e/pages.ts`, and `tests/e2e/layout.spec.ts` opens each one and reads it to the end. A new page is only missing from that list when the build-output test `e2e-coverage.test.ts` says so; add it there.
 
 ## README template for a game
 
