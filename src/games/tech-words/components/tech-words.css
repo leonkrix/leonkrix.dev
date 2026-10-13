@@ -62,6 +62,8 @@
 }
 
 .tw-select {
+  /* As wide as the longest category (with its count), so that the row of controls never shifts */
+  width: 15rem;
   max-width: 100%;
   padding: 0.45rem 0.75rem;
   border: 1px solid var(--color-border);

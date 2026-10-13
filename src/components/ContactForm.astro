@@ -1,30 +1,41 @@
 ---
 import Icon from '@/components/Icon.astro';
 import { LIMITS } from '@/lib/contact';
+import { MESSAGES } from '@/lib/contact-client';
 
 const fieldClass =
   'mt-2 block w-full rounded-lg border border-border bg-bg/60 px-3.5 py-2.5 text-base text-fg placeholder:text-muted/70 transition-colors hover:border-muted/50 focus-visible:border-accent focus-visible:outline-none aria-invalid:border-danger';
 const labelClass = 'block text-sm font-medium text-fg';
-const errorClass = 'mt-1.5 text-sm text-danger';
+// Nothing on the page may move when a message appears. The messages of the fields are one short
+// line that sits in the gap below the field (the gap between the fields is a little wider than
+// the line), the message of the message field shares the row of the counter.
+const fieldErrorClass =
+  'absolute top-full left-0 mt-0.5 max-w-full truncate text-xs leading-4 text-danger';
+const messageErrorClass = 'min-w-0 truncate text-xs leading-4 text-danger';
+// The longest text that can take the place of the privacy note: it sets the height of that place
+const longestNotice = Object.values(MESSAGES).reduce((a, b) => (b.length > a.length ? b : a));
 ---
 
 <!--
-  The form needs JavaScript (it sends JSON to /api/contact). It starts hidden, the script shows
-  it. Without JavaScript only the email button next to it is available.
+  The form needs JavaScript (it sends JSON to /api/contact). It is in the page from the start, so
+  nothing moves when the script is ready, and is hidden only for visitors whose browser says that
+  scripting is off (media feature "scripting"). Without JavaScript only the email button next to
+  it is available. The form and the confirmation lie on top of each other (one grid cell): the
+  confirmation takes the place of the form and is exactly as high.
 -->
-<div data-contact hidden>
+<div data-contact class="grid [@media(scripting:none)]:hidden">
   <form
     data-contact-form
     novalidate
-    class="edge rounded-xl border border-border bg-surface/50 p-5 sm:p-6"
+    class="edge col-start-1 row-start-1 rounded-xl border border-border bg-surface/50 p-5 sm:p-6"
     aria-labelledby="contact-form-title"
   >
     <h3 id="contact-form-title" class="font-mono text-sm text-accent-2">
       $ send-message
     </h3>
 
-    <div class="mt-5 grid gap-5 sm:grid-cols-2">
-      <div>
+    <div class="mt-5 grid gap-6 sm:grid-cols-2">
+      <div class="relative">
         <label for="contact-name" class={labelClass}>
           Name
         </label>
@@ -37,9 +48,9 @@ const errorClass = 'mt-1.5 text-sm text-danger';
           aria-describedby="contact-name-error"
           class={fieldClass}
         />
-        <p id="contact-name-error" data-error-for="name" class={errorClass}></p>
+        <p id="contact-name-error" data-error-for="name" class={fieldErrorClass}></p>
       </div>
-      <div>
+      <div class="relative">
         <label for="contact-email" class={labelClass}>
           Email
         </label>
@@ -48,17 +59,18 @@ const errorClass = 'mt-1.5 text-sm text-danger';
           name="email"
           type="email"
           autocomplete="email"
+          placeholder="you@mail.com"
           inputmode="email"
           spellcheck="false"
           required
           aria-describedby="contact-email-error"
           class={fieldClass}
         />
-        <p id="contact-email-error" data-error-for="email" class={errorClass}></p>
+        <p id="contact-email-error" data-error-for="email" class={fieldErrorClass}></p>
       </div>
     </div>
 
-    <div class="mt-5">
+    <div class="mt-6">
       <label for="contact-message" class={labelClass}>
         Message
       </label>
@@ -71,7 +83,7 @@ const errorClass = 'mt-1.5 text-sm text-danger';
         class:list={[fieldClass, 'resize-y']}
       ></textarea>
       <div class="mt-1.5 flex items-start justify-between gap-4">
-        <p id="contact-message-error" data-error-for="message" class={errorClass}></p>
+        <p id="contact-message-error" data-error-for="message" class={messageErrorClass}></p>
         <p
           id="contact-message-count"
           data-message-count
@@ -101,30 +113,36 @@ const errorClass = 'mt-1.5 text-sm text-danger';
           class="size-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
         />
       </button>
-      <p class="text-sm text-muted">
-        I use your details only to answer your message. See the{' '}
-        <a href="/privacy-policy/" class="text-fg underline underline-offset-4 hover:text-accent">
-          privacy policy
-        </a>
-        .
-      </p>
+      <!--
+        One place, four texts on top of each other: the privacy note, the progress ("Sending"), a
+        problem with sending (not tied to one field) and an invisible copy of the longest of these
+        texts, which keeps the place as high as the longest of them. While the progress or a problem
+        is shown, the note is hidden (see the style below).
+      -->
+      <div data-notice class="grid min-w-0 flex-1 basis-56 text-sm">
+        <p data-note class="col-start-1 row-start-1 text-muted">
+          I use your details only to answer your message. See the{' '}
+          <a href="/privacy-policy/" class="text-fg underline underline-offset-4 hover:text-accent">
+            privacy policy
+          </a>
+          .
+        </p>
+        <p aria-hidden="true" class="invisible col-start-1 row-start-1 select-none">
+          {longestNotice}
+        </p>
+        <!-- Problems with sending: announced immediately -->
+        <p role="alert" data-alert class="col-start-1 row-start-1 text-danger"></p>
+        <!-- Progress: announced politely -->
+        <p role="status" data-status class="col-start-1 row-start-1 text-muted"></p>
+      </div>
     </div>
-
-    <!-- Problems with sending (not tied to one field): announced immediately -->
-    <p
-      role="alert"
-      data-alert
-      class="mt-4 rounded-lg border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-fg empty:hidden"
-    ></p>
-    <!-- Progress: announced politely -->
-    <p role="status" data-status class="mt-4 text-sm text-muted empty:hidden"></p>
   </form>
 
   <div
     data-success
-    hidden
+    inert
     tabindex="-1"
-    class="edge rounded-xl border border-status/40 bg-status/10 p-5 sm:p-6"
+    class="edge invisible col-start-1 row-start-1 flex flex-col justify-center rounded-xl border border-status/40 bg-status/10 p-5 sm:p-6"
   >
     <p class="flex items-center gap-2 font-medium text-fg">
       <Icon name="lucide:check" class="size-5 text-status" />
@@ -136,6 +154,13 @@ const errorClass = 'mt-1.5 text-sm text-danger';
     </p>
   </div>
 </div>
+
+<style>
+  /* The progress or a problem takes the place of the privacy note, it does not add a line */
+  [data-notice]:has([data-alert]:not(:empty), [data-status]:not(:empty)) > [data-note] {
+    visibility: hidden;
+  }
+</style>
 
 <script>
   import {
@@ -328,8 +353,11 @@ const errorClass = 'mt-1.5 text-sm text-danger';
           formElement.reset();
           updateCounter();
           successEmail.textContent = values.email.trim();
-          formElement.hidden = true;
-          success.hidden = false;
+          // The confirmation takes the place of the form, which keeps its height
+          formElement.classList.add('invisible');
+          formElement.inert = true;
+          success.classList.remove('invisible');
+          success.inert = false;
           success.focus();
           break;
         case 'invalid': {
@@ -369,7 +397,5 @@ const errorClass = 'mt-1.5 text-sm text-danger';
       showErrors({});
       void send();
     });
-
-    wrapper.hidden = false;
   }
 </script>

@@ -1,0 +1,570 @@
+/* Styles of the Word Radar game. Plain CSS on the design tokens of the site (src/styles/global.css).
+   Nothing on the page may move while the game is played: everything that appears later has its
+   space reserved (the message, the latest guess, the result), and the lists scroll inside a box
+   of fixed height. Reduced motion is handled at the end of the file. */
+
+.wr {
+  --wr-color: var(--color-muted);
+  display: grid;
+  gap: 0.75rem;
+  max-width: 62rem;
+  margin-inline: auto;
+}
+
+/* How close a word is: one color per bucket, and the bucket is also written as a word */
+.wr [data-bucket='found'] {
+  --wr-color: var(--color-status);
+}
+
+.wr [data-bucket='burning'] {
+  --wr-color: var(--color-danger);
+}
+
+.wr [data-bucket='hot'] {
+  --wr-color: var(--color-contrast);
+}
+
+.wr [data-bucket='warm'] {
+  --wr-color: var(--color-accent-2);
+}
+
+.wr [data-bucket='cool'] {
+  --wr-color: var(--color-accent);
+}
+
+.wr [data-bucket='cold'] {
+  --wr-color: var(--color-muted);
+}
+
+/* ---- The field and the message ---- */
+
+.wr-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.wr-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+  background-color: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  color: var(--color-fg);
+  font-size: 1rem;
+}
+
+.wr-input::placeholder {
+  color: var(--color-muted);
+}
+
+.wr-input:focus-visible {
+  border-color: var(--color-accent);
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.wr-input:disabled {
+  opacity: 0.55;
+}
+
+.wr-message {
+  display: flex;
+  align-items: center;
+  /* Two lines on a wide screen, four on a narrow one, so that no message moves anything */
+  min-height: 2.9rem;
+  padding-inline: 0.2rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--color-muted);
+}
+
+.wr-message[data-tone='good'] {
+  color: var(--color-status);
+  font-weight: 600;
+}
+
+.wr-message[data-tone='warn'] {
+  color: var(--color-contrast);
+}
+
+.wr-message[data-tone='neutral'] {
+  color: var(--color-fg);
+}
+
+@media (max-width: 40rem) {
+  .wr-message {
+    min-height: 4.9rem;
+  }
+}
+
+/* ---- The radar and the list ---- */
+
+.wr-main {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 48rem) {
+  .wr-main {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.wr-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.8rem;
+  background-color: color-mix(in srgb, var(--color-surface) 55%, transparent);
+}
+
+/* On a narrow screen the list is a box of its own height; next to the radar it is as high as the radar */
+.wr-list-panel {
+  height: 26rem;
+}
+
+@media (min-width: 48rem) {
+  .wr-list-panel {
+    /* The radar decides how high the row is, the list scrolls inside it (contain: size makes the
+       list panel ignore its own content when the row height is worked out) */
+    height: auto;
+    contain: size;
+  }
+}
+
+.wr-switch {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.wr button {
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background-color: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  color: var(--color-fg);
+  font-size: 0.85rem;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.wr button:hover:not(:disabled) {
+  border-color: var(--color-accent-2);
+  transform: translateY(-1px);
+}
+
+.wr button:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+}
+
+.wr button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.wr button[data-primary] {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.wr .wr-switch button {
+  padding: 0.25rem 0.7rem;
+  font-size: 0.78rem;
+}
+
+.wr .wr-switch button[aria-pressed='true'] {
+  border-color: var(--color-accent-2);
+  background-color: color-mix(in srgb, var(--color-accent-2) 16%, transparent);
+}
+
+.wr-radar-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.wr-radar,
+.wr-map {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+/* The beam: a cone of light with a fading tail that turns round the middle, on top of the picture.
+   The disc of the radar has the radius 96 of 100, so the beam is inset by 2 percent */
+.wr-sweep {
+  position: absolute;
+  inset: 2%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0turn,
+    transparent 0.62turn,
+    color-mix(in srgb, var(--color-accent-2) 6%, transparent) 0.7turn,
+    color-mix(in srgb, var(--color-accent-2) 24%, transparent) 0.92turn,
+    color-mix(in srgb, var(--color-accent-2) 52%, transparent) 0.995turn,
+    var(--color-accent-2) 1turn
+  );
+  /* The middle of the beam is a little lighter, like a screen that glows where the beam is */
+  mask-image: radial-gradient(circle, transparent 0, #000 4%);
+  animation: wr-spin 5s linear infinite;
+  pointer-events: none;
+}
+
+.wr-disc {
+  fill: color-mix(in srgb, var(--color-bg) 80%, var(--color-surface));
+  stroke: var(--color-border);
+  stroke-width: 0.6;
+}
+
+.wr-ring {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 0.5;
+}
+
+.wr-ring-label {
+  fill: var(--color-muted);
+  font:
+    400 4px var(--font-mono),
+    monospace;
+}
+
+.wr-axis {
+  stroke: var(--color-border);
+  stroke-width: 0.3;
+  stroke-dasharray: 1.5 2;
+  opacity: 0.7;
+}
+
+.wr-target-dot {
+  fill: var(--color-bg);
+  stroke: var(--color-fg);
+  stroke-width: 1.2;
+}
+
+.wr-target-label {
+  fill: var(--color-fg);
+  font:
+    600 6px var(--font-mono),
+    monospace;
+  paint-order: stroke;
+  stroke: var(--color-bg);
+  stroke-width: 1.6px;
+}
+
+.wr-target[data-revealed] .wr-target-dot {
+  fill: var(--color-status);
+  stroke: var(--color-status);
+}
+
+.wr-burst {
+  fill: none;
+  stroke: var(--color-status);
+  stroke-width: 0.8;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wr-burst 1100ms ease-out 2 both;
+}
+
+.wr-dot-body {
+  fill: var(--wr-color);
+  stroke: var(--color-bg);
+  stroke-width: 0.8;
+}
+
+.wr-dot-label {
+  fill: var(--color-fg);
+  font:
+    500 4.6px var(--font-mono),
+    monospace;
+  paint-order: stroke;
+  stroke: var(--color-bg);
+  stroke-width: 1.6px;
+}
+
+.wr-dot[data-latest] .wr-dot-body {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wr-pop 520ms cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+}
+
+/* A dot flashes once in every turn, at the moment the beam passes it (the delay is worked out in
+   the component, the length of a turn is the same as the one of the beam) */
+.wr-blip {
+  fill: var(--wr-color);
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: wr-blip 5s linear infinite;
+  animation-delay: var(--wr-delay, 0s);
+}
+
+.wr-ripple {
+  fill: none;
+  stroke: var(--wr-color);
+  stroke-width: 0.8;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wr-ripple 900ms ease-out both;
+}
+
+.wr-path {
+  fill: none;
+  stroke: var(--color-muted);
+  stroke-width: 0.5;
+  stroke-dasharray: 2 2;
+  opacity: 0.7;
+}
+
+.wr-map-near {
+  fill: var(--color-muted);
+  opacity: 0.55;
+}
+
+.wr-map-near-label {
+  fill: var(--color-muted);
+  font:
+    400 4px var(--font-mono),
+    monospace;
+  paint-order: stroke;
+  stroke: var(--color-bg);
+  stroke-width: 1.4px;
+}
+
+/* ---- The list of words ---- */
+
+/* The newest guess has a place of its own: its row, or empty space of the same height */
+.wr-latest {
+  min-height: 2.9rem;
+}
+
+.wr-list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.wr-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 4.2rem;
+  grid-template-areas:
+    'word rank bucket'
+    'bar bar bar';
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.wr-latest .wr-row {
+  border: 1px solid var(--wr-color);
+  background-color: color-mix(in srgb, var(--wr-color) 10%, transparent);
+}
+
+.wr-list .wr-row[data-latest] {
+  background-color: color-mix(in srgb, var(--wr-color) 8%, transparent);
+}
+
+.wr-word {
+  grid-area: word;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wr-rank {
+  grid-area: rank;
+  font-family: var(--font-mono), monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.wr-bucket {
+  grid-area: bucket;
+  font-size: 0.72rem;
+  color: var(--wr-color);
+  text-align: right;
+}
+
+.wr-tag {
+  margin-left: 0.4rem;
+  padding: 0 0.35rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: var(--color-muted);
+}
+
+.wr-bar {
+  position: relative;
+  grid-area: bar;
+  height: 4px;
+  border-radius: 2px;
+  background-color: color-mix(in srgb, var(--wr-color) 18%, transparent);
+}
+
+.wr-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: calc(var(--fill) * 100%);
+  border-radius: inherit;
+  background-color: var(--wr-color);
+  transition: width 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ---- The buttons and the result ---- */
+
+.wr-tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.5rem;
+}
+
+.wr-end {
+  min-height: 5.2rem;
+}
+
+@media (max-width: 40rem) {
+  .wr-end {
+    min-height: 7.6rem;
+  }
+}
+
+.wr-result {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.7rem 1.1rem;
+  border: 1px solid var(--color-status);
+  border-radius: 0.8rem;
+  background-color: color-mix(in srgb, var(--color-status) 9%, var(--color-surface));
+  text-align: center;
+  animation: wr-result-in 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.wr-result[data-status='gaveUp'] {
+  border-color: var(--color-accent);
+  background-color: color-mix(in srgb, var(--color-accent) 9%, var(--color-surface));
+}
+
+.wr-result h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.wr-result strong {
+  font-family: var(--font-mono), monospace;
+}
+
+.wr-result p {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.wr-result:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* ---- Animations ---- */
+
+@keyframes wr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes wr-blip {
+  0% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  9% {
+    opacity: 0;
+    transform: scale(4.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(4.2);
+  }
+}
+
+@keyframes wr-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.1);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes wr-ripple {
+  from {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(5);
+  }
+}
+
+@keyframes wr-burst {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(9);
+  }
+}
+
+@keyframes wr-result-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.8rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wr *,
+  .wr *::before,
+  .wr *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .wr-sweep {
+    display: none;
+  }
+
+  .wr-blip {
+    display: none;
+  }
+}
+
+/* The label of the first switch grows with the number of guesses: keep room for it, so that the
+   button next to it never moves */
+.wr-list-panel .wr-switch button:first-child {
+  min-width: 9.6rem;
+}

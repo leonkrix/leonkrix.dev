@@ -1,4 +1,8 @@
 ---
+// The styles of the game belong to the page: the picture of the game that the page renders on the
+// server and the game itself use the same ones, which are sent once
+import './components/tech-words.css';
+
 import { type GameDefinition } from '@/games/registry';
 import GameLayout from '@/layouts/GameLayout.astro';
 
@@ -14,9 +18,7 @@ const { game } = Astro.props;
 <GameLayout game={game}>
   {/* Rendered in the browser only: the round is random and the lists load on demand */}
   <TechWords client:only="react">
-    <p slot="fallback" class="grid min-h-[36rem] place-items-center text-muted">
-      Loading the game...
-    </p>
+    <TechWords slot="fallback" skeleton />
   </TechWords>
   <noscript>
     <p class="text-muted">

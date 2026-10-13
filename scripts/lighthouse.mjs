@@ -40,19 +40,21 @@ const BUDGETS = {
  */
 const GAME_BUDGETS = {
   // Measured on 2026-10-09 (React, the game, the five-letter list): scripts 96 KB, stylesheets 12.8 KB, total 203 KB
-  // Re-measured on 2026-10-12: the stylesheet is shared by the Playground pages and holds the CSS of every game (Link Up added about 3 KB), so every game page has the same stylesheet limit
+  // The stylesheet is shared by the Playground pages and holds the CSS of every game (21.6 KB on 2026-10-13 with four games; the styles are imported once, by the page of each game, not by the picture of the game and the game itself), so every game page has the same stylesheet limit: a new game adds about 3 KB
   'tech-words': { script: 130 * 1024, stylesheet: 24 * 1024, total: 260 * 1024 },
   // Measured on 2026-10-10 (React, the game, the 18 levels, the generator is a separate worker file that is only loaded for a random level): scripts 100 KB, stylesheets 17.7 KB, total 212 KB
   'root-cause': { script: 130 * 1024, stylesheet: 24 * 1024, total: 260 * 1024 },
   // Measured on 2026-10-12 (React, the game, about 240 categories: the data is split into 14 files and only the files of the four categories of a puzzle are fetched, usually three or four): scripts 111 KB, stylesheets 21.1 KB, total 227 KB
   'link-up': { script: 130 * 1024, stylesheet: 24 * 1024, total: 260 * 1024 },
+  // Measured on 2026-10-13 (React, the game, and the word data of about 2 MB that is fetched when the page opens: 1.9 MB of vectors, 0.27 MB of words): scripts 78 KB, stylesheets 24.2 KB, total 2196 KB; performance 98
+  'word-radar': { script: 130 * 1024, stylesheet: 24 * 1024, total: 2600 * 1024 },
 };
 
 /** The pages to test: the home page, and the Playground pages once a game is live. */
 async function listPages() {
   const pages = [{ path: '/', budgets: BUDGETS }];
   if (existsSync('dist/games/index.html')) {
-    // The overview loads the shared Playground stylesheet (2026-10-12: 20.9 KB, all games in one file)
+    // The overview loads the shared Playground stylesheet (2026-10-13: 21.6 KB, all games in one file)
     pages.push({ path: '/games/', budgets: { ...BUDGETS, stylesheet: 24 * 1024 } });
   }
   if (existsSync('dist/games')) {

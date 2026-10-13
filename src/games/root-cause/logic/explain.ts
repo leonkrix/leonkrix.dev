@@ -17,16 +17,29 @@ export type ExplainStep =
    * else can use their rows and columns
    */
   | { kind: 'taken'; placed: number[]; pinned: number[]; cells: number }
-  /** More people with a single cell, and rows or columns that only one person can still use */
-  | { kind: 'chain'; people: number[]; cells: number }
-  /** The clues that tie people together (north of, in the same room, apart, ...) */
-  | { kind: 'relations'; people: number[]; cells: number }
+  /**
+   * More people with a single cell, or people who can only be in one row or column (named in
+   * `bound`): nobody else can use that row or column
+   */
+  | { kind: 'chain'; people: number[]; bound: Bound[]; cells: number }
+  /**
+   * The clues that tie people together (north of, in the same room, apart, ...): `clues` are the
+   * ones that are really needed here
+   */
+  | { kind: 'relations'; people: number[]; clues: number[]; cells: number }
   /** The rules about rooms: the victim rule and the clues about whole rooms or counting */
   | { kind: 'rooms'; rules: number[]; people: number[]; cells: number }
   /** Trying a cell and finding that a clue breaks */
   | { kind: 'whatif'; cells: number }
   /** Where the person belongs (or can only be) */
   | { kind: 'result'; cells: Cell[] };
+
+/** A person who can only be in one row or column (the numbers start at 0) */
+export interface Bound {
+  person: number;
+  line: 'row' | 'column';
+  index: number;
+}
 
 /** The clue types that the rules about rooms work with, besides the rule about the victim */
 const ROOM_RULES = new Set(['roomEmpty', 'soleOnKind', 'kindCount', 'emptyRooms', 'alone']);
@@ -75,11 +88,104 @@ export function explain(
     return [];
   }
   const count = (step: TraceStep): number => step.cells[person]?.length ?? 0;
+  const finalCells = deductions[person]?.cells ?? [];
   const steps: ExplainStep[] = [];
   if (broken.length > 0) {
     steps.push({ kind: 'broken', clues: [...broken] });
   }
   steps.push({ kind: 'clues', clues: cluesThatLimit(level, person), cells: count(first) });
+  if (count(first) === finalCells.length) {
+    // The clues about the person alone already say it: nobody else is needed
+    steps.push({ kind: 'result', cells: finalCells });
+    return steps;
+  }
+
+  const size = level.layout.size;
+  const shares = (a: number, b: number): boolean =>
+    Math.floor(a / size) === Math.floor(b / size) || a % size === b % size;
+
+  /**
+   * Of some people who have a single cell, the ones whose rows and columns take the cells away
+   * that this step took from the person (the fewest that explain all of them). When they do not
+   * explain everything on their own (the reasoning has more than one stage), all of them stay and
+   * `complete` is false.
+   */
+  const needed = (
+    people: readonly number[],
+    from: TraceStep,
+    to: TraceStep,
+  ): { people: number[]; complete: boolean } => {
+    const kept = new Set(to.cells[person] ?? []);
+    let open = (from.cells[person] ?? []).filter((cell) => !kept.has(cell));
+    if (open.length === 0) {
+      return { people: [...people], complete: false };
+    }
+    const spot = (other: number): number | undefined => {
+      const cells = to.cells[other] ?? [];
+      return cells.length === 1 ? cells[0] : undefined;
+    };
+    const chosen: number[] = [];
+    let rest = [...people];
+    while (open.length > 0) {
+      const gains = rest.map((other) => {
+        const at = spot(other);
+        return at === undefined ? 0 : open.filter((cell) => shares(cell, at)).length;
+      });
+      const best = Math.max(...gains, 0);
+      if (best === 0) {
+        return { people: [...people], complete: false };
+      }
+      const index = gains.indexOf(best);
+      const other = rest[index] ?? 0;
+      const at = spot(other) ?? 0;
+      chosen.push(other);
+      open = open.filter((cell) => !shares(cell, at));
+      rest = rest.filter((_, position) => position !== index);
+    }
+    return { people: people.filter((other) => chosen.includes(other)), complete: true };
+  };
+
+  /**
+   * The people who can only be in one row or column and so take that row or column from the
+   * person: the fewest that explain every cell this step took (none when that is not enough)
+   */
+  const bounds = (from: TraceStep, to: TraceStep): Bound[] => {
+    const kept = new Set(to.cells[person] ?? []);
+    let open = (from.cells[person] ?? []).filter((cell) => !kept.has(cell));
+    const options: Bound[] = [];
+    from.cells.forEach((cells, other) => {
+      const [head] = cells;
+      if (other === person || head === undefined || cells.length < 2) {
+        return;
+      }
+      if (cells.every((cell) => Math.floor(cell / size) === Math.floor(head / size))) {
+        options.push({ person: other, line: 'row', index: Math.floor(head / size) });
+      } else if (cells.every((cell) => cell % size === head % size)) {
+        options.push({ person: other, line: 'column', index: head % size });
+      }
+    });
+    const inLine = (bound: Bound, cell: number): boolean =>
+      (bound.line === 'row' ? Math.floor(cell / size) : cell % size) === bound.index;
+    const chosen: Bound[] = [];
+    while (open.length > 0) {
+      let best: Bound | undefined;
+      let gain = 0;
+      for (const option of options) {
+        const count = open.filter((cell) => inLine(option, cell)).length;
+        if (count > gain) {
+          best = option;
+          gain = count;
+        }
+      }
+      if (best === undefined) {
+        return [];
+      }
+      const pick = best;
+      chosen.push(pick);
+      open = open.filter((cell) => !inLine(pick, cell));
+    }
+    return chosen;
+  };
 
   const givenPeople = placed.flatMap((cell, other) =>
     cell !== undefined && other !== person ? [other] : [],
@@ -92,17 +198,39 @@ export function explain(
   if (givenPeople.length > 0 || pinned.length > 0) {
     // The first pass over rows and columns is what the people on the map and the single cells do
     const pass = rest[0]?.label === 'cross' ? rest[0] : undefined;
+    const taking = needed([...givenPeople, ...pinned], first, pass ?? start);
+    const known = singles(start);
+    // When the people of the step before already explain every cell that went, a chain is not needed
+    const chain =
+      pass !== undefined && !taking.complete
+        ? needed(
+            [...singles(pass)].filter((other) => other !== person && !known.has(other)),
+            start,
+            pass,
+          ).people
+        : [];
+    const chainBound =
+      pass !== undefined && !taking.complete && chain.length === 0 ? bounds(start, pass) : [];
+    // With a chain after it, this step only counts what the rows and columns of its own people take
+    const own =
+      chain.length > 0 || chainBound.length > 0
+        ? (first.cells[person] ?? []).filter(
+            (cell) =>
+              !taking.people.some((other) => {
+                const at = start.cells[other]?.[0];
+                return at !== undefined && shares(cell, at);
+              }),
+          ).length
+        : 0;
     steps.push({
       kind: 'taken',
-      placed: givenPeople,
-      pinned,
-      cells: count(pass ?? start),
+      placed: givenPeople.filter((other) => taking.people.includes(other)),
+      pinned: pinned.filter((other) => taking.people.includes(other)),
+      cells: Math.max(own, count(pass ?? start)),
     });
     if (pass !== undefined) {
-      const known = singles(start);
-      const people = [...singles(pass)].filter((other) => other !== person && !known.has(other));
-      if (people.length > 0) {
-        steps.push({ kind: 'chain', people, cells: count(pass) });
+      if (chain.length > 0 || chainBound.length > 0) {
+        steps.push({ kind: 'chain', people: chain, bound: chainBound, cells: count(pass) });
       }
       before = pass;
       rest = rest.slice(1);
@@ -114,37 +242,95 @@ export function explain(
       break;
     }
     const known = singles(before);
-    const people = [...singles(step)].filter((other) => other !== person && !known.has(other));
+    const people = needed(
+      [...singles(step)].filter((other) => other !== person && !known.has(other)),
+      before,
+      step,
+    ).people;
     if (count(step) !== count(before) || people.length > 0) {
       const last = steps.at(-1);
       const cells = count(step);
       if (step.label === 'cross') {
+        const bound = people.length === 0 ? bounds(before, step) : [];
         if (last?.kind === 'chain') {
           last.people.push(...people);
+          last.bound.push(...bound);
           last.cells = cells;
         } else {
-          steps.push({ kind: 'chain', people, cells });
+          steps.push({ kind: 'chain', people, bound, cells });
         }
       } else if (step.label === 'relations') {
         if (last?.kind === 'relations') {
           last.people.push(...people);
           last.cells = cells;
         } else {
-          steps.push({ kind: 'relations', people, cells });
+          steps.push({ kind: 'relations', people, clues: [], cells });
         }
       } else if (step.label === 'rooms') {
-        const rules = level.clues.flatMap((clue, index) =>
-          ROOM_RULES.has(clue.type) ? [index] : [],
-        );
-        steps.push({ kind: 'rooms', rules, people, cells });
+        steps.push({ kind: 'rooms', rules: [], people, cells });
       } else if (step.label === 'whatif') {
-        steps.push({ kind: 'whatif', cells });
+        // Two rounds of trying cells say the same: one step, with the cells that are left in the end
+        if (last?.kind === 'whatif') {
+          last.cells = cells;
+        } else {
+          steps.push({ kind: 'whatif', cells });
+        }
       }
     }
     before = step;
   }
-  steps.push({ kind: 'result', cells: deductions[person]?.cells ?? [] });
+
+  // The clues that these steps rest on: the fewest that still lead to the same cells at the end of
+  // the stage of the rules about rooms. Only those are named, each once, where they are used (the
+  // ones about the person alone are in the first step). The what-if step names none: it is a search
+  // through all clues and costs too much to take apart.
+  const roomsStage = trace.find((step) => step.label === 'rooms');
+  if (roomsStage !== undefined && steps.some((s) => s.kind === 'relations' || s.kind === 'rooms')) {
+    const alone = new Set(cluesThatLimit(level, person));
+    const named = new Set(alone);
+    const needed = neededClues(level, placed, person, roomsStage.cells[person] ?? [], alone);
+    const fresh = (wanted: (type: string) => boolean): number[] =>
+      needed.filter((index) => !named.has(index) && wanted(level.clues[index]?.type ?? ''));
+    for (const step of steps) {
+      if (step.kind === 'relations') {
+        step.clues = fresh((type) => !ROOM_RULES.has(type));
+        step.clues.forEach((index) => named.add(index));
+      } else if (step.kind === 'rooms') {
+        step.rules = fresh((type) => ROOM_RULES.has(type));
+        step.rules.forEach((index) => named.add(index));
+      }
+    }
+  }
+  steps.push({ kind: 'result', cells: finalCells });
   return steps;
+}
+
+/**
+ * The fewest clues of the level that still lead to the same cells for the person (apart from the
+ * ones about the person alone, which stay). Found by trying to do without each clue in turn: a clue
+ * stays out when the reasoning gets to the same cells without it.
+ */
+function neededClues(
+  level: Level,
+  placed: readonly (Cell | undefined)[],
+  person: number,
+  finalCells: readonly Cell[],
+  alone: ReadonlySet<number>,
+): number[] {
+  let kept = level.clues.map((_, index) => index);
+  // The clues about the person alone stay: they are named in the first step anyway
+  for (const index of kept.filter((i) => !alone.has(i))) {
+    const rest = kept.filter((other) => other !== index);
+    const clues = rest.flatMap((other) => {
+      const clue = level.clues[other];
+      return clue === undefined ? [] : [clue];
+    });
+    const cells = deduce({ ...level, clues }, placed, undefined, 'rooms')?.[person]?.cells;
+    if (cells?.length === finalCells.length && cells.every((cell) => finalCells.includes(cell))) {
+      kept = rest;
+    }
+  }
+  return kept;
 }
 
 /** What the text of an explanation needs to know */
@@ -196,6 +382,9 @@ export function explanationLines(steps: readonly ExplainStep[], words: ExplainWo
           ? `No clue limits where ${me} can be, so every free cell is possible: ${cellsText(step.cells)}.`
           : `${step.clues.length === 1 ? 'The clue' : 'The clues'} ${quoted(words, step.clues)} ${step.clues.length === 1 ? 'leaves' : 'leave'} ${cellsText(step.cells)} for ${me}.`;
       case 'taken': {
+        if (step.placed.length === 0 && step.pinned.length === 0) {
+          return `The rows and columns that the other people need are taken. ${leftText(step.cells)} for ${me}.`;
+        }
         const placed = `With ${names(words, step.placed)} on the map`;
         const pinned = `the clues leave ${names(words, step.pinned)} only one cell${step.pinned.length === 1 ? '' : ' each'}`;
         const lead =
@@ -206,14 +395,39 @@ export function explanationLines(steps: readonly ExplainStep[], words: ExplainWo
               : `As ${pinned}`;
         return `${lead}, their rows and columns are taken. ${leftText(step.cells)} for ${me}.`;
       }
-      case 'chain':
+      case 'chain': {
+        if (step.people.length > 0) {
+          return `That leaves ${names(words, step.people)} only one cell, so ${step.people.length === 1 ? 'their row and column are' : 'their rows and columns are'} taken as well, and a row or column that only one person can still use goes to that person. ${leftText(step.cells)} for ${me}.`;
+        }
+        if (step.bound.length > 0) {
+          const bound = step.bound.map(
+            (one) =>
+              `${words.name(one.person)} can only be in ${one.line} ${String(one.index + 1)}`,
+          );
+          const list =
+            bound.length <= 1
+              ? bound.join('')
+              : `${bound.slice(0, -1).join(', ')} and ${bound.at(-1) ?? ''}`;
+          const one = step.bound.length === 1;
+          const lines = step.bound.every((b) => b.line === 'row')
+            ? one
+              ? 'that row is'
+              : 'those rows are'
+            : step.bound.every((b) => b.line === 'column')
+              ? one
+                ? 'that column is'
+                : 'those columns are'
+              : 'those rows and columns are';
+          return `As ${list}, ${lines} taken. ${leftText(step.cells)} for ${me}.`;
+        }
+        return `A person who is bound to one row or column, or a row or column with only one place left, takes cells away. ${leftText(step.cells)} for ${me}.`;
+      }
+      case 'relations': {
+        const named = step.clues.length > 0 ? ` (${quoted(words, step.clues)})` : '';
         return step.people.length > 0
-          ? `That leaves ${names(words, step.people)} only one cell, so ${step.people.length === 1 ? 'their row and column are' : 'their rows and columns are'} taken as well, and a row or column that only one person can still use goes to that person. ${leftText(step.cells)} for ${me}.`
-          : `A person who is bound to one row or column, or a row or column with only one place left, takes cells away. ${leftText(step.cells)} for ${me}.`;
-      case 'relations':
-        return step.people.length > 0
-          ? `The clues that tie people together (who is next to, north of or in the same room as whom) leave ${names(words, step.people)} only one cell, and that cuts the cells of ${me} down. ${leftText(step.cells)}.`
-          : `The clues that tie people together (who is next to, north of or in the same room as whom) cut cells away. ${leftText(step.cells)} for ${me}.`;
+          ? `The clues that tie people together${named} leave ${names(words, step.people)} only one cell, and that cuts the cells of ${me} down. ${leftText(step.cells)}.`
+          : `The clues that tie people together${named} cut cells away. ${leftText(step.cells)} for ${me}.`;
+      }
       case 'rooms': {
         const extra =
           step.rules.length > 0

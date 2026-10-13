@@ -218,9 +218,12 @@ describe('contact form switch', () => {
     }
   });
 
-  it.skipIf(!enabled)('starts hidden and cannot send without JavaScript', () => {
+  it.skipIf(!enabled)('is hidden without scripting and cannot send without JavaScript', () => {
     const html = section();
-    expect(html).toMatch(/<div data-contact[^>]*\shidden/);
+    // In the page from the start (nothing moves when the script is ready), hidden only when the
+    // browser says that scripting is off
+    expect(html).toMatch(/<div data-contact[^>]*scripting:none/);
+    expect(html).not.toMatch(/<div data-contact[^>]*\shidden/);
     const form = /<form[^>]*>/.exec(html)?.[0] ?? '';
     // No action or method: without JavaScript a submit would put the message into the URL
     expect(form).not.toMatch(/\saction=/);

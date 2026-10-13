@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { type RandomSetup, sizesFor } from '../logic/random-level';
 import { type Tier } from '../logic/types';
-import { type Run } from './useGenerator';
+import type { Run } from './useGenerator';
 
 interface RandomPanelProps {
   setup: RandomSetup;
@@ -110,25 +110,34 @@ export function RandomPanel({ setup, run, error, onSetup, onStart, onCancel }: R
         )}
       </div>
 
-      {run !== undefined && (
-        <div className="rc-progress">
-          <progress max={1} value={fraction(elapsed, run.typical)} aria-label="Making a level" />
-          {/* The first line is the same all the time, only the time at its end changes (and is not
+      {/* The space of the progress is always there, so nothing below it moves when a level is made */}
+      <div className="rc-random-status">
+        {run === undefined && error === undefined && (
+          <p className="rc-random-status-idle">
+            A new level is made in your browser, with the difficulty, size and look you chose, and
+            checked by two solvers before you see it.
+          </p>
+        )}
+        {run !== undefined && (
+          <div className="rc-progress">
+            <progress max={1} value={fraction(elapsed, run.typical)} aria-label="Making a level" />
+            {/* The first line is the same all the time, only the time at its end changes (and is not
               read aloud every second); the longer text is a line of its own, so nothing jumps */}
-          <p className="rc-progress-now" role="status">
-            Making a {run.job.tier} {String(run.job.size)}×{String(run.job.size)} level
-            <span className="rc-elapsed" aria-hidden="true">
-              {String(Math.floor(elapsed / 1000))} s so far
-            </span>
-          </p>
-          <p className="rc-progress-hint">
-            This usually takes about {seconds(run.typical)}, but it is a matter of luck
-            {run.workers > 1 ? ` (${String(run.workers)} threads are trying different maps)` : ''}.
-            Every level is checked by two solvers before you see it.
-          </p>
-        </div>
-      )}
-      {error !== undefined && <p className="rc-error">{error}</p>}
+            <p className="rc-progress-now" role="status">
+              Making a {run.job.tier} {String(run.job.size)}×{String(run.job.size)} level
+              <span className="rc-elapsed" aria-hidden="true">
+                {String(Math.floor(elapsed / 1000))} s so far
+              </span>
+            </p>
+            <p className="rc-progress-hint">
+              This usually takes about {seconds(run.typical)}, but it is a matter of luck
+              {run.workers > 1 ? ` (${String(run.workers)} threads are trying different maps)` : ''}
+              . Every level is checked by two solvers before you see it.
+            </p>
+          </div>
+        )}
+        {error !== undefined && <p className="rc-error">{error}</p>}
+      </div>
     </div>
   );
 }

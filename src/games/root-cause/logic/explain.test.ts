@@ -48,6 +48,24 @@ describe('the explanation of a hint', () => {
           const left = counts(hint.steps);
           expect(left, id).toEqual([...left].sort((a, b) => b - a));
           expect(left.at(-1) ?? 0, id).toBeGreaterThanOrEqual(hint.cells.length);
+          // Only the steps that are needed: the cells of the hint are reached by the last step with a count and not before
+          expect(left.filter((n) => n === hint.cells.length).length, id).toBeLessThanOrEqual(1);
+
+          // Rounds of what-if are one step, and a clue is named once at most
+          const kinds = hint.steps.map((part) => part.kind);
+          expect(
+            kinds.some((kind, at) => kind === 'whatif' && kinds[at + 1] === 'whatif'),
+            id,
+          ).toBe(false);
+          const named = hint.steps.flatMap((part) =>
+            part.kind === 'clues' || part.kind === 'relations'
+              ? part.clues
+              : part.kind === 'rooms'
+                ? part.rules
+                : [],
+          );
+          expect(new Set(named).size, id).toBe(named.length);
+
           // The hint marks every clue that limits the person
           const first = hint.steps[0];
           for (const index of first?.kind === 'clues' ? first.clues : []) {
@@ -86,6 +104,41 @@ describe('the explanation of a hint', () => {
         expect(hint?.steps[0]?.kind, record.id).toBe(broken.length > 0 ? 'broken' : 'clues');
         expect(hint?.steps.at(-1)?.kind).toBe('result');
       }
+    },
+    SLOW,
+  );
+
+  it(
+    'names the people who bind a row or column and the clues that tie people together',
+    () => {
+      let bound = 0;
+      let relations = 0;
+      for (const record of records) {
+        const level = toLevel(record);
+        const placed: (Cell | undefined)[] = level.people.map(() => undefined);
+        for (const turn of level.people.keys()) {
+          const started = performance.now();
+          const hint = findHint(level, placed);
+          // A hint is worked out when the button is pressed: it must not make the page wait
+          expect(performance.now() - started, `${record.id} step ${String(turn)}`).toBeLessThan(
+            3000,
+          );
+          if (hint === undefined) {
+            break;
+          }
+          for (const part of hint.steps) {
+            if (part.kind === 'chain' && part.bound.length > 0) {
+              bound += 1;
+            }
+            if (part.kind === 'relations' && part.clues.length > 0) {
+              relations += 1;
+            }
+          }
+          placed[hint.person] = level.solution[hint.person];
+        }
+      }
+      expect(bound).toBeGreaterThan(0);
+      expect(relations).toBeGreaterThan(0);
     },
     SLOW,
   );

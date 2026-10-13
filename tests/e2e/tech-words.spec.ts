@@ -8,7 +8,7 @@ import { terms4 } from '../../src/games/tech-words/data/terms-4';
 import { terms5 } from '../../src/games/tech-words/data/terms-5';
 import { evaluateGuess } from '../../src/games/tech-words/logic/evaluate';
 import { type CategoryChoice, selectTerm } from '../../src/games/tech-words/logic/select';
-import { expect, test } from './fixtures';
+import { expect, gameReady, test } from './fixtures';
 
 const PATH = '/games/tech-words/';
 
@@ -33,6 +33,7 @@ function otherThan(answer: TechTerm, terms: readonly TechTerm[], skip = 0): stri
 
 async function openRound(page: Page, query: string): Promise<void> {
   await page.goto(`${PATH}?${query}`);
+  await gameReady(page);
   await expect(page.getByRole('grid', { name: 'Your guesses' })).toBeVisible();
 }
 

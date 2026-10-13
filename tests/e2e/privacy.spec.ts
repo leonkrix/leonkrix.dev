@@ -1,10 +1,10 @@
-import { expect, test } from '@playwright/test';
-
-import { pages } from './fixtures';
+import { expect, notFoundPath, pages, test } from './fixtures';
 
 // Protects the "no cookie banner" decision: no third-party requests, no cookies.
-// The 404 page is included, it is served like every other page.
-for (const path of [...pages, '/this-page-does-not-exist']) {
+// The 404 page is included, it is served like every other page (its own 404 status is expected).
+test.use({ expectedPageStatus: 404 });
+
+for (const path of [...pages, notFoundPath]) {
   test(`${path} talks only to its own origin and sets no cookies`, async ({ page, context }) => {
     const requested: string[] = [];
     page.on('request', (request) => {

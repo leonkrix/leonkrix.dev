@@ -36,6 +36,7 @@ export function Board({ round, shake, boardRef }: BoardProps) {
       aria-label="Your guesses"
       tabIndex={-1}
       className="tw-board"
+      data-layout-fluid
       style={{ '--len': round.length } as CSSProperties}
     >
       {Array.from({ length: MAX_TRIES }, (_, rowIndex) => {

@@ -1,5 +1,3 @@
-import './tech-words.css';
-
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 
 import { createRandom, freshSeed } from '../../shared/random';
@@ -55,9 +53,15 @@ function describeGuess(round: Round): string {
     : base;
 }
 
-/** Tech Words: guess the hidden tech term in six tries. */
-export default function TechWords() {
-  const [setup, setSetup] = useState<PuzzleSetup>(readInitialSetup);
+/**
+ * Tech Words: guess the hidden tech term in six tries. With `skeleton` it is only the picture of
+ * the game before its first round (the page renders that on the server as the placeholder, so that
+ * nothing below the game jumps when the game appears): it does not look at the address.
+ */
+export default function TechWords({ skeleton = false }: { skeleton?: boolean }) {
+  const [setup, setSetup] = useState<PuzzleSetup>(() =>
+    skeleton ? parsePuzzleParams('', () => 0) : readInitialSetup(),
+  );
   const [game, setGame] = useState<Game | null>(null);
   const [toast, setToast] = useState<{ text: string; id: number } | null>(null);
   const [shake, setShake] = useState<'a' | 'b' | null>(null);

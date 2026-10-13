@@ -39,6 +39,7 @@ export const technologies = {
   rl: { label: 'Reinforcement Learning', icon: 'lucide:bot' },
   tensorboard: { label: 'TensorBoard', icon: 'lucide:chart-line' },
   numpypandas: { label: 'NumPy & pandas', icon: 'simple-icons:numpy' },
+  wordembeddings: { label: 'Word Embeddings & PCA', icon: 'lucide:chart-scatter' },
 
   // Networking
   networking: { label: 'Computer Networks', icon: 'lucide:waypoints' },
@@ -96,7 +97,16 @@ export const technologyGroups: readonly TechnologyGroup[] = [
   },
   {
     title: 'Machine Learning',
-    items: ['pytorch', 'raytune', 'numpypandas', 'deeplearning', 'gnn', 'rl', 'tensorboard'],
+    items: [
+      'pytorch',
+      'raytune',
+      'numpypandas',
+      'deeplearning',
+      'gnn',
+      'rl',
+      'tensorboard',
+      'wordembeddings',
+    ],
   },
   {
     title: 'Networking',

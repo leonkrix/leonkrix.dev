@@ -1,5 +1,3 @@
-import './link-up.css';
-
 import {
   type CSSProperties,
   type KeyboardEvent,
@@ -27,6 +25,7 @@ import {
 import { buildPuzzleUrl } from '../logic/link';
 import { newGame } from '../logic/new-game';
 import { GROUP_SIZE } from '../logic/puzzle';
+import LinkUpSkeleton from './LinkUpSkeleton';
 
 /** How long each reaction takes, in milliseconds (the CSS animations have the same lengths) */
 const DELAY_BEFORE_CHECK = 240;
@@ -372,7 +371,7 @@ function LinkUpBoard({ initialSeed, initialGame }: { initialSeed: number; initia
         )}
       </div>
 
-      <div className="lu-board" ref={boardRef}>
+      <div className="lu-board" ref={boardRef} data-layout-fluid>
         {found.map((group, index) => {
           const data = game.puzzle.groups[group];
           if (data === undefined) {
@@ -593,11 +592,13 @@ export default function LinkUp() {
 
   if (start === null) {
     return (
-      <p className="lu-loading" role="status">
-        {failed
-          ? 'The puzzle could not be loaded. Please reload the page.'
-          : 'Loading the puzzle...'}
-      </p>
+      <LinkUpSkeleton
+        message={
+          failed
+            ? 'The puzzle could not be loaded. Please reload the page.'
+            : 'Loading the puzzle...'
+        }
+      />
     );
   }
   return <LinkUpBoard initialSeed={start.seed} initialGame={start.game} />;

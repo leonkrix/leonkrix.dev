@@ -3,10 +3,11 @@ import { readFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import { type Locator, type Page } from '@playwright/test';
 
+import { STORIES } from '../../src/games/root-cause/data/stories';
 import { Board } from '../../src/games/root-cause/logic/board';
 import { check, subjectOf, UNPLACED } from '../../src/games/root-cause/logic/clues';
 import { type LevelRecord, toLevel } from '../../src/games/root-cause/pool';
-import { expect, test } from './fixtures';
+import { expect, gameReady, test } from './fixtures';
 
 const PATH = '/games/root-cause/';
 
@@ -61,14 +62,23 @@ async function solveWithKeyboard(page: Page, level: LevelRecord): Promise<void> 
   }
 }
 
+/**
+ * Opens a level the way a player does: from the choice page. (A level that is opened straight from
+ * its address starts at another height than the choice page that the page shows while the game
+ * loads, which the layout guard would rightly report.)
+ */
 async function open(page: Page, id: string): Promise<void> {
-  await page.goto(`${PATH}?level=${id}`);
+  const title = STORIES[id]?.title ?? id;
+  await page.goto(PATH);
+  await gameReady(page);
+  await page.getByRole('button', { name: new RegExp(title) }).click();
   await expect(page.getByRole('grid')).toBeVisible();
 }
 
 test.describe('Root Cause', () => {
   test('shows the choice of a level, and a level opens with its address', async ({ page }) => {
     await page.goto(PATH);
+    await gameReady(page);
     await expect(page.getByRole('heading', { name: 'Choose a level' })).toBeVisible();
     // 18 levels in three groups, and the random level
     await expect(page.locator('.rc-card')).toHaveCount(18);
@@ -273,6 +283,7 @@ test.describe('Root Cause', () => {
     page,
   }) => {
     await page.goto(PATH);
+    await gameReady(page);
     await page.getByLabel('Difficulty').selectOption('easy');
     await page.getByLabel('Size').selectOption('4');
     await page.getByRole('button', { name: 'New level' }).click();

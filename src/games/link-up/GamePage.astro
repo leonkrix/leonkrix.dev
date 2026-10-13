@@ -1,8 +1,13 @@
 ---
+// The styles of the game belong to the page: the picture of the game that the page renders on the
+// server and the game itself use the same ones, which are sent once
+import './components/link-up.css';
+
 import { type GameDefinition } from '@/games/registry';
 import GameLayout from '@/layouts/GameLayout.astro';
 
 import LinkUp from './components/LinkUp';
+import LinkUpSkeleton from './components/LinkUpSkeleton';
 
 interface Props {
   game: GameDefinition;
@@ -22,12 +27,7 @@ const { game } = Astro.props;
   </script>
   {/* Rendered in the browser only: the puzzle is random */}
   <LinkUp client:only="react">
-    <p
-      slot="fallback"
-      class="grid min-h-[38.8rem] place-items-center text-muted [@media(max-width:30rem)]:min-h-[39.8rem]"
-    >
-      Loading the game...
-    </p>
+    <LinkUpSkeleton slot="fallback" />
   </LinkUp>
   <noscript>
     <p class="text-muted">
