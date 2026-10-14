@@ -73,6 +73,39 @@ describe('notes', () => {
   });
 });
 
+describe('code in the notes', () => {
+  /** The longest line that fits the box of a note without scrolling (about 77 characters) */
+  const LONGEST_LINE = 72;
+  const snippetFolder = join(folder, 'snippets');
+  const snippets = readdirSync(snippetFolder).filter((name) => name.endsWith('.snippet'));
+
+  it('keeps code in snippet files, not in the text (Prettier takes the indentation out of code in MDX)', () => {
+    for (const { slug, text } of notes) {
+      expect(text, slug).not.toMatch(/code=\{`/);
+      expect(text, slug).not.toMatch(/^```/m);
+    }
+  });
+
+  it('has a snippet for every use and no snippet that is not used', () => {
+    const used = notes.flatMap(({ text }) =>
+      [...text.matchAll(/\.\/snippets\/([\w-]+\.snippet)\?raw/g)].map((match) => match[1] ?? ''),
+    );
+    expect([...new Set(used)].sort()).toEqual([...snippets].sort());
+  });
+
+  it('has lines that fit the box, so that code is read and not scrolled', () => {
+    expect(snippets.length).toBeGreaterThan(0);
+    for (const name of snippets) {
+      const code = readFileSync(join(snippetFolder, name), 'utf8');
+      for (const line of code.split('\n')) {
+        expect(line.length, `${name}: "${line}" is too long, break the line`).toBeLessThanOrEqual(
+          LONGEST_LINE,
+        );
+      }
+    }
+  });
+});
+
 describe('notes in the build', () => {
   it('lists every note on the overview and in the sitemap', async () => {
     const overview = await readDistFile(join(notesPath, 'index.html'));

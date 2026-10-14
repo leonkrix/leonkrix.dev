@@ -1,0 +1,145 @@
+---
+// Three guesses against the answer "stack", marked by the game's own function (`evaluateGuess`), so
+// the picture can never disagree with the game. The sentence under every row is checked against
+// the result when the page is built: if the rule changed, the build fails instead of the picture
+// lying.
+import { evaluateGuess, type LetterState } from '@/games/tech-words/logic/evaluate';
+
+import Figure from './Figure.astro';
+
+const answer = 'stack';
+
+const rows: { guess: string; expected: LetterState[]; text: string }[] = [
+  {
+    guess: 'class',
+    expected: ['present', 'absent', 'correct', 'present', 'absent'],
+    text: 'The A is in the right place. The answer has one S: the first S gets it, the second S finds none left.',
+  },
+  {
+    guess: 'tacks',
+    expected: ['present', 'present', 'present', 'present', 'present'],
+    text: 'Every letter is in the answer, and none of them is in its place.',
+  },
+  {
+    guess: 'stack',
+    expected: ['correct', 'correct', 'correct', 'correct', 'correct'],
+    text: 'All correct.',
+  },
+];
+
+const marks: Record<LetterState, string> = { correct: '✓', present: '○', absent: '✕' };
+const names: Record<LetterState, string> = {
+  correct: 'right place',
+  present: 'elsewhere',
+  absent: 'not in the word',
+};
+
+const evaluated = rows.map((row) => {
+  const states = evaluateGuess(row.guess, answer);
+  if (states.join() !== row.expected.join()) {
+    throw new Error(
+      `EvaluateFigure: "${row.guess}" against "${answer}" gives ${states.join()}, the text expects ${row.expected.join()}`,
+    );
+  }
+  return {
+    ...row,
+    tiles: [...row.guess].map((letter, index) => ({ letter, state: states[index] ?? 'absent' })),
+  };
+});
+---
+
+<Figure
+  caption={`The answer is “${answer.toUpperCase()}”. Correct tiles are handed out first, then present tiles from left to right, and a letter is only marked as often as the answer has it. Every tile carries a mark as well as a colour.`}
+>
+  <ul class="rows">
+    {evaluated.map((row) => (
+      <li>
+        <p
+          class="tiles"
+          aria-label={`Guess ${row.guess}: ${row.tiles.map((tile) => `${tile.letter}, ${names[tile.state]}`).join('; ')}`}
+          role="img"
+        >
+          {row.tiles.map((tile) => (
+            <span class="tile" data-state={tile.state} aria-hidden="true">
+              {tile.letter}
+              <span class="mark">{marks[tile.state]}</span>
+            </span>
+          ))}
+        </p>
+        <p class="text">{row.text}</p>
+      </li>
+    ))}
+  </ul>
+</Figure>
+
+<style>
+  .rows {
+    display: grid;
+    gap: 1.25rem;
+    list-style: none;
+    padding: 0;
+  }
+
+  li {
+    display: grid;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  @media (min-width: 36rem) {
+    li {
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 1.25rem;
+    }
+  }
+
+  .tiles {
+    display: flex;
+    gap: 0.35rem;
+  }
+
+  .tile {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.375rem;
+    background: var(--color-surface);
+    font-family: var(--font-mono), monospace;
+    font-size: 1.125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-fg);
+  }
+
+  .tile[data-state='correct'] {
+    border-color: var(--color-status);
+    background: color-mix(in srgb, var(--color-status) 30%, var(--color-surface));
+  }
+
+  .tile[data-state='present'] {
+    border-color: var(--color-contrast);
+    background: color-mix(in srgb, var(--color-contrast) 28%, var(--color-surface));
+  }
+
+  .tile[data-state='absent'] {
+    color: var(--color-muted);
+  }
+
+  .mark {
+    position: absolute;
+    top: 0.1rem;
+    right: 0.25rem;
+    font-size: 0.6rem;
+    font-weight: 400;
+    opacity: 0.85;
+  }
+
+  .text {
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--color-muted);
+  }
+</style>

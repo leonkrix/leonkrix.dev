@@ -1,0 +1,8 @@
+for (let word = 0; word < count; word += 1) {
+  const start = word * DIMENSIONS;
+  let sum = 0;
+  for (let index = 0; index < DIMENSIONS; index += 1) {
+    sum += vectors[start + index] * wanted[index];
+  }
+  result[word] = sum;
+}

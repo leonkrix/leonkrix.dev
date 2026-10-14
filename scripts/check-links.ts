@@ -30,6 +30,9 @@ export const PAGES: readonly string[] = [
   '/privacy-policy/',
   // The notes link to the code on GitHub
   '/notes/root-cause/',
+  '/notes/tech-words/',
+  '/notes/link-up/',
+  '/notes/word-radar/',
 ];
 
 /** External links that are on none of the pages above but must keep working. */

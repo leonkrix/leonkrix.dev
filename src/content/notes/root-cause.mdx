@@ -9,6 +9,7 @@ updated: '2026-10-14'
 ---
 
 import Code from '@/components/notes/Code.astro';
+import verdictSnippet from './snippets/root-cause-verdict.snippet?raw';
 import DeduceFigure from '@/components/notes/DeduceFigure.astro';
 import Stats from '@/components/notes/Stats.astro';
 import Steps from '@/components/notes/Steps.astro';
@@ -48,7 +49,7 @@ Every clue is true by construction, because it is read off the solution. What co
 
 The meaning of a clue lives in one function that is given a placement, possibly an incomplete one, and answers with one of three things:
 
-<Code lang="ts" code={`type Verdict = boolean | undefined; // undefined: not decided yet`} />
+<Code lang="ts" code={verdictSnippet} />
 
 With a complete placement the answer is always true or false. With a partial one, “not yet” is honest: if Ada is not on the board, nobody can say whether she is next to a plant. A **false is final**, however the others are placed, and that one property is used twice. A search can drop a whole branch the moment a clue says false. And the game turns a clue red when the people on the board break it: a red clue is never a false alarm, however the rest of the board is filled in later.
 

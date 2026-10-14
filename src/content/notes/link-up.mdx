@@ -1,0 +1,92 @@
+---
+title: 'Link Up: how do you know a grouping puzzle has only one answer?'
+summary: 'Sixteen tiles, four hidden groups, and a rule that no puzzle may have a second solution. Why a counter is not enough, what a list of conflicts adds, and how 3,000 terms load in pieces.'
+tag: 'Words · Link Up'
+game: link-up
+code: src/games/link-up
+order: 3
+updated: '2026-10-14'
+---
+
+import ConflictFigure from '@/components/notes/ConflictFigure.astro';
+import Stats from '@/components/notes/Stats.astro';
+import Steps from '@/components/notes/Steps.astro';
+
+Link Up shows sixteen tech terms that belong to four hidden groups of four, such as sorting algorithms, HTTP methods or Git commands. You pick four tiles, the fourth pick hands the group in, and four mistakes end the game.
+
+A grouping puzzle lives or dies by one property: **there must be exactly one way to sort the tiles.** If a tile could honestly sit in two groups, the player who is right on paper loses, and that is the kind of unfairness people remember. This note is about how the game makes sure it does not happen, and how it carries three thousand terms without making the page slow.
+
+<Stats
+  items={[
+    { value: '239', label: 'topics' },
+    { value: '3,044', label: 'terms' },
+    { value: '92', label: 'pairs of topics that never meet' },
+    { value: '14', label: 'data files, loaded as needed' },
+  ]}
+/>
+
+## Making a puzzle, then proving it
+
+A puzzle is made from the data, not by hand, and every one of them goes through the same short pipeline.
+
+<Steps
+  columns={3}
+  steps={[
+    {
+      title: 'Four topics',
+      text: 'Chosen from the seed, never a pair that is on the conflict list.',
+    },
+    { title: 'Four terms each', text: 'Sixteen tiles, put in a seeded order.' },
+    {
+      title: 'Count',
+      text: 'A separate function counts every way to sort the tiles into four groups of four.',
+    },
+    { title: 'Exactly one?', text: 'Then the puzzle is shown.' },
+    { title: 'Otherwise', text: 'It is thrown away and another one is made.' },
+  ]}
+/>
+
+The same seed always gives the same puzzle and the same first order of the tiles, which is how a puzzle can be shared as a link.
+
+## Two kinds of ambiguity
+
+The counting function does exactly what it says: it counts every way to sort the sixteen tiles into four groups, where a tile fits every group whose topic lists a term with that name. It is a separate function from the generator, so the generator cannot mark its own homework. And the data has one rule that keeps the count honest: **every term belongs to exactly one topic in the whole data**, and a test checks that no name is used twice.
+
+With that rule in force, the counter can only find a second solution when the data is wrong. It protects against a mistake in the data. It does not protect against the more interesting problem, a mistake in _meaning_.
+
+<ConflictFigure />
+
+The data lists DELETE under “HTTP methods” and nowhere else, so the counter is happy. But put “HTTP methods” and “SQL commands” into one puzzle and a player who sees DELETE next to SELECT, INSERT and UPDATE will quite reasonably put it into the SQL group. No program can see that, because it is a fact about the world and not about the data.
+
+So there is a second, handwritten safeguard: a list of **pairs of topics that must never meet in one puzzle**, 92 of them at the moment. The cases are always of the same few kinds:
+
+- a family and its members (HTTP headers and security headers, Next.js and the React frameworks),
+- a word that is two things at once (a port number is also the service behind it, Clojure is also a functional language),
+- a person who also has an algorithm or a law named after them (Dijkstra and Kruskal).
+
+The generator picks four topics without a conflict. The data tests check that the list only names topics that exist and that every topic keeps at least three partners it may meet, so the generator always has partners to choose from.
+
+## Testing the checker
+
+A check that has never failed is not a check. The tests run the generator on 150 seeds and require exactly one solution every time. But they also feed the counter a made-up pair of topics that share terms, to prove that it **does** see a second solution when there is one. Without that test, a counter that always answers “one” would pass every other test in the file.
+
+## Three thousand terms, one page
+
+All the topics and terms together are a few hundred kilobytes, far more than a page should load to show sixteen tiles. The data lives in fourteen files by subject, and a puzzle needs four topics, so the game fetches only the files of the four it chose, usually three or four of them.
+
+A small catalogue (the list of every topic and the file it lives in) is part of the first script and is used to choose the topics. The loaders fetch and remember the files. A lazy version of the generator makes exactly the puzzle that the plain one would make from the same seed, and a test checks that for 80 seeds, so the speed-up cannot change what a seed means.
+
+The last piece is timing. A small script of the page starts the first puzzle as soon as the page has loaded, while React and the board are still loading, and the game picks up the same promise. Without it the Lighthouse score of the page sits around 95; with it, between 96 and 98.
+
+## The game is a value, and a reaction blocks the board
+
+Like the other games, the logic is pure TypeScript and knows nothing about the page: the game is an immutable value, and picking, handing in a group, a mistake, losing and revealing the missing groups are functions on it.
+
+One decision is worth a sentence. While a reaction plays (a shake for a wrong group takes 0.6 seconds, a found group 0.8), the board is blocked, and the state of the game changes only at the end of the reaction. So the animation always shows the old state first and the new one afterwards, and you cannot start a second move in the middle of the first. The tiles that move up after a found group glide to their new place: the browser measures where every tile was and where it is, and plays the difference with the Web Animations API. With reduced motion there is no animation at all.
+
+## What the tests protect
+
+- Every topic and term: at least 150 topics, seven to twenty terms each, unique ids and terms, definitions that do not contain their term, and a conflict list that makes sense.
+- The generator: four groups of four, no conflicts, exactly one solution, the same seed giving the same puzzle, every topic being used.
+- The game: picking, correct and wrong groups, “one away”, the repeated wrong group (it costs nothing), winning, losing and the seed in the address.
+- In a real browser: definitions on hover and focus, a win and a loss, the keyboard, a small screen, accessibility checks, reduced motion, and a check that nothing on the page moves when the result appears.

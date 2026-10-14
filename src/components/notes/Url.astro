@@ -1,0 +1,16 @@
+---
+// A long address or query in a sentence. It may break at any character, so that the lines of the
+// sentence stay full: the browser would otherwise move the whole unbreakable word to the next line
+// and leave a gap. Short code in a sentence is not meant to break in the middle, so this is a
+// component of its own and not a rule for all code.
+---
+
+<code class="url">
+  <slot />
+</code>
+
+<style>
+  .url {
+    word-break: break-all;
+  }
+</style>

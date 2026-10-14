@@ -1,0 +1,26 @@
+const states = Array.from<LetterState>({ length: guess.length })
+  .fill('absent');
+const unused = new Map<string, number>();
+
+// Pass 1: correct tiles. Every other letter of the answer is counted
+// as still unused.
+for (let index = 0; index < answer.length; index += 1) {
+  const letter = answer.charAt(index);
+  if (guess.charAt(index) === letter) {
+    states[index] = 'correct';
+  } else {
+    unused.set(letter, (unused.get(letter) ?? 0) + 1);
+  }
+}
+
+// Pass 2: present tiles, from left to right, as long as an unused
+// copy of the letter is left.
+for (let index = 0; index < guess.length; index += 1) {
+  if (states[index] === 'correct') continue;
+  const letter = guess.charAt(index);
+  const left = unused.get(letter) ?? 0;
+  if (left > 0) {
+    states[index] = 'present';
+    unused.set(letter, left - 1);
+  }
+}
