@@ -16,7 +16,7 @@ Personal portfolio. A minimal, dark, fast and privacy-friendly static site: no c
 
 - [Astro](https://astro.build) (static output), TypeScript (strict), Tailwind CSS v4, React islands where needed
 - Content as typed YAML (projects, experience) validated with Zod at build time
-- A small Playground of browser games (Tech Words, Root Cause, Link Up): pure TypeScript logic with unit tests, generators that prove every puzzle has one solution, keyboard play, and nothing stored on the device
+- A small Playground of browser games (Tech Words, Root Cause, Link Up, Word Radar), each with a write-up of how it is built under "Behind the scenes" (`/notes/`): pure TypeScript logic with unit tests, generators that prove every puzzle has one solution, keyboard play, and nothing stored on the device
 - Contact form without any third-party service: a Cloudflare Pages Function validates the message (shared rules, signed time token, honeypot, rate limit in KV) and sends it through the own IONOS mailbox
 - Hosted on Cloudflare (Git integration), every change goes through a pull request
 
@@ -88,7 +88,7 @@ src/
   games/        The Playground: registry, shared code and one folder per game (see src/games/README.md)
   layouts/      Base and legal page layouts
   lib/          Plain TypeScript: schemas, helpers, site configuration, with unit tests
-  pages/        Routes: home, legal notice, privacy policy (English and German), games, 404, sitemap
+  pages/        Routes: home, legal notice, privacy policy (English and German), games, notes (Behind the scenes), 404, sitemap
   styles/       Design tokens and global styles
 functions/      Cloudflare Pages Functions (contact form API) with their own tsconfig
 public/         robots.txt, favicon, security headers (_headers)

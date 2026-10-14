@@ -1,5 +1,6 @@
 import { z } from 'astro/zod';
 
+import { hasOnlyInternalLinks } from './highlights';
 import { technologies, type TechnologyId } from './technologies';
 
 const technologyIds = Object.keys(technologies) as [TechnologyId, ...TechnologyId[]];
@@ -47,7 +48,15 @@ export const projectSchema = z
     grade: z.string().min(1).optional(),
     start: year,
     end: year.optional(),
-    highlights: z.array(z.string().min(1)).min(1).max(5),
+    /** Plain text; a link to a page of this site is written as [text](/path/) */
+    highlights: z
+      .array(
+        z.string().min(1).refine(hasOnlyInternalLinks, {
+          message: 'only links to this site are allowed, written as [text](/path/)',
+        }),
+      )
+      .min(1)
+      .max(5),
     /** Optional key figures shown as a strip (at most three, so the box stays small and the picture beside it too), e.g. { value: "−47%", label: "mean delay" } */
     stats: z
       .array(z.object({ value: z.string().min(1), label: z.string().min(1) }))

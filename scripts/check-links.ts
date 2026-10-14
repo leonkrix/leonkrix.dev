@@ -24,7 +24,13 @@ import { isChallenge } from './live-check.ts';
 const PAGES_DEV = 'https://leonkrix-dev.pages.dev';
 
 /** Pages whose links are checked. Add new pages with links here (for example /uses). */
-export const PAGES: readonly string[] = ['/', '/legal-notice/', '/privacy-policy/'];
+export const PAGES: readonly string[] = [
+  '/',
+  '/legal-notice/',
+  '/privacy-policy/',
+  // The notes link to the code on GitHub
+  '/notes/root-cause/',
+];
 
 /** External links that are on none of the pages above but must keep working. */
 export const EXTRA_LINKS: readonly string[] = [];

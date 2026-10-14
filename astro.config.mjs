@@ -1,3 +1,4 @@
+import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, envField } from 'astro/config';
@@ -22,7 +23,7 @@ if (isProductionBuild) {
 // https://astro.build/config
 export default defineConfig({
   site: 'https://leonkrix.dev',
-  integrations: [react()],
+  integrations: [react(), mdx()],
   vite: {
     plugins: [tailwindcss()],
     build: {
@@ -30,7 +31,9 @@ export default defineConfig({
       assetsInlineLimit: 0,
     },
   },
-  // The site has no Markdown content, and Shiki's inline styles would conflict with the CSP
+  // Shiki's inline styles would conflict with the CSP, so Markdown code blocks (notes, MDX) are plain
+  // monospace text; code that should be coloured goes through components/notes/Code.astro (build
+  // time, CSS classes only)
   markdown: { syntaxHighlight: false },
   security: {
     // Content Security Policy as <meta> element. Astro adds script-src and style-src with hashes.

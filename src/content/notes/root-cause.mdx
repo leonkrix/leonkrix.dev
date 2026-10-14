@@ -1,0 +1,111 @@
+---
+title: 'Root Cause: a puzzle that proves itself'
+summary: 'How a logic puzzle can guarantee that it has exactly one solution, measure its own difficulty and explain its own hints, all in the browser.'
+tag: 'Logic · Root Cause'
+game: root-cause
+code: src/games/root-cause
+order: 1
+updated: '2026-10-14'
+---
+
+import Code from '@/components/notes/Code.astro';
+import DeduceFigure from '@/components/notes/DeduceFigure.astro';
+import Stats from '@/components/notes/Stats.astro';
+import Steps from '@/components/notes/Steps.astro';
+
+Root Cause is a placement puzzle. A square board is divided into rooms, a handful of people stand on it, one in every row and one in every column, and a few clues such as “Ada is next to a plant” say where. One suspect shares a room with the victim, and that is the culprit.
+
+A puzzle like this is only fun when it is fair: **exactly one solution**, and the clues must be enough to find it by reasoning instead of guessing. Writing such puzzles by hand does not scale, and a generator that cannot prove its own output is worse than useless. So the interesting part of this game is not the interface. It is how a generated puzzle proves that it is fair.
+
+<Stats
+  items={[
+    { value: '~45', label: 'kinds of clue' },
+    { value: '2', label: 'independent solvers' },
+    { value: '18', label: 'levels in the pool' },
+    { value: '480+', label: 'tests for this game' },
+  ]}
+/>
+
+## Generate by construction, then take away
+
+The generator never invents clues and hopes. It works from the answer backwards.
+
+<Steps
+  columns={3}
+  steps={[
+    { title: 'Map', text: 'Rooms, objects and windows, sized for the level.' },
+    { title: 'Solution', text: 'Everybody gets a cell, one per row and column.' },
+    { title: 'Clues', text: 'True statements about that solution are added one by one.' },
+    { title: 'Rate', text: 'Stop when a solver that reasons like a person can finish the puzzle.' },
+    { title: 'Prune', text: 'Take away every clue that is not needed.' },
+    { title: 'Verify', text: 'Two solvers must find exactly the stored solution.' },
+  ]}
+/>
+
+Every clue is true by construction, because it is read off the solution. What construction does **not** give is the two things that matter: that the clues are enough, and that there are no more of them than needed. That is what steps four to six are for. The same seed always gives the same puzzle, which is how a level can be shared as a link.
+
+## A clue answers “true”, “false” or “not yet”
+
+The meaning of a clue lives in one function that is given a placement, possibly an incomplete one, and answers with one of three things:
+
+<Code lang="ts" code={`type Verdict = boolean | undefined; // undefined: not decided yet`} />
+
+With a complete placement the answer is always true or false. With a partial one, “not yet” is honest: if Ada is not on the board, nobody can say whether she is next to a plant. A **false is final**, however the others are placed, and that one property is used twice. A search can drop a whole branch the moment a clue says false. And the game turns a clue red when the people on the board break it: a red clue is never a false alarm, however the rest of the board is filled in later.
+
+## Two solvers that share no search code
+
+To count solutions there are two solvers, written separately.
+
+- **The search** places the person with the fewest possible cells first and tries every cell, dropping a branch as soon as a clue says false. It stops at the second solution, because “more than one” is all the answer I need.
+- **The reasoner** works the way a person does on paper. Every person has a set of possible cells, and rules strike cells from the sets: a person with one cell left takes their row and column from everybody else, every clue strikes the cells it rules out, the rules about rooms strike more, and at the end comes “what if”: try a cell, and if something breaks, strike it.
+
+<DeduceFigure />
+
+A level only exists when **both** solvers find exactly one solution and it is the stored one. If one of them has a bug that makes it too generous, the other disagrees, and the level never ships. The tests push the same idea harder: for more than a hundred random combinations of clues, the two solvers must agree on the number of solutions.
+
+The limit of this check is worth being clear about. Both solvers share the **meaning** of a clue, because they call the same function, and a mistake there would fool both of them. That is why every kind of clue has its own tests on hand-made puzzles, and why the sentence that is generated for each clue is tested too. It is also why a rule such as “next to” for a sofa that covers two cells is written down as an explicit decision. An early version treated the two halves as two objects, and playing it showed that this reads wrong.
+
+## Difficulty is measured, not guessed
+
+The reasoner is also the **rater**. It reports the hardest kind of reasoning it needed, and the generator uses that instead of a guess.
+
+| Level | What it needs                                                              | Where it is used |
+| ----- | -------------------------------------------------------------------------- | ---------------- |
+| 1     | A person with one cell left, clues about one person                        | Easy             |
+| 2     | Clues that relate people, empty rooms, counting, the rule about the victim | Medium           |
+| 3     | “What if”: try a cell and find a contradiction                             | Hard             |
+
+Anything that needs more than that is rejected, because it is too much to ask of a player. Two rules make the easy end gentle. An **easy level must be solved completely** by nothing but “this person has one cell left”, then the next, so it never asks for crossing out in your head. A **medium level** must have at least half of its people placed by the clues alone before any rule about rooms is needed. Both are checked for every level of the pool, not just for the generator in general.
+
+## Hints are the same reasoning, said in words
+
+The reasoner records a **trace**: the possible cells of everybody after each pass of the rules. The hint button uses it to find the next person who can be placed with the least reasoning, and the “Why here?” dialog turns the trace into sentences.
+
+The first version of those sentences was a faithful dump of the trace, and it read like one: steps that repeated the same count, and a list of every person who happened to be pinned down. The version in the game shows **only what is needed**. When one clue leaves a single cell, the explanation is that clue and the place. Otherwise the clues named in the later steps are the fewest that still lead to the same cells, found by leaving each clue out in turn and checking whether the result changes. Here is a real one, from a hard level:
+
+> 1. The clue “No device is in the cabling room” leaves 69 cells for fw-01.
+> 2. As px-02 can only be in row 4, that row is taken. 61 cells are left for fw-01.
+> 3. These clues together (“fw-01 is somewhere west of px-02”, “px-02 is in the fourth row”) cut cells away. 54 cells are left for fw-01.
+> 4. The rules about rooms: exactly one suspect shares a room with the failed device, and the clues about rooms and counting (“ap-01 is the only device on a rack”). 47 cells are left for fw-01.
+> 5. What if: every other cell for fw-01 makes a clue break or leaves somebody without a cell. Only one cell is left.
+> 6. So fw-01 belongs at row 3, column 4.
+
+Leaving clues out is cheap only up to a point. The same trick for the last step, the “what if” search, took up to nine seconds on a 9 by 9 board, because with fewer clues the search has far more cells to try. So that step is shown as one sentence without naming clues, and a test makes sure that no hint on any level takes longer than three seconds to compute.
+
+## It runs in your browser
+
+The site is static and has no server, so random levels are made on your machine. The generator runs in **Web Workers**: up to four threads try different seeds at the same time, and the first level that passes the check wins. That matters because generation time is a matter of luck. A hard 9 by 9 board has a mean of about 40 seconds on one thread, and once took three minutes. With four threads the medians I measured on a laptop were 0.1 seconds for easy 7 by 7, 1.3 seconds for medium 9 by 9 and 3 seconds for hard 8 by 8 and 9 by 9, with the slowest tenth up to ten seconds. The progress bar says so honestly: it is an estimate, and it never reaches its end on its own.
+
+A random level has an address (`?level=random&seed=…`) that makes the very same level again. Nothing about a game is written to your device.
+
+## What the tests protect
+
+The tests are the reason I trust the generator, so they are part of the design:
+
+- Every level of the pool is verified by **both** solvers, and no clue can be taken away from it.
+- Every part of a combined clue (“and”, “or”) rules out cells that the other part does not, so nothing says nothing.
+- Easy levels are solved by single cells alone, and medium levels open the way they should.
+- For every level, the hints lead to the solution one logical step after the other, and the explanations contain no step that is not needed.
+- The sentence of every clue is clean in both looks of the game: no placeholders, never the victim named, “people” in one and “devices” in the other.
+
+All of it runs in continuous integration with the rest of the site, next to a layout guard that fails a test whenever anything on a page moves while you play.

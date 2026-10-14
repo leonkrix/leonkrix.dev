@@ -1,0 +1,101 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { getCollection, render } from 'astro:content';
+
+import ExternalLink from '@/components/ExternalLink.astro';
+import Icon from '@/components/Icon.astro';
+import CodeBlock from '@/components/notes/CodeBlock.astro';
+import { gamePath, games } from '@/games/registry';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatUpdated, notePath, notesPath, readingMinutes } from '@/lib/notes';
+import { siteConfig } from '@/lib/site';
+
+export const getStaticPaths = (async () => {
+  const notes = (await getCollection('notes')).sort((a, b) => a.data.order - b.data.order);
+  return notes.map((entry, index) => ({
+    params: { slug: entry.id },
+    props: { entry, previous: notes[index - 1], next: notes[index + 1] },
+  }));
+}) satisfies GetStaticPaths;
+
+const { entry, previous, next } = Astro.props;
+const { Content } = await render(entry);
+const { title, summary, tag, updated, code } = entry.data;
+const game = games.find((one) => one.slug === entry.data.game && one.status === 'live');
+---
+
+<BaseLayout title={`${title} | ${siteConfig.name}`} description={summary} calm>
+  <main id="main" class="flex-1">
+    <div class="mx-auto max-w-5xl px-6 py-6 sm:py-16">
+      <a
+        href={notesPath}
+        class="inline-flex items-center gap-2 text-sm text-muted underline-offset-4 transition-colors hover:text-fg hover:underline"
+      >
+        <Icon name="lucide:arrow-left" class="size-4" />
+        Behind the scenes
+      </a>
+
+      <header class="mt-3 sm:mt-6">
+        <p class="font-mono text-sm text-accent-2">{tag}</p>
+        <h1 class="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
+        <p class="mt-2 max-w-2xl text-base text-muted sm:mt-3 sm:text-lg">{summary}</p>
+        <p class="mt-4 font-mono text-xs text-muted">
+          {readingMinutes(entry.body ?? '')} min read · updated {formatUpdated(updated)}
+        </p>
+      </header>
+
+      <article class="note-prose mt-8 sm:mt-12">
+        <Content components={{ pre: CodeBlock }} />
+      </article>
+
+      <nav aria-label="Go further" class="mt-14 border-t border-border pt-8">
+        <ul class="flex flex-wrap items-center gap-x-4 gap-y-3 text-sm">
+          {game && (
+            <li>
+              <a
+                href={gamePath(game.slug)}
+                class="btn-primary inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium"
+              >
+                <Icon name="lucide:play" class="size-4" />
+                Play {game.name}
+              </a>
+            </li>
+          )}
+          {code && (
+            <li>
+              <ExternalLink
+                href={`${siteConfig.repo}/tree/main/${code}`}
+                class="btn-outline inline-flex items-center gap-2 rounded-lg px-4 py-2 text-fg"
+              >
+                <Icon name="simple-icons:github" class="size-4" />
+                Read the code
+              </ExternalLink>
+            </li>
+          )}
+          {next && (
+            <li>
+              <a
+                href={notePath(next.id)}
+                class="btn-outline inline-flex items-center gap-2 rounded-lg px-4 py-2 text-fg"
+              >
+                Next: {next.data.title}
+                <Icon name="lucide:arrow-right" class="size-4" />
+              </a>
+            </li>
+          )}
+          {!next && previous && (
+            <li>
+              <a
+                href={notePath(previous.id)}
+                class="btn-outline inline-flex items-center gap-2 rounded-lg px-4 py-2 text-fg"
+              >
+                <Icon name="lucide:arrow-left" class="size-4" />
+                Previous: {previous.data.title}
+              </a>
+            </li>
+          )}
+        </ul>
+      </nav>
+    </div>
+  </main>
+</BaseLayout>

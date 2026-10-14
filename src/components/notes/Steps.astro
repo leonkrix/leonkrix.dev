@@ -1,0 +1,199 @@
+---
+// A short chain of steps, one box each, with an arrow from every step to the next. On a wide screen
+// the boxes run in a snake: left to right in the first row, then one box down and right to left in
+// the second row, and so on, so that there is an arrow between every two steps and none leads into
+// nothing. The numbers show the order. The list itself stays in reading order (an ordered list), so
+// assistive technology reads step 1 to step n; only the picture is arranged. On a narrow screen the
+// boxes are one below the other.
+interface Props {
+  steps: readonly { title: string; text: string }[];
+  /** Boxes per row on a wide screen */
+  columns?: 2 | 3 | 4 | 5 | 6;
+}
+
+const { steps, columns = Math.min(steps.length, 4) as 2 | 3 | 4 } = Astro.props;
+
+if (Math.ceil(steps.length / columns) > 4) {
+  throw new Error('Steps.astro: at most four rows are supported.');
+}
+
+type Arrow = 'right' | 'left' | 'down' | 'none';
+
+const placed = steps.map((step, index) => {
+  const row = Math.floor(index / columns);
+  const place = index % columns;
+  // Every second row runs from right to left
+  const backwards = row % 2 === 1;
+  const column = backwards ? columns - place : place + 1;
+  const last = index === steps.length - 1;
+  const arrow: Arrow = last
+    ? 'none'
+    : place === columns - 1
+      ? 'down'
+      : backwards
+        ? 'left'
+        : 'right';
+  return { ...step, row: row + 1, column, arrow };
+});
+---
+
+<ol class:list={['note-steps', `columns-${String(columns)}`]}>
+  {placed.map((step) => (
+    <li data-row={step.row} data-column={step.column} data-arrow={step.arrow}>
+      <p class="note-step-title">{step.title}</p>
+      <p class="note-step-text">{step.text}</p>
+      {step.arrow !== 'none' && (
+        <svg class="note-arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <path d="M2 8h11M9 3.5 13.5 8 9 12.5" />
+        </svg>
+      )}
+    </li>
+  ))}
+</ol>
+
+<style>
+  .note-steps {
+    /* The gap between two boxes: the arrow is centred in it */
+    --gap: 1.25rem;
+    display: grid;
+    gap: var(--gap);
+    list-style: none;
+    padding: 0;
+    counter-reset: step;
+  }
+
+  li {
+    position: relative;
+    counter-increment: step;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    background: var(--color-surface);
+    padding: 0.75rem 0.875rem;
+  }
+
+  /* The number of the step */
+  li::before {
+    content: counter(step);
+    display: block;
+    margin-bottom: 0.25rem;
+    font-family: var(--font-mono), monospace;
+    font-size: 0.75rem;
+    color: var(--color-accent-2);
+  }
+
+  /* The arrow to the next step is one drawn shape, turned to point where it has to (one below the
+     other: always down). The same lines and the same head in every direction. */
+  .note-arrow {
+    position: absolute;
+    left: 50%;
+    /* Half the gap, plus the arrow itself (1rem) and the border of the box (1px, a position is
+       counted from the inside of the border) */
+    bottom: calc(var(--gap) / -2 - 0.5rem - 1px);
+    z-index: 1;
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: var(--color-muted);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transform: translateX(-50%) rotate(90deg);
+  }
+
+  .note-step-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-fg);
+  }
+
+  .note-step-text {
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--color-muted);
+  }
+
+  @media (min-width: 48rem) {
+    .note-steps {
+      --gap: 1.5rem;
+    }
+
+    .columns-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .columns-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .columns-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .columns-5 {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .columns-6 {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+
+    /* The place of every box in the snake */
+    [data-row='1'] {
+      grid-row: 1;
+    }
+
+    [data-row='2'] {
+      grid-row: 2;
+    }
+
+    [data-row='3'] {
+      grid-row: 3;
+    }
+
+    [data-row='4'] {
+      grid-row: 4;
+    }
+
+    [data-column='1'] {
+      grid-column: 1;
+    }
+
+    [data-column='2'] {
+      grid-column: 2;
+    }
+
+    [data-column='3'] {
+      grid-column: 3;
+    }
+
+    [data-column='4'] {
+      grid-column: 4;
+    }
+
+    [data-column='5'] {
+      grid-column: 5;
+    }
+
+    [data-column='6'] {
+      grid-column: 6;
+    }
+
+    /* The arrow lies in the gap on the side of the next box, or below the box at the end of a row */
+    [data-arrow='right'] > .note-arrow {
+      top: 50%;
+      right: calc(var(--gap) / -2 - 0.5rem - 1px);
+      bottom: auto;
+      left: auto;
+      transform: translateY(-50%);
+    }
+
+    [data-arrow='left'] > .note-arrow {
+      top: 50%;
+      right: auto;
+      bottom: auto;
+      left: calc(var(--gap) / -2 - 0.5rem - 1px);
+      transform: translateY(-50%) rotate(180deg);
+    }
+  }
+</style>

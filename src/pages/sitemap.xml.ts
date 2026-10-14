@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
+import { getCollection } from 'astro:content';
 
 import { gamePaths } from '@/games/registry';
+import { notePath } from '@/lib/notes';
 import { siteConfig } from '@/lib/site';
 
 // Pages that must not appear in the sitemap (they are noindex or not real content pages)
@@ -20,12 +22,17 @@ function toPath(file: string): string | undefined {
   return `/${route.replace(/\/index$/, '')}/`;
 }
 
-export const GET: APIRoute = () => {
+export const GET: APIRoute = async () => {
+  const notes = await getCollection('notes');
   const urls = Object.keys(pages)
     .map(toPath)
     .filter((path): path is string => path !== undefined)
-    // The games routes are dynamic (only live games exist), so they come from the registry
-    .concat(gamePaths())
+    // The games routes are dynamic (only live games exist), so they come from the registry, and the
+    // notes come from their collection
+    .concat(
+      gamePaths(),
+      notes.map((note) => notePath(note.id)),
+    )
     .sort()
     .map((path) => `  <url><loc>${siteConfig.url}${path}</loc></url>`);
 

@@ -1,0 +1,55 @@
+---
+// A row of key figures, like the strip on a project card.
+interface Props {
+  items: readonly { value: string; label: string }[];
+}
+
+const { items } = Astro.props;
+---
+
+<dl class="note-stats">
+  {items.map((item) => (
+    <div>
+      <dt>{item.label}</dt>
+      <dd>{item.value}</dd>
+    </div>
+  ))}
+</dl>
+
+<style>
+  /* Two columns on a narrow screen, so that the rows line up */
+  .note-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 1.5rem;
+    margin-block: 2rem;
+  }
+
+  /* The figures sit close together, left aligned, instead of being spread over the whole width */
+  @media (min-width: 40rem) {
+    .note-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem 2.75rem;
+    }
+  }
+
+  div {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+    gap: 0.25rem;
+  }
+
+  dt {
+    font-size: 0.875rem;
+    color: var(--color-muted);
+  }
+
+  dd {
+    font-family: var(--font-mono), monospace;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-accent-2);
+  }
+</style>
