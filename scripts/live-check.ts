@@ -440,6 +440,47 @@ export async function runLiveChecks(options: LiveCheckOptions): Promise<CheckRes
     );
   });
 
+  // The notes ("Behind the scenes") exist as soon as there is one; the sitemap tells which
+  await run('notes', async () => {
+    const sitemap = await get('/sitemap.xml');
+    const paths = [
+      ...sitemap.body.matchAll(/<loc>https?:\/\/[^/<]+(\/notes\/[^<]*)<\/loc>/g),
+    ].flatMap((match) => (match[1] === undefined ? [] : [match[1]]));
+    if (paths.length === 0) {
+      return ok('notes', 'no notes are published yet, nothing to check');
+    }
+    const problems: string[] = [];
+    const overview = '/notes/';
+    const overviewBody = (await get(overview)).body;
+    for (const path of paths) {
+      const note = await get(path);
+      if (note.status !== 200) {
+        problems.push(`${path}: HTTP ${String(note.status)}`);
+        continue;
+      }
+      const title = /<title>([^<]*)<\/title>/.exec(note.body)?.[1] ?? '';
+      if (!title.includes(siteConfig.name)) {
+        problems.push(`${path}: unexpected title "${title}"`);
+      }
+      if (!/<h1[\s>]/.test(note.body)) {
+        problems.push(`${path}: no main heading`);
+      }
+      if (path !== overview) {
+        if (!note.body.includes(`href="${overview}"`)) {
+          problems.push(`${path}: no link back to the overview`);
+        }
+        if (!overviewBody.includes(`href="${path}"`)) {
+          problems.push(`the overview does not list ${path}`);
+        }
+      }
+    }
+    return verdict(
+      'notes',
+      problems,
+      `${String(paths.length)} pages (the overview and the notes) are fine`,
+    );
+  });
+
   await run('unknown pages', async () => {
     const page = await get(`/does-not-exist-${String(Date.now())}`);
     const problems: string[] = [];

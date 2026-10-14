@@ -1,0 +1,107 @@
+---
+title: 'A contact form without a third party'
+summary: 'A form on a static site that sends mail from my own mailbox, with no service in between. The path of a message, the checks in the order they run, and why the obvious Cloudflare option would have broken my email.'
+tag: 'Site · Contact form'
+code: functions
+group: site
+order: 3
+updated: '2026-10-14'
+---
+
+import Code from '@/components/notes/Code.astro';
+import contactToken from './snippets/contact-token.snippet?raw';
+import Stats from '@/components/notes/Stats.astro';
+import Steps from '@/components/notes/Steps.astro';
+
+A static site has no server, and a contact form needs one: something has to receive the message and turn it into an email. The easy answer is a service that does it for you, a form backend you point the page at. I did not want that. Every service in the path is another company that sees the messages, another processor in the privacy policy, another script or request on the page, and a reason for a cookie banner.
+
+So the constraint was: **the message goes from the visitor to my own mailbox, through code I control, and through nothing else.**
+
+<Stats
+  items={[
+    { value: '0', label: 'services in the path' },
+    { value: '~420 ms', label: 'to send a message' },
+    { value: '283', label: 'unit tests' },
+    { value: '2', label: 'secrets' },
+  ]}
+/>
+
+## Why not the obvious option
+
+The site already lives on Cloudflare, so Cloudflare is the first place to look, and two of its products sound right and are not.
+
+**Email Routing** is for _receiving_ mail, and turning it on takes over the MX records of the domain. My mailbox is at IONOS and must keep receiving mail there, so it would have broken the very thing the form is meant to deliver to. **Email Sending** is the right shape, but it is in beta and costs money, which is the opposite of what I wanted for a portfolio.
+
+What was left was a small experiment. A Cloudflare Pages Function can open an SMTP connection, and my mailbox provider accepts SMTP. I wrote a spike that sent one mail from a real Cloudflare deployment to my own address: it worked, in about 420 milliseconds, and the free plan has enough CPU time for it. That settled it.
+
+## The path of a message
+
+<Steps
+  columns={4}
+  steps={[
+    {
+      title: 'Browser',
+      text: 'The form sends JSON. A time token was requested when the visitor first focused it.',
+    },
+    { title: 'Function', text: 'A Cloudflare Pages Function checks the request, step by step.' },
+    { title: 'SMTP', text: 'One authenticated, encrypted connection to the mailbox provider.' },
+    { title: 'Mailbox', text: 'The visitor appears only as the address to reply to.' },
+  ]}
+/>
+
+The sender and the recipient are fixed in the code, so this is not a relay: nobody can use the form to send mail to somebody else. The visitor's address is only the reply address and part of the text, and every field that ends up in a mail header has anything that could end a line or smuggle in another header replaced by a space.
+
+## The checks, in the order they run
+
+The function does the cheapest check first and the one that costs something last, so a bad request is turned away before it touches anything expensive. In order:
+
+1. The method. Only `POST` is accepted.
+2. The origin. A browser always sends it with a `POST`, and it must be this site. There is no CORS header at all.
+3. That the form is switched on and configured. Until it is, every request answers that the form is not available.
+4. The content type, which must be JSON.
+5. The size: at most 10 KB, counted on the stream while it is read, not after it was all received.
+6. That the body is a JSON object.
+7. The honeypot. A field that people cannot see and a bot fills in. If it is filled, the function answers that everything worked, sends nothing and tells the bot nothing.
+8. The time token.
+9. The validation, with the same rules the browser used.
+10. The rate limit.
+11. The mail.
+
+Two of these are worth a closer look.
+
+**The time token** is a small signed value that the page asks for when the visitor first touches the form, never when the page loads, so someone who only reads causes no request at all. The server accepts a message only with a genuine token that is at least three seconds old (writing takes time) and not older than an hour. The signature is an HMAC, checked in constant time.
+
+<Code lang="plaintext" code={contactToken} />
+
+**The rate limit** keeps the mailbox from being flooded. It counts messages per sender and per hour, and in total, in Cloudflare's key-value store. The sender is never stored as an address: the count is kept under a salted hash of it, and every counter expires by itself after two hours. The store is only eventually consistent, so the limit is approximate, which is enough for this.
+
+## One set of rules for the browser and the server
+
+The rules for a valid message live in one plain TypeScript module that both the browser and the function import. The browser uses it to show an error when you leave a field. The server runs it again, because a browser is a request that can say anything, and the server is the one that counts. All the problems are reported at once, not one at a time.
+
+The rules are stricter than they look, because a form is a place where input is hostile. The email address is checked by a procedure in linear time and not by a regular expression that can be made to take forever. A message is counted in characters as a person sees them, so an emoji is one. Control characters and the characters that can make text appear in a different order than it is stored are refused.
+
+## What the log never contains
+
+The function logs that sending failed, and only the _name_ of the error. The message of a visitor, their name and their address are never in a log. The privacy policy has a section for the form that describes exactly this path, and that section exists _only while the form is built in_: a build switch turns the form, the text of the policy and the line in the legal notice on and off together, and tests check both versions. So the text can never claim something the site does not do.
+
+The same switch has a twin at runtime. The endpoints answer “not available” until a variable says otherwise, so nothing was live before the form, the policy and the tests were ready.
+
+## What I did not do
+
+There is no CAPTCHA. The usual one loads a third-party script, which would mean changing the content security policy and the privacy policy. If spam ever shows up, that is the next step, with both changes. Until then, a honeypot, a time token and a rate limit are enough, and I would rather say that than pretend they stop a determined human.
+
+## A lesson in the configuration
+
+Cloudflare Pages has a second way to configure a project, a file in the repository. When that file exists, the dashboard variables are ignored at build time, including the one with the address for the legal notice. The production build failed, and the live site stayed on the last good deployment, which is the gate working. The fix was to configure the function without such a file, and a test now fails if one appears. The mailbox settings that are not secret are constants in the code, and the secrets are two: the mailbox password and the key that signs the tokens and salts the hashes.
+
+## What the tests protect
+
+- Every step of the function, with a fake mailer and a fake key-value store: each check, in its order, with the status it answers.
+- The shared rules, with the boundary cases of every limit.
+- The browser logic and the form in a real browser, with the API answered by the test: validation, the counter, the honeypot, the sending state, every kind of server error, the keyboard and the accessibility scan with errors showing.
+- The live site: a check that sends a request with the honeypot filled in. It only answers “ok” when the secret, the switch and the key-value store are all in place, and it sends no mail. [That check lives in the live check](/notes/watching-the-live-site/).
+
+The real round trip, an actual mail arriving, I test by hand on a preview deployment. A test that sent real mail would fill the mailbox and use up the rate limit, so it is not part of any automated run.
+
+And the form is calm: when an error or the confirmation appears, nothing on the page moves. [That has its own note](/notes/a-page-that-never-moves/).

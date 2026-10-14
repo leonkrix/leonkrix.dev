@@ -1,6 +1,7 @@
 ---
 import ExternalLink from '@/components/ExternalLink.astro';
 import Icon from '@/components/Icon.astro';
+import { notesPath } from '@/lib/notes';
 import { siteConfig } from '@/lib/site';
 
 const year = new Date().getFullYear();
@@ -19,6 +20,12 @@ const year = new Date().getFullYear();
         <Icon name="simple-icons:github" class="size-4" />
         Source on GitHub
       </ExternalLink>
+      <a
+        class="underline-offset-4 transition-colors hover:text-fg hover:underline"
+        href={notesPath}
+      >
+        Behind the scenes
+      </a>
     </div>
     <nav aria-label="Legal">
       <ul class="flex gap-6">

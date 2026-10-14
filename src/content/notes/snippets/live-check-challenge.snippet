@@ -1,0 +1,6 @@
+export function isChallenge(page): boolean {
+  return (
+    page.headers.get('cf-mitigated') === 'challenge' ||
+    (page.status === 403 && page.body.includes('Just a moment'))
+  );
+}

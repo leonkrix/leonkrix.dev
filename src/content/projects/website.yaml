@@ -8,14 +8,14 @@ stats:
     label: security headers grade (securityheaders.com)
   - value: '95+'
     label: Lighthouse score in every category (mobile, enforced in CI)
-  - value: '1000+'
+  - value: '1,500+'
     label: automated tests (unit, build output, browser, accessibility)
 highlights:
   - Static portfolio built with Astro, TypeScript, React islands and Tailwind CSS, hosted on Cloudflare. Its content is typed YAML that is validated at build time, so a typo fails the build instead of shipping.
   - Every change goes through a pull request and automated gates before it goes live, from linting, type checks and unit tests to build-output checks (security headers, CSP, legal pages), end-to-end tests with accessibility scans and a layout guard that fails a test when anything on any page moves or changes size, Lighthouse budgets, CodeQL, dependency review and OpenSSF Scorecard. After the deployment a live check of the published site (headers, redirects, legal pages, contact form, certificate, domain, mail DNS) runs every few hours, plus a weekly link check.
   - A contact form without any third-party service. A Cloudflare Function validates the message with the same rules as the browser, checks origin, a signed time token, a honeypot and a rate limit, and hands it to my own mailbox over SMTP.
   - Privacy and security by design with a strict content security policy, HSTS, no cookies of its own, self-hosted fonts and obfuscated contact data.
-  - A small Playground of browser games with logic written as tested pure functions, keyboard play, accessible results and animations that respect reduced motion, and a promise that is checked by tests, that nothing is stored on the device. Tech Words uses hundreds of own tech terms; Root Cause is a logic puzzle with its own generator that runs in Web Workers, and every puzzle is checked by two independent solvers (a search and one that reasons like a person, which also rates the difficulty) before it is shown. Link Up is a grouping game with about 240 own topics and over 3,000 terms, where a separate solution counter proves that every generated puzzle has exactly one answer. Word Radar ranks your guesses by meaning. Its 30,000 word vectors (GloVe) are reduced with a principal component analysis written for the project, rounded to bytes and searched in the browser, with a map of your guesses calculated on the spot.
+  - Four browser games in the [Playground](/#playground) further down this page, written as tested pure functions, playable with the keyboard, with nothing stored on your device. How they and this site are built is written up in [Behind the scenes](/notes/).
 technologies:
   [
     typescript,
@@ -30,7 +30,6 @@ technologies:
     playwright,
     axe,
     lighthouse,
-    wordembeddings,
     git,
   ]
 code:

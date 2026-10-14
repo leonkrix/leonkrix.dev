@@ -1,0 +1,93 @@
+---
+title: 'A page that never moves: a test that watches every frame'
+summary: 'Content that loads late pushes what you are reading, and Lighthouse does not see most of it. How a test that watches every element on every frame found the jumps, and why the fix is a skeleton and not a guess.'
+tag: 'Site · Layout'
+code: tests/e2e
+group: site
+order: 2
+updated: '2026-10-14'
+---
+
+import Code from '@/components/notes/Code.astro';
+import layoutGuardMoved from './snippets/layout-guard-moved.snippet?raw';
+import layoutGuardReport from './snippets/layout-guard-report.snippet?raw';
+import Steps from '@/components/notes/Steps.astro';
+
+You start reading a paragraph, an image or a game finishes loading above it, and the text jumps. Everybody knows the feeling, and most pages cause it. I wanted a site where it **never** happens: not while it loads, not when a message appears, not when a game starts. The rule I set myself was blunt. A static page that is read should stay where it is.
+
+The interesting question is how you enforce a rule like that, because layout shift is easy to cause and surprisingly hard to see.
+
+## Why the usual measurement is not enough
+
+Lighthouse has a number for this, the cumulative layout shift. It is useful, and it is also narrow. It only counts what moves inside the part of the window you can see, and it leaves out shifts that follow your own input, so a shift at the bottom of a long page does not count and neither does most of what happens after a click. A game page of this site could jump by hundreds of pixels _below_ the game, at the very end of the page, and the score would stay at zero.
+
+The check I wanted had to look at **everything**, **all the time**, and fail a test when something moves.
+
+## A test that watches every frame
+
+The guard is a small script that runs in the page during every browser test. From the moment the page has loaded, it looks at every element on every animation frame and remembers where each one was when it was first seen: its place on the page and its size. When an element turns up somewhere else, it reports it, and the test fails at the end.
+
+Two details make it work.
+
+**It measures layout, not appearance.** Position comes from the layout of the page, not from the pixels on the screen. So a button that lifts a little on hover, a fade or a slide does not count, and a real shift does.
+
+**It knows what is a move.** An element that only grows or shrinks has not moved. What it pushed away has, and that is reported at the thing that moved.
+
+<Code lang="ts" code={layoutGuardMoved} />
+
+It is switched on for **every** browser test, automatically, through the shared test fixture, so a new test is covered without anyone having to remember. A test that has a reason to turn it off must say so with a comment, and another test checks that the comment is there.
+
+## What it found
+
+The first version was a tracker for a single game, written when a message under the board made the page jump. Then I asked for it everywhere, for every page and every state, and that turned it into the shared guard. It found real problems on the first run:
+
+- **The placeholder of every game was a guess.** A game is a script that takes a moment to start, so the page held a box of a guessed height in the meantime. The guess was wrong by 170 to 540 pixels, depending on the game and the screen, and the whole page below the game jumped when the game appeared. Lighthouse never saw it.
+- **The contact form pushed the page** when an error or the confirmation appeared.
+- **A few details in the games**: the area for a random level in Root Cause and the width of two controls.
+
+This is what a report looks like. It is a real one, from the contact form while I made it fail on purpose:
+
+<Code lang="plaintext" code={layoutGuardReport} />
+
+Each entry is an element, where it was and where it is now. Here a line of text in the form took a line of its own and pushed everything below it down by 16 pixels.
+
+## The fix is a skeleton, not a guess
+
+The cure for a wrong guess is not a better guess. Every game page now renders, on the server, a **skeleton**: the same boxes as the game itself (the field, the board, the buttons, the room for the result), empty and without function. It is the placeholder while the game loads, and the game shows the same skeleton while its data loads. The game and the skeleton share their CSS, so they are the same size at every screen width, and when the game takes over, nothing moves.
+
+<Steps
+  columns={3}
+  steps={[
+    { title: 'Page', text: 'The server renders the skeleton: the boxes of the game, empty.' },
+    {
+      title: 'Loading',
+      text: 'React and the data arrive. The skeleton stays, and nothing changes size.',
+    },
+    { title: 'Game', text: 'The game replaces the skeleton, box for box. Nothing moves.' },
+  ]}
+/>
+
+If the real game ever gets a box the skeleton does not have, the guard fails the test, so the two cannot drift apart without somebody noticing.
+
+## The contact form, and an exception that did not last
+
+The contact form was the one place where I switched the guard off. Messages and the confirmation appear in place, and reserving space for them looked like it would leave gaps in an otherwise tidy form. I wrote that down as an open decision, and it did not feel right for long.
+
+The answer was to make the messages need no space of their own. The message of a field is one short line that sits in the gap below the field. The progress and a problem with sending take the place of the privacy note next to the button. The confirmation lies on top of the form, in the same grid cell, so it is exactly as high. The error texts had to become shorter to fit, and the form went from being the exception to being covered. I checked that it really is covered by putting a message back into the flow: the test failed at once.
+
+## Honest limits and a few exceptions
+
+A guard like this lives or dies by its false alarms, and I fought a few. It ignores the SVG of the games (they have no box of their own in the layout), the sticky header (its offset changes while you scroll), words inside a line of text (they change size whenever the text does), and the contents of a button (the button itself is watched). What a visitor asks for is not a surprise either: after a resize, after a panel is opened and after the address changes, the page is measured anew.
+
+An element that is not visible is not watched. That sounds like a loophole and is not one: it still takes up its space, so whatever it pushes is watched, and when it is shown it counts as new. I ran into it with the confirmation of the form, which lies invisibly under the form and fills with text before it appears.
+
+Two things are marked as deliberate. A box that rearranges its insides on purpose (the tiles of a board, a list that grows) carries an attribute, and only its contents are exempt, never the box.
+
+And one limit remains: the guard only sees states that a test triggers. A new dynamic state needs a test that causes it. That is why the list of pages is a list in the code, a test checks it against the pages of the build so that no page is missing, and a generic test opens every page, scrolls it to the end and waits.
+
+## What it protects
+
+- Every browser test of every page, at desktop and phone size, from load to the end of the test.
+- Every game from the loading state to a finished round, including a 320 pixel wide screen.
+- The contact form with an error, with a failed sending and with the confirmation.
+- The rule that an exception needs a reason, and that every browser test uses the fixture that has the guard.

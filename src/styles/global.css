@@ -636,3 +636,189 @@
     }
   }
 }
+
+/* The text of a note (Behind the scenes): a single narrow column, everything in it as wide as
+   the text */
+@layer components {
+  .note-prose {
+    color: var(--color-muted);
+    font-size: 1.0625rem;
+    line-height: 1.75;
+  }
+
+  /* Everything has the width of the text: figures, steps, key figures, code and tables too */
+  .note-prose > * {
+    max-width: 42rem;
+  }
+
+  .note-prose > * + * {
+    margin-top: 1.1rem;
+  }
+
+  .note-prose h2 {
+    margin-top: 3rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    color: var(--color-fg);
+  }
+
+  .note-prose h3 {
+    margin-top: 2rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-fg);
+  }
+
+  .note-prose h2 + *,
+  .note-prose h3 + * {
+    margin-top: 0.75rem;
+  }
+
+  .note-prose strong {
+    color: var(--color-fg);
+    font-weight: 600;
+  }
+
+  .note-prose > ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+  }
+
+  .note-prose > ol,
+  .note-prose blockquote ol {
+    list-style: decimal;
+    padding-left: 1.25rem;
+  }
+
+  .note-prose blockquote ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+  }
+
+  /* The boxes of the step chain (Steps.astro) have their own spacing */
+  .note-prose > ul > li + li,
+  .note-prose > ol:not(.note-steps) > li + li {
+    margin-top: 0.4rem;
+  }
+
+  .note-prose a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .note-prose a:hover {
+    color: var(--color-fg);
+  }
+
+  .note-prose code {
+    border: 1px solid var(--color-border);
+    border-radius: 0.375rem;
+    background-color: var(--color-surface);
+    padding: 0.05rem 0.35rem;
+    font-family: var(--font-mono), monospace;
+    font-size: 0.85em;
+    color: var(--color-fg);
+  }
+
+  /* A long piece of code in a sentence (an address) may break at any place instead of making the
+     page wider than the screen */
+  .note-prose :not(pre) > code {
+    overflow-wrap: anywhere;
+  }
+
+  .note-prose pre {
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    background-color: var(--color-surface);
+    padding: 1rem 1.25rem;
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+
+  .note-prose pre code {
+    border: 0;
+    background: none;
+    padding: 0;
+    font-size: inherit;
+  }
+
+  /* The colours of code (classes of highlight.js, made at build time): blue keywords, cyan types,
+     amber strings and numbers, quiet comments */
+  .note-prose .hljs-keyword,
+  .note-prose .hljs-literal,
+  .note-prose .hljs-selector-tag,
+  .note-prose .hljs-meta {
+    color: var(--color-accent);
+  }
+
+  .note-prose .hljs-type,
+  .note-prose .hljs-built_in,
+  .note-prose .hljs-class .hljs-title,
+  .note-prose .hljs-attr,
+  .note-prose .hljs-attribute,
+  .note-prose .hljs-property {
+    color: var(--color-accent-2);
+  }
+
+  .note-prose .hljs-string,
+  .note-prose .hljs-number,
+  .note-prose .hljs-regexp,
+  .note-prose .hljs-symbol {
+    color: var(--color-contrast);
+  }
+
+  .note-prose .hljs-comment,
+  .note-prose .hljs-quote {
+    color: var(--color-muted);
+    font-style: italic;
+  }
+
+  .note-prose .hljs-title,
+  .note-prose .hljs-function .hljs-title,
+  .note-prose .hljs-variable {
+    color: var(--color-fg);
+  }
+
+  /* Quoted text of the game, such as an explanation of a hint */
+  .note-prose blockquote {
+    border-left: 2px solid var(--color-accent-2);
+    padding-left: 1rem;
+    font-size: 0.95rem;
+    color: var(--color-fg);
+  }
+
+  .note-prose blockquote > * + * {
+    margin-top: 0.5rem;
+  }
+
+  .note-prose table {
+    display: block;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .note-prose th,
+  .note-prose td {
+    border-bottom: 1px solid var(--color-border);
+    padding: 0.5rem 1rem 0.5rem 0;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .note-prose th {
+    font-weight: 600;
+    color: var(--color-fg);
+  }
+
+  .note-prose hr {
+    margin-block: 2.5rem;
+    border: 0;
+    border-top: 1px solid var(--color-border);
+  }
+}

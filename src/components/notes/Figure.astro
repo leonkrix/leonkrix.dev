@@ -1,0 +1,32 @@
+---
+// A picture or diagram of a note, with a caption. Wider than the running text (structure wide,
+// text narrow). The content must describe itself for assistive technology (role="img" and a label,
+// or real text), the caption says what to see.
+interface Props {
+  caption: string;
+}
+
+const { caption } = Astro.props;
+---
+
+<figure class="note-figure edge">
+  <slot />
+  <figcaption>{caption}</figcaption>
+</figure>
+
+<style>
+  .note-figure {
+    margin-block: 2rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--color-surface) 50%, transparent);
+    padding: 1.25rem;
+  }
+
+  figcaption {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--color-muted);
+  }
+</style>

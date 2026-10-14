@@ -1,0 +1,53 @@
+---
+// The words nearest to the hidden word "volcano", with their cosine similarity, from the real data
+// of the game (see radar-example.ts).
+import { radarExample, SECRET } from './radar-example';
+
+const { nearest } = radarExample();
+---
+
+<div class="nearest-wrap">
+  <table class="nearest">
+    <caption>
+      The twelve words nearest to “{SECRET}” among the 30,000 words of the game, worked out when
+      this page is built.
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col">Rank</th>
+        <th scope="col">Word</th>
+        <th scope="col">Cosine similarity</th>
+      </tr>
+    </thead>
+    <tbody>
+      {nearest.map((row) => (
+        <tr>
+          <td>{row.rank}</td>
+          <td>{row.word}</td>
+          <td>{row.similarity.toFixed(2)}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  /* As wide as the text (the other tables of a note scroll when they are wider) */
+  /* The width of a table is not limited by a maximum width, so the wrapper has the width of the
+     text and the table fills it */
+  .nearest-wrap {
+    max-width: 42rem;
+  }
+
+  .nearest {
+    display: table;
+    width: 100%;
+  }
+
+  caption {
+    margin-bottom: 0.5rem;
+    text-align: left;
+    font-size: 0.875rem;
+    color: var(--color-muted);
+  }
+</style>

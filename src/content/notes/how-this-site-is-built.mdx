@@ -1,0 +1,108 @@
+---
+title: 'How this site is built: a static page behind a gate'
+summary: 'A static site, a pull request for every change and one check that nothing passes without. What runs before a change goes live, what looks at the live site afterwards, and what broke along the way.'
+tag: 'Site · Overview'
+code: .github/workflows
+group: site
+order: 1
+updated: '2026-10-14'
+---
+
+import Stats from '@/components/notes/Stats.astro';
+import Steps from '@/components/notes/Steps.astro';
+
+This site is a portfolio, so it has two jobs at the same time: it should look calm and load fast, and it should be a piece of engineering I can stand behind. This note is the overview of how that works. The details of the parts that are worth a page of their own are in the notes that follow it.
+
+The shape is simple. The site is **static**: it is built once, and the result is plain files on a CDN. The pages are written in Astro and TypeScript, React is used only for the games, styling is Tailwind CSS, and the content (projects, experience) is typed YAML that is validated when the site is built, so a typo fails the build instead of reaching a visitor. The only server code is one function behind the contact form.
+
+<Stats
+  items={[
+    { value: '1,500+', label: 'automated tests' },
+    { value: '8', label: 'jobs in the gate' },
+    { value: '95+', label: 'Lighthouse floor' },
+    { value: '0', label: 'third-party requests' },
+  ]}
+/>
+
+## The journey of a change
+
+Nothing reaches the site without going through the same steps, and the important ones are enforced by the repository, not by my discipline.
+
+<Steps
+  columns={3}
+  steps={[
+    {
+      title: 'Branch',
+      text: 'Work happens on a branch. The main branch is protected: no direct pushes, no force pushes.',
+    },
+    {
+      title: 'Commit',
+      text: 'A hook fixes and formats the staged files, type checks the project and runs the tests of the changed modules. About 15 seconds.',
+    },
+    {
+      title: 'Pull request',
+      text: 'Every change is a pull request, and its title becomes the commit message.',
+    },
+    {
+      title: 'Checks',
+      text: 'Eight jobs run in parallel. One summary job, “CI passed”, is the only check the repository requires.',
+    },
+    {
+      title: 'Merge and deploy',
+      text: 'Squash merge, then Cloudflare builds the main branch and publishes it.',
+    },
+    {
+      title: 'Watch',
+      text: 'A live check looks at the published site right after the deployment and every six hours.',
+    },
+  ]}
+/>
+
+## The gate
+
+The decision that shapes the rest is _where the gate sits_. Cloudflare deploys from the repository by itself, and GitHub runs the checks at the same time. The gate is a rule of the repository: the main branch accepts a change only when the check “CI passed” is green and the branch is up to date. Since only code that passed can reach the main branch, production is gated by CI without any deployment token or secret in the pipeline. Deploying from the workflow instead would have been more moving parts for no benefit on a site this size.
+
+There is a small trick in it. The branch rule requires one check, and that check is a job that waits for all the others. A new job is added to its list and never needs a change in the repository settings.
+
+| Job                    | What it checks                                                                                                                                              |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lint, format and types | ESLint with type-aware rules, Prettier, the TypeScript check of the site and of the function                                                                |
+| Unit tests             | Vitest: game logic, the rules of the contact form, content schemas                                                                                          |
+| Build and site checks  | The production build, then tests over the built files: security headers, the content security policy, the legal pages in both languages, links, the sitemap |
+| End-to-end tests       | A real browser at desktop and phone size: smoke tests, a privacy guard, accessibility scans, and a guard that fails when anything moves                     |
+| Lighthouse             | Three runs, the median, every category at least 95, and budgets for the bytes transferred                                                                   |
+| Dependency audit       | Known vulnerabilities in any dependency                                                                                                                     |
+| Lint workflows         | The workflow files themselves                                                                                                                               |
+| Dependency review      | What a pull request adds to the dependencies                                                                                                                |
+
+Two more checks run beside the gate: CodeQL and an OpenSSF Scorecard. And a job that needs the network to be right can turn red without a code change: `pnpm audit` compares the lockfile with an advisory database of _that moment_, so a pull request can be green on Monday and the same files red on Tuesday. That has happened twice. The answer is either to update the package inside its allowed range or to record an override with a reason and a date to remove it, and both are written down in the repository.
+
+## What the checks actually look at
+
+A list of tool names says little, so here are four checks that exist because of a promise the site makes.
+
+- **“Nothing is stored on your device.”** A source scan, a scan of the published JavaScript and a browser test that visits every page and plays every game, then checks that cookies, local storage, session storage, IndexedDB, cache storage and service workers are empty.
+- **“Nothing leaves for another server.”** The browser test records every request of every page and fails on one that goes to another origin. Fonts are self-hosted, and the content security policy allows no external host.
+- **A strict content security policy.** It is generated by the build as a `meta` element with a hash for every script that is allowed, and a test checks that every inline script on every page is covered by a hash and that nothing was added without one.
+- **A page that never moves.** Content that loads late must not push what you are reading. [That has its own note](/notes/a-page-that-never-moves/).
+
+## Decisions I would defend
+
+- **No cookie banner, no analytics, no embeds.** Each one would change the privacy policy and the legal text, so the site simply does not use them, and the tests above keep it that way.
+- **The privacy policy follows the site.** The section about the contact form exists exactly when the form is built in, and tests check both versions. The text is bilingual, English first and the German original second.
+- **The postal address stays out of the repository.** The repository is public and git history is permanent, so the address is injected as a build variable and rendered by CSS in pieces, which a simple crawler does not read as text.
+- **One required check.** It keeps the settings of the repository small and the rules easy to explain.
+
+## What broke
+
+A description of a pipeline that never broke is not worth much, so here are three things that did.
+
+1. **A configuration file that silenced the dashboard.** Cloudflare Pages ignores the variables set in its dashboard when the repository contains a Wrangler configuration file. One of them held the address for the legal notice, the production build failed, and the live site stayed on the last good deployment, which is the gate doing its job. There is now a test that fails if such a file appears.
+2. **A bot protection that locked out my own monitoring.** [That is the story of the live check](/notes/watching-the-live-site/).
+3. **A shortcut that was not one.** The contact form first ran with the layout guard switched off, because reserving space for its messages seemed to leave gaps. It was solvable, and the exception was removed.
+
+## What is not here, on purpose
+
+There are no visual regression snapshots (a lot of upkeep for little value on a site like this), no coverage thresholds (the tests protect what would hurt, not a number), no analytics and no external uptime service, because the live check looks at far more than whether the page answers. A code quality service was also left out: it would repeat what ESLint, strict TypeScript and CodeQL already find, and it needs an account and a secret.
+
+The contact form is the one place where the site runs code of its own, and it has its own note: [a contact form without a third party](/notes/a-contact-form-without-a-third-party/).

@@ -1,0 +1,206 @@
+---
+// How a person reasons about the board of Root Cause, in three small pictures: the clues leave
+// Olga one cell, so her row and her column are taken, so Dmitri has one cell left. The same
+// reasoning is what the solver that "thinks like a person" does, and what a hint explains.
+import Figure from './Figure.astro';
+
+const size = 4;
+const cell = 26;
+const pad = 4;
+const extent = pad * 2 + cell * size;
+
+interface Spot {
+  row: number;
+  column: number;
+}
+
+/** The middle of a cell of the picture */
+function centre({ row, column }: Spot): { x: number; y: number } {
+  return { x: pad + column * cell + cell / 2, y: pad + row * cell + cell / 2 };
+}
+
+const squares: Spot[] = Array.from({ length: size * size }, (_, index) => ({
+  row: Math.floor(index / size),
+  column: index % size,
+}));
+
+const olga: Spot = { row: 0, column: 1 };
+const dmitri: Spot = { row: 2, column: 3 };
+// The cells Dmitri could stand on before Olga is on the map
+const candidates: Spot[] = [{ row: 0, column: 3 }, { row: 2, column: 1 }, dmitri];
+
+const inLine = (square: Spot, person: Spot): boolean =>
+  square.row === person.row || square.column === person.column;
+
+const panels = [
+  {
+    title: '1. The clues leave Olga one cell',
+    text: 'Dmitri could still be on three cells (the dots).',
+    label: 'A four by four board: Olga stands on one cell, Dmitri could be on three cells.',
+    people: [{ letter: 'O', spot: olga }],
+    taken: [] as Spot[],
+    dots: candidates,
+    crosses: [] as Spot[],
+  },
+  {
+    title: '2. Her row and column are taken',
+    text: 'Nobody else can stand there: two of the three cells are gone.',
+    label:
+      'The same board with the row and column of Olga shaded: two of the cells of Dmitri are crossed out.',
+    people: [{ letter: 'O', spot: olga }],
+    taken: [olga],
+    dots: candidates.filter((spot) => !inLine(spot, olga)),
+    crosses: candidates.filter((spot) => inLine(spot, olga)),
+  },
+  {
+    title: '3. Dmitri has one cell left',
+    text: 'So he belongs there, and his own row and column are taken in turn.',
+    label: 'The same board: Dmitri stands on the last cell, and his row and column are shaded too.',
+    people: [
+      { letter: 'O', spot: olga },
+      { letter: 'D', spot: dmitri },
+    ],
+    taken: [olga, dmitri],
+    dots: [] as Spot[],
+    crosses: [] as Spot[],
+  },
+].map((panel) => ({
+  ...panel,
+  squares: squares.map((square) => ({
+    ...square,
+    isTaken: panel.taken.some((person) => inLine(square, person)),
+  })),
+}));
+---
+
+<Figure caption="The reasoning of the solver that thinks like a person, on a tiny board. It is the same reasoning that a hint explains in words.">
+  <div class="deduce">
+    {panels.map((panel) => (
+      <div>
+        <svg
+          viewBox={`0 0 ${String(extent)} ${String(extent)}`}
+          role="img"
+          aria-label={panel.label}
+        >
+          {panel.squares.map((square) => (
+            <rect
+              class:list={['cell', square.isTaken && 'cell-taken']}
+              x={pad + square.column * cell}
+              y={pad + square.row * cell}
+              width={cell}
+              height={cell}
+            />
+          ))}
+          {panel.dots.map((spot) => (
+            <circle class="dot" cx={centre(spot).x} cy={centre(spot).y} r="3.5" />
+          ))}
+          {panel.crosses.map((spot) => (
+            <path
+              class="cross"
+              d={`M${String(centre(spot).x - 5)} ${String(centre(spot).y - 5)} l10 10 m0 -10 l-10 10`}
+            />
+          ))}
+          {panel.people.map((person) => (
+            <g>
+              <circle class="token" cx={centre(person.spot).x} cy={centre(person.spot).y} r="9" />
+              <text class="letter" x={centre(person.spot).x} y={centre(person.spot).y + 3.5}>
+                {person.letter}
+              </text>
+            </g>
+          ))}
+        </svg>
+        <p class="panel-title">{panel.title}</p>
+        <p class="panel-text">{panel.text}</p>
+      </div>
+    ))}
+  </div>
+</Figure>
+
+<style>
+  /* Every panel has three rows (picture, title, text) that it shares with its neighbours (a
+     subgrid), so the title with the most lines sets the height of all titles and every text
+     starts on the same line */
+  .deduce {
+    display: grid;
+    column-gap: 1.5rem;
+  }
+
+  .deduce > div {
+    display: grid;
+    grid-row: span 3;
+    grid-template-rows: subgrid;
+  }
+
+  .deduce > div + div {
+    margin-top: 1.5rem;
+  }
+
+  @media (min-width: 40rem) {
+    .deduce {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .deduce > div + div {
+      margin-top: 0;
+    }
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    max-width: 11rem;
+    margin-inline: auto;
+  }
+
+  .cell {
+    fill: var(--color-bg);
+    stroke: var(--color-border);
+    stroke-width: 1;
+  }
+
+  .cell-taken {
+    fill: color-mix(in srgb, var(--color-accent) 18%, var(--color-bg));
+  }
+
+  .dot {
+    fill: var(--color-contrast);
+  }
+
+  .cross {
+    fill: none;
+    stroke: var(--color-muted);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+
+  .token {
+    fill: var(--color-surface);
+    stroke: var(--color-accent-2);
+    stroke-width: 1.5;
+  }
+
+  .letter {
+    fill: var(--color-fg);
+    font-family: var(--font-mono), monospace;
+    font-size: 10px;
+    font-weight: 700;
+    text-anchor: middle;
+  }
+
+  /* The picture is centred in its column, so the texts below it are centred as well */
+  .panel-title {
+    margin-top: 0.75rem;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-fg);
+  }
+
+  .panel-text {
+    margin-top: 0.25rem;
+    text-align: center;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--color-muted);
+  }
+</style>

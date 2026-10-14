@@ -169,6 +169,7 @@ describe('runLiveChecks', () => {
       'legal pages',
       'search engine files',
       'playground',
+      'notes',
       'unknown pages',
       'contact form API',
       'TLS certificate',
@@ -245,6 +246,59 @@ describe('runLiveChecks', () => {
       expect(result.status).toBe('fail');
       expect(result.detail).toContain('unexpected title');
       expect(result.detail).toContain('no main heading');
+    });
+  });
+
+  describe('notes', () => {
+    const SITEMAP = `<urlset><url><loc>https://leonkrix.dev/</loc></url><url><loc>https://leonkrix.dev/notes/</loc></url><url><loc>https://leonkrix.dev/notes/root-cause/</loc></url></urlset>`;
+    const OVERVIEW =
+      '<title>Behind the scenes | Leon Krix</title><h1>Behind the scenes</h1><a href="/notes/root-cause/">Root Cause</a>';
+    const NOTE =
+      '<title>Root Cause | Leon Krix</title><h1>Root Cause</h1><a href="/notes/">Behind the scenes</a>';
+
+    function withNotes(extra: Record<string, Route | Response | undefined> = {}): typeof fetch {
+      return fakeSite({
+        [`GET ${BASE}/sitemap.xml`]: new Response(SITEMAP),
+        [`GET ${BASE}/notes/`]: page(OVERVIEW),
+        [`GET ${BASE}/notes/root-cause/`]: page(NOTE),
+        ...extra,
+      });
+    }
+
+    it('has nothing to check while no note is published', async () => {
+      const result = find(await runLiveChecks(options()), 'notes');
+      expect(result.status).toBe('pass');
+      expect(result.detail).toContain('nothing to check');
+    });
+
+    it('passes when the overview and the notes are there', async () => {
+      const result = find(await runLiveChecks(options({ fetch: withNotes() })), 'notes');
+      expect(result.status).toBe('pass');
+      expect(result.detail).toContain('2 pages');
+    });
+
+    it('fails when a note is missing, has no heading or the overview does not list it', async () => {
+      const missing = withNotes({
+        [`GET ${BASE}/notes/root-cause/`]: new Response('Page not found', { status: 404 }),
+      });
+      expect(find(await runLiveChecks(options({ fetch: missing })), 'notes').detail).toContain(
+        '/notes/root-cause/: HTTP 404',
+      );
+
+      const bare = withNotes({
+        [`GET ${BASE}/notes/root-cause/`]: page('<title>Root Cause | Leon Krix</title>'),
+      });
+      const result = find(await runLiveChecks(options({ fetch: bare })), 'notes');
+      expect(result.status).toBe('fail');
+      expect(result.detail).toContain('no main heading');
+      expect(result.detail).toContain('no link back to the overview');
+
+      const unlisted = withNotes({
+        [`GET ${BASE}/notes/`]: page('<title>Behind the scenes | Leon Krix</title><h1>x</h1>'),
+      });
+      expect(find(await runLiveChecks(options({ fetch: unlisted })), 'notes').detail).toContain(
+        'the overview does not list /notes/root-cause/',
+      );
     });
   });
 

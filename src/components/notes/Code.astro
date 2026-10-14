@@ -1,0 +1,24 @@
+---
+// A block of code with colours, made at build time by highlight.js: the output is plain text with
+// CSS classes (`hljs-keyword` and so on, coloured in global.css under `.note-prose`), so no script
+// runs in the browser and no inline style is needed (the CSP stays strict). Used in MDX as
+// <Code lang="ts" code={`...`} />. A block that is wider than the text scrolls, and a region that
+// scrolls must be reachable with the keyboard, so it takes focus.
+import hljs from 'highlight.js/lib/common';
+
+interface Props {
+  /** A language of highlight.js (ts, js, bash, yaml, json, css, html, ...) */
+  lang: string;
+  code: string;
+}
+
+const { lang, code } = Astro.props;
+
+if (hljs.getLanguage(lang) === undefined) {
+  throw new Error(`Code.astro: highlight.js does not know the language "${lang}".`);
+}
+const html = hljs.highlight(code.replace(/\n$/, ''), { language: lang }).value;
+---
+
+{/* eslint-disable-next-line astro/jsx-a11y/no-noninteractive-tabindex */}
+<pre tabindex="0"><code class={`hljs language-${lang}`} set:html={html} /></pre>

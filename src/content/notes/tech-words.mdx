@@ -1,0 +1,83 @@
+---
+title: 'Tech Words: the small rules that make a word game fair'
+summary: 'A word game looks trivial until a letter appears twice. How Tech Words marks repeated letters, why every guess must come from its own list, and the keyboard bug that must never restart your round.'
+tag: 'Words · Tech Words'
+game: tech-words
+code: src/games/tech-words
+group: games
+order: 2
+updated: '2026-10-14'
+---
+
+import Code from '@/components/notes/Code.astro';
+import evaluateSnippet from './snippets/tech-words-evaluate.snippet?raw';
+import entrySnippet from './snippets/tech-words-entry.snippet?raw';
+import EvaluateFigure from '@/components/notes/EvaluateFigure.astro';
+import Stats from '@/components/notes/Stats.astro';
+import Url from '@/components/notes/Url.astro';
+
+Tech Words is a word game with a twist: the hidden word is a tech term (a language, a protocol, a part of a computer) of three, four or five letters, and you have six tries. After a round the game shows the term and a short definition.
+
+The rules fit in a sentence, which is exactly why the small decisions matter. A word game feels fair or unfair in the corners: what happens with a letter that appears twice, which words may you guess, what happens when you press Enter at the wrong moment. This note is about three of those corners.
+
+<Stats
+  items={[
+    { value: '1,595', label: 'terms written for this site' },
+    { value: '10', label: 'categories' },
+    { value: '3', label: 'word lengths' },
+    { value: '75', label: 'unit tests for this game' },
+  ]}
+/>
+
+## A letter that appears twice
+
+The naive way to mark a guess calls a letter “present” whenever the answer contains it somewhere. That is wrong as soon as a letter is repeated. If the answer has one S and you guess a word with two, only one of your S tiles may claim it. Otherwise the game tells you there are two S in a word that has one.
+
+<EvaluateFigure />
+
+The fix is two passes over the guess instead of one:
+
+<Code lang="ts" code={evaluateSnippet} />
+
+The order is the whole trick. A correct tile is handed out first, so it can never lose its letter to a present tile that happens to stand further to the left. A letter in the answer that a correct tile already used is not counted as unused. The function is pure, it takes two strings and returns a list, and the tests feed it the awkward cases: three of one letter against an answer with one (`aaa` against `abc`), a guess whose letters are all right and all misplaced (`tacks` against `stack`), and `eerie` against `there`, where the correct E at the end claims its copy first so that only one more E can be present.
+
+## The list is the dictionary
+
+Many word games accept any real word as a guess. Tech Words accepts only terms from **its own list**, and the list for a length is also the list of possible answers. So every guess is something the game knows, an unknown word shakes the row and costs no try, and nobody can win by typing a word the game would never have chosen.
+
+That puts the weight on the list. It has 1,595 terms in three files, one per length, and every entry looks the same:
+
+<Code lang="ts" code={entrySnippet} />
+
+All terms and all definitions are written for this site, in my own words, and a data test checks every one of them: lowercase letters a to z and the right length, one of the ten categories, one sentence of at most a hundred characters, and a definition that does **not contain the term it defines**. The files are sorted by category and then alphabetically, and a test fails when they are not, so a new term has a place to go and a reviewer can read a diff. Every category needs at least five terms for each length, otherwise the category filter would sometimes have nothing to choose from, and a short list of words that must never appear is tested too.
+
+A list that is only checked when someone remembers is not a list. These checks run on every change.
+
+## A round is a value
+
+The rest of the game follows one decision: the logic knows nothing about the page. A round is an immutable value, and typing a letter, deleting one or handing in a guess are functions that take a round and return a new one. The React component only draws what the round says.
+
+That is what makes the interesting things easy:
+
+- A test can play a round from the first letter to a won or lost game without a browser.
+- The hidden term comes from a **seeded** random generator, so the same seed always gives the same term. A link such as <Url>?length=4&amp;category=networking&amp;seed=1234567890</Url> prepares exactly that puzzle.
+- When you copy your result as coloured squares, the link in the text carries all three values, so whoever receives it can play the very same puzzle at once.
+
+There is no daily word and nothing is saved: you can play as many rounds as you like, and nothing is written to your device.
+
+## The bug that must not happen
+
+A keyboard game has a nasty trap. You click a letter on the on-screen keyboard, the button keeps the focus, and the next press of Enter presses that button again. Enter is also how you hand in a guess. If the focused button is “New round”, a guess in the middle of a game starts a new round and throws your progress away.
+
+The fix has two small parts. The on-screen keys do not take the focus when you press them, and “New round” moves the focus to the board. It is the kind of bug you only find by playing with a keyboard.
+
+## Not by colour alone
+
+Correct, present and absent tiles do not rely on colour. Each carries a small mark in the corner (a check, a circle, a cross) and an accessible label such as “E, elsewhere”, and a handed-in row is announced through a live region. The animations are CSS only: a pop when you type, a flip with the colour change in the middle, a shake for a refused row. With reduced motion everything is instant.
+
+## What the tests protect
+
+- The evaluation, with repeated letters on both sides.
+- Every list: counts, format, order, uniqueness, categories and definitions, and the loader that fetches only the list of the length you play.
+- A round from the first letter to a won or lost game, the keyboard states, picking a term from a seed, the result text and the links.
+- In a real browser: a full round with the keyboard, refused words, the length switch, accessibility checks and reduced motion.

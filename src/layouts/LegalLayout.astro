@@ -12,7 +12,13 @@ interface Props {
 const { title, germanTitle, description } = Astro.props;
 ---
 
-<BaseLayout title={`${title} (${germanTitle}) | Leon Krix`} description={description} noindex calm>
+<BaseLayout
+  title={`${title} (${germanTitle}) | Leon Krix`}
+  description={description}
+  noindex
+  calm
+  preloadFonts
+>
   <main id="main" class="mx-auto w-full max-w-3xl flex-1 px-6 py-16 sm:py-24">
     <div class="legal">
       <h1>

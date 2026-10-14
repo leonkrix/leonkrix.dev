@@ -50,7 +50,7 @@ const GAME_BUDGETS = {
   'word-radar': { script: 130 * 1024, stylesheet: 24 * 1024, total: 2600 * 1024 },
 };
 
-/** The pages to test: the home page, and the Playground pages once a game is live. */
+/** The pages to test: the home page, the Playground pages once a game is live, and the notes. */
 async function listPages() {
   const pages = [{ path: '/', budgets: BUDGETS }];
   if (existsSync('dist/games/index.html')) {
@@ -67,6 +67,14 @@ async function listPages() {
         );
       }
       pages.push({ path: `/games/${folder.name}/`, budgets });
+    }
+  }
+  // The notes (Behind the scenes): the overview and every note, plain text pages with the normal budgets
+  if (existsSync('dist/notes/index.html')) {
+    pages.push({ path: '/notes/', budgets: BUDGETS });
+    const folders = await readdir('dist/notes', { withFileTypes: true });
+    for (const folder of folders.filter((entry) => entry.isDirectory())) {
+      pages.push({ path: `/notes/${folder.name}/`, budgets: BUDGETS });
     }
   }
   return pages;

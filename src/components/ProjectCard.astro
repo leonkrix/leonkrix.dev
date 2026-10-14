@@ -3,6 +3,7 @@ import ExternalLink from '@/components/ExternalLink.astro';
 import Icon from '@/components/Icon.astro';
 import ProjectArt from '@/components/project-art/ProjectArt.astro';
 import TechList from '@/components/TechList.astro';
+import { highlightParts } from '@/lib/highlights';
 import { kindLabels, type Project } from '@/lib/projects';
 
 interface Props {
@@ -65,7 +66,20 @@ const { project } = Astro.props;
       {project.highlights.map((highlight) => (
         <li class="flex gap-3">
           <span aria-hidden="true" class="mt-2.5 size-1 shrink-0 rounded-full bg-accent-2" />
-          <span>{highlight}</span>
+          <span>
+            {highlightParts(highlight).map((part) =>
+              part.href === undefined ? (
+                part.text
+              ) : (
+                <a
+                  href={part.href}
+                  class="text-fg underline underline-offset-4 transition-colors hover:text-accent"
+                >
+                  {part.text}
+                </a>
+              ),
+            )}
+          </span>
         </li>
       ))}
     </ul>

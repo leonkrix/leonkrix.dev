@@ -1,0 +1,8 @@
+---
+// The code blocks of a note (used for every `pre` in MDX, see pages/notes/[slug].astro). A block
+// that is wider than the screen scrolls, and a region that scrolls must be reachable with the
+// keyboard, so it takes focus.
+---
+
+{/* eslint-disable-next-line astro/jsx-a11y/no-noninteractive-tabindex */}
+<pre tabindex="0"><slot /></pre>

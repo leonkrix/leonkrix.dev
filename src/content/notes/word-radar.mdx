@@ -1,0 +1,130 @@
+---
+title: 'Word Radar: how a computer knows that a wolf is close to a dog'
+summary: 'From 100 numbers per word to a radar in your browser: word vectors, a principal component analysis written for this project, 1.9 MB of bytes, and a Lighthouse score that fell to 73 and why.'
+tag: 'ML · Word Radar'
+game: word-radar
+code: src/games/word-radar
+group: games
+order: 4
+updated: '2026-10-14'
+---
+
+import Code from '@/components/notes/Code.astro';
+import similaritySnippet from './snippets/word-radar-similarity.snippet?raw';
+import prioritySnippet from './snippets/word-radar-priority.snippet?raw';
+import NearestTable from '@/components/notes/NearestTable.astro';
+import RadarFigure from '@/components/notes/RadarFigure.astro';
+import Stats from '@/components/notes/Stats.astro';
+import Steps from '@/components/notes/Steps.astro';
+
+In Word Radar a word is hidden. You guess words, and the game tells you how close each guess is in **meaning**, as a rank out of about 30,000 common English words: rank 1 is the hidden word, rank 2 the word nearest to it, and so on. It is the game that talks about the machine learning side of this site, and it raises an obvious question. How can a program that has no idea what a volcano is know that _lava_ is closer to it than _dog_?
+
+The answer is that it never looks at meaning. It looks at numbers.
+
+<Stats
+  items={[
+    { value: '30,000', label: 'words in the game' },
+    { value: '64', label: 'numbers per word' },
+    { value: '82.5%', label: 'of the variation kept' },
+    { value: '1.9 MB', label: 'of vectors' },
+  ]}
+/>
+
+## Words as numbers
+
+The game uses **GloVe** word vectors from Stanford University. Every word is a list of 100 numbers that was learned from billions of words of text, so that words that appear in similar places get similar numbers. Two words are close when their lists point in nearly the same direction, and the measure for that is the **cosine similarity**: the cosine of the angle between the two lists, seen as arrows. It is 1 for the same direction, around 0 for unrelated words.
+
+Here is what that looks like for the hidden word _volcano_:
+
+<NearestTable />
+
+Most of it is what you would hope for: _eruption_, _lava_, _crater_, _caldera_, _magma_. And then _blaze_ (rank 10) and _observatory_ (rank 12) turn up. They are probably there because the numbers capture how words are **used** together in text, not what they mean, and a blaze and a volcano turn up in similar stories. That is worth remembering when the game puzzles you: it is not a dictionary, it is a map of how people write.
+
+## From 100 numbers to 64 bytes
+
+The raw vectors are far too big to ship to a browser, and most of them are not needed. So the data is prepared once, offline, by a script that is part of the repository (`pnpm word-radar-data`), and the result is committed.
+
+<Steps
+  columns={3}
+  steps={[
+    {
+      title: 'GloVe',
+      text: 'The word vectors of Stanford: 100 numbers per word, the commonest words first.',
+    },
+    {
+      title: 'Choose',
+      text: 'The 30,000 commonest ordinary words that WordNet knows. No names, no little words such as “the”.',
+    },
+    {
+      title: 'Shrink',
+      text: 'A principal component analysis keeps 64 of the 100 directions: 82.5 percent of the variation.',
+    },
+    {
+      title: 'Round',
+      text: 'Every word one unit long, every number a whole number from -127 to 127.',
+    },
+    {
+      title: 'Ship',
+      text: 'About 1.9 MB of numbers and 0.27 MB of words, committed to the repository.',
+    },
+    {
+      title: 'Fetch',
+      text: 'Loaded when the game page opens, in parallel with the rest of the page.',
+    },
+  ]}
+/>
+
+The **principal component analysis** finds the directions in which the words differ most and keeps the strongest ones. I wrote it for this project in TypeScript (the covariance matrix and cyclic Jacobi rotations, tested against a matrix with known eigenvalues and a tilted line with a known strongest direction), partly because Python was not installed on the machine I built it on, and partly because then the whole pipeline runs with the tools the site already has. The script is deterministic: the same input gives the same files. The downloads (an 862 MB archive) are not in the repository, the 2 MB result is.
+
+Making every word exactly one unit long has a nice consequence. For vectors of length one, the dot product **is** the cosine similarity, so the game never needs a square root or a division.
+
+## A rank is a sort
+
+At the start of a round the browser compares the hidden word with all 30,000 words:
+
+<Code lang="ts" code={similaritySnippet} />
+
+That is about two million multiplications, and then a sort. It takes a few milliseconds. After that every guess is a lookup in a table, so the game answers instantly, and nothing is sent anywhere.
+
+## Which words may be hidden
+
+Guessing is open, but the hidden word is chosen carefully. It has to be an everyday thing, so that the round is not a lottery. The script takes nouns whose most common sense in WordNet is an animal, an artifact, a part of the body, a food, an object, a natural phenomenon, a plant or a substance, among the 20,000 commonest words, with three to ten letters, no names, and found in a text collection. That leaves 1,510 words.
+
+Whole categories are left out on purpose: people, acts, feelings and ideas. That keeps the list free of abstract and sensitive words without a long blacklist. A short list of words that slip through anyway (vague words such as _world_ or _piece_, names, drugs, weapons) is kept in one file, and a data test checks that none of them is ever hidden.
+
+## Tests on meaning, not just on format
+
+A data set can have the right size and the wrong content, so the data tests check meaning. _King_ must be closer to _queen_ than to _banana_. _Dog_ must be closer to _cat_ than to _car_. The nearest words of _volcano_ must contain _eruption_ and _lava_. If a rounding step or a wrong dimension ever scrambled the vectors, these tests would fail long before a player noticed.
+
+## The radar
+
+The picture is a real round for the hidden word _volcano_. The rings are ranks 10, 100, 1,000 and 10,000.
+
+<RadarFigure />
+
+The **distance** from the middle is the logarithm of the rank. That gives the ranks that matter, 1 to 1,000, most of the space and squeezes the thousands of far words to the edge, so the rings are equally far apart.
+
+The **direction** is the honest weak point. A word is a point in 64 dimensions and the screen has two. The game finds the plane in which the 300 words nearest to the hidden word differ most (another principal component analysis, in the browser) and shows each guess in the direction of its difference from the hidden word seen on that plane. Words that are related to the hidden word in similar ways tend to lie in similar directions. But it is a flat picture of a much bigger space, so it is a **tendency, never a promise**. The distance is the information. The direction is for orientation. The plane is fixed at the start of a round, so a dot never moves while you play. The map after the round is a principal component analysis of that round's own words, which is a truer picture.
+
+## Hints that last
+
+A hint reveals a word that is closer than your best guess so far. The first version took the square root of the rank, which gave a trail of 173, 13, 4 and 2 and was over after four hints. The version in the game takes about **half** of your best rank, so the ranks go 2,000, 1,000, 500, 250 and so on down to 2. The first hint starts from rank 4,000 at the most, and a hint is never the hidden word itself. A data test checks the steps.
+
+## A lesson from Lighthouse
+
+The 2 MB of data has to be fetched, and the first obvious way to do it was a small script that starts the download as soon as the page has loaded, in parallel with React. It worked, and the Lighthouse score of the page fell from 98 to 73.
+
+Lighthouse simulates a slow connection, and the 2 MB download competed with the fonts and the text for it: it was requested with high priority before them, and the simulated time of the largest paint went from about two seconds to twelve. The fix is one option:
+
+<Code lang="ts" code={prioritySnippet} />
+
+The page and its fonts come first, the words come when the connection is free, and the score is back at 98. On a real connection the words still arrive as soon as nothing more important is loading.
+
+## Credits and what the tests protect
+
+The vectors are **GloVe** (6B tokens, 100 dimensions; Pennington, Socher and Manning, Stanford University; Public Domain Dedication and License), and the choice of the words uses **WordNet 3.0** (Princeton University; WordNet License). Both are credited in the repository.
+
+- The principal component analysis, the reading of WordNet and the choice of words (names, little words, abstract nouns, the blocklist) have unit tests with small samples in the real format.
+- The game logic: decoding and unit length, cosine similarity and ranking, a round (guesses, repeated and invalid words, winning), hints, giving up, the radar and the map.
+- The data: 30,000 different lower case words, the right size of the number file, enough hidden words that are in the list and not blocked, and the tests on meaning above.
+- In a real browser: a full round with the keyboard, the rank of a guess equal to the one in the data, hints, winning, giving up, accessibility checks, reduced motion, and a check that nothing on the page moves while you play.

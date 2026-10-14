@@ -423,10 +423,15 @@ export function explanationLines(steps: readonly ExplainStep[], words: ExplainWo
         return `A person who is bound to one row or column, or a row or column with only one place left, takes cells away. ${leftText(step.cells)} for ${me}.`;
       }
       case 'relations': {
-        const named = step.clues.length > 0 ? ` (${quoted(words, step.clues)})` : '';
+        // The clues that are named are the ones that are needed, whoever they are about: do not
+        // call them all clues that tie people together
+        const subject =
+          step.clues.length > 0
+            ? `These clues together (${quoted(words, step.clues)})`
+            : 'The clues that tie people together (who is next to, north of or in the same room as whom)';
         return step.people.length > 0
-          ? `The clues that tie people together${named} leave ${names(words, step.people)} only one cell, and that cuts the cells of ${me} down. ${leftText(step.cells)}.`
-          : `The clues that tie people together${named} cut cells away. ${leftText(step.cells)} for ${me}.`;
+          ? `${subject} leave ${names(words, step.people)} only one cell, and that cuts the cells of ${me} down. ${leftText(step.cells)}.`
+          : `${subject} cut cells away. ${leftText(step.cells)} for ${me}.`;
       }
       case 'rooms': {
         const extra =
