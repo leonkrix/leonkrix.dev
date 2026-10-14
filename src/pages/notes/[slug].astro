@@ -29,7 +29,7 @@ const { title, summary, tag, updated, code } = entry.data;
 const game = games.find((one) => one.slug === entry.data.game && one.status === 'live');
 ---
 
-<BaseLayout title={`${title} | ${siteConfig.name}`} description={summary} calm>
+<BaseLayout title={`${title} | ${siteConfig.name}`} description={summary} calm preloadFonts>
   <main id="main" class="flex-1">
     <div class="mx-auto max-w-5xl px-6 py-6 sm:py-16">
       <a

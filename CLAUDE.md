@@ -166,6 +166,7 @@ Decision: **Cloudflare's Git integration deploys, GitHub Actions runs CI in para
 - Lighthouse 95+ in all four categories on mobile (enforced in CI).
 - Minimal JS shipped: hydrate islands with `client:visible` / `client:idle`; games are lazy loaded.
 - Valid semantic HTML, meta tags, Open Graph images, `sitemap.xml`, JSON-LD (`Person`).
+- **Fonts and layout shift:** a page that is mostly text must request its two fonts before the stylesheet is read (`<BaseLayout preloadFonts>`, set by the notes and the legal pages), otherwise the text is first set in the fallback font and again in the real one, breaks differently and the page jumps (Lighthouse measured 0.07 on the notes, and on the slower CI machine that was enough to fall under 95, 2026-10-14). The game pages must **not** preload: their page loads a large file at the same time, and the preload made Lighthouse count it into the first paint (75 instead of 98). `tests/build-output/fonts.test.ts` holds both rules. Lighthouse is sensitive to the order of requests on a page with a big fetch: after any change to what a game page requests, run `pnpm lighthouse` twice and look at the LCP.
 - TypeScript strict, no `any` without justification.
 - Unit tests for all game logic; e2e smoke tests for critical paths.
 
