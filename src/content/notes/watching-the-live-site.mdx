@@ -1,0 +1,81 @@
+---
+title: 'Watching the live site: a check that had to survive Cloudflare'
+summary: 'CI checks the code before it ships, a live check looks at what is really running, every six hours. Sixteen checks, a test for the checker, and the day Cloudflare’s own bot protection locked it out.'
+tag: 'Site · Monitoring'
+code: scripts
+group: site
+order: 4
+updated: '2026-10-14'
+---
+
+import Code from '@/components/notes/Code.astro';
+import liveCheckChallenge from './snippets/live-check-challenge.snippet?raw';
+import Stats from '@/components/notes/Stats.astro';
+
+Continuous integration answers one question: is this _code_ good enough to ship? It cannot answer the question that comes after: is the site that is **really running** right now what I think it is? The headers that Cloudflare serves, the redirects, the certificate, the DNS records of my mail, the form behind the form: none of that is in the code that CI looks at, and any of it can go wrong without a single commit.
+
+So there is a second check, and it looks at the published site from the outside, the way a visitor would.
+
+<Stats
+  items={[
+    { value: '16', label: 'live-site checks' },
+    { value: '6 h', label: 'between runs' },
+    { value: '40', label: 'tests of the checker' },
+    { value: '0', label: 'dependencies' },
+  ]}
+/>
+
+## What it looks at
+
+Each check ends in pass, warn or fail, and only a fail fails the run.
+
+| Area                     | What is checked                                                                                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| The page                 | The home page answers and has its sections. The custom 404 page is shown for an unknown address. The pages of the games and the notes that the sitemap lists answer too. |
+| What the browser is told | The security headers must equal the list in the repository, and the content security policy is read from the page.                                                       |
+| Assets                   | The stylesheet and the script are served, with the long cache time that fingerprinted files should have.                                                                 |
+| Redirects                | `http` to `https`, `www` to the main domain, and the old German addresses of the legal pages to the new ones.                                                            |
+| Legal pages              | Both languages are there, they are not indexed, no placeholder is left where the address should be, and the email and the address are not readable as plain text.        |
+| The contact form         | The token endpoint, no cross-origin access, and a probe that proves the form is configured.                                                                              |
+| Time                     | The certificate fails below 14 days, the domain registration below 30 days (warning below 60).                                                                           |
+| My mail                  | The MX, SPF and DMARC records must still point to the mailbox provider.                                                                                                  |
+
+Some of these are checks I would not have thought of before they went wrong somewhere else. The mail records are on the list because the DNS of this domain lives at Cloudflare and the mail at another company, and a change in the wrong place would silently stop my email. The headers are compared with the file in the repository, so there is one list and the live site cannot drift from it.
+
+## How it runs
+
+A workflow runs it every six hours, right after every successful production deployment (Cloudflare reports its deployments to GitHub, and the workflow listens for them), and on demand. A failed check is repeated a few times first, because a fresh deployment needs a moment to reach every location. The result is a table on the page of the run, and the README shows a badge for the latest run. A failure sends an email.
+
+The script has no dependencies. Node runs the TypeScript file directly, which keeps the checker small enough to trust. Its logic is tested against a fake site, so a check can be made to fail on purpose.
+
+## A test for the checker
+
+A check that has never failed has never proved that it can. That is true of every test, and it is easy to forget for the ones that watch other things.
+
+Every check has a test in which the fake site is broken in exactly the way the check is meant to find: a header missing, a placeholder left in the legal text, a certificate about to expire, a mail record that points somewhere else. And when the live check was first pointed at the real site, two checks of the legal pages **failed**, because the change they were checking for was not deployed yet. That was the best result I could have hoped for. It showed that they work.
+
+## The day Cloudflare locked it out
+
+The first manual run on GitHub did not go as planned. Every page of my own domain came back as a page that said “Just a moment…”.
+
+That page is the challenge of Cloudflare's bot protection, which I had switched on myself. It treats requests from data centres with suspicion, and the machines that run GitHub's workflows are in data centres. My own computer is not challenged, so the check had always worked locally, and the first time it ran in the place where it was supposed to run, the site treated it as a bot.
+
+The answer has three parts.
+
+**Recognise it.** The challenge is easy to tell from the real page:
+
+<Code lang="ts" code={liveCheckChallenge} />
+
+**Do not blame the site for it.** When the custom domain is challenged, the check reports that the domain is reachable, because the TLS, the DNS and the redirects still work from the runner, and it reads the _content_ of the page from the address of the same deployment on Cloudflare's own domain, where the bot protection is not in front. The fallback is used only when the domain is challenged. So a run from my own computer checks the real domain, and one from GitHub checks the same deployment through the other door.
+
+**Know the alternative.** If that other address were ever challenged as well, the options would be to switch the bot protection off, or to give up the content checks from GitHub. On this plan the protection cannot be excused by a rule, so I wrote the trade-off down instead of hiding it.
+
+## A weekly look at the links
+
+A second, smaller workflow runs once a week. It reads every external link from the published pages (the home page, the legal pages and the notes), asks each one, first with a light request and then with a full one, and retries before it complains. LinkedIn, which refuses automated requests, only produces a warning. Because the links are read from the pages, a new link is checked without anybody adding it to a list.
+
+## What it does not do
+
+It is not a monitor in the sense of an alarm that wakes anybody: six hours is a long time, and a failure arrives as an email. I did not add an outside uptime service, because that service would see far less than this check does. There is no test that sends a real email through the form, because it would fill the mailbox and use up the rate limit, and there is no log analysis.
+
+One more thing about scheduled workflows: GitHub switches them off in a public repository after 60 days without any activity. Regular commits keep them alive, and if the site is ever left alone for two months, the first thing to do is to switch them on again in the Actions tab. It is written down, because a monitor that quietly stopped is worse than none.

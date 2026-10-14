@@ -7,15 +7,20 @@ import Icon from '@/components/Icon.astro';
 import CodeBlock from '@/components/notes/CodeBlock.astro';
 import { gamePath, games } from '@/games/registry';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { formatUpdated, notePath, notesPath, readingMinutes } from '@/lib/notes';
+import { formatUpdated, notePath, notesPath, readingMinutes, sortNotes } from '@/lib/notes';
 import { siteConfig } from '@/lib/site';
 
 export const getStaticPaths = (async () => {
-  const notes = (await getCollection('notes')).sort((a, b) => a.data.order - b.data.order);
-  return notes.map((entry, index) => ({
-    params: { slug: entry.id },
-    props: { entry, previous: notes[index - 1], next: notes[index + 1] },
-  }));
+  const notes = sortNotes(await getCollection('notes'));
+  return notes.map((entry) => {
+    // Next and previous stay in the group of the note (the notes of the site, the notes of the games)
+    const inGroup = notes.filter((note) => note.data.group === entry.data.group);
+    const index = inGroup.findIndex((note) => note.id === entry.id);
+    return {
+      params: { slug: entry.id },
+      props: { entry, previous: inGroup[index - 1], next: inGroup[index + 1] },
+    };
+  });
 }) satisfies GetStaticPaths;
 
 const { entry, previous, next } = Astro.props;

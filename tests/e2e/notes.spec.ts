@@ -77,3 +77,21 @@ for (const path of notes) {
     }
   });
 }
+
+// The key figures of a note sit in one row on a wide screen (a row that breaks in the middle looks
+// unfinished): the labels have to be short. On a narrow screen they are two columns on purpose.
+for (const path of notes) {
+  test(`${path} shows its key figures in one row on a wide screen`, async ({ page }) => {
+    await page.goto(path);
+    const width = page.viewportSize()?.width ?? 0;
+    test.skip(width < 640, 'two columns on a narrow screen');
+    const tops = await page.evaluate(() =>
+      [...document.querySelectorAll('.note-stats')].map((stats) => [
+        ...new Set([...stats.children].map((item) => Math.round(item.getBoundingClientRect().top))),
+      ]),
+    );
+    for (const rows of tops) {
+      expect(rows, 'the figures are in more than one row').toHaveLength(1);
+    }
+  });
+}

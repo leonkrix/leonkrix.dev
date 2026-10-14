@@ -45,9 +45,9 @@ describe('notes', () => {
     }
   });
 
-  it('has a different place on the overview for every note', () => {
-    const orders = notes.map(({ front }) => front.order);
-    expect(new Set(orders).size).toBe(orders.length);
+  it('has a different place in its group on the overview for every note', () => {
+    const places = notes.map(({ front }) => `${front.group ?? ''} ${front.order ?? ''}`);
+    expect(new Set(places).size).toBe(places.length);
   });
 
   it('belongs to games that exist and are live, and the game page links back', async () => {

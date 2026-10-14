@@ -33,6 +33,10 @@ export const PAGES: readonly string[] = [
   '/notes/tech-words/',
   '/notes/link-up/',
   '/notes/word-radar/',
+  '/notes/how-this-site-is-built/',
+  '/notes/a-page-that-never-moves/',
+  '/notes/a-contact-form-without-a-third-party/',
+  '/notes/watching-the-live-site/',
 ];
 
 /** External links that are on none of the pages above but must keep working. */
