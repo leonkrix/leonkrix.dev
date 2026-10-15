@@ -1,5 +1,6 @@
 import { type Language } from '../logic/language';
 import { texts } from '../logic/texts';
+import SwapLabel from './SwapLabel';
 
 /**
  * The game before its words are there: the same boxes as the game (the field, the message, the
@@ -75,7 +76,7 @@ export default function WordRadarSkeleton({
           {t.hint(0)}
         </button>
         <button type="button" disabled>
-          {t.giveUp}
+          <SwapLabel shown={t.giveUp} other={t.reallyGiveUp} />
         </button>
         <button type="button" disabled>
           {t.newRound}

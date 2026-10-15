@@ -19,6 +19,7 @@ import {
 import { type Texts, texts } from '../logic/texts';
 import MapView from './MapView';
 import RadarView from './RadarView';
+import SwapLabel from './SwapLabel';
 import WordRadarSkeleton from './WordRadarSkeleton';
 
 const NEAREST_COUNT = 40;
@@ -372,7 +373,10 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
           disabled={over}
           data-confirming={confirming || undefined}
         >
-          {confirming ? t.reallyGiveUp : t.giveUp}
+          <SwapLabel
+            shown={confirming ? t.reallyGiveUp : t.giveUp}
+            other={confirming ? t.giveUp : t.reallyGiveUp}
+          />
         </button>
         <button type="button" onClick={restart} data-primary={over || undefined}>
           {t.newRound}
