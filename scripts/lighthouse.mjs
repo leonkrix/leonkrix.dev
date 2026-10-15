@@ -4,6 +4,7 @@
  * Fails when a category score is below its threshold or a budget is exceeded.
  *
  * Usage: pnpm lighthouse   (builds first)
+ *        pnpm lighthouse --page /uses/ --page /notes/   (only these pages, for a quick look while building)
  * Needs a Chrome or Chromium; set CHROME_PATH if it is not found automatically.
  */
 import { spawn } from 'node:child_process';
@@ -69,6 +70,10 @@ async function listPages() {
       pages.push({ path: `/games/${folder.name}/`, budgets });
     }
   }
+  // The Uses page is a plain page with the normal budgets
+  if (existsSync('dist/uses/index.html')) {
+    pages.push({ path: '/uses/', budgets: BUDGETS });
+  }
   // The notes (Behind the scenes): the overview and every note, plain text pages with the normal budgets
   if (existsSync('dist/notes/index.html')) {
     pages.push({ path: '/notes/', budgets: BUDGETS });
@@ -77,7 +82,18 @@ async function listPages() {
       pages.push({ path: `/notes/${folder.name}/`, budgets: BUDGETS });
     }
   }
-  return pages;
+  // --page <path> (repeatable) tests only those pages. A full run takes about five minutes.
+  const only = process.argv.flatMap((arg, index) =>
+    arg === '--page' && process.argv[index + 1] !== undefined ? [process.argv[index + 1]] : [],
+  );
+  if (only.length === 0) {
+    return pages;
+  }
+  const unknown = only.filter((path) => !pages.some((page) => page.path === path));
+  if (unknown.length > 0) {
+    throw new Error(`Unknown page(s) for --page: ${unknown.join(', ')}`);
+  }
+  return pages.filter((page) => only.includes(page.path));
 }
 
 const log = (message) => process.stdout.write(`${message}\n`);

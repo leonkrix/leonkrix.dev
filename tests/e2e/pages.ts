@@ -23,6 +23,7 @@ export const pages: readonly string[] = [
   '/',
   '/legal-notice/',
   '/privacy-policy/',
+  '/uses/',
   ...gamePaths(),
   ...notePaths(),
 ];

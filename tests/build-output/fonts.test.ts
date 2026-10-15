@@ -20,7 +20,7 @@ const preloads = (html: string): string[] =>
   );
 
 const textPages = pages.filter(({ file }) =>
-  /^(notes|legal-notice|privacy-policy)\//.test(route(file)),
+  /^(notes|legal-notice|privacy-policy|uses)\//.test(route(file)),
 );
 const gamePages = pages.filter(({ file }) => route(file).startsWith('games/'));
 

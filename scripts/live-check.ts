@@ -481,6 +481,27 @@ export async function runLiveChecks(options: LiveCheckOptions): Promise<CheckRes
     );
   });
 
+  // The Uses page is a plain page that the footer links to
+  await run('uses page', async () => {
+    const uses = await get('/uses/');
+    const problems: string[] = [];
+    if (uses.status !== 200) {
+      problems.push(`HTTP ${String(uses.status)}`);
+    } else {
+      const title = /<title>([^<]*)<\/title>/.exec(uses.body)?.[1] ?? '';
+      if (!title.includes(siteConfig.name)) {
+        problems.push(`unexpected title "${title}"`);
+      }
+      if (!/<h1[\s>]/.test(uses.body)) {
+        problems.push('no main heading');
+      }
+    }
+    if (!(await get('/')).body.includes('href="/uses/"')) {
+      problems.push('the home page does not link to it');
+    }
+    return verdict('uses page', problems, 'the Uses page is there and the home page links to it');
+  });
+
   await run('unknown pages', async () => {
     const page = await get(`/does-not-exist-${String(Date.now())}`);
     const problems: string[] = [];

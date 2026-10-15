@@ -30,7 +30,7 @@ const CSP =
 const HOME = `<!doctype html><html lang="en"><head><title>Leon Krix | Software Engineer</title>
 <meta http-equiv="content-security-policy" content="${CSP}">
 <link rel="stylesheet" href="/_astro/site.css"><script type="module" src="/_astro/site.js"></script></head>
-<body><section id="about"></section><section id="projects"></section><section id="experience"></section>
+<body><a href="/uses/">Uses</a><section id="about"></section><section id="projects"></section><section id="experience"></section>
 <section id="contact"><div data-contact-form></div></section></body></html>`;
 
 const LEGAL = `<html><head><meta name="robots" content="noindex"></head><body>
@@ -83,6 +83,7 @@ function fakeSite(
       status: 301,
       headers: { location: '/privacy-policy' },
     }),
+    [`GET ${base}/uses/`]: page('<title>Uses | Leon Krix</title><h1>What I work with</h1>'),
     [`GET ${base}/legal-notice/`]: page(LEGAL),
     [`GET ${base}/privacy-policy/`]: page(LEGAL),
     [`GET ${base}/robots.txt`]: new Response(
@@ -170,6 +171,7 @@ describe('runLiveChecks', () => {
       'search engine files',
       'playground',
       'notes',
+      'uses page',
       'unknown pages',
       'contact form API',
       'TLS certificate',
@@ -299,6 +301,29 @@ describe('runLiveChecks', () => {
       expect(find(await runLiveChecks(options({ fetch: unlisted })), 'notes').detail).toContain(
         'the overview does not list /notes/root-cause/',
       );
+    });
+  });
+
+  describe('uses page', () => {
+    it('fails when the page is missing, has no heading or the home page does not link to it', async () => {
+      const missing = fakeSite({
+        [`GET ${BASE}/uses/`]: new Response('Page not found', { status: 404 }),
+      });
+      expect(find(await runLiveChecks(options({ fetch: missing })), 'uses page').detail).toContain(
+        'HTTP 404',
+      );
+
+      const bare = fakeSite({ [`GET ${BASE}/uses/`]: page('<title>Uses | Leon Krix</title>') });
+      expect(find(await runLiveChecks(options({ fetch: bare })), 'uses page').detail).toContain(
+        'no main heading',
+      );
+
+      const unlinked = fakeSite({
+        [`GET ${BASE}/`]: page(HOME.replace('href="/uses/"', 'href="/"')),
+      });
+      const result = find(await runLiveChecks(options({ fetch: unlinked })), 'uses page');
+      expect(result.status).toBe('fail');
+      expect(result.detail).toContain('the home page does not link to it');
     });
   });
 
