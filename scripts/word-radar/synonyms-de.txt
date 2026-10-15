@@ -1,0 +1,79 @@
+# Synonyms of the German hidden words (see chooseSynonyms in german.ts).
+# "- secret word" takes a pair away that OdeNet and the numbers allow but that is wrong,
+# "+ secret word" adds a pair that is right but not close enough. Lower case.
+
+# Wrong or too loose pairs that OdeNet and the numbers allow (read through by hand, 2026-10-16)
+- gerät laufwerk
+- kamera videokamera
+- videokamera kamera
+- städtchen dorf
+- städtchen ortschaft
+- dorf städtchen
+- balkon loggia
+- loggia balkon
+- tasche tragetasche
+- kuchen torte
+- torte kuchen
+- heizung heizkörper
+- heizkörper heizung
+- bauch unterleib
+- lampe leuchtmittel
+- schokolade kakao
+- kakao schokolade
+- käse quark
+- quark käse
+- kette halskette
+- halskette kette
+- ufer seeufer
+- hütte berghütte
+- schrank kleiderschrank
+- nebel dunst
+- dunst nebel
+- hemd shirt
+- hemd bluse
+- pullover sweatshirt
+- packung schachtel
+- schachtel packung
+- speck schmalz
+- unterwäsche dessous
+- hase biene
+- biene hase
+- freibad schwimmbad
+- schaft riemen
+- riemen schaft
+- frisur haarschnitt
+- essig balsamico
+- balsamico essig
+- gewitter unwetter
+- lenker lenkrad
+- lenkrad lenker
+- armbanduhr chronograph
+- kuppel gewölbe
+- dressing marinade
+- marinade vinaigrette
+- marinade dressing
+- birne glühbirne
+- pfannkuchen krapfen
+- vorspeise häppchen
+- häppchen vorspeise
+- buchse stecker
+- axt beil
+- fernglas fernrohr
+- abendkleid ballkleid
+- gelatine gelee
+- gelee gelatine
+- schutt trümmer
+- ohrstecker ohrring
+- lasagne nudelauflauf
+- sitzkissen sitzsack
+- wetterlage witterung
+- vorraum eingangshalle
+- raupe larve
+- erdbeere ananas
+- ananas erdbeere
+- konzentrat extrakt
+
+# Right pairs that are not close enough in the numbers
++ auto wagen
++ auto pkw
++ auto automobil

@@ -1,5 +1,6 @@
 import { createRandom } from '../../shared/random';
 import { type WordData } from './data';
+import { type Language } from './language';
 import { type Ranking, rankWords } from './similarity';
 
 export interface Guess {
@@ -12,6 +13,8 @@ export interface Guess {
   similarity: number;
   /** True for a word that was given by the hint button */
   hint: boolean;
+  /** True for a word that means the same as the hidden word: it counts as finding it (rank 1) */
+  synonym: boolean;
 }
 
 export type Status = 'playing' | 'won' | 'gaveUp';
@@ -25,7 +28,7 @@ export interface Round {
 }
 
 export type GuessResult =
-  | { kind: 'ok'; round: Round; guess: Guess }
+  | { kind: 'ok'; round: Round; guess: Guess; form?: string }
   | { kind: 'duplicate'; guess: Guess }
   | { kind: 'unknown'; word: string }
   | { kind: 'invalid' }
@@ -45,9 +48,26 @@ export function startRound(data: WordData, secret: number): Round {
 }
 
 /** What the player typed, as a word: lower case letters only, or null. */
-export function normalizeGuess(text: string): string | null {
+export function normalizeGuess(text: string, language: Language = 'en'): string | null {
   const word = text.trim().toLowerCase();
-  return /^[a-z]{2,15}$/.test(word) ? word : null;
+  // German words are longer (compounds) and have umlauts and the sharp s
+  return (language === 'de' ? /^[a-zäöüß]{2,30}$/ : /^[a-z]{2,15}$/).test(word) ? word : null;
+}
+
+/**
+ * The ways a German word can be typed on a keyboard without the special letters: ae, oe, ue and ss
+ * for ä, ö, ü and ß ("Mueller", "Strasse"). The word as typed comes first, so a word that really
+ * has these letters in a row ("neue", "Frauen") is found as it is.
+ */
+export function spellings(word: string, language: Language): string[] {
+  if (language !== 'de') {
+    return [word];
+  }
+  const umlauts = word.replaceAll('ae', 'ä').replaceAll('oe', 'ö').replaceAll('ue', 'ü');
+  const sharp = word.replaceAll('ss', 'ß');
+  // The word list has one of Straße and Strasse (the commoner one), so both ways are tried
+  const double = word.replaceAll('ß', 'ss');
+  return [...new Set([word, umlauts, sharp, double, umlauts.replaceAll('ss', 'ß')])];
 }
 
 function makeGuess(round: Round, data: WordData, index: number, hint: boolean): Guess {
@@ -57,6 +77,7 @@ function makeGuess(round: Round, data: WordData, index: number, hint: boolean): 
     rank: round.ranking.rankOf[index] ?? data.words.length,
     similarity: round.ranking.similarity[index] ?? 0,
     hint,
+    synonym: false,
   };
 }
 
@@ -73,11 +94,20 @@ export function guessWord(round: Round, data: WordData, text: string): GuessResu
   if (round.status !== 'playing') {
     return { kind: 'over' };
   }
-  const word = normalizeGuess(text);
+  const word = normalizeGuess(text, data.language);
   if (word === null) {
     return { kind: 'invalid' };
   }
-  const index = data.indexOf.get(word);
+  // A word of the list, or else a form of one (typing Hunde counts as typing Hund)
+  const tries = spellings(word, data.language);
+  const own = tries.find((spelling) => data.indexOf.has(spelling));
+  const asForm = own === undefined ? tries.find((spelling) => data.forms.has(spelling)) : undefined;
+  const index =
+    own !== undefined
+      ? data.indexOf.get(own)
+      : asForm === undefined
+        ? undefined
+        : data.forms.get(asForm);
   if (index === undefined) {
     return { kind: 'unknown', word };
   }
@@ -85,8 +115,16 @@ export function guessWord(round: Round, data: WordData, text: string): GuessResu
   if (earlier !== undefined) {
     return { kind: 'duplicate', guess: earlier };
   }
-  const guess = makeGuess(round, data, index, false);
-  return { kind: 'ok', round: withGuess(round, guess), guess };
+  const made = makeGuess(round, data, index, false);
+  // A word that means the same as the hidden word finds it: it counts as rank 1
+  const synonym = data.aliases.get(round.secret)?.has(index) === true;
+  const guess = synonym ? { ...made, rank: 1, synonym: true } : made;
+  return {
+    kind: 'ok',
+    round: withGuess(round, guess),
+    guess,
+    ...(asForm === undefined ? {} : { form: text.trim() }),
+  };
 }
 
 /** The best (lowest) rank so far, or the size of the list when there is no guess yet. */
@@ -106,7 +144,11 @@ export function takeHint(round: Round, data: WordData): { round: Round; guess: G
   if (round.status !== 'playing') {
     return null;
   }
-  const tried = new Set(round.guesses.map((guess) => guess.index));
+  // A hint is never the hidden word or a word that means the same (that would end the round)
+  const tried = new Set([
+    ...round.guesses.map((guess) => guess.index),
+    ...(data.aliases.get(round.secret) ?? []),
+  ]);
   const best = bestRank(round, data.words.length);
   const target = Math.max(2, Math.round(Math.min(best, FIRST_HINT_FROM) / 2));
   // The wanted rank, or the next closer one that was not tried yet (never the hidden word itself)

@@ -6,7 +6,7 @@ game: word-radar
 code: src/games/word-radar
 group: games
 order: 4
-updated: '2026-10-14'
+updated: '2026-10-15'
 ---
 
 import Code from '@/components/notes/Code.astro';
@@ -120,11 +120,30 @@ Lighthouse simulates a slow connection, and the 2 MB download competed with the 
 
 The page and its fonts come first, the words come when the connection is free, and the score is back at 98. On a real connection the words still arrive as soon as nothing more important is loading.
 
+## And in German
+
+The same game exists in German, chosen by the address (`?lang=de`, two plain links above the game; nothing is stored, and only the files of the language you play are fetched). The point was to run the same pipeline on a second language and see what breaks. A lot did.
+
+**The vectors are all lower case.** The German model I found with an open licence (the NLPL repository, model 45, trained on the German CoNLL17 corpus, 4.9 million words, Creative Commons Attribution) has no capital letters, and German writes every noun with one. So the capitals come from the word lists: the Open German WordNet (OdeNet) and the page titles of the German Wiktionary.
+
+**OdeNet has holes.** It does not have _Kuh_, _Honig_, _Spiegel_ or _Schulter_, so a game built only on it would refuse them. The Wiktionary list fills the gap, but it also lists names and English words, so a word has to pass a few more checks (no little word, no English word, and a word that OdeNet does not know needs at least four letters). My first English filter used the commonest words of GloVe and threw out _Kuh_ and _Honig_ as well, because GloVe has read German names and quotes in English texts. A test with the real data found it.
+
+**Words have forms, and they must not be words.** `Hunde` is a word a player types, so the first version put the forms (endings and umlauts, checked by how close their numbers are to the basic word: _Hund_ and _Hunde_ 0.72, _Haus_ and _Häuser_ 0.61) into the list of 30,000 words. A first round showed the flaw at once: with _Gehirn_ hidden, the third nearest word was _Gehirns_ (the genitive), right after _Nervensystem_. A form is the same word, so it should not take a place in the ranking, in the hints or in the list of the nearest words. Now the list has basic words only, and the forms are a separate file of about 20,000 entries that lead to their word: typing _Gehirns_ counts as typing _Gehirn_ (and finds it, if that is the hidden word). Without the forms taking a third of the places, the list also reaches further down the model, so more nouns became candidates. Two spellings of one word (_Straße_ and _Strasse_) are one word, and typing finds it either way, as `ae`, `oe`, `ue` and `ss` for the umlauts and the sharp s.
+
+**Which words may be hidden** was the hard part. OdeNet says which nouns are everyday things, but it is not always right: _Macht_ (power) has a sense of a starch, and _Hund_ has an insulting sense, which a strict check had thrown out. So two proofs work together. A noun has to be close to our own examples of things (animals, food, tools, vehicles and so on), and OdeNet may confirm it. One trick made the numbers separable: the commonest words share a direction in the vectors, which made _Welt_ and _Frau_ look as close to the examples as _Auto_. Taking the average of the words away before comparing moved the abstract words (_Seite_ 0.18, _Idee_ 0.22) away from the animals (_Katze_ 0.78, _Apfel_ 0.83). A first test of that scorer found that I had taken the average away twice. I then read through the list of candidates, twice because the second list was longer, and blocked about 550 words (sex and body fluids, illness, weapons, names, forms and words that are not a thing). 1,150 words can be hidden, fewer than the 1,510 of English, and a list in the repository says why each group is blocked.
+
+**Words that mean the same.** In the same round _Hirn_ was the fifth nearest word, and a player who types it has found the word. The numbers cannot say that two words are the same, they only say that they are close. OdeNet can: _Gehirn_ and _Hirn_ are words of one sense. But its senses are not always right. Among the synonyms it has for _Hund_ are _Arschloch_ and _Schwein_, for _Fahrrad_ a deer (_Hirsch_), for _Hase_ a bee. So a synonym counts only if it is a word of the list and at least 0.7 close to the hidden word in the numbers of the game, which kept out most of these. Of the pairs that were left, I read all and took out the ones that are wrong or too loose (_Birne_ and _Glühbirne_, _Kuchen_ and _Torte_, _Erdbeere_ and _Ananas_), and added a few that are right but not close enough (_Auto_ and _Wagen_). 136 hidden words have synonyms now (_Hirn_ for _Gehirn_, _Rad_ and _Velo_ for _Fahrrad_, _Couch_ for _Sofa_, _Lastwagen_ for _Lkw_). A synonym finds the hidden word with rank 1, and it is never given as a hint, which would end the round. A test with a small list found that my first test of this did not notice when I took that rule away.
+
+**What is not perfect.** The list of guesses still has a few names and places. I could not find a reliable way to tell them from common words by their numbers (the numbers of _Larry_ and _Frau_ overlap), and for guesses it does not matter much. The hidden words, where it does, were read through by hand.
+
+The German files are shared under **CC BY-SA 4.0**, because OdeNet and the Wiktionary require it. That is the one place where this repository is not all rights reserved, and it is said in `LICENSE`, in `THIRD_PARTY.md` and in a notice next to the files.
+
 ## Credits and what the tests protect
 
-The vectors are **GloVe** (6B tokens, 100 dimensions; Pennington, Socher and Manning, Stanford University; Public Domain Dedication and License), and the choice of the words uses **WordNet 3.0** (Princeton University; WordNet License). Both are credited in the repository.
+The English vectors are **GloVe** (6B tokens, 100 dimensions; Pennington, Socher and Manning, Stanford University; Public Domain Dedication and License), and the choice of the words uses **WordNet 3.0** (Princeton University; WordNet License). The German data comes from the **NLPL** vectors (Fares, Kutuzov, Oepen and Velldal, 2017), **OdeNet** (Siegel and Bond, 2021) and the **German Wiktionary**. All are credited in the repository.
 
 - The principal component analysis, the reading of WordNet and the choice of words (names, little words, abstract nouns, the blocklist) have unit tests with small samples in the real format.
 - The game logic: decoding and unit length, cosine similarity and ranking, a round (guesses, repeated and invalid words, winning), hints, giving up, the radar and the map.
 - The data: 30,000 different lower case words, the right size of the number file, enough hidden words that are in the list and not blocked, and the tests on meaning above.
+- The German pipeline: the reader of the 2 GB vector file (in any pieces), OdeNet, the forms of words, the choice of words and of the hidden ones, and the data itself (the same tests on meaning as for English: _König_ is closer to _Königin_ than to _Banane_, no blocked word is ever hidden, forms are valid guesses and never hidden).
 - In a real browser: a full round with the keyboard, the rank of a guess equal to the one in the data, hints, winning, giving up, accessibility checks, reduced motion, and a check that nothing on the page moves while you play.

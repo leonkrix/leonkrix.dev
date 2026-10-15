@@ -36,11 +36,40 @@
   --wr-color: var(--color-muted);
 }
 
+/* ---- The language switch (plain links above the game) ---- */
+
+.wr-lang {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.9rem;
+  max-width: 62rem;
+  margin: 0 auto 0.6rem;
+  font-size: 0.85rem;
+}
+
+/* The language that is played has an underline, nothing that changes the width of the word */
+.wr-lang a {
+  color: var(--color-muted);
+  text-decoration: underline transparent;
+  text-underline-offset: 0.3em;
+  transition: color 160ms ease;
+}
+
+.wr-lang a:hover,
+.wr-lang a[aria-current='true'] {
+  color: var(--color-fg);
+  text-decoration-color: var(--color-accent-2);
+}
+
 /* ---- The field and the message ---- */
 
 .wr-form {
   display: flex;
   gap: 0.5rem;
+}
+
+.wr-form button {
+  min-width: 5.5rem;
 }
 
 .wr-input {

@@ -9,7 +9,7 @@ Phases 0 to 4b are done and merged: tooling and CI, content, the contact form, t
 Next, in this order (decided with Leon on 2026-10-14):
 
 1. ~~`/uses` page~~ **done 2026-10-15** (Phase 5).
-2. **Word Radar in German** (4.7): a language switch on the same page; the licence of the German data is still open.
+2. ~~Word Radar in German~~ (4.7) **built 2026-10-15**, waiting for Leon's look: a language switch on the same page, German data under CC BY-SA 4.0 (see 4.7).
 3. **Command palette with a terminal mode, the easter eggs and `security.txt`** (Phase 5).
 4. **Own OG images per page and an Atom feed of the notes** (Phase 5).
 5. **The network game** (4.5), last: a concept note with Leon comes first.
@@ -260,15 +260,15 @@ Leon wants a game from the networking side too, **in addition to** the Outage sk
 - [x] Playground polish: animated tile previews for all four games, Lighthouse budgets for every game page (and the notes), the live check reads the game pages from the sitemap, the READMEs and CLAUDE.md follow every game, the project card of this site points to the Playground and to the notes. Whether the About text should mention the Playground is Leon's call
 - [ ] Legal review of the whole site: see Phase 2 ("Review the legal texts"), it is one item
 
-### 4.7 Word Radar in German (decided 2026-10-14, not started)
+### 4.7 Word Radar in German (decided 2026-10-14, built 2026-10-15)
 
 Only Word Radar gets a German version, as a **language switch on the same page** (through the address, for example `?lang=de`, nothing is stored; English stays the default). The point is to show the same pipeline with a second dictionary and a second set of word vectors, and a note about what changes in another language: compound words, inflected forms, umlauts. The other games stay English only (the decision of 2026-10-08 stays, with this one exception).
 
-- [ ] **Licences first.** Check them at the source and look for a source without share-alike. What is known: OdeNet (the open German WordNet) is CC BY-SA 4.0; GermaNet is not open and is out; the related fastText sets are CC BY-SA 3.0 but the licence of `cc.de.300` itself is not confirmed; the licence of deepset's German GloVe vectors was not found. Leon's wish: an open licence, or everything stays all rights reserved. If neither exists, **share-alike for the German data folder only** is acceptable (own licence line, attribution, change notice, entry in `THIRD_PARTY.md`; code, texts and design stay all rights reserved). Have it looked at in the legal review
-- [ ] **Data pipeline** for German in `scripts/word-radar/`: a vocabulary of ordinary words in their basic form (a rule for inflected forms such as Hund and Hunde), the vectors reduced the same way (PCA to 64 numbers, bytes), the hidden words chosen from the dictionary relations (OdeNet has no WordNet style kinds, so they have to be derived from the hypernyms), a blocklist
-- [ ] **Game:** the switch (address and a link in the game), all texts of the interface in both languages (about 50 strings), input normalisation (umlauts, ß, case), the data fetched per language, skeleton and layout guard unchanged
-- [ ] **Tests:** data tests with German meaning checks (König closer to Königin than to Banane and so on), an end-to-end round in German, axe; the privacy test and the live check need nothing new (nothing is stored)
-- [ ] **Note:** extend the Word Radar note or write a second one about the two languages
+- [x] **Licences first** (done 2026-10-15, decided with Leon: share-alike for the German data folder only is acceptable). Result: the vectors are NLPL model 45 (German CoNLL17 corpus, **CC BY 4.0**, no share-alike); fastText `cc.de.300` is CC BY-SA 3.0, the German GloVe of deepset has no findable licence, devmount's model names MIT for the code only, so they were not used. The dictionary role is OdeNet 1.4 (**CC BY-SA 4.0**) plus the page titles of the German Wiktionary (CC BY-SA 4.0), because OdeNet alone lacks common words (Kuh, Honig, Spiegel, Schulter). So `data/de/vocabulary.txt` and `secrets.txt` are share-alike, the numbers are CC BY 4.0 inside a CC BY-SA 4.0 collection; the files carry a notice (`data/de/NOTICE.md`), `THIRD_PARTY.md` and `LICENSE` name the exception. **Still to do in the legal review:** look at this once. Original text of this item: Check them at the source and look for a source without share-alike. What is known: OdeNet (the open German WordNet) is CC BY-SA 4.0; GermaNet is not open and is out; the related fastText sets are CC BY-SA 3.0 but the licence of `cc.de.300` itself is not confirmed; the licence of deepset's German GloVe vectors was not found. Leon's wish: an open licence, or everything stays all rights reserved. If neither exists, **share-alike for the German data folder only** is acceptable (own licence line, attribution, change notice, entry in `THIRD_PARTY.md`; code, texts and design stay all rights reserved). Have it looked at in the legal review
+- [x] **Data pipeline** for German (done, `pnpm word-radar-data-de`; 30,000 basic words, about 20,000 inflected forms as shortcuts to their word (typing Hunde counts as Hund), 1,150 hidden words of which 136 have synonyms that find the word (Hirn for Gehirn), the lists of blocked words and corrected synonyms read through by hand; see the README of the game for the steps and the known limits). Original plan: in `scripts/word-radar/`: a vocabulary of ordinary words in their basic form (a rule for inflected forms such as Hund and Hunde), the vectors reduced the same way (PCA to 64 numbers, bytes), the hidden words chosen from the dictionary relations (OdeNet has no WordNet style kinds, so they have to be derived from the hypernyms), a blocklist
+- [x] **Game:** the switch (done; `?lang=de`, two plain links above the game, one component with `logic/texts.ts` for both languages). Original plan: (address and a link in the game), all texts of the interface in both languages (about 50 strings), input normalisation (umlauts, ß, case), the data fetched per language, skeleton and layout guard unchanged
+- [x] **Tests** (done: unit tests of the pipeline, language and data tests, `tests/e2e/word-radar-de.spec.ts`). Original plan: data tests with German meaning checks (König closer to Königin than to Banane and so on), an end-to-end round in German, axe; the privacy test and the live check need nothing new (nothing is stored)
+- [x] **Note** (done: a section "And in German" in the Word Radar note, with what broke). Original plan: extend the Word Radar note or write a second one about the two languages
 - Estimate: one to two days, most of it for the list of hidden words.
 
 ### Open decisions (to settle with Leon while building)
@@ -313,7 +313,7 @@ Both parts are done and merged. After them comes Phase 5 (see "Where we are" at 
 - Final palette tuning (see CLAUDE.md tokens; status green `#34d399` was added for the availability dot)
 - Decided on 2026-10-08 (games): see Phase 4, "Decisions (settled)" and "Open decisions"
 - Commitlint and PR title check: decided on 2026-10-14, not now (see Phase 1b)
-- Licence of the German data files for Word Radar (4.7): open, to be checked at the source first; share-alike for the data folder only is acceptable if nothing freer exists
+- Licence of the German data files for Word Radar (4.7): **settled 2026-10-15**, CC BY-SA 4.0 for the two word lists (nothing freer exists for the dictionary role), CC BY 4.0 for the vectors; to look at in the legal review
 - Scope of the command palette (navigation only, or also search of the notes): to be confirmed with Leon when it is built
 
 ## Routine (not projects, but not to forget)
