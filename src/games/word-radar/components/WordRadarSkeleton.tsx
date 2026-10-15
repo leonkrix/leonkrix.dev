@@ -1,3 +1,7 @@
+import { type Language } from '../logic/language';
+import { texts } from '../logic/texts';
+import SwapLabel from './SwapLabel';
+
 /**
  * The game before its words are there: the same boxes as the game (the field, the message, the
  * radar and the list, the buttons, the space for the result) with nothing in them and controls
@@ -7,37 +11,40 @@
  * layout guard of the end-to-end tests finds out when it differs.
  */
 export default function WordRadarSkeleton({
-  message = 'Loading the words (about 2 MB)...',
+  language = 'en',
+  message,
 }: {
+  language?: Language;
   message?: string;
 }) {
+  const t = texts[language];
   return (
-    <div className="wr" data-skeleton>
+    <div className="wr" data-skeleton lang={language}>
       <form className="wr-form">
         <input
           className="wr-input"
           type="text"
           disabled
-          placeholder="Type a word and press Enter"
-          aria-label="Your guess"
+          placeholder={t.placeholder}
+          aria-label={t.guessLabel}
         />
         <button type="submit" disabled data-primary>
-          Guess
+          {t.guessButton}
         </button>
       </form>
 
       <p className="wr-message" role="status">
-        {message}
+        {message ?? t.loading}
       </p>
 
       <div className="wr-main">
-        <section className="wr-panel wr-radar-panel" aria-label="Radar">
-          <div className="wr-switch" role="group" aria-label="Picture">
+        <section className="wr-panel wr-radar-panel" aria-label={t.radarSection}>
+          <div className="wr-switch" role="group" aria-label={t.pictureGroup}>
             <button type="button" aria-pressed="true" disabled>
-              Radar
+              {t.radar}
             </button>
             <button type="button" aria-pressed="false" disabled>
-              Map
+              {t.map}
             </button>
           </div>
           <svg
@@ -50,13 +57,13 @@ export default function WordRadarSkeleton({
           </svg>
         </section>
 
-        <section className="wr-panel wr-list-panel" aria-label="Guesses">
-          <div className="wr-switch" role="group" aria-label="List">
+        <section className="wr-panel wr-list-panel" aria-label={t.guessesSection}>
+          <div className="wr-switch" role="group" aria-label={t.listGroup}>
             <button type="button" aria-pressed="true" disabled>
-              Your guesses (0)
+              {t.yourGuesses(0)}
             </button>
             <button type="button" aria-pressed="false" disabled>
-              Nearest words
+              {t.nearestWords}
             </button>
           </div>
           <div className="wr-latest" aria-hidden="true" />
@@ -66,16 +73,16 @@ export default function WordRadarSkeleton({
 
       <div className="wr-tools">
         <button type="button" disabled>
-          Hint
+          {t.hint(0)}
         </button>
         <button type="button" disabled>
-          Give up
+          <SwapLabel shown={t.giveUp} other={t.reallyGiveUp} />
         </button>
         <button type="button" disabled>
-          New round
+          {t.newRound}
         </button>
         <button type="button" disabled>
-          Copy link to this round
+          {t.copyLink}
         </button>
       </div>
 

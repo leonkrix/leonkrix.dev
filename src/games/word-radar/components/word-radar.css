@@ -6,6 +6,10 @@
 .wr {
   --wr-color: var(--color-muted);
   display: grid;
+  /* One column that is exactly as wide as the game: without it the column is as wide as the widest
+     content (the field of the form wants about 250 px), which pushed the game out of the screen on
+     a phone of 320 px and made the boxes below depend on the width of the letters */
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
   max-width: 62rem;
   margin-inline: auto;
@@ -36,11 +40,40 @@
   --wr-color: var(--color-muted);
 }
 
+/* ---- The language switch (plain links above the game) ---- */
+
+.wr-lang {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.9rem;
+  max-width: 62rem;
+  margin: 0 auto 0.6rem;
+  font-size: 0.85rem;
+}
+
+/* The language that is played has an underline, nothing that changes the width of the word */
+.wr-lang a {
+  color: var(--color-muted);
+  text-decoration: underline transparent;
+  text-underline-offset: 0.3em;
+  transition: color 160ms ease;
+}
+
+.wr-lang a:hover,
+.wr-lang a[aria-current='true'] {
+  color: var(--color-fg);
+  text-decoration-color: var(--color-accent-2);
+}
+
 /* ---- The field and the message ---- */
 
 .wr-form {
   display: flex;
   gap: 0.5rem;
+}
+
+.wr-form button {
+  min-width: 5.5rem;
 }
 
 .wr-input {
@@ -71,7 +104,7 @@
 .wr-message {
   display: flex;
   align-items: center;
-  /* Two lines on a wide screen, four on a narrow one, so that no message moves anything */
+  /* Two lines on a wide screen, five on a narrow one (the German texts are longer), so that no message moves anything */
   min-height: 2.9rem;
   padding-inline: 0.2rem;
   font-size: 0.9rem;
@@ -94,7 +127,7 @@
 
 @media (max-width: 40rem) {
   .wr-message {
-    min-height: 4.9rem;
+    min-height: 6.4rem;
   }
 }
 
@@ -166,6 +199,19 @@
 .wr button:disabled {
   opacity: 0.45;
   cursor: default;
+}
+
+/* A label that changes ("Give up", "Really give up?"): both texts in one place, the other one invisible */
+.wr-swap {
+  display: grid;
+}
+
+.wr-swap > * {
+  grid-area: 1 / 1;
+}
+
+.wr-swap > :last-child {
+  visibility: hidden;
 }
 
 .wr button[data-primary] {
@@ -432,6 +478,16 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
   gap: 0.5rem;
+}
+
+/* A label can take two lines in a narrow column, and how soon it does depends on the language and
+   on the width of the letters (the server draws the skeleton in English, the German game replaces
+   it). So every button is as high as two lines on every screen where that can happen, and nothing
+   moves when a label wraps or does not. The buttons are also easier to hit. */
+@media (max-width: 66rem) {
+  .wr-tools button {
+    min-height: 3.5rem;
+  }
 }
 
 .wr-end {

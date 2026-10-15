@@ -25,7 +25,7 @@ src/games/<slug>/
 
 ## Rules in short
 
-- English only, unlimited play, no daily mode, **nothing stored on the device** (no cookies, `localStorage`, `sessionStorage`, IndexedDB, cache storage). The site-wide storage guard fails the build otherwise.
+- English only (the one exception is Word Radar, which also has a German version, see its README), unlimited play, no daily mode, **nothing stored on the device** (no cookies, `localStorage`, `sessionStorage`, IndexedDB, cache storage). The site-wide storage guard fails the build otherwise.
 - Own names, own art, own texts. Data sources go into [THIRD_PARTY.md](../../THIRD_PARTY.md) with their license.
 - Keyboard playable, results announced to screen readers, never color alone, reduced motion honored.
 - The home page loads no game JavaScript. A game page loads React and its data on its own page only. Big data is split into files that are fetched when they are needed (Link Up: only the files of the four categories of a puzzle).

@@ -1,4 +1,5 @@
 import { hashSeed } from '../../shared/random';
+import { type Language } from './language';
 
 /**
  * A seed written in the address (?seed=anything). Digits are the seed itself, which is what the
@@ -13,7 +14,8 @@ export function parseSeed(search: string, freshSeed: () => number): number {
   return /^\d{1,10}$/.test(text) ? Number(text) >>> 0 : hashSeed(text);
 }
 
-/** The address that opens the very same round (the same hidden word). */
-export function buildRoundUrl(pageUrl: string, seed: number): string {
-  return `${pageUrl}?seed=${String(seed >>> 0)}`;
+/** The address that opens the very same round (the same hidden word), in the same language. */
+export function buildRoundUrl(pageUrl: string, seed: number, language: Language = 'en'): string {
+  const lang = language === 'en' ? '' : `lang=${language}&`;
+  return `${pageUrl}?${lang}seed=${String(seed >>> 0)}`;
 }

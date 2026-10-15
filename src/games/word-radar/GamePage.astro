@@ -3,8 +3,10 @@
 // server and the game itself use the same ones, which are sent once
 import './components/word-radar.css';
 
+import ExternalLink from '@/components/ExternalLink.astro';
 import { type GameDefinition } from '@/games/registry';
 import GameLayout from '@/layouts/GameLayout.astro';
+import { siteConfig } from '@/lib/site';
 
 import WordRadar from './components/WordRadar';
 import WordRadarSkeleton from './components/WordRadarSkeleton';
@@ -17,14 +19,26 @@ const { game } = Astro.props;
 ---
 
 <GameLayout game={game}>
-  {/* Starts fetching the words (about 2 MB) while the game itself is still loading */}
+  {/* Starts fetching the words (about 2 MB) while the game itself is still loading, and marks the language that is played */}
   <script>
     import { loadWordData } from './data/load';
+    import { parseLanguage } from './logic/language';
 
-    loadWordData().catch(() => {
+    const language = parseLanguage(window.location.search);
+    loadWordData(language).catch(() => {
       // The game shows the error itself
     });
+    document.querySelector(`[data-wr-lang="${language}"]`)?.setAttribute('aria-current', 'true');
   </script>
+  {/* The language is chosen by the address, so these are plain links (they work before the game has loaded) */}
+  <nav class="wr-lang" aria-label="Language, Sprache">
+    <a href="?lang=en" lang="en" hreflang="en" data-wr-lang="en">
+      English
+    </a>
+    <a href="?lang=de" lang="de" hreflang="de" data-wr-lang="de">
+      Deutsch
+    </a>
+  </nav>
   {/* Rendered in the browser only: the hidden word is random */}
   <WordRadar client:only="react">
     <WordRadarSkeleton slot="fallback" />
@@ -66,6 +80,13 @@ const { game } = Astro.props;
       <em>dot</em> is. Only words from the word list work; if a word is refused, try the singular or
       another form. Rounds are unlimited and nothing is saved. The link of a round opens the same
       hidden word for whoever you send it to.
+    </p>
+    <p>
+      Word Radar also speaks German: choose <em lang="de">Deutsch</em> above the game. The words are
+      German then, nouns are written with a capital letter (you can type in any case), a form such
+      as <em lang="de">Hunde</em> counts as its word <em lang="de">Hund</em>, a word that means the
+      same as the hidden word (<em lang="de">Hirn</em> for <em lang="de">Gehirn</em>) finds it, and
+      ä, ö, ü and ß can be typed as ae, oe, ue and ss.
     </p>
   </div>
 
@@ -116,6 +137,25 @@ const { game } = Astro.props;
       pure TypeScript functions with unit tests; the data has tests, too (for example that{' '}
       <em>king</em> is closer to <em>queen</em> than to <em>banana</em>). Nothing is sent anywhere
       and nothing is stored on your device.
+    </p>
+    <p>
+      The German version is the same pipeline with other data: word vectors of the NLPL repository
+      (trained on the German CoNLL17 corpus), the Open German WordNet (<strong>OdeNet</strong>) and
+      the page titles of the German Wiktionary to decide which words exist and how they are written.
+      German changes three things. Nouns are written with a capital letter, but the vectors are all
+      lower case, so the capitals come from the word lists. Words have many forms (
+      <em lang="de">Hund</em>, <em lang="de">Hunde</em>, <em lang="de">Hundes</em>): the list has
+      basic words only, and a form typed counts as its word. The hidden word can also be found by a
+      word that means the same, which comes from the Open German WordNet and has to be close in the
+      numbers, too. And compounds such as <em lang="de">Hundehütte</em> are one word, which makes
+      the list longer. The hidden words are nouns for everyday things, chosen by their numbers (they
+      have to be close to examples such as animals, food or tools) and checked against OdeNet and by
+      hand. Only the files of the language you play are loaded. The German word lists and numbers
+      are shared under CC BY-SA 4.0, with the credits in{' '}
+      <ExternalLink href={`${siteConfig.repo}/blob/main/src/games/word-radar/data/de/NOTICE.md`}>
+        the notice of the data
+      </ExternalLink>
+      .
     </p>
   </div>
 </GameLayout>

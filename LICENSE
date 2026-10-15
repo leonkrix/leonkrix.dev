@@ -6,3 +6,8 @@ modification, distribution or any other reuse without prior written
 permission from the copyright holder.
 
 Third-party dependencies and assets remain under their respective licenses.
+
+One exception: the word lists and numbers of the German version of Word Radar
+(src/games/word-radar/data/de/) are shared under the Creative Commons
+Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0), because the
+data sets they are made from require it. See src/games/word-radar/data/de/NOTICE.md.

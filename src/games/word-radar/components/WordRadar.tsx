@@ -3,6 +3,7 @@ import { type CSSProperties, type SubmitEvent, useEffect, useMemo, useRef, useSt
 import { freshSeed } from '../../shared/random';
 import { loadWordData } from '../data/load';
 import { type WordData } from '../logic/data';
+import { type Language, locales, parseLanguage } from '../logic/language';
 import { buildRoundUrl, parseSeed } from '../logic/link';
 import { bucketOf, closenessOf, radarPlane } from '../logic/radar';
 import {
@@ -15,8 +16,10 @@ import {
   startRound,
   takeHint,
 } from '../logic/round';
+import { type Texts, texts } from '../logic/texts';
 import MapView from './MapView';
 import RadarView from './RadarView';
+import SwapLabel from './SwapLabel';
 import WordRadarSkeleton from './WordRadarSkeleton';
 
 const NEAREST_COUNT = 40;
@@ -26,21 +29,31 @@ interface Note {
   tone: 'neutral' | 'good' | 'warn';
 }
 
-const describe = (guess: Guess, prefix = ''): string =>
-  `${prefix}${guess.word}: rank ${guess.rank.toLocaleString('en-US')}, ${bucketOf(guess.rank).label.toLowerCase()}`;
-
 /** One word with its rank, a bar for how close it is, and a label that says it in words. */
-function Row({ guess, size, mark }: { guess: Guess; size: number; mark?: string | undefined }) {
+function Row({
+  guess,
+  size,
+  t,
+  locale,
+  mark,
+}: {
+  guess: Guess;
+  size: number;
+  t: Texts;
+  locale: string;
+  mark?: string | undefined;
+}) {
   const bucket = bucketOf(guess.rank);
   return (
     <>
       <span className="wr-word">
         {guess.word}
-        {guess.hint && <span className="wr-tag">hint</span>}
+        {guess.hint && <span className="wr-tag">{t.tagHint}</span>}
+        {guess.synonym && <span className="wr-tag">{t.tagSynonym}</span>}
         {mark !== undefined && <span className="wr-tag">{mark}</span>}
       </span>
-      <span className="wr-rank">{guess.rank.toLocaleString('en-US')}</span>
-      <span className="wr-bucket">{bucket.label}</span>
+      <span className="wr-rank">{guess.rank.toLocaleString(locale)}</span>
+      <span className="wr-bucket">{t.bucket[bucket.id]}</span>
       <span
         className="wr-bar"
         style={{ '--fill': closenessOf(guess.rank, size).toFixed(3) } as CSSProperties}
@@ -52,6 +65,9 @@ function Row({ guess, size, mark }: { guess: Guess; size: number; mark?: string 
 
 /** The game itself, once the words are loaded. */
 function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
+  const language = data.language;
+  const t = texts[language];
+  const locale = locales[language];
   const [seed, setSeed] = useState(initialSeed);
   const [round, setRound] = useState<Round>(() => startRound(data, pickSecret(data, initialSeed)));
   const [text, setText] = useState('');
@@ -77,6 +93,9 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
     () => (over ? nearestWords(round, data, NEAREST_COUNT) : []),
     [over, round, data],
   );
+
+  const describe = (guess: Guess, prefix = ''): string =>
+    `${prefix}${t.described(guess.word, guess.rank.toLocaleString(locale), t.bucket[bucketOf(guess.rank).id].toLowerCase())}`;
 
   // Put the cursor in the field, unless the device has a touch screen (it would open the keyboard)
   useEffect(() => {
@@ -113,29 +132,34 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
         setRound(result.round);
         setLatest(result.guess);
         setText('');
-        setNote(
-          result.round.status === 'won'
-            ? {
-                text: `Found it! The word is ${result.guess.word}, after ${String(result.round.guesses.length)} ${result.round.guesses.length === 1 ? 'guess' : 'guesses'}.`,
-                tone: 'good',
-              }
-            : { text: describe(result.guess), tone: 'neutral' },
-        );
+        {
+          // Hunde counts as Hund, and Hirn means the same as Gehirn
+          const guesses = result.round.guesses.length;
+          let message: string;
+          if (result.round.status === 'won') {
+            message = result.guess.synonym
+              ? t.foundSynonym(text.trim(), secretWord, guesses)
+              : result.form === undefined
+                ? t.found(result.guess.word, guesses)
+                : t.foundByForm(result.form, result.guess.word, guesses);
+          } else {
+            message =
+              (result.form === undefined ? '' : t.viaForm(result.form)) + describe(result.guess);
+          }
+          setNote({ text: message, tone: result.round.status === 'won' ? 'good' : 'neutral' });
+        }
         break;
       case 'duplicate':
         setNote({
-          text: `You tried ${result.guess.word} already: rank ${result.guess.rank.toLocaleString('en-US')}.`,
+          text: t.duplicate(result.guess.word, result.guess.rank.toLocaleString(locale)),
           tone: 'warn',
         });
         break;
       case 'unknown':
-        setNote({
-          text: `${result.word} is not in the word list. Try another word, or a simpler form such as the singular.`,
-          tone: 'warn',
-        });
+        setNote({ text: t.unknown(result.word), tone: 'warn' });
         break;
       case 'invalid':
-        setNote({ text: 'Type one word, with letters only.', tone: 'warn' });
+        setNote({ text: t.invalid, tone: 'warn' });
         break;
       case 'over':
         break;
@@ -145,12 +169,12 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
   const hint = (): void => {
     const result = takeHint(round, data);
     if (result === null) {
-      setNote({ text: 'There is no closer hint left. Keep guessing!', tone: 'warn' });
+      setNote({ text: t.noHint, tone: 'warn' });
       return;
     }
     setRound(result.round);
     setLatest(result.guess);
-    setNote({ text: describe(result.guess, 'Hint: '), tone: 'neutral' });
+    setNote({ text: describe(result.guess, t.hintPrefix), tone: 'neutral' });
     inputRef.current?.focus({ preventScroll: true });
   };
 
@@ -161,7 +185,7 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
     }
     setConfirming(false);
     setRound(giveUp(round));
-    setNote({ text: `The word was ${secretWord}.`, tone: 'neutral' });
+    setNote({ text: t.wordWas(secretWord), tone: 'neutral' });
   };
 
   const restart = (): void => {
@@ -182,19 +206,23 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
   };
 
   const copyLink = (): void => {
-    const url = buildRoundUrl(`${window.location.origin}${window.location.pathname}`, seed);
+    const url = buildRoundUrl(
+      `${window.location.origin}${window.location.pathname}`,
+      seed,
+      language,
+    );
     navigator.clipboard.writeText(url).then(
       () => {
-        setNote({ text: 'Link to this round copied.', tone: 'neutral' });
+        setNote({ text: t.linkCopied, tone: 'neutral' });
       },
       () => {
-        setNote({ text: 'Copying was not possible.', tone: 'warn' });
+        setNote({ text: t.copyFailed, tone: 'warn' });
       },
     );
   };
 
   return (
-    <div className="wr" data-over={over || undefined}>
+    <div className="wr" data-over={over || undefined} lang={language}>
       <form className="wr-form" onSubmit={submit}>
         <input
           ref={inputRef}
@@ -209,10 +237,10 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
               setText('');
             }
           }}
-          placeholder={over ? 'The round is over' : 'Type a word and press Enter'}
-          aria-label="Your guess"
+          placeholder={over ? t.placeholderOver : t.placeholder}
+          aria-label={t.guessLabel}
           disabled={over}
-          maxLength={20}
+          maxLength={30}
           autoComplete="off"
           autoCapitalize="off"
           autoCorrect="off"
@@ -220,20 +248,17 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
           enterKeyHint="go"
         />
         <button type="submit" disabled={over || text.trim() === ''} data-primary>
-          Guess
+          {t.guessButton}
         </button>
       </form>
 
       <p className="wr-message" role="status" data-tone={note?.tone}>
-        {note?.text ??
-          (round.guesses.length === 0
-            ? 'Find the hidden word. The closer a guess is in meaning, the lower its rank: rank 1 is the word itself.'
-            : '')}
+        {note?.text ?? (round.guesses.length === 0 ? t.intro : '')}
       </p>
 
       <div className="wr-main">
-        <section className="wr-panel wr-radar-panel" aria-label="Radar">
-          <div className="wr-switch" role="group" aria-label="Picture">
+        <section className="wr-panel wr-radar-panel" aria-label={t.radarSection}>
+          <div className="wr-switch" role="group" aria-label={t.pictureGroup}>
             <button
               type="button"
               aria-pressed={view === 'radar'}
@@ -241,18 +266,18 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
                 setChosenView('radar');
               }}
             >
-              Radar
+              {t.radar}
             </button>
             <button
               type="button"
               aria-pressed={view === 'map'}
               disabled={!over}
-              title={over ? undefined : 'The map is shown when the round is over'}
+              title={over ? undefined : t.mapLocked}
               onClick={() => {
                 setChosenView('map');
               }}
             >
-              Map
+              {t.map}
             </button>
           </div>
           {view === 'radar' ? (
@@ -269,8 +294,8 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
           )}
         </section>
 
-        <section className="wr-panel wr-list-panel" aria-label="Guesses">
-          <div className="wr-switch" role="group" aria-label="List">
+        <section className="wr-panel wr-list-panel" aria-label={t.guessesSection}>
+          <div className="wr-switch" role="group" aria-label={t.listGroup}>
             <button
               type="button"
               aria-pressed={list === 'guesses'}
@@ -278,24 +303,24 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
                 setChosenList('guesses');
               }}
             >
-              Your guesses ({round.guesses.length})
+              {t.yourGuesses(round.guesses.length)}
             </button>
             <button
               type="button"
               aria-pressed={list === 'nearest'}
               disabled={!over}
-              title={over ? undefined : 'The nearest words are shown when the round is over'}
+              title={over ? undefined : t.nearestLocked}
               onClick={() => {
                 setChosenList('nearest');
               }}
             >
-              Nearest words
+              {t.nearestWords}
             </button>
           </div>
           <div className="wr-latest" aria-hidden={latest === null || undefined}>
             {list === 'guesses' && latest !== null && (
               <div className="wr-row" data-bucket={bucketOf(latest.rank).id} data-latest>
-                <Row guess={latest} size={size} mark="latest" />
+                <Row guess={latest} size={size} t={t} locale={locale} mark={t.tagLatest} />
               </div>
             )}
           </div>
@@ -305,11 +330,7 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
             className="wr-list"
             data-layout-fluid
             tabIndex={0}
-            aria-label={
-              list === 'guesses'
-                ? 'Guesses made so far, closest first'
-                : 'The words nearest to the hidden word'
-            }
+            aria-label={list === 'guesses' ? t.guessesList : t.nearestList}
           >
             {list === 'guesses'
               ? sorted.map((guess) => (
@@ -319,7 +340,7 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
                     data-bucket={bucketOf(guess.rank).id}
                     data-latest={latest?.index === guess.index || undefined}
                   >
-                    <Row guess={guess} size={size} />
+                    <Row guess={guess} size={size} t={t} locale={locale} />
                   </li>
                 ))
               : nearest.map((guess) => (
@@ -327,9 +348,11 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
                     <Row
                       guess={guess}
                       size={size}
+                      t={t}
+                      locale={locale}
                       mark={
                         round.guesses.some((entry) => entry.index === guess.index)
-                          ? 'you'
+                          ? t.tagYou
                           : undefined
                       }
                     />
@@ -342,7 +365,7 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
 
       <div className="wr-tools">
         <button type="button" onClick={hint} disabled={over}>
-          Hint{hints > 0 ? ` (${String(hints)})` : ''}
+          {t.hint(hints)}
         </button>
         <button
           type="button"
@@ -350,13 +373,16 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
           disabled={over}
           data-confirming={confirming || undefined}
         >
-          {confirming ? 'Really give up?' : 'Give up'}
+          <SwapLabel
+            shown={confirming ? t.reallyGiveUp : t.giveUp}
+            other={confirming ? t.giveUp : t.reallyGiveUp}
+          />
         </button>
         <button type="button" onClick={restart} data-primary={over || undefined}>
-          New round
+          {t.newRound}
         </button>
         <button type="button" onClick={copyLink}>
-          Copy link to this round
+          {t.copyLink}
         </button>
       </div>
 
@@ -365,12 +391,10 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
         {over && (
           <div className="wr-result" ref={resultRef} tabIndex={-1} data-status={round.status}>
             <h2>
-              {round.status === 'won' ? 'Found it!' : 'The word was'} <strong>{secretWord}</strong>
+              {round.status === 'won' ? t.foundTitle : t.wasTitle} <strong>{secretWord}</strong>
             </h2>
             <p>
-              {round.status === 'won'
-                ? `${String(round.guesses.length)} ${round.guesses.length === 1 ? 'guess' : 'guesses'}${hints > 0 ? `, ${String(hints)} ${hints === 1 ? 'hint' : 'hints'}` : ''}.`
-                : 'The map shows your guesses, the list the nearest words.'}
+              {round.status === 'won' ? t.summary(round.guesses.length, hints) : t.gaveUpSummary}
             </p>
           </div>
         )}
@@ -381,15 +405,16 @@ function Board({ data, initialSeed }: { data: WordData; initialSeed: number }) {
 
 /**
  * Word Radar: find a hidden word by how close your guesses are in meaning. The words and their
- * numbers (about 2 MB) are fetched when the page opens.
+ * numbers (about 2 MB) are fetched when the page opens, in the language of the address.
  */
 export default function WordRadar() {
   const [data, setData] = useState<WordData | null>(null);
   const [failed, setFailed] = useState(false);
+  const [language] = useState<Language>(() => parseLanguage(window.location.search));
   const [seed] = useState(() => parseSeed(window.location.search, freshSeed));
   useEffect(() => {
     let current = true;
-    loadWordData().then(
+    loadWordData(language).then(
       (loaded) => {
         if (current) {
           setData(loaded);
@@ -404,16 +429,13 @@ export default function WordRadar() {
     return () => {
       current = false;
     };
-  }, []);
+  }, [language]);
 
   if (data === null) {
     return (
       <WordRadarSkeleton
-        message={
-          failed
-            ? 'The words could not be loaded. Please reload the page.'
-            : 'Loading the words (about 2 MB)...'
-        }
+        language={language}
+        message={failed ? texts[language].loadFailed : texts[language].loading}
       />
     );
   }
