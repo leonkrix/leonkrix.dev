@@ -25,12 +25,15 @@ import { availability } from '@/lib/site';
   </p>
 
   {PUBLIC_CONTACT_FORM && (
-    <div class="reveal md:col-start-2 md:row-span-2 md:row-start-1">
+    <div data-radar="Contact form" class="reveal md:col-start-2 md:row-span-2 md:row-start-1">
       <ContactForm />
     </div>
   )}
 
-  <div class:list={['reveal md:col-start-1 md:row-start-2', !PUBLIC_CONTACT_FORM && 'mt-8']}>
+  <div
+    data-radar="Email, GitHub and LinkedIn"
+    class:list={['reveal md:col-start-1 md:row-start-2', !PUBLIC_CONTACT_FORM && 'mt-8']}
+  >
     <p class="mb-3 text-sm text-muted">
       {PUBLIC_CONTACT_FORM ? 'Or reach me directly' : 'You can reach me here'}
     </p>

@@ -10,7 +10,7 @@ interface Props {
 const { games, level } = Astro.props;
 ---
 
-<ul class="grid gap-6 sm:grid-cols-2">
+<ul data-radar="The games" class="grid gap-6 sm:grid-cols-2">
   {games.map((game) => (
     <li class="reveal">
       <GameTile game={game} level={level} />

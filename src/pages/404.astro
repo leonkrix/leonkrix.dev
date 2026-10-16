@@ -17,6 +17,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
       <!-- A real terminal when JavaScript runs (the same commands as the palette); the lines stay as a picture without. The log scrolls, so it can take the focus (axe: scrollable-region-focusable). -->
       <div
         data-terminal
+        data-radar="The terminal"
         class="edge mt-[clamp(1.25rem,4dvh,2.5rem)] rounded-xl border border-border bg-surface/60 p-5 font-mono text-sm leading-relaxed"
       >
         <div
@@ -54,6 +55,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 
       <a
         href="/"
+        data-radar="Back to the home page"
         class="btn-primary mt-[clamp(1.25rem,3dvh,2rem)] inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-medium"
       >
         Back to home
@@ -95,9 +97,9 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
                 case 'close':
                   window.location.assign('/');
                   break;
-                case 'sweep':
-                  void import('@/scripts/sweep').then(({ runSweep }) => {
-                    runSweep();
+                case 'radar':
+                  void import('@/scripts/radar').then(({ runRadar }) => {
+                    runRadar();
                   });
                   break;
                 case 'copy-email':

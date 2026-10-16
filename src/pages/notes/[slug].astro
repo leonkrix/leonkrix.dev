@@ -61,6 +61,7 @@ const game = games.find((one) => one.slug === entry.data.game && one.status === 
             <li>
               <a
                 href={gamePath(game.slug)}
+                data-radar={`Play ${game.name}`}
                 class="btn-primary inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium"
               >
                 <Icon name="lucide:play" class="size-4" />
@@ -72,6 +73,7 @@ const game = games.find((one) => one.slug === entry.data.game && one.status === 
             <li>
               <ExternalLink
                 href={`${siteConfig.repo}/tree/main/${code}`}
+                data-radar="The code on GitHub"
                 class="btn-outline inline-flex items-center gap-2 rounded-lg px-4 py-2 text-fg"
               >
                 <Icon name="simple-icons:github" class="size-4" />

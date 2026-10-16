@@ -77,7 +77,7 @@ describe('palette.json', () => {
 });
 
 describe('what a page carries of the palette', () => {
-  it('never links the styles or the code of the palette, the terminal and the sweep', async () => {
+  it('never links the styles or the code of the palette, the terminal and the radar', async () => {
     const pages = await readPages();
     expect(pages.length).toBeGreaterThan(5);
     for (const { file, html } of pages) {
@@ -87,9 +87,22 @@ describe('what a page carries of the palette', () => {
       );
       for (const link of links) {
         expect(link, `${file} loads ${link} with the page`).not.toMatch(
-          /palette-ui|terminal-ui|sweep|\/palette\.[^/]*\.css/,
+          /\/(palette-ui|terminal-ui|radar|palette|terminal)\.[^/]*\.(js|css)$/,
         );
       }
+    }
+  });
+
+  it('marks something for the radar on every page, with a label of its own', async () => {
+    const pages = await readPages();
+    for (const { file, html } of pages) {
+      const labels = [...html.matchAll(/data-radar="([^"]*)"/g)].map((match) => match[1] ?? '');
+      expect(labels.length, `${file} has nothing for the radar`).toBeGreaterThan(0);
+      for (const label of labels) {
+        expect(label.trim(), `${file} has an empty radar label`).not.toBe('');
+        expect(label.length, `${file}: "${label}" is too long for a list`).toBeLessThanOrEqual(40);
+      }
+      expect(new Set(labels).size, `${file} has the same radar label twice`).toBe(labels.length);
     }
   });
 

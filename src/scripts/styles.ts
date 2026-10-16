@@ -1,6 +1,6 @@
 /**
  * Loads a stylesheet when it is needed and resolves when it is applied. The palette, the terminal and
- * the radar sweep are fetched only when somebody uses them, and so are their styles: a CSS file that
+ * the radar are fetched only when somebody uses them, and so are their styles: a CSS file that
  * a script imports would be linked by every page (Astro collects the styles of the scripts of a
  * page, also of those it only loads later), so these files are imported as an address (`?url`) and
  * added here. Asking twice for the same file adds it once.

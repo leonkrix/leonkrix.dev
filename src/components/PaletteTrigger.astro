@@ -101,9 +101,9 @@ import { siteConfig } from '@/lib/site';
       progress += 1;
       if (progress === konami.length) {
         progress = 0;
-        import('@/scripts/sweep')
-          .then(({ runSweep }) => {
-            runSweep();
+        import('@/scripts/radar')
+          .then(({ runRadar }) => {
+            runRadar();
           })
           .catch(() => undefined);
       }

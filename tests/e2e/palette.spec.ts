@@ -29,7 +29,7 @@ test.describe('search', () => {
       performance
         .getEntriesByType('resource')
         .map((entry) => entry.name)
-        .filter((name) => /palette-ui|terminal-ui|sweep/.test(name)),
+        .filter((name) => /\/(palette-ui|terminal-ui|radar)\.[^/]*\.(js|css)$/.test(name)),
     );
     expect(scripts).toEqual([]);
   });
@@ -414,14 +414,149 @@ test.describe('the Konami code', () => {
     'a',
   ];
 
-  test('starts a radar sweep with a message, which goes away again', async ({ page }) => {
-    await page.goto('/');
+  const radarPanel = (page: Page) => page.getByRole('region', { name: /The radar found/ });
+
+  async function runCode(page: Page): Promise<void> {
     for (const key of code) {
       await page.keyboard.press(key);
     }
-    await expect(page.getByRole('status').filter({ hasText: 'Radar online' })).toBeVisible();
-    await expect(page.locator('.sweep')).toBeAttached();
-    await expect(page.locator('.sweep-note')).toBeHidden({ timeout: 8000 });
+  }
+
+  test('turns a beam, lights up what is on the screen and then lists what the page has', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await runCode(page);
+    await expect(page.locator('.radar-beam')).toBeAttached();
+    // The badge in the hero is on the screen: it lights up with its label, when the beam arrives
+    await expect(
+      page.locator('.radar-ping-label', { hasText: 'Open to opportunities' }),
+    ).toBeAttached();
+    const delays = await page
+      .locator('.radar-ping')
+      .evaluateAll((pings) =>
+        pings.map((ping) => parseFloat(getComputedStyle(ping).animationDelay)),
+      );
+    expect(delays.length).toBeGreaterThan(0);
+    for (const delay of delays) {
+      expect(delay).toBeGreaterThanOrEqual(0);
+      expect(delay).toBeLessThanOrEqual(2.2);
+    }
+
+    const panel = radarPanel(page);
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText('worth a look on this page');
+    await expect(panel.getByRole('button', { name: 'Open to opportunities' })).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'The games' })).toBeVisible();
+    await expect(panel.getByRole('button', { name: /^Key figures: / }).first()).toBeVisible();
+    await expect(page.locator('.radar-beam')).toHaveCount(0);
+    await expect(panel).toBeFocused();
+  });
+
+  test('goes to a find when it is chosen in the list, and lights it up there', async ({ page }) => {
+    await page.goto('/');
+    await runCode(page);
+    const panel = radarPanel(page);
+    await panel.getByRole('button', { name: 'Email, GitHub and LinkedIn' }).click();
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const box = document.querySelector('[data-radar="Email, GitHub and LinkedIn"]');
+          const rect = box?.getBoundingClientRect();
+          return rect !== undefined && rect.top >= 0 && rect.bottom <= window.innerHeight;
+        }),
+      )
+      .toBe(true);
+    await expect(
+      page.locator('.radar-ping-label', { hasText: 'Email, GitHub and LinkedIn' }),
+    ).toBeAttached();
+  });
+
+  test('puts the frame exactly on the thing, also after a long scroll to a block that fades in', async ({
+    page,
+  }) => {
+    // Far from each other, so that every click scrolls smoothly for a while, and the blocks that
+    // fade in when they are reached are still rising when the page arrives
+    test.setTimeout(90_000);
+    await page.goto('/');
+    await runCode(page);
+    const panel = radarPanel(page);
+    const centre = (box: { x: number; y: number; width: number; height: number } | null) =>
+      box === null ? null : { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    for (const label of [
+      'Contact form',
+      'What I am doing now',
+      'Key figures: Defuze',
+      'The games',
+      'Key figures: leonkrix.dev',
+      'Email, GitHub and LinkedIn',
+    ]) {
+      await panel.getByRole('button', { name: label, exact: true }).click();
+      const frame = page.locator('.radar-ping', { hasText: label });
+      await expect(frame).toBeAttached({ timeout: 8000 });
+      // The first look at the frame, and two more while it is visible: the same place every time
+      for (let sample = 0; sample < 3; sample += 1) {
+        const [frameBox, target] = await Promise.all([
+          frame.boundingBox(),
+          page.locator(`[data-radar="${label}"]`).boundingBox(),
+        ]);
+        const a = centre(frameBox);
+        const b = centre(target);
+        expect(a, `${label}: no frame`).not.toBeNull();
+        expect(
+          Math.abs((a?.x ?? 1e9) - (b?.x ?? 0)),
+          `${label} sample ${String(sample)} (x)`,
+        ).toBeLessThan(2);
+        expect(
+          Math.abs((a?.y ?? 1e9) - (b?.y ?? 0)),
+          `${label} sample ${String(sample)} (y)`,
+        ).toBeLessThan(2);
+        await page.waitForTimeout(150);
+      }
+    }
+  });
+
+  test('closes with Escape or the button, and one run replaces the one before', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await runCode(page);
+    await expect(radarPanel(page)).toBeVisible();
+    await runCode(page);
+    await expect(radarPanel(page)).toHaveCount(1);
+    await expect(radarPanel(page)).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(radarPanel(page)).toHaveCount(0);
+
+    await runCode(page);
+    await expect(radarPanel(page)).toBeVisible();
+    await page.getByRole('button', { name: 'Close the radar' }).click();
+    await expect(radarPanel(page)).toHaveCount(0);
+  });
+
+  test.describe('on every kind of page', () => {
+    // Only the list is of interest here, and without the beam six pages take seconds, not a minute
+    test.use({ reducedMotion: 'reduce' });
+
+    test('finds something', async ({ page }) => {
+      for (const [path, label] of [
+        ['/uses/', 'My setup in short'],
+        ['/notes/word-radar/', 'Key figures'],
+        ['/notes/word-radar/', 'Play Word Radar'],
+        // Not Word Radar: its page puts the cursor into the guess field when it is ready, and the
+        // Konami code is not taken while somebody types in a field
+        ['/games/link-up/', 'The game'],
+        ['/legal-notice', 'Source code on GitHub'],
+      ] as const) {
+        await page.goto(path);
+        await runCode(page);
+        await expect(
+          radarPanel(page).getByRole('button', { name: label, exact: true }),
+          `${path} lists ${label}`,
+        ).toBeVisible();
+        await page.keyboard.press('Escape');
+      }
+    });
   });
 
   test('does not start when a key is wrong or while typing in a field', async ({ page }) => {
@@ -429,36 +564,58 @@ test.describe('the Konami code', () => {
     for (const key of [...code.slice(0, 5), 'x', ...code.slice(5)]) {
       await page.keyboard.press(key);
     }
-    await expect(page.locator('.sweep-note')).toHaveCount(0);
+    await expect(page.locator('.radar-beam')).toHaveCount(0);
 
     await openWithKeyboard(page);
-    for (const key of code) {
-      await page.keyboard.press(key);
-    }
-    await expect(page.locator('.sweep-note')).toHaveCount(0);
+    await runCode(page);
+    await expect(page.locator('.radar-beam')).toHaveCount(0);
+    await expect(radarPanel(page)).toHaveCount(0);
   });
 
   test.describe('with reduced motion', () => {
     test.use({ reducedMotion: 'reduce' });
 
-    test('shows only the message, no moving layer', async ({ page }) => {
+    test('shows only the list at once, no beam and no frames', async ({ page }) => {
       await page.goto('/');
-      for (const key of code) {
-        await page.keyboard.press(key);
-      }
-      await expect(page.locator('.sweep-note')).toBeVisible();
-      await expect(page.locator('.sweep')).toHaveCount(0);
+      await runCode(page);
+      await expect(radarPanel(page)).toBeVisible();
+      await expect(page.locator('.radar-beam, .radar, .radar-ping')).toHaveCount(0);
+      await expect(
+        radarPanel(page).getByRole('button', { name: 'Open to opportunities' }),
+      ).toBeVisible();
+    });
+
+    test('has no accessibility violations with the list open', async ({ page }) => {
+      await page.goto('/');
+      await runCode(page);
+      await expect(radarPanel(page)).toBeVisible();
+      const results = await new AxeBuilder({ page }).analyze();
+      expect(results.violations.map((violation) => violation.id)).toEqual([]);
     });
   });
 
-  test('the terminal command radar does the same', async ({ page }) => {
+  test('the terminal command radar does the same, also on the 404 page', async ({ page }) => {
     await page.goto('/');
     await openWithKeyboard(page);
     await field(page).fill('>');
     await terminalField(page).fill('radar');
     await page.keyboard.press('Enter');
     await expect(dialog(page)).toBeHidden();
-    await expect(page.locator('.sweep-note')).toBeVisible();
+    await expect(radarPanel(page)).toBeVisible();
+    await page.keyboard.press('Escape');
+  });
+
+  test.describe('on the 404 page', () => {
+    test.use({ expectedPageStatus: 404 });
+
+    test('lists the terminal and the way back', async ({ page }) => {
+      await page.goto(notFoundPath);
+      await page.getByRole('textbox', { name: 'Terminal command' }).fill('radar');
+      await page.getByRole('textbox', { name: 'Terminal command' }).press('Enter');
+      const panel = radarPanel(page);
+      await expect(panel.getByRole('button', { name: 'The terminal' })).toBeVisible();
+      await expect(panel.getByRole('button', { name: 'Back to the home page' })).toBeVisible();
+    });
   });
 });
 

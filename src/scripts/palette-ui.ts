@@ -12,8 +12,8 @@ import paletteStyles from '@/styles/palette.css?url';
 import terminalStyles from '@/styles/terminal.css?url';
 
 import { loadPaletteData } from './palette-data-client';
+import { runRadar } from './radar';
 import { loadStyles } from './styles';
-import { runSweep } from './sweep';
 import { copyEmail, createTerminal, type Terminal } from './terminal-ui';
 
 /**
@@ -197,9 +197,9 @@ function build(data: PaletteData): Palette {
         case 'close':
           close();
           break;
-        case 'sweep':
+        case 'radar':
           close();
-          runSweep();
+          runRadar();
           break;
         case 'copy-email':
           void copy().then((copied) => {

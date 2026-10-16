@@ -25,7 +25,7 @@ export type Effect =
   | { kind: 'clear' }
   | { kind: 'close' }
   | { kind: 'copy-email' }
-  | { kind: 'sweep' };
+  | { kind: 'radar' };
 
 export interface CommandResult {
   lines: Line[];
@@ -60,7 +60,7 @@ export const commands: readonly CommandInfo[] = [
   { name: 'git', args: 'log', description: 'the latest changes of this site' },
   { name: 'email', description: 'copy my email address' },
   { name: 'whoami', description: 'you guessed it' },
-  { name: 'radar', description: 'a short sweep over the page' },
+  { name: 'radar', description: 'scan this page for what is worth a look' },
   { name: 'clear', description: 'empty the screen' },
   { name: 'exit', description: 'close the terminal' },
 ];
@@ -424,7 +424,7 @@ export function runCommand(input: string, data: PaletteData, context: Context): 
         lines: [plain('visitor'), plain(`(I am ${data.about.name}, but you can stay.)`, 'muted')],
       };
     case 'radar':
-      return { lines: [plain('Sweeping...', 'muted')], effect: { kind: 'sweep' } };
+      return { lines: [plain('Scanning...', 'muted')], effect: { kind: 'radar' } };
     case 'clear':
     case 'cls':
       return { lines: [], effect: { kind: 'clear' } };

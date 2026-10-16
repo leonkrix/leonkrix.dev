@@ -105,7 +105,7 @@ describe('the screen', () => {
     expect(run('exit').effect).toEqual({ kind: 'close' });
     expect(run(':q').effect).toEqual({ kind: 'close' });
     expect(run('   ')).toEqual({ lines: [] });
-    expect(run('radar').effect).toEqual({ kind: 'sweep' });
+    expect(run('radar').effect).toEqual({ kind: 'radar' });
   });
 });
 
