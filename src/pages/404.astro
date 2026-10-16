@@ -1,35 +1,173 @@
 ---
+/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- the log of the terminal scrolls, so it takes the focus (axe: scrollable-region-focusable) */
+import '@/styles/terminal.css';
+
 import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 
 <BaseLayout title="Page not found | Leon Krix" noindex>
   <main id="main" class="flex flex-1 items-center">
-    <div class="mx-auto w-full max-w-3xl px-6 py-24">
+    <div class="mx-auto w-full max-w-3xl px-6 py-[clamp(1.5rem,6dvh,6rem)]">
       <p class="font-mono text-sm text-accent-2">404</p>
       <h1 class="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Page not found</h1>
       <p class="mt-4 max-w-xl text-lg text-muted">
         The page you are looking for does not exist or has moved.
       </p>
 
+      <!-- A real terminal when JavaScript runs (the same commands as the palette); the lines stay as a picture without. The log scrolls, so it can take the focus (axe: scrollable-region-focusable). -->
       <div
-        class="edge mt-10 overflow-x-auto rounded-xl border border-border bg-surface/60 p-5 font-mono text-sm leading-relaxed"
-        aria-hidden="true"
+        data-terminal
+        data-radar="The terminal"
+        class="edge mt-[clamp(1.25rem,4dvh,2.5rem)] rounded-xl border border-border bg-surface/60 p-5 font-mono text-sm leading-relaxed"
       >
-        <p>
-          <span class="text-accent">$</span> cd /this-page
-        </p>
-        <p class="text-muted">bash: cd: /this-page: No such file or directory</p>
-        <p class="mt-2">
-          <span class="text-accent">$</span> cd ~<span class="cursor text-accent-2">_</span>
-        </p>
+        <div
+          data-terminal-log
+          role="log"
+          aria-label="Terminal"
+          tabindex="0"
+          class="term-log h-[clamp(5rem,calc(18dvh+max(0px,100dvh-800px)*0.6),20rem)] [@media(scripting:none)]:h-auto"
+        >
+          <div class="term-line">
+            <span class="term-prompt">$</span> cd /this-page
+          </div>
+          <div class="term-line term-tone-muted">
+            bash: cd: /this-page: No such file or directory
+          </div>
+          <div class="term-line term-tone-muted">Type "help" to see what this terminal can do.</div>
+        </div>
+        <label class="mt-2 flex items-center gap-2 [@media(scripting:none)]:hidden">
+          <span class="term-prompt" aria-hidden="true">
+            $
+          </span>
+          <input
+            data-terminal-input
+            type="text"
+            aria-label="Terminal command"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            enterkeyhint="go"
+            placeholder="Type a command, for example help"
+            class="min-w-0 flex-1 bg-transparent font-mono text-base text-fg outline-none"
+          />
+        </label>
       </div>
 
       <a
         href="/"
-        class="btn-primary mt-8 inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-medium"
+        data-radar="Back to the home page"
+        class="btn-primary mt-[clamp(1.25rem,3dvh,2rem)] inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-medium"
       >
         Back to home
       </a>
     </div>
   </main>
 </BaseLayout>
+
+<script>
+  import { loadPaletteData } from '@/scripts/palette-data-client';
+  import type { Terminal } from '@/scripts/terminal-ui';
+
+  const log = document.querySelector<HTMLElement>('[data-terminal-log]');
+  const input = document.querySelector<HTMLInputElement>('[data-terminal-input]');
+
+  if (log && input) {
+    let terminal: Terminal | undefined;
+    let starting: Promise<Terminal> | undefined;
+
+    // The code of the terminal and its data come when somebody comes near the field
+    const start = (): Promise<Terminal> => {
+      starting ??= Promise.all([import('@/scripts/terminal-ui'), loadPaletteData()]).then(
+        ([{ createTerminal, copyEmail }, data]) => {
+          const created = createTerminal({
+            log,
+            input,
+            data,
+            onEffect: (effect) => {
+              switch (effect.kind) {
+                case 'navigate':
+                  window.location.assign(effect.href);
+                  break;
+                case 'external':
+                  window.open(effect.href, '_blank', 'noopener,noreferrer');
+                  break;
+                case 'clear':
+                  created.clear();
+                  break;
+                case 'close':
+                  window.location.assign('/');
+                  break;
+                case 'radar':
+                  void import('@/scripts/radar').then(({ runRadar }) => {
+                    runRadar();
+                  });
+                  break;
+                case 'copy-email':
+                  void copyEmail(data).then((copied) => {
+                    if (!copied) {
+                      created.print([
+                        [{ text: 'Could not copy. Use the contact form instead.', tone: 'error' }],
+                      ]);
+                    }
+                  });
+                  break;
+              }
+            },
+          });
+          terminal = created;
+          return created;
+        },
+      );
+      return starting;
+    };
+
+    // A click anywhere in the box (not on a link, not while selecting text) goes to the field
+    input.closest('[data-terminal]')?.addEventListener('click', (event) => {
+      if (
+        !(event.target instanceof HTMLAnchorElement) &&
+        (window.getSelection()?.toString() ?? '') === ''
+      ) {
+        input.focus();
+      }
+    });
+    input.addEventListener('focus', () => void start().catch(() => undefined), { once: true });
+    input
+      .closest('[data-terminal]')
+      ?.addEventListener('pointerenter', () => void start().catch(() => undefined), { once: true });
+
+    // Typing anywhere on the page goes to the field, so one can start without a click. The focus
+    // is not set when the page opens: that would pop up the keyboard on a phone and move a screen
+    // reader away from the page.
+    document.addEventListener('keydown', (event) => {
+      const target = event.target;
+      if (
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        event.key.length !== 1 ||
+        event.key === ' ' ||
+        (target instanceof HTMLElement &&
+          (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(target.tagName)))
+      ) {
+        return;
+      }
+      input.focus();
+    });
+
+    input.addEventListener('keydown', (event) => {
+      if (terminal) {
+        if (terminal.handleKey(event)) {
+          event.preventDefault();
+        }
+        return;
+      }
+      // A key that comes before the code has arrived is used as soon as it has
+      if (['Enter', 'Tab', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+        event.preventDefault();
+        void start()
+          .then((ready) => ready.handleKey(event))
+          .catch(() => undefined);
+      }
+    });
+  }
+</script>

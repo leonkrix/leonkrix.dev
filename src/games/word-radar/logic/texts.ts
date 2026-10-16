@@ -63,7 +63,7 @@ export interface Texts {
 
 const english: Texts = {
   name: 'English',
-  loading: 'Loading the words (about 2 MB)...',
+  loading: 'Loading the words...',
   loadFailed: 'The words could not be loaded. Please reload the page.',
   placeholder: 'Type a word and press Enter',
   placeholderOver: 'The round is over',
@@ -126,7 +126,7 @@ const english: Texts = {
 
 const german: Texts = {
   name: 'Deutsch',
-  loading: 'Die Wörter werden geladen (etwa 2,5 MB) ...',
+  loading: 'Die Wörter werden geladen ...',
   loadFailed: 'Die Wörter konnten nicht geladen werden. Bitte lade die Seite neu.',
   placeholder: 'Wort eingeben und Enter drücken',
   placeholderOver: 'Die Runde ist vorbei',

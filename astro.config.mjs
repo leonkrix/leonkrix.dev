@@ -1,7 +1,11 @@
+import { createHash } from 'node:crypto';
+
 import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, envField } from 'astro/config';
+
+import { languageScript } from './src/games/word-radar/language-script.mjs';
 
 const legalEnvKeys = ['IMPRESSUM_STREET', 'IMPRESSUM_ZIP', 'IMPRESSUM_CITY'];
 
@@ -49,6 +53,11 @@ export default defineConfig({
         "frame-src 'none'",
         "manifest-src 'self'",
       ],
+      // The one inline script of the site that Astro does not hash itself (it is marked is:inline):
+      // the language of Word Radar, see src/games/word-radar/language-script.mjs
+      scriptDirective: {
+        hashes: [`sha256-${createHash('sha256').update(languageScript).digest('base64')}`],
+      },
       styleDirective: {
         resources: [
           // Style elements (our stylesheet link) may only come from this origin

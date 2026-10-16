@@ -33,6 +33,20 @@ const HOME = `<!doctype html><html lang="en"><head><title>Leon Krix | Software E
 <body><a href="/uses/">Uses</a><section id="about"></section><section id="projects"></section><section id="experience"></section>
 <section id="contact"><div data-contact-form></div></section></body></html>`;
 
+const PALETTE = JSON.stringify({
+  places: [{ label: 'About', href: '/#about' }],
+  notes: [{ slug: 'a' }],
+  projects: [{ id: 'p' }],
+  uses: [{ label: 'OS', value: 'x' }],
+  email: 'aGVsbG8=',
+});
+
+/** A security.txt that expires the given number of days from now */
+function securityText(days: number): string {
+  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+  return `Contact: mailto:hello@leonkrix.dev\nExpires: ${expires.toISOString()}\n`;
+}
+
 const LEGAL = `<html><head><meta name="robots" content="noindex"></head><body>
 <section lang="en" id="en">Leon Krix</section><section lang="de" id="de">Leon Krix</section></body></html>`;
 
@@ -92,6 +106,8 @@ function fakeSite(
     [`GET ${base}/sitemap.xml`]: new Response(
       '<urlset><url><loc>https://leonkrix.dev/</loc></url></urlset>',
     ),
+    [`GET ${base}/.well-known/security.txt`]: new Response(securityText(300)),
+    [`GET ${base}/palette.json`]: new Response(PALETTE),
     [`GET ${base}/api/contact-token`]: (init) =>
       init.headers['Sec-Fetch-Site'] === 'cross-site'
         ? new Response('{"ok":false}', { status: 403 })
@@ -169,6 +185,8 @@ describe('runLiveChecks', () => {
       'redirects',
       'legal pages',
       'search engine files',
+      'security.txt',
+      'palette data',
       'playground',
       'notes',
       'uses page',
@@ -301,6 +319,56 @@ describe('runLiveChecks', () => {
       expect(find(await runLiveChecks(options({ fetch: unlisted })), 'notes').detail).toContain(
         'the overview does not list /notes/root-cause/',
       );
+    });
+  });
+
+  describe('security.txt', () => {
+    const withText = (text: string, status = 200): typeof fetch =>
+      fakeSite({ [`GET ${BASE}/.well-known/security.txt`]: new Response(text, { status }) });
+
+    it('fails when the file is missing, has no contact or has run out', async () => {
+      const missing = withText('Not found', 404);
+      expect(find(await runLiveChecks(options({ fetch: missing })), 'security.txt').status).toBe(
+        'fail',
+      );
+      const noContact = withText('Expires: 2999-01-01T00:00:00Z\n');
+      expect(
+        find(await runLiveChecks(options({ fetch: noContact })), 'security.txt').detail,
+      ).toContain('Contact');
+      const expired = withText(securityText(-1));
+      const result = find(await runLiveChecks(options({ fetch: expired })), 'security.txt');
+      expect(result.status).toBe('fail');
+      expect(result.detail).toContain('expired');
+    });
+
+    it('only warns while the expiry is close', async () => {
+      const close = withText(securityText(30));
+      expect(find(await runLiveChecks(options({ fetch: close })), 'security.txt').status).toBe(
+        'warn',
+      );
+    });
+  });
+
+  describe('palette data', () => {
+    const answer = (body: string, status = 200): typeof fetch =>
+      fakeSite({ [`GET ${BASE}/palette.json`]: new Response(body, { status }) });
+
+    it('fails when the file is missing, broken, empty or shows the address', async () => {
+      const check = async (fetchImpl: typeof fetch) =>
+        find(await runLiveChecks(options({ fetch: fetchImpl })), 'palette data');
+      expect((await check(answer('Not found', 404))).detail).toContain('HTTP 404');
+      expect((await check(answer('{oops'))).detail).toContain('not valid JSON');
+      expect(
+        (await check(answer('{"places":[],"notes":[1],"projects":[1],"uses":[1]}'))).detail,
+      ).toContain('"places" is missing or empty');
+      const leaking = JSON.stringify({
+        places: [1],
+        notes: [1],
+        projects: [1],
+        uses: [1],
+        email: 'hello@leonkrix.dev',
+      });
+      expect((await check(answer(leaking))).detail).toContain('readable');
     });
   });
 

@@ -391,6 +391,48 @@ export async function runLiveChecks(options: LiveCheckOptions): Promise<CheckRes
     return verdict('search engine files', problems, 'robots.txt and sitemap.xml are fine');
   });
 
+  // security.txt carries an expiry that is renewed by every deployment; a site that was not built
+  // for almost a year would let it run out (RFC 9116 says readers must then ignore the file)
+  await run('security.txt', async () => {
+    const file = await get('/.well-known/security.txt');
+    if (file.status !== 200 || !/^Contact: /m.test(file.body)) {
+      return fail('security.txt', 'missing, or without a Contact line');
+    }
+    const expires = /^Expires: (.+)$/m.exec(file.body)?.[1];
+    const days = (Date.parse(expires ?? '') - Date.now()) / (24 * 60 * 60 * 1000);
+    if (Number.isNaN(days) || days <= 0) {
+      return fail('security.txt', `expired or without a valid Expires line (${expires ?? 'none'})`);
+    }
+    const detail = `valid for another ${String(Math.floor(days))} days`;
+    return days < 60 ? warn('security.txt', detail) : ok('security.txt', detail);
+  });
+
+  // The command palette and the terminal fetch this file when they are opened: without it Ctrl K
+  // shows nothing. The address must not be readable in it (the page keeps it obfuscated too).
+  await run('palette data', async () => {
+    const file = await get('/palette.json');
+    if (file.status !== 200) {
+      return fail('palette data', `/palette.json answers HTTP ${String(file.status)}`);
+    }
+    let data: Record<string, unknown>;
+    try {
+      data = JSON.parse(file.body) as Record<string, unknown>;
+    } catch {
+      return fail('palette data', '/palette.json is not valid JSON');
+    }
+    const problems: string[] = [];
+    for (const key of ['places', 'notes', 'projects', 'uses']) {
+      const list = data[key];
+      if (!Array.isArray(list) || list.length === 0) {
+        problems.push(`"${key}" is missing or empty`);
+      }
+    }
+    if (file.body.includes(siteConfig.email) || file.body.includes('mailto:')) {
+      problems.push('the email address is readable in it');
+    }
+    return verdict('palette data', problems, 'places, notes, projects and uses are there');
+  });
+
   // The Playground pages exist exactly while games are published; the sitemap tells which ones
   await run('playground', async () => {
     const sitemap = await get('/sitemap.xml');

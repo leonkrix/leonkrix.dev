@@ -42,6 +42,7 @@ const { project } = Astro.props;
     )}
     {project.stats && (
       <dl
+        data-radar={`Key figures: ${project.title.length > 24 ? `${project.title.slice(0, 23)}…` : project.title}`}
         class:list={[
           'mt-6 grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-x-6 gap-y-4 rounded-lg border border-border bg-bg/40 p-4',
           project.art && 'md:col-start-1 md:row-start-2',

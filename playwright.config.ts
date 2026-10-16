@@ -8,8 +8,15 @@ export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
   forbidOnly: isCI,
-  // Never hang: stop the whole run after 8 minutes (a local run takes about 20 seconds)
-  ...(isCI ? { globalTimeout: 8 * 60_000 } : {}),
+  // Never hang: stop the whole run after 15 minutes. The suite has about 700 tests: a local run on
+  // eight workers takes about 3 minutes, the runner of the CI (four cores) about 6. The limit was
+  // 8 minutes and was reached with 527 of 704 tests done (2026-10-16), when the suite had grown
+  // with the palette, the radar and the tests of the fonts: raise it when the run takes more than
+  // two thirds of it, and keep an eye on the slow tests (the radar and the fonts wait on purpose).
+  ...(isCI ? { globalTimeout: 15 * 60_000 } : {}),
+  // Playwright starts one worker per two cores by default, which is two on the runner of the CI and
+  // made the run slow; the tests wait for the browser more than they compute, so one per core is fine
+  ...(isCI ? { workers: 4 } : {}),
   retries: isCI ? 1 : 0,
   // `list` prints every test as it finishes, so a stuck run is visible in the CI log
   reporter: isCI ? [['list'], ['github'], ['html', { open: 'never' }]] : [['list']],

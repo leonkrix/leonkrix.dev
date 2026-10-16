@@ -9,23 +9,29 @@ import SwapLabel from './SwapLabel';
  * shows it while the words (about 2 MB) are fetched, so the page is exactly as high before the
  * game as after it, at every width. If the real game gets another box, this one needs it too: the
  * layout guard of the end-to-end tests finds out when it differs.
+ *
+ * The message already says what the game says when it is ready (the rule of the game), and the
+ * field says that the words are loading: the text of the message must not change when the words
+ * arrive. It is the biggest text of the game, so it is the largest paint of the page, and if it
+ * only came with the words (a longer text than "loading") the largest paint would depend on the
+ * 2 MB, and Lighthouse would count the download into it (a score of 74 instead of 98).
  */
 export default function WordRadarSkeleton({
   language = 'en',
   message,
 }: {
   language?: Language;
-  message?: string;
+  message?: string | undefined;
 }) {
   const t = texts[language];
   return (
-    <div className="wr" data-skeleton lang={language}>
+    <div className="wr" data-skeleton aria-busy={message === undefined} lang={language}>
       <form className="wr-form">
         <input
           className="wr-input"
           type="text"
           disabled
-          placeholder={t.placeholder}
+          placeholder={message === undefined ? t.loading : t.placeholder}
           aria-label={t.guessLabel}
         />
         <button type="submit" disabled data-primary>
@@ -34,7 +40,7 @@ export default function WordRadarSkeleton({
       </form>
 
       <p className="wr-message" role="status">
-        {message ?? t.loading}
+        {message ?? t.intro}
       </p>
 
       <div className="wr-main">

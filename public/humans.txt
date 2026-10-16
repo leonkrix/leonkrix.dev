@@ -1,0 +1,14 @@
+/* TEAM */
+Developer: Leon Krix
+Site: https://leonkrix.dev
+GitHub: https://github.com/leonkrix
+
+/* THANKS */
+Word lists, vectors and fonts: see https://github.com/leonkrix/leonkrix.dev/blob/main/THIRD_PARTY.md
+
+/* SITE */
+Standards: HTML5, CSS3, TypeScript
+Components: Astro, React islands, Tailwind CSS
+Hosting: Cloudflare Pages
+Source: https://github.com/leonkrix/leonkrix.dev
+How it is built: https://leonkrix.dev/notes/

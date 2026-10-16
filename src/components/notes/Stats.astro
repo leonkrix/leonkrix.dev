@@ -7,7 +7,7 @@ interface Props {
 const { items } = Astro.props;
 ---
 
-<dl class="note-stats">
+<dl class="note-stats" data-radar="Key figures">
   {items.map((item) => (
     <div>
       <dt>{item.label}</dt>

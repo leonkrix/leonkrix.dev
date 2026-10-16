@@ -1,0 +1,96 @@
+/* The legal pages only (see LegalLayout.astro): linked there, so no other page carries these rules */
+
+/* The order of the layers of Tailwind, said again: this file is linked by its page before the main stylesheet is
+   read, and a layer that is named first would rank lowest (the lists of the notes lost their marks that way) */
+@layer theme, base, components, utilities;
+
+/* Typography for the legal pages (legal notice and privacy policy, each in English and German).
+   Headings: h1 page, h2 language section, h3 topic, h4 detail. */
+@layer components {
+  .legal h1 {
+    font-size: 2.25rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 1.5rem;
+  }
+
+  .legal h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.75rem;
+  }
+
+  .legal h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .legal h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* The two language versions: the second one is set apart and jumps land below the sticky header */
+  .legal section {
+    scroll-margin-top: 5rem;
+  }
+
+  .legal section + section {
+    margin-top: 4.5rem;
+    padding-top: 3rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .legal .notice-inline {
+    font-size: 0.9rem;
+  }
+
+  .legal p,
+  .legal li,
+  .legal address {
+    color: var(--color-muted);
+    font-style: normal;
+    line-height: 1.75;
+  }
+
+  .legal p,
+  .legal address,
+  .legal ul {
+    margin-bottom: 1rem;
+  }
+
+  .legal ul {
+    list-style: disc;
+    padding-left: 1.5rem;
+  }
+
+  .legal strong {
+    color: var(--color-fg);
+    font-weight: 600;
+  }
+
+  /* Underlined, so links in a text are recognizable without relying on color alone */
+  .legal a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .legal a:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  .legal .notice {
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+  }
+}

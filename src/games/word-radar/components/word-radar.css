@@ -52,17 +52,34 @@
 }
 
 /* The language that is played has an underline, nothing that changes the width of the word */
-.wr-lang a {
+.wr-lang a,
+.wr-lang span {
   color: var(--color-muted);
   text-decoration: underline transparent;
   text-underline-offset: 0.3em;
   transition: color 160ms ease;
 }
 
+.wr-lang [aria-current='true'] {
+  cursor: default;
+}
+
 .wr-lang a:hover,
-.wr-lang a[aria-current='true'] {
+.wr-lang [aria-current='true'] {
   color: var(--color-fg);
   text-decoration-color: var(--color-accent-2);
+}
+
+/* The placeholder of the game that the page draws before the game is there exists in both
+   languages; the script at the top of the page says which one the address asks for (English if it
+   cannot say). The boxes have no effect on the layout. */
+.wr-fallback {
+  display: contents;
+}
+
+html[data-wr-language='de'] .wr-fallback[data-fallback-language='en'],
+html:not([data-wr-language='de']) .wr-fallback[data-fallback-language='de'] {
+  display: none;
 }
 
 /* ---- The field and the message ---- */

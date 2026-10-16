@@ -10,6 +10,7 @@ import { siteConfig } from '@/lib/site';
 
 import WordRadar from './components/WordRadar';
 import WordRadarSkeleton from './components/WordRadarSkeleton';
+import { languageScript } from './language-script.mjs';
 
 interface Props {
   game: GameDefinition;
@@ -19,6 +20,14 @@ const { game } = Astro.props;
 ---
 
 <GameLayout game={game}>
+  {/*
+    The language of the address, said to the stylesheet before anything below is drawn: the page has a
+    placeholder of the game in both languages (below), and this chooses the one that is shown while the
+    game loads. It has to be a script that runs at once (inline): a module script runs after the first
+    paint, and the placeholder would be in English first. The same rule as parseLanguage in
+    logic/language.ts (a test compares them).
+  */}
+  <script is:inline set:html={languageScript} />
   {/* Starts fetching the words (about 2 MB) while the game itself is still loading, and marks the language that is played */}
   <script>
     import { loadWordData } from './data/load';
@@ -28,7 +37,19 @@ const { game } = Astro.props;
     loadWordData(language).catch(() => {
       // The game shows the error itself
     });
-    document.querySelector(`[data-wr-lang="${language}"]`)?.setAttribute('aria-current', 'true');
+    // The language that is played is not a link: a click would load the same page again. It becomes
+    // plain text that is marked as the current one (an anchor without an address is not crawlable,
+    // Lighthouse lowers the score of the page for it).
+    const current = document.querySelector(`.wr-lang [data-wr-lang="${language}"]`);
+    if (current) {
+      const mark = document.createElement('span');
+      mark.textContent = current.textContent;
+      mark.className = current.className;
+      mark.setAttribute('lang', current.getAttribute('lang') ?? language);
+      mark.dataset.wrLang = language;
+      mark.setAttribute('aria-current', 'true');
+      current.replaceWith(mark);
+    }
   </script>
   {/* The language is chosen by the address, so these are plain links (they work before the game has loaded) */}
   <nav class="wr-lang" aria-label="Language, Sprache">
@@ -41,7 +62,15 @@ const { game } = Astro.props;
   </nav>
   {/* Rendered in the browser only: the hidden word is random */}
   <WordRadar client:only="react">
-    <WordRadarSkeleton slot="fallback" />
+    {/* The placeholder in both languages, the one of the address is shown (see the script above and word-radar.css) */}
+    <Fragment slot="fallback">
+      <div class="wr-fallback" data-fallback-language="en">
+        <WordRadarSkeleton language="en" />
+      </div>
+      <div class="wr-fallback" data-fallback-language="de">
+        <WordRadarSkeleton language="de" />
+      </div>
+    </Fragment>
   </WordRadar>
   <noscript>
     <p class="text-muted">

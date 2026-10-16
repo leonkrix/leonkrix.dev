@@ -1,11 +1,11 @@
 ---
 title: 'Watching the live site: a check that had to survive Cloudflare'
-summary: 'CI checks the code before it ships, a live check looks at what is really running, every six hours. Seventeen checks, a test for the checker, and the day Cloudflare’s own bot protection locked it out.'
+summary: 'CI checks the code before it ships, a live check looks at what is really running, every six hours. Nineteen checks, a test for the checker, and the day Cloudflare’s own bot protection locked it out.'
 tag: 'Site · Monitoring'
 code: scripts
 group: site
 order: 4
-updated: '2026-10-15'
+updated: '2026-10-16'
 ---
 
 import Code from '@/components/notes/Code.astro';
@@ -18,9 +18,9 @@ So there is a second check, and it looks at the published site from the outside,
 
 <Stats
   items={[
-    { value: '17', label: 'live-site checks' },
+    { value: '19', label: 'live-site checks' },
     { value: '6 h', label: 'between runs' },
-    { value: '41', label: 'tests of the checker' },
+    { value: '44', label: 'tests of the checker' },
     { value: '0', label: 'dependencies' },
   ]}
 />
@@ -29,16 +29,16 @@ So there is a second check, and it looks at the published site from the outside,
 
 Each check ends in pass, warn or fail, and only a fail fails the run.
 
-| Area                     | What is checked                                                                                                                                                                                                                       |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The page                 | The home page answers and has its sections. The custom 404 page is shown for an unknown address. The pages of the games and the notes that the sitemap lists answer too, and so does the Uses page, which the home page must link to. |
-| What the browser is told | The security headers must equal the list in the repository, and the content security policy is read from the page.                                                                                                                    |
-| Assets                   | The stylesheet and the script are served, with the long cache time that fingerprinted files should have.                                                                                                                              |
-| Redirects                | `http` to `https`, `www` to the main domain, and the old German addresses of the legal pages to the new ones.                                                                                                                         |
-| Legal pages              | Both languages are there, they are not indexed, no placeholder is left where the address should be, and the email and the address are not readable as plain text.                                                                     |
-| The contact form         | The token endpoint, no cross-origin access, and a probe that proves the form is configured.                                                                                                                                           |
-| Time                     | The certificate fails below 14 days, the domain registration below 30 days (warning below 60).                                                                                                                                        |
-| My mail                  | The MX, SPF and DMARC records must still point to the mailbox provider.                                                                                                                                                               |
+| Area                     | What is checked                                                                                                                                                                                                                                                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The page                 | The home page answers and has its sections. The custom 404 page is shown for an unknown address. The pages of the games and the notes that the sitemap lists answer too, and so does the Uses page, which the home page must link to. `security.txt` must not have run out, and the data behind the command palette must be there. |
+| What the browser is told | The security headers must equal the list in the repository, and the content security policy is read from the page.                                                                                                                                                                                                                 |
+| Assets                   | The stylesheet and the script are served, with the long cache time that fingerprinted files should have.                                                                                                                                                                                                                           |
+| Redirects                | `http` to `https`, `www` to the main domain, and the old German addresses of the legal pages to the new ones.                                                                                                                                                                                                                      |
+| Legal pages              | Both languages are there, they are not indexed, no placeholder is left where the address should be, and the email and the address are not readable as plain text.                                                                                                                                                                  |
+| The contact form         | The token endpoint, no cross-origin access, and a probe that proves the form is configured.                                                                                                                                                                                                                                        |
+| Time                     | The certificate fails below 14 days, the domain registration below 30 days (warning below 60).                                                                                                                                                                                                                                     |
+| My mail                  | The MX, SPF and DMARC records must still point to the mailbox provider.                                                                                                                                                                                                                                                            |
 
 Some of these are checks I would not have thought of before they went wrong somewhere else. The mail records are on the list because the DNS of this domain lives at Cloudflare and the mail at another company, and a change in the wrong place would silently stop my email. The headers are compared with the file in the repository, so there is one list and the live site cannot drift from it.
 

@@ -67,22 +67,22 @@ test.describe('Word Radar in German', () => {
     await page.goto(PATH);
     await gameReady(page);
     const nav = page.getByRole('navigation', { name: /Language/ });
-    await expect(nav.getByRole('link', { name: 'English' })).toHaveAttribute('href', '?lang=en');
-    await expect(nav.getByRole('link', { name: 'Deutsch' })).toHaveAttribute('href', '?lang=de');
-    await expect(nav.getByRole('link', { name: 'English' })).toHaveAttribute(
-      'aria-current',
-      'true',
-    );
+    // The language that is played is marked and not a link (a click would load the same page again,
+    // see word-radar-language.spec.ts); the other one is a link
+    const english = nav.locator('[data-wr-lang="en"]');
+    const german = nav.locator('[data-wr-lang="de"]');
+    await expect(german).toHaveAttribute('href', '?lang=de');
+    await expect(english).toHaveAttribute('aria-current', 'true');
+    await expect(english).not.toHaveAttribute('href');
     await expect(page.getByLabel('Your guess')).toBeEnabled();
 
     await nav.getByRole('link', { name: 'Deutsch' }).click();
     await expect(page).toHaveURL(/\?lang=de$/);
     await gameReady(page);
     await expect(page.getByLabel(de.guessLabel)).toBeEnabled();
-    await expect(nav.getByRole('link', { name: 'Deutsch' })).toHaveAttribute(
-      'aria-current',
-      'true',
-    );
+    await expect(german).toHaveAttribute('aria-current', 'true');
+    await expect(german).not.toHaveAttribute('href');
+    await expect(english).toHaveAttribute('href', '?lang=en');
     await expect(page.locator('.wr')).toHaveAttribute('lang', 'de');
     await expect(message(page)).toContainText('Finde das versteckte Wort');
 

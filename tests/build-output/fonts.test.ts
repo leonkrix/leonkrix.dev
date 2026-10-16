@@ -5,12 +5,19 @@ import { describe, expect, it } from 'vitest';
 
 import { distDir, readPages } from './helpers';
 
-// Pages that are mostly text request their two fonts before the stylesheet is read. Without it the
-// text is first set in the fallback font and then again in the real one, it breaks differently and
-// the page jumps (Lighthouse measured a layout shift of 0.07 on the notes, and in the continuous
-// integration it was enough to fall below the limit). The game pages must NOT do it: their page
-// loads a large file at the same time, and the preload made Lighthouse count that download into the
-// first paint (a score of 75 instead of 98).
+// Every page requests its two fonts (Inter and JetBrains Mono, the latin files) at once, before the
+// stylesheet is read. Without it the text is first set in the fallback font, then again in the real
+// one when the font arrives; it breaks differently and the page jumps (Lighthouse measured a layout
+// shift of 0.07 on the notes, and on the slower machine of the continuous integration it was enough
+// to fall below the limit; the layout guard saw the overview of the games jump by 28 px when the
+// fonts came late).
+//
+// Why this is for the game pages too: it used to be left out of them, because the preload made
+// Lighthouse count the 2 MB download of Word Radar into the first paint (a score of 75 instead of
+// 98). That was a different problem that the preload only made visible: the largest paint of that
+// page depended on the download. It does not any more (see `afterPaint` in
+// src/games/word-radar/data/load.ts and the comment of WordRadarSkeleton), so there is no reason
+// for an exception, and the same rule holds for every page.
 
 const pages = await readPages();
 const route = (file: string): string => relative(distDir, file).split('\\').join('/');
@@ -19,23 +26,18 @@ const preloads = (html: string): string[] =>
     (match) => match[1] ?? '',
   );
 
-const textPages = pages.filter(({ file }) =>
-  /^(notes|legal-notice|privacy-policy|uses)\//.test(route(file)),
-);
-const gamePages = pages.filter(({ file }) => route(file).startsWith('games/'));
-
 describe('font preload', () => {
-  it('is on the pages that are mostly text, with both fonts, and the files exist', () => {
-    expect(textPages.length).toBeGreaterThan(0);
-    for (const { file, html } of textPages) {
+  it('is on every page, with both fonts, and the files exist', () => {
+    expect(pages.length).toBeGreaterThan(10);
+    for (const { file, html } of pages) {
       const fonts = preloads(html);
       expect(fonts, route(file)).toHaveLength(2);
       expect(
-        fonts.some((font) => font.includes('inter-')),
+        fonts.some((font) => font.includes('inter-latin-wght')),
         route(file),
       ).toBe(true);
       expect(
-        fonts.some((font) => font.includes('jetbrains-mono-')),
+        fonts.some((font) => font.includes('jetbrains-mono-latin-wght')),
         route(file),
       ).toBe(true);
       for (const font of fonts) {
@@ -44,10 +46,30 @@ describe('font preload', () => {
     }
   });
 
-  it('is not on the game pages (see the comment at the top of this file)', () => {
-    expect(gamePages.length).toBeGreaterThan(0);
-    for (const { file, html } of gamePages) {
-      expect(preloads(html), route(file)).toEqual([]);
+  it('comes before the stylesheet, as a font with the attributes the browser needs to reuse it', () => {
+    for (const { file, html } of pages) {
+      const firstPreload = html.indexOf('rel="preload"');
+      const firstStyle = Math.min(
+        ...['<link rel="stylesheet"', '<style'].map((start) => {
+          const at = html.indexOf(start);
+          return at < 0 ? Number.MAX_SAFE_INTEGER : at;
+        }),
+      );
+      expect(firstPreload, route(file)).toBeGreaterThan(-1);
+      expect(firstPreload, `${route(file)}: the preload is after the first style`).toBeLessThan(
+        firstStyle,
+      );
+      // A font is fetched in "anonymous" mode: without crossorigin the preloaded file is not used
+      for (const link of html.match(/<link rel="preload"[^>]*>/g) ?? []) {
+        expect(link, route(file)).toContain('crossorigin');
+        expect(link, route(file)).toContain('type="font/woff2"');
+      }
+    }
+  });
+
+  it('does not preload anything else, so the first request goes to what the page needs most', () => {
+    for (const { file, html } of pages) {
+      expect(html.match(/<link rel="preload"/g) ?? [], route(file)).toHaveLength(2);
     }
   });
 });
