@@ -33,6 +33,12 @@ const HOME = `<!doctype html><html lang="en"><head><title>Leon Krix | Software E
 <body><a href="/uses/">Uses</a><section id="about"></section><section id="projects"></section><section id="experience"></section>
 <section id="contact"><div data-contact-form></div></section></body></html>`;
 
+/** A security.txt that expires the given number of days from now */
+function securityText(days: number): string {
+  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+  return `Contact: mailto:hello@leonkrix.dev\nExpires: ${expires.toISOString()}\n`;
+}
+
 const LEGAL = `<html><head><meta name="robots" content="noindex"></head><body>
 <section lang="en" id="en">Leon Krix</section><section lang="de" id="de">Leon Krix</section></body></html>`;
 
@@ -92,6 +98,7 @@ function fakeSite(
     [`GET ${base}/sitemap.xml`]: new Response(
       '<urlset><url><loc>https://leonkrix.dev/</loc></url></urlset>',
     ),
+    [`GET ${base}/.well-known/security.txt`]: new Response(securityText(300)),
     [`GET ${base}/api/contact-token`]: (init) =>
       init.headers['Sec-Fetch-Site'] === 'cross-site'
         ? new Response('{"ok":false}', { status: 403 })
@@ -169,6 +176,7 @@ describe('runLiveChecks', () => {
       'redirects',
       'legal pages',
       'search engine files',
+      'security.txt',
       'playground',
       'notes',
       'uses page',
@@ -300,6 +308,33 @@ describe('runLiveChecks', () => {
       });
       expect(find(await runLiveChecks(options({ fetch: unlisted })), 'notes').detail).toContain(
         'the overview does not list /notes/root-cause/',
+      );
+    });
+  });
+
+  describe('security.txt', () => {
+    const withText = (text: string, status = 200): typeof fetch =>
+      fakeSite({ [`GET ${BASE}/.well-known/security.txt`]: new Response(text, { status }) });
+
+    it('fails when the file is missing, has no contact or has run out', async () => {
+      const missing = withText('Not found', 404);
+      expect(find(await runLiveChecks(options({ fetch: missing })), 'security.txt').status).toBe(
+        'fail',
+      );
+      const noContact = withText('Expires: 2999-01-01T00:00:00Z\n');
+      expect(
+        find(await runLiveChecks(options({ fetch: noContact })), 'security.txt').detail,
+      ).toContain('Contact');
+      const expired = withText(securityText(-1));
+      const result = find(await runLiveChecks(options({ fetch: expired })), 'security.txt');
+      expect(result.status).toBe('fail');
+      expect(result.detail).toContain('expired');
+    });
+
+    it('only warns while the expiry is close', async () => {
+      const close = withText(securityText(30));
+      expect(find(await runLiveChecks(options({ fetch: close })), 'security.txt').status).toBe(
+        'warn',
       );
     });
   });

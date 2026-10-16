@@ -391,6 +391,22 @@ export async function runLiveChecks(options: LiveCheckOptions): Promise<CheckRes
     return verdict('search engine files', problems, 'robots.txt and sitemap.xml are fine');
   });
 
+  // security.txt carries an expiry that is renewed by every deployment; a site that was not built
+  // for almost a year would let it run out (RFC 9116 says readers must then ignore the file)
+  await run('security.txt', async () => {
+    const file = await get('/.well-known/security.txt');
+    if (file.status !== 200 || !/^Contact: /m.test(file.body)) {
+      return fail('security.txt', 'missing, or without a Contact line');
+    }
+    const expires = /^Expires: (.+)$/m.exec(file.body)?.[1];
+    const days = (Date.parse(expires ?? '') - Date.now()) / (24 * 60 * 60 * 1000);
+    if (Number.isNaN(days) || days <= 0) {
+      return fail('security.txt', `expired or without a valid Expires line (${expires ?? 'none'})`);
+    }
+    const detail = `valid for another ${String(Math.floor(days))} days`;
+    return days < 60 ? warn('security.txt', detail) : ok('security.txt', detail);
+  });
+
   // The Playground pages exist exactly while games are published; the sitemap tells which ones
   await run('playground', async () => {
     const sitemap = await get('/sitemap.xml');

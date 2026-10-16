@@ -273,6 +273,23 @@ describe('search engine files', () => {
     expect(robots).toContain(`Sitemap: ${siteConfig.url}/sitemap.xml`);
   });
 
+  it('security.txt names a contact, a policy and an expiry that is neither past nor far away', async () => {
+    const text = await readDistFile('.well-known/security.txt');
+    expect(text).toContain(`Contact: mailto:${siteConfig.email}`);
+    expect(text).toContain(`Canonical: ${siteConfig.url}/.well-known/security.txt`);
+    const expires = /^Expires: (.+)$/m.exec(text)?.[1];
+    expect(expires).toBeDefined();
+    const days = (Date.parse(expires ?? '') - Date.now()) / (24 * 60 * 60 * 1000);
+    expect(days).toBeGreaterThan(300);
+    expect(days).toBeLessThan(365);
+  });
+
+  it('humans.txt names the developer and the source', async () => {
+    const text = await readDistFile('humans.txt');
+    expect(text).toContain(siteConfig.name);
+    expect(text).toContain(siteConfig.repo);
+  });
+
   it('sitemap lists the home page but not the noindex pages', async () => {
     const sitemap = await readDistFile('sitemap.xml');
     expect(sitemap).toContain(`<loc>${siteConfig.url}/</loc>`);
