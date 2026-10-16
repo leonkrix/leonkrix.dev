@@ -1,0 +1,54 @@
+/*
+ * The lines of the terminal: in the palette (type ">") and on the 404 page. Loaded together with
+ * the terminal code (see src/scripts/terminal-ui.ts), not with the page.
+ */
+
+.term-log {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.term-line {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* An empty line keeps its height */
+.term-line:empty::before {
+  content: '\200b';
+}
+
+.term-tone-muted {
+  color: var(--color-muted);
+}
+
+.term-tone-ok {
+  color: var(--color-status);
+}
+
+.term-tone-error {
+  color: var(--color-danger);
+}
+
+.term-tone-accent {
+  color: var(--color-accent-2);
+}
+
+.term-prompt {
+  color: var(--color-accent);
+}
+
+.term-link {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.15s;
+}
+
+.term-link:hover,
+.term-link:focus-visible {
+  text-decoration-color: currentColor;
+}

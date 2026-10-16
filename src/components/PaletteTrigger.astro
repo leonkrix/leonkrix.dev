@@ -1,0 +1,122 @@
+---
+import Icon from '@/components/Icon.astro';
+import { siteConfig } from '@/lib/site';
+---
+
+<!--
+  The button of the command palette (Ctrl or Cmd + K). It does nothing without JavaScript, so it is
+  hidden then. Only the small script below is part of the page; the palette itself (about 10 KB) is
+  fetched when it is opened for the first time.
+-->
+<button
+  type="button"
+  data-palette-open
+  data-repo={siteConfig.repo}
+  aria-label="Search and commands"
+  aria-keyshortcuts="Control+K Meta+K"
+  class="inline-flex size-10 items-center justify-center gap-2 rounded-md text-muted transition-colors hover:text-fg md:h-8 md:w-auto md:border md:border-border md:px-2.5 md:hover:border-accent/50 [@media(scripting:none)]:hidden"
+>
+  <Icon name="lucide:search" class="size-5 md:size-4" />
+  <kbd
+    data-palette-key
+    class="hidden min-w-[3.1rem] text-center font-mono text-xs md:inline"
+    aria-hidden="true"
+  >
+    Ctrl K
+  </kbd>
+</button>
+
+<script>
+  import { loadPaletteData } from '@/scripts/palette-data-client';
+
+  type Mode = 'search' | 'terminal';
+
+  const button = document.querySelector<HTMLElement>('[data-palette-open]');
+
+  // Cmd instead of Ctrl on Apple devices; the box has a fixed width, so nothing moves
+  const key = document.querySelector<HTMLElement>('[data-palette-key]');
+  if (key && /Mac|iPhone|iPad/.test(navigator.platform)) {
+    key.textContent = '⌘ K';
+  }
+
+  /** Fetches the code of the palette and its data at the same time */
+  function warm(): Promise<typeof import('@/scripts/palette-ui')> {
+    void loadPaletteData().catch(() => undefined);
+    return import('@/scripts/palette-ui');
+  }
+
+  function open(mode: Mode = 'search'): void {
+    warm()
+      .then(({ openPalette }) => openPalette(mode))
+      .catch(() => undefined);
+  }
+
+  button?.addEventListener('click', () => {
+    open();
+  });
+  // Start loading as soon as somebody is about to use it
+  button?.addEventListener('pointerenter', () => void warm().catch(() => undefined), {
+    once: true,
+  });
+  button?.addEventListener('focus', () => void warm().catch(() => undefined), { once: true });
+
+  // The Konami code: up, up, down, down, left, right, left, right, B, A
+  const konami = [
+    'ArrowUp',
+    'ArrowUp',
+    'ArrowDown',
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowLeft',
+    'ArrowRight',
+    'b',
+    'a',
+  ];
+  let progress = 0;
+
+  document.addEventListener('keydown', (event) => {
+    if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey) {
+      if (event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        const dialog = document.querySelector<HTMLDialogElement>('dialog.palette[open]');
+        if (dialog) {
+          dialog.close();
+        } else {
+          open();
+        }
+      }
+      return;
+    }
+    const target = event.target;
+    if (
+      target instanceof HTMLElement &&
+      (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))
+    ) {
+      progress = 0;
+      return;
+    }
+    const pressed = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    if (pressed === konami[progress]) {
+      progress += 1;
+      if (progress === konami.length) {
+        progress = 0;
+        import('@/scripts/sweep')
+          .then(({ runSweep }) => {
+            runSweep();
+          })
+          .catch(() => undefined);
+      }
+    } else {
+      progress = pressed === konami[0] ? 1 : 0;
+    }
+  });
+
+  // A hello for the developers who look into the console
+  console.info(
+    '%c> leonkrix.dev%c\nHello! This site is open source: %s\nPress Ctrl K (or Cmd K) for the command palette and type ">" for the terminal.',
+    'color:#22d3ee;font-weight:bold;font-size:14px',
+    '',
+    button?.dataset.repo,
+  );
+</script>

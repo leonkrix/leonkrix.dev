@@ -407,6 +407,32 @@ export async function runLiveChecks(options: LiveCheckOptions): Promise<CheckRes
     return days < 60 ? warn('security.txt', detail) : ok('security.txt', detail);
   });
 
+  // The command palette and the terminal fetch this file when they are opened: without it Ctrl K
+  // shows nothing. The address must not be readable in it (the page keeps it obfuscated too).
+  await run('palette data', async () => {
+    const file = await get('/palette.json');
+    if (file.status !== 200) {
+      return fail('palette data', `/palette.json answers HTTP ${String(file.status)}`);
+    }
+    let data: Record<string, unknown>;
+    try {
+      data = JSON.parse(file.body) as Record<string, unknown>;
+    } catch {
+      return fail('palette data', '/palette.json is not valid JSON');
+    }
+    const problems: string[] = [];
+    for (const key of ['places', 'notes', 'projects', 'uses']) {
+      const list = data[key];
+      if (!Array.isArray(list) || list.length === 0) {
+        problems.push(`"${key}" is missing or empty`);
+      }
+    }
+    if (file.body.includes(siteConfig.email) || file.body.includes('mailto:')) {
+      problems.push('the email address is readable in it');
+    }
+    return verdict('palette data', problems, 'places, notes, projects and uses are there');
+  });
+
   // The Playground pages exist exactly while games are published; the sitemap tells which ones
   await run('playground', async () => {
     const sitemap = await get('/sitemap.xml');

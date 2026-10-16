@@ -1,0 +1,228 @@
+/*
+ * The command palette (Ctrl or Cmd + K). Loaded the first time it is opened, not with the page, so
+ * the stylesheet of every page stays small. The box has a fixed size, so nothing inside it moves
+ * when the list gets shorter or the terminal prints a line.
+ */
+
+.palette {
+  box-sizing: border-box;
+  display: none;
+  flex-direction: column;
+  width: min(40rem, calc(100vw - 2rem));
+  max-width: none;
+  height: min(30rem, calc(100dvh - 2rem));
+  max-height: none;
+  margin: min(10vh, 6rem) auto auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  background: color-mix(in srgb, var(--color-surface) 96%, transparent);
+  color: var(--color-fg);
+  box-shadow:
+    0 24px 80px rgb(0 0 0 / 0.55),
+    inset 0 1px 0 color-mix(in srgb, var(--color-accent) 18%, transparent);
+}
+
+.palette[open] {
+  display: flex;
+  animation: palette-in 0.14s ease-out backwards;
+}
+
+.palette::backdrop {
+  background: rgb(5 8 12 / 0.62);
+  backdrop-filter: blur(3px);
+}
+
+@keyframes palette-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+}
+
+@media (max-width: 40rem) {
+  .palette {
+    margin-top: 1rem;
+    height: min(34rem, calc(100dvh - 2rem));
+  }
+}
+
+.palette-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: none;
+  padding: 0 1rem;
+  height: 3.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.palette-mark {
+  flex: none;
+  width: 1.1rem;
+  text-align: center;
+  color: var(--color-muted);
+  font-family: var(--font-mono), monospace;
+}
+
+.palette-mark svg {
+  display: block;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.palette[data-mode='terminal'] .palette-mark {
+  color: var(--color-accent);
+}
+
+.palette-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--color-fg);
+  /* 16px at least, or iOS zooms into the field */
+  font: inherit;
+  font-size: 1rem;
+  outline: none;
+}
+
+.palette[data-mode='terminal'] .palette-input {
+  font-family: var(--font-mono), monospace;
+}
+
+.palette-input::placeholder {
+  color: var(--color-muted);
+}
+
+.palette-close {
+  flex: none;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--color-muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.palette-close:hover {
+  color: var(--color-fg);
+}
+
+.palette-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.palette-list,
+.palette-log {
+  position: absolute;
+  inset: 0;
+  padding: 0.5rem;
+}
+
+.palette-list {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding: 2rem 0;
+}
+
+.palette-log {
+  padding: 0.75rem 1rem;
+}
+
+.palette[data-mode='terminal'] .palette-list,
+.palette[data-mode='search'] .palette-log {
+  display: none;
+}
+
+.palette-group-label {
+  padding: 0.6rem 0.75rem 0.3rem;
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.palette-option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.5rem;
+  color: var(--color-fg);
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.palette-option[aria-selected='true'] {
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  box-shadow: inset 2px 0 0 var(--color-accent);
+}
+
+.palette-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette-hint {
+  flex: none;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+
+.palette-empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 0.9375rem;
+}
+
+.palette-foot {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 1rem;
+  height: 2.5rem;
+  padding: 0 1rem;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.palette-foot kbd,
+.kbd {
+  padding: 0.05rem 0.35rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.3rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.7rem;
+}
+
+.palette-foot .palette-note {
+  color: var(--color-status);
+}
+
+/* On a phone there is no keyboard to point at */
+@media (hover: none) {
+  .palette-keys {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .palette[open] {
+    animation: none;
+  }
+}
