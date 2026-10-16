@@ -2,6 +2,63 @@
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/jetbrains-mono';
 
+/*
+ * Fallback fonts that are as big as the web fonts. While a font is on its way (or if it comes late on
+ * a slow line) the text is set in a font of the visitor's system, and when the web font arrives the
+ * text is set again. If the two fonts differ in width and height the lines break at other places and
+ * the whole page jumps. These faces are Arial (and the fonts that have its measures: Liberation Sans
+ * on Linux, Arimo on Chrome OS) and Courier New (Liberation Mono, Cousine), stretched and shifted to
+ * the measures of Inter and JetBrains Mono, so that the swap moves (almost) nothing. The values were
+ * measured with the real font files on a text of the site: Inter is 6.75 % wider than Arial (1.5 %
+ * wider than Arial Bold at weights 600 and 700), JetBrains Mono is as wide as Courier New (both
+ * 0.6 em); the vertical measures are those of the fonts divided by the size adjustment. A visitor
+ * whose system has none of these fonts gets the generic fallback, as before. The test that loads
+ * every page with delayed fonts (tests/e2e/slow-fonts.spec.ts) checks that nothing jumps.
+ */
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Arial'), local('Liberation Sans'), local('Arimo');
+  font-weight: 100 500;
+  size-adjust: 106.8%;
+  ascent-override: 90.7%;
+  descent-override: 22.6%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Inter Fallback';
+  src:
+    local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'),
+    local('LiberationSans-Bold'), local('Arimo Bold');
+  font-weight: 600 900;
+  size-adjust: 101.5%;
+  ascent-override: 95.4%;
+  descent-override: 23.8%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono Fallback';
+  src: local('Courier New'), local('CourierNewPSMT'), local('Liberation Mono'), local('Cousine');
+  font-weight: 100 500;
+  size-adjust: 100%;
+  ascent-override: 102%;
+  descent-override: 30%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono Fallback';
+  src:
+    local('Courier New Bold'), local('CourierNewPS-BoldMT'), local('Liberation Mono Bold'),
+    local('LiberationMono-Bold'), local('Cousine Bold');
+  font-weight: 600 900;
+  size-adjust: 100%;
+  ascent-override: 102%;
+  descent-override: 30%;
+  line-gap-override: 0%;
+}
+
 /* Design tokens. Tailwind generates utilities from these, e.g. bg-bg, text-fg, text-muted. */
 @theme static {
   --color-bg: #0a0d12;
@@ -15,8 +72,10 @@
   --color-status: #34d399;
   --color-danger: #f87171;
 
-  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --font-sans: 'Inter Variable', 'Inter Fallback', ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    'JetBrains Mono Variable', 'JetBrains Mono Fallback', ui-monospace, 'SFMono-Regular', Menlo,
+    monospace;
 }
 
 @layer base {

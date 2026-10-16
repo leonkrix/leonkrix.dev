@@ -17,24 +17,9 @@ interface Props {
   noindex?: boolean | undefined;
   /** Pages with a lot of text get a calm background without the grid */
   calm?: boolean | undefined;
-  /**
-   * Request the two fonts at once, before the stylesheet is read. For pages that are mostly text
-   * (the notes, the legal pages): if the fonts arrive after the first paint, the text is set again
-   * in the new font and breaks differently, and the page jumps. Not for the games: their page
-   * loads a large file at the same time, and a change in the order of the requests made Lighthouse
-   * count that download into the first paint (a score of 75 instead of 98).
-   */
-  preloadFonts?: boolean | undefined;
 }
 
-const {
-  title = siteConfig.title,
-  description,
-  image,
-  noindex,
-  calm = false,
-  preloadFonts = false,
-} = Astro.props;
+const { title = siteConfig.title, description, image, noindex, calm = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -50,12 +35,9 @@ const {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
-    {preloadFonts && (
-      <>
-        <link rel="preload" href={interUrl} as="font" type="font/woff2" crossorigin />
-        <link rel="preload" href={monoUrl} as="font" type="font/woff2" crossorigin />
-      </>
-    )}
+    {/* The two fonts of every page, requested at once, before the stylesheet is read (see tests/build-output/fonts.test.ts) */}
+    <link rel="preload" href={interUrl} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={monoUrl} as="font" type="font/woff2" crossorigin />
     <Seo title={title} description={description} image={image} noindex={noindex} />
     <slot name="head" />
   </head>
