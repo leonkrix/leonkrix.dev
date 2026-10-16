@@ -435,7 +435,7 @@ export default function WordRadar() {
     return (
       <WordRadarSkeleton
         language={language}
-        message={failed ? texts[language].loadFailed : texts[language].loading}
+        message={failed ? texts[language].loadFailed : undefined}
       />
     );
   }

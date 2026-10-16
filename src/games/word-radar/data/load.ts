@@ -27,55 +27,82 @@ const loaded = new Map<Language, Promise<WordData>>();
 let painted: Promise<void> | undefined;
 
 /**
- * Resolves when the page has been painted: when the browser reports the first largest paint (a
- * moment later), or, in a browser that does not report it, when the page has loaded and two frames
- * have been drawn. The words (about 2 MB) are only fetched after that, never while the page is
- * still being drawn. A page that is never painted (a tab in the background) starts after 4 seconds.
+ * Resolves when the page has been painted for the last time: it has loaded, its fonts are there, and
+ * the browser has reported the largest paint of the game itself (its message, which is the last
+ * largest paint of the page) followed by a moment. The words (about 2 MB) are only fetched after
+ * that, never while the page is still being drawn. If that paint never comes (a script that fails,
+ * a tab in the background) the fetch starts after 4 seconds.
  *
  * Why: Lighthouse works out the time of the largest paint on a slow phone from what it saw. A
- * request that starts before the paint it saw counts as something the paint waits for, and the
- * simulation then waits for 2 MB on a slow line (12 seconds, a score of 73), a request that starts
- * after it does not (1.8 seconds, a score of 98). The words used to start in the same few
- * milliseconds as the first paint, so the same page scored 98 or 73, whichever came first, and
- * on a slow machine (the build server) the two were even closer together; a fixed wait did not
- * help there either (under load the paint came after 1.2 seconds, the wait was over after 0.5),
- * so the fetch waits for the paint itself. A visitor loses nothing: the words are not needed
- * before the game runs, and the download takes longer than this wait.
+ * request that started before that paint counts as something the paint waits for, and the
+ * simulation then waits for 2 MB on a slow line (12 seconds, a score of 73 or 74), a request that
+ * started after it does not (1.8 seconds, a score of 98). The paint it looks at is the LAST largest
+ * paint, and this page has two: first the text of the page (92 ms in a real browser), then the
+ * message of the game, which is bigger (332 ms: the game has been drawn long before, but the
+ * message is only shown then). A fetch that waited only for the first one started between the two
+ * (and scored 74 as soon as the fonts were preloaded, which moved the first paint earlier, found
+ * 2026-10-16; before, the two paints happened to fall together), and a quiet period or a signal
+ * from the game is too early as well. So the fetch waits for the paint of the game itself, and for
+ * the fonts, whose swap can paint the text again. A visitor loses little: the words are not needed
+ * before the game runs, and the download takes longer than the wait.
  */
-function afterFirstPaint(): Promise<void> {
+function afterPaint(): Promise<void> {
   painted ??= new Promise((resolve) => {
-    let started = false;
-    const go = (delay: number): void => {
-      if (!started) {
-        started = true;
-        window.setTimeout(resolve, delay);
+    let finished = false;
+    const finish = (): void => {
+      if (!finished) {
+        finished = true;
+        resolve();
       }
     };
-    window.setTimeout(() => {
-      go(0);
-    }, 4000);
+    window.setTimeout(finish, 4000);
 
-    const reportsPaint =
+    const loadedPage = new Promise<void>((done) => {
+      if (document.readyState === 'complete') {
+        done();
+      } else {
+        window.addEventListener(
+          'load',
+          () => {
+            done();
+          },
+          { once: true },
+        );
+      }
+    });
+
+    // The game has painted: the browser reports a largest paint whose element is part of the game
+    let gamePainted: () => void = () => undefined;
+    const painted$ = new Promise<void>((done) => {
+      gamePainted = done;
+    });
+    if (
       typeof PerformanceObserver !== 'undefined' &&
-      PerformanceObserver.supportedEntryTypes.includes('largest-contentful-paint');
-    if (reportsPaint) {
-      new PerformanceObserver(() => {
-        go(100);
-      }).observe({ type: 'largest-contentful-paint', buffered: true });
-      return;
+      PerformanceObserver.supportedEntryTypes.includes('largest-contentful-paint')
+    ) {
+      const observer = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          const element = (entry as PerformanceEntry & { element?: Element | null }).element;
+          if (element?.closest('.wr')) {
+            observer.disconnect();
+            gamePainted();
+          }
+        }
+      });
+      observer.observe({ type: 'largest-contentful-paint', buffered: true });
+    } else {
+      // A browser that does not report it: the load, and a moment (the game is drawn by then)
+      window.setTimeout(gamePainted, 600);
     }
-    const wait = (): void => {
+
+    void Promise.all([loadedPage, document.fonts.ready, painted$]).then(() => {
+      // Two frames and a moment after that: a swap of the fonts or a late paint has been reported
       window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => {
-          go(150);
+          window.setTimeout(finish, 150);
         });
       });
-    };
-    if (document.readyState === 'complete') {
-      wait();
-    } else {
-      window.addEventListener('load', wait, { once: true });
-    }
+    });
   });
   return painted;
 }
@@ -92,7 +119,7 @@ async function fetchOk(url: string): Promise<Response> {
 /**
  * The words, their numbers and the words that can be hidden (about 2 MB), fetched once for a
  * language. A small script of the game page starts this once the page has been painted (see
- * `afterFirstPaint`), so the files are on their way while the game itself (React and the board) is
+ * `afterPaint`), so the files are on their way while the game itself (React and the board) is
  * still loading. The files get their address from the build (with a fingerprint), so they are
  * cached for good.
  */
@@ -102,7 +129,7 @@ export function loadWordData(language: Language = 'en'): Promise<WordData> {
     return earlier;
   }
   const current = (async () => {
-    await afterFirstPaint();
+    await afterPaint();
     const urls = files[language];
     const [vocabulary, vectors, secrets, forms] = await Promise.all([
       fetchOk(urls.vocabulary).then((response) => response.text()),
