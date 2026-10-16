@@ -58,51 +58,84 @@ jobs:
       # The Cloudflare Functions must bundle with the Workers runtime settings (nodejs_compat)
       - run: pnpm build:functions
 
+  # The browser tests run as two jobs at once, each on its own machine and with its own half of the
+  # tests (Playwright's --shard splits the list of tests, every test is in exactly one half). The
+  # same tests, the same limits, in half the time. The number of halves is written here twice (the
+  # matrix and the argument); tests/build-output/ci-shards.test.ts checks that they agree, so that
+  # a shard cannot be dropped by accident (its tests would silently not run).
   e2e:
-    name: End-to-end tests
+    name: End-to-end tests (${{ matrix.shard }}/2)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      # A failure in one half does not hide a failure in the other
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      - name: Install the Playwright browser
-        run: pnpm exec playwright install --with-deps chromium
       - name: Show the Playwright version
-        run: pnpm exec playwright --version
-      # Builds the site, serves it and runs the browser tests: smoke, privacy guard, accessibility
+        id: playwright
+        run: |
+          pnpm exec playwright --version
+          echo "version=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      # The browser (about 150 MB) is downloaded once per Playwright version; its system libraries
+      # come from the package manager of the machine every time
+      - name: Cache the Playwright browser
+        id: browser
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install the Playwright browser
+        if: steps.browser.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Install the system libraries of the Playwright browser
+        if: steps.browser.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
+      # Builds the site, serves it and runs half of the browser tests: smoke, privacy guard, accessibility
       # Playwright stops itself after 15 minutes (playwright.config.ts); this limit is a little above it
-      - run: pnpm test:e2e
+      - run: pnpm test:e2e --shard=${{ matrix.shard }}/2
         timeout-minutes: 17
       - name: Upload the Playwright report when tests failed
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: |
             playwright-report/
             test-results/
           retention-days: 7
 
+  # Lighthouse runs as three jobs at once, each with a third of the pages on its own machine: a run
+  # is still alone on its machine (running several on one machine disturbs the measurement), and the
+  # whole gate takes a third of the time. The number of parts is written twice (matrix and argument),
+  # see the comment at the browser tests and tests/build-output/ci-shards.test.ts.
   lighthouse:
-    name: Lighthouse
+    name: Lighthouse (${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      # Builds the site, runs Lighthouse (mobile) three times against it and checks the scores
-      # and the size budgets. Uses the Chrome that is preinstalled on the runner.
-      - run: pnpm lighthouse
+      # Builds the site, runs Lighthouse (mobile) three times against each page of its part and
+      # checks the scores and the size budgets. Uses the Chrome that is preinstalled on the runner.
+      - run: pnpm lighthouse --shard ${{ matrix.shard }}/3
         timeout-minutes: 8
       - name: Upload the Lighthouse report
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: lighthouse-report
+          name: lighthouse-report-${{ matrix.shard }}
           path: lighthouse-report/
           retention-days: 7
 

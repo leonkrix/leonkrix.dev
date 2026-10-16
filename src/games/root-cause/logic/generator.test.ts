@@ -3,21 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { createRandom } from '../../shared/random';
 import { caseFile, outage } from '../data/skins';
 import { Board } from './board';
+import { clueLevelOf, type Context, isNeutral, isSolution, subjectOf } from './clues';
 import {
-  check,
-  clueLevelOf,
-  type Context,
-  isNeutral,
-  isSolution,
-  isStatic,
-  subjectOf,
-  UNPLACED,
-} from './clues';
-import {
-  axesOf,
-  axisSubjects,
   chooseClues,
-  directShare,
   enumerateClues,
   generateLevel,
   isVaried,
@@ -26,24 +14,12 @@ import {
   sampleSolution,
   tierOf,
 } from './generator';
+import { defined, SKINS, SLOW } from './generator-test-helpers';
 import { generateLayout } from './layout';
-import { deduce, directlySolved, rate } from './propagation';
-import { kindsOf, type Skin } from './skin';
+import { deduce, rate } from './propagation';
+import { kindsOf } from './skin';
 import { solve } from './solver';
-import { type Clue, type Tier } from './types';
-
-const SKINS: readonly Skin[] = [caseFile, outage];
-
-/** Generating takes a moment: these tests get more time than the usual five seconds */
-const SLOW = 120_000;
-
-/** A value the test cannot go on without: fails with a clear message when it is missing */
-function defined<T>(value: T | undefined, what: string): T {
-  if (value === undefined) {
-    throw new Error('Expected ' + what + ', but there was none');
-  }
-  return value;
-}
+import { type Clue } from './types';
 
 describe('makePeople', () => {
   it.each(SKINS)('gives $id people unique names and labels, the victim last', (skin) => {
@@ -291,118 +267,6 @@ describe('tierOf', () => {
   });
 });
 
-describe('generateLevel', () => {
-  const cases: { skin: Skin; size: number; tier: Tier }[] = SKINS.flatMap((skin) =>
-    [
-      { size: 4, tier: 'easy' as const },
-      { size: 5, tier: 'easy' as const },
-      { size: 5, tier: 'medium' as const },
-      { size: 6, tier: 'medium' as const },
-      { size: 4, tier: 'hard' as const },
-      { size: 6, tier: 'hard' as const },
-    ].map((entry) => ({ skin, ...entry })),
-  );
-
-  it.each(cases)(
-    'makes verified $tier puzzles of $size by $size in $skin.id',
-    ({ skin, size, tier }) => {
-      for (let seed = 0; seed < 3; seed += 1) {
-        const made = generateLevel(
-          skin,
-          size,
-          tier,
-          `test2-${skin.id}-${String(size)}-${tier}-${String(seed)}`,
-        );
-        const level = defined(made, `a level (seed ${String(seed)})`).level;
-        // Two independent solvers, structure, names, clues: nothing may be wrong
-        expect(problemsOf(level), `seed ${String(seed)}`).toEqual([]);
-        expect(made?.tier).toBe(tier);
-        expect(tierOf(rate(level))).toBe(tier);
-        expect(level.people).toHaveLength(size);
-        expect(level.layout.size).toBe(size);
-        expect(level.layout.rooms).toHaveLength(level.layout.roomCount);
-      }
-    },
-    SLOW,
-  );
-
-  it(
-    'uses the number of clues about the map that the tier allows',
-    () => {
-      const limits: Record<Tier, [number, number]> = { easy: [0, 1], medium: [0, 2], hard: [1, 3] };
-      for (const tier of ['easy', 'medium', 'hard'] as const) {
-        for (let seed = 0; seed < 4; seed += 1) {
-          const made = defined(
-            generateLevel(caseFile, 5, tier, `floor-${tier}-${String(seed)}`),
-            'a level',
-          );
-          const floor = made.level.clues.filter(isNeutral).length;
-          const [fewest, most] = limits[tier];
-          expect(floor, `${tier} ${String(seed)}`).toBeGreaterThanOrEqual(fewest);
-          expect(floor, `${tier} ${String(seed)}`).toBeLessThanOrEqual(most);
-        }
-      }
-    },
-    SLOW,
-  );
-
-  it(
-    'makes the same puzzle for the same seed, and another one for another seed',
-    () => {
-      const first = generateLevel(caseFile, 5, 'medium', 'repeat');
-      const again = generateLevel(caseFile, 5, 'medium', 'repeat');
-      const other = generateLevel(caseFile, 5, 'medium', 'different');
-      expect(first?.level).toEqual(again?.level);
-      expect(first?.level).not.toEqual(other?.level);
-    },
-    SLOW,
-  );
-
-  it(
-    'uses few clues: clues are rare',
-    () => {
-      for (const skin of SKINS) {
-        const made = generateLevel(skin, 6, 'medium', 'rare');
-        expect(made?.level.clues.length ?? 99).toBeLessThanOrEqual(14);
-      }
-    },
-    SLOW,
-  );
-
-  it(
-    'mixes the kinds of clues',
-    () => {
-      for (let seed = 0; seed < 6; seed += 1) {
-        const clues =
-          generateLevel(caseFile, 6, 'medium', `variety-${String(seed)}`)?.level.clues ?? [];
-        expect(isVaried(clues), `seed ${String(seed)}`).toBe(true);
-      }
-    },
-    SLOW,
-  );
-
-  it(
-    'gives the rooms names that belong to their objects: no plant in a server room',
-    () => {
-      for (let seed = 0; seed < 8; seed += 1) {
-        const level = defined(
-          generateLevel(caseFile, 6, 'medium', `fit-${String(seed)}`),
-          'a level',
-        ).level;
-        for (const object of level.layout.objects) {
-          for (const cell of object.cells) {
-            const room = level.layout.rooms[level.layout.roomOf[cell] ?? 0];
-            if (room?.type === 'server-room') {
-              expect(['plant', 'sofa', 'rug']).not.toContain(object.kind);
-            }
-          }
-        }
-      }
-    },
-    SLOW,
-  );
-});
-
 describe('problemsOf notices a level that is wrong', () => {
   const made = generateLevel(caseFile, 5, 'medium', 'wrong');
   const level = defined(made, 'a level').level;
@@ -454,148 +318,6 @@ describe('problemsOf notices a level that is wrong', () => {
   it('notices the wrong number of people', () => {
     expect(problemsOf({ ...level, people: level.people.slice(1) })[0]).toMatch(/number of people/);
   });
-});
-
-describe('rows and columns', () => {
-  it(
-    'has at most one clue about a row and one about a column in a level',
-    () => {
-      for (const skin of SKINS) {
-        for (const tier of ['easy', 'medium', 'hard'] as const) {
-          for (let seed = 0; seed < 4; seed += 1) {
-            const made = generateLevel(skin, 6, tier, `axes-${skin.id}-${tier}-${String(seed)}`);
-            const level = defined(made, 'a level').level;
-            const axes = level.clues.flatMap((clue) => axesOf(clue));
-            expect(
-              axes.filter((axis) => axis === 'row').length,
-              `rows, seed ${String(seed)}`,
-            ).toBeLessThanOrEqual(1);
-            expect(
-              axes.filter((axis) => axis === 'col').length,
-              `columns, seed ${String(seed)}`,
-            ).toBeLessThanOrEqual(1);
-          }
-        }
-      }
-    },
-    SLOW,
-  );
-});
-
-describe('a row and a column clue about the same person', () => {
-  it('name the people of the row and column clues of a list', () => {
-    expect(
-      axisSubjects([
-        { type: 'line', person: 2, line: 'lastRow' },
-        { type: 'rowCol', person: 0, axis: 'col', index: 1 },
-        { type: 'corner', person: 1 },
-      ]),
-    ).toEqual({ row: [2], col: [0] });
-  });
-
-  it(
-    'are never in the same level, as together they name one cell (small easy levels most of all)',
-    () => {
-      let both = 0;
-      for (const skin of SKINS) {
-        for (const size of [4, 5]) {
-          for (let seed = 0; seed < 30; seed += 1) {
-            const made = generateLevel(
-              skin,
-              size,
-              'easy',
-              `one-cell-${skin.id}-${String(size)}-${String(seed)}`,
-            );
-            const { row, col } = axisSubjects(defined(made, 'a level').level.clues);
-            if (row.length > 0 && col.length > 0) {
-              both += 1;
-            }
-            expect(
-              row.filter((person) => col.includes(person)),
-              `${skin.id} ${String(size)} seed ${String(seed)}`,
-            ).toEqual([]);
-          }
-        }
-      }
-      // The test would mean little if no level had both kinds at all
-      expect(both).toBeGreaterThan(0);
-    },
-    SLOW,
-  );
-});
-
-describe('combined clues', () => {
-  it(
-    'let each part rule something out that the other does not (checked for the parts that depend on one cell)',
-    () => {
-      let combined = 0;
-      for (const skin of SKINS) {
-        for (let seed = 0; seed < 12; seed += 1) {
-          const made = generateLevel(skin, 6, 'hard', `parts-${skin.id}-${String(seed)}`);
-          const level = defined(made, 'a level').level;
-          const board = new Board(level.layout, level.kinds);
-          const context: Context = { board, people: level.people, victim: level.people.length - 1 };
-          const free = Array.from({ length: board.cellCount }, (_, cell) => cell).filter(
-            (cell) => !board.blocked.has(cell),
-          );
-          for (const clue of level.clues) {
-            if (clue.type !== 'and' && clue.type !== 'or') {
-              continue;
-            }
-            const [first, second] = clue.parts;
-            if (!isStatic(first) || !isStatic(second)) {
-              continue;
-            }
-            const cellsOf = (part: typeof first): Set<number> =>
-              new Set(
-                free.filter(
-                  (cell) =>
-                    check(
-                      part,
-                      context,
-                      level.people.map((_, person) => (person === clue.person ? cell : UNPLACED)),
-                    ) === true,
-                ),
-              );
-            const a = cellsOf(first);
-            const b = cellsOf(second);
-            const both = [...a].filter((cell) => b.has(cell)).length;
-            combined += 1;
-            expect(both, `${clue.type}: one part follows from the other`).toBeLessThan(a.size);
-            expect(both, `${clue.type}: one part follows from the other`).toBeLessThan(b.size);
-            expect(a.size, 'a part rules nothing out').toBeLessThan(
-              clue.type === 'and' ? free.length : free.length + 1,
-            );
-          }
-        }
-      }
-      expect(combined).toBeGreaterThan(0);
-    },
-    SLOW,
-  );
-});
-
-describe('the way in on a medium level', () => {
-  it(
-    'has the clues alone place at least half of the people',
-    () => {
-      for (const skin of SKINS) {
-        for (const size of [5, 6, 7]) {
-          for (let seed = 0; seed < 2; seed += 1) {
-            const made = generateLevel(
-              skin,
-              size,
-              'medium',
-              `direct-${skin.id}-${String(size)}-${String(seed)}`,
-            );
-            const level = defined(made, 'a level').level;
-            expect(directlySolved(level)).toBeGreaterThanOrEqual(directShare('medium', size));
-          }
-        }
-      }
-    },
-    SLOW,
-  );
 });
 
 describe('what can be deduced', () => {

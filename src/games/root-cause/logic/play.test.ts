@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { createRandom } from '../../shared/random';
+import levelsJson from '../data/levels.json';
 import { skins } from '../data/skins';
 import { skinWords } from '../data/words';
+import { type LevelRecord, toLevel } from '../pool';
 import { Board } from './board';
+import { checkClueTexts } from './clue-text-checks';
 import { CLUE_TYPES } from './clues';
 import { describeClue, kindsNobodyIsOn } from './describe';
-import { enumerateClues, generateLevel } from './generator';
+import { generateLevel } from './generator';
 import {
   autoCrossed,
   clearCell,
@@ -26,7 +28,6 @@ import {
   undo,
   visibleNotes,
 } from './play';
-import { kindsOf } from './skin';
 import { type Level } from './types';
 
 const made = generateLevel(skins['case-file'], 5, 'medium', 'play-test');
@@ -342,59 +343,23 @@ describe('undo and redo', () => {
 });
 
 describe('the texts of the clues', () => {
-  it('has a clean sentence for every kind of clue, in both skins', () => {
+  // The levels of the pool are verified puzzles of both skins and all tiers, and they exist without
+  // generating anything, so this goes through all of them in a moment: every kind of clue that is
+  // true on any of them must have a clean sentence, and together they must show every kind of clue.
+  // The same check on freshly generated levels is in play-texts-case-file.test.ts and
+  // play-texts-outage.test.ts (the generating takes a while, so each skin has its own file).
+  it('has a clean sentence for every kind of clue, in both skins, on every level of the pool', () => {
     const seen = new Set<string>();
-    for (const skin of Object.values(skins)) {
-      for (let seed = 0; seed < 6; seed += 1) {
-        const generated = generateLevel(skin, 7, 'hard', `text-${skin.id}-${String(seed)}`);
-        if (generated === undefined) {
-          continue;
-        }
-        const { layout, people, solution } = generated.level;
-        const kinds = kindsOf(skin);
-        const board = new Board(layout, kinds);
-        const clues = enumerateClues(
-          { board, people, victim: people.length - 1 },
-          layout,
-          kinds,
-          [...solution],
-          3,
-          createRandom(`text-${skin.id}-${String(seed)}`),
-        );
-        for (const clue of clues) {
-          seen.add(clue.type);
-          const text = describeClue(clue, {
-            skin,
-            words: skinWords[skin.id],
-            people,
-            layout,
-            kinds,
-          });
-          expect(text, JSON.stringify(clue)).toMatch(/^[A-Za-z][^?]*\.$/);
-          expect(text, JSON.stringify(clue)).not.toMatch(/undefined|NaN|\[object|\s{2}|\?/);
-          // The victim is never named
-          expect(text, JSON.stringify(clue)).not.toContain(people.at(-1)?.name ?? '');
-          // A clue names only objects that are on the map
-          if (clue.type === 'onFurniture') {
-            const present = new Set(layout.objects.map((object) => object.kind));
-            for (const [kind, info] of Object.entries(kinds)) {
-              const name = (skinWords[skin.id].kinds[kind]?.one ?? '').replace(/^(an?|the) /, '');
-              expect(text.includes(name), `${kind} in "${text}"`).toBe(
-                info.occupiable && present.has(kind),
-              );
-            }
-          }
-          // The people of Outage are devices, and the people of Case file are people
-          if (skin.id === 'outage') {
-            expect(text, JSON.stringify(clue)).not.toMatch(/\b(person|people|nobody)\b/i);
-          } else {
-            expect(text, JSON.stringify(clue)).not.toMatch(/\bdevices?\b/i);
-          }
-        }
+    const records = levelsJson as unknown as LevelRecord[];
+    expect(records.length).toBeGreaterThanOrEqual(18);
+    for (const record of records) {
+      const skin = skins[record.skin];
+      for (const type of checkClueTexts(skin, toLevel(record), `pool-${record.id}`)) {
+        seen.add(type);
       }
     }
     expect(CLUE_TYPES.filter((type) => !seen.has(type))).toEqual([]);
-  }, 120_000);
+  });
 });
 
 describe('the text of an "on furniture" clue', () => {

@@ -4,6 +4,7 @@
  * Fails when a category score is below its threshold or a budget is exceeded.
  *
  * Usage: pnpm lighthouse   (builds first)
+ *        pnpm lighthouse --shard 2/3   (only the second of three parts of the pages; the CI runs the three parts as three jobs)
  *        pnpm lighthouse --page /uses/ --page /notes/   (only these pages, for a quick look while building)
  * Needs a Chrome or Chromium; set CHROME_PATH if it is not found automatically.
  */
@@ -13,6 +14,8 @@ import { appendFile, mkdir, readdir, writeFile } from 'node:fs/promises';
 
 import * as chromeLauncher from 'chrome-launcher';
 import lighthouse from 'lighthouse';
+
+import { takeShard } from './shard.mjs';
 
 const PORT = 4323;
 const ORIGIN = `http://localhost:${String(PORT)}`;
@@ -86,14 +89,16 @@ async function listPages() {
   const only = process.argv.flatMap((arg, index) =>
     arg === '--page' && process.argv[index + 1] !== undefined ? [process.argv[index + 1]] : [],
   );
-  if (only.length === 0) {
-    return pages;
-  }
   const unknown = only.filter((path) => !pages.some((page) => page.path === path));
   if (unknown.length > 0) {
     throw new Error(`Unknown page(s) for --page: ${unknown.join(', ')}`);
   }
-  return pages.filter((page) => only.includes(page.path));
+  const chosen = only.length === 0 ? pages : pages.filter((page) => only.includes(page.path));
+  // --shard 2/3 tests only the second of three parts of the pages (every page is in exactly one part,
+  // see shard.mjs). The CI runs the parts as separate jobs on separate machines, which is a third of
+  // the time and does not change a single measurement: a run is still alone on its machine.
+  const shardFlag = process.argv.indexOf('--shard');
+  return shardFlag < 0 ? chosen : takeShard(chosen, process.argv[shardFlag + 1]);
 }
 
 const log = (message) => process.stdout.write(`${message}\n`);
