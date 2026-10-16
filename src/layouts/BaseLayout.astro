@@ -38,6 +38,13 @@ const {
 ---
 
 <!doctype html>
+<!--
+  Hello! You are reading the source of leonkrix.dev, so you are my kind of visitor.
+  The code is public: https://github.com/leonkrix/leonkrix.dev
+  How it is built: https://leonkrix.dev/notes/
+  Press Ctrl K (or Cmd K) for the command palette, and type ">" in it for a terminal.
+  Security contact: https://leonkrix.dev/.well-known/security.txt
+-->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -52,7 +59,7 @@ const {
     <Seo title={title} description={description} image={image} noindex={noindex} />
     <slot name="head" />
   </head>
-  <body class="flex min-h-dvh flex-col">
+  <body class="relative flex min-h-dvh flex-col">
     <a
       href="#main"
       class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-fg"

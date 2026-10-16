@@ -151,7 +151,9 @@
     left: 0;
     z-index: -1;
     width: 100%;
-    height: max(110dvh, 42rem);
+    /* Never taller than the page: it sits in the body, so a short page (the 404 page, the Uses page)
+       does not get a scroll bar only because of this layer */
+    height: min(max(110dvh, 42rem), 100%);
     overflow: hidden;
     pointer-events: none;
   }
