@@ -24,7 +24,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
           role="log"
           aria-label="Terminal"
           tabindex="0"
-          class="term-log h-[clamp(5rem,18dvh,11rem)] [@media(scripting:none)]:h-auto"
+          class="term-log h-[clamp(5rem,calc(18dvh+max(0px,100dvh-800px)*0.6),20rem)] [@media(scripting:none)]:h-auto"
         >
           <div class="term-line">
             <span class="term-prompt">$</span> cd /this-page
