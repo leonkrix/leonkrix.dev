@@ -1,0 +1,16 @@
+// Shortened from src/games/word-radar/data/load.ts
+const observer = new PerformanceObserver((list) => {
+  for (const entry of list.getEntries()) {
+    const { element } = entry as { element?: Element | null };
+    // A largest paint that is part of the game
+    if (element?.closest('.wr')) {
+      observer.disconnect();
+      gamePainted();
+    }
+  }
+});
+observer.observe({ type: 'largest-contentful-paint', buffered: true });
+
+// The words start when the page has loaded, its fonts are there and
+// the game has painted, and then two frames and 150 ms later
+await Promise.all([pageLoaded, document.fonts.ready, gamePainted]);

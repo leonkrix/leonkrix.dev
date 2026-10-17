@@ -112,13 +112,13 @@ A hint reveals a word that is closer than your best guess so far. The first vers
 
 ## A lesson from Lighthouse
 
-The 2 MB of data has to be fetched, and the first obvious way to do it was a small script that starts the download as soon as the page has loaded, in parallel with React. It worked, and the Lighthouse score of the page fell from 98 to 73.
+The 2 MB of data has to be fetched, and the first obvious way to do it was a small script that starts the download as soon as the page has loaded, in parallel with React. It worked, and the Lighthouse score of the page fell from 98 to 73. Later it did not even stay there: the same page scored 98, 89, 75 or 73, whatever the run felt like.
 
-Lighthouse simulates a slow connection, and the 2 MB download competed with the fonts and the text for it: it was requested with high priority before them, and the simulated time of the largest paint went from about two seconds to twelve. The fix is one option:
+I took it for a question of priority at first, and one option brought the score back for a while:
 
 <Code lang="ts" code={prioritySnippet} />
 
-The page and its fonts come first, the words come when the connection is free, and the score is back at 98. On a real connection the words still arrive as soon as nothing more important is loading.
+The real cause took longer to find. Lighthouse does not time the page, it replays a recording of one load on a simulated slow phone, and a download that had finished before the largest paint of the recording becomes something the simulated paint waits for: ten seconds for 1.9 MB on a line of 1.6 Mbit/s. Whether the download was before or after the paint of the recording was a matter of milliseconds. The page now starts the words after it has painted for the last time, and its biggest text no longer depends on them. [One page, four scores](/notes/one-page-four-scores/) tells the whole story, with the numbers.
 
 ## And in German
 

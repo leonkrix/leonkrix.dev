@@ -85,6 +85,8 @@ Two things are marked as deliberate. A box that rearranges its insides on purpos
 
 And one limit remains: the guard only sees states that a test triggers. A new dynamic state needs a test that causes it. That is why the list of pages is a list in the code, a test checks it against the pages of the build so that no page is missing, and a generic test opens every page, scrolls it to the end and waits.
 
+There is a second way a page can move that no state of a game causes: the fonts. A web font arrives after the first paint on a slow line and the text is set again. That has its own note, with the numbers: [Fonts that arrive late](/notes/fonts-that-arrive-late/).
+
 ## What it protects
 
 - Every browser test of every page, at desktop and phone size, from load to the end of the test.
