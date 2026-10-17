@@ -1,0 +1,161 @@
+/**
+ * The vocabulary of Backbone, independent of how a game looks and of the interface.
+ *
+ * A level is a network (nodes and links), a list of flows (what has to travel) and one to three
+ * situations (what happens while it travels). A plan says, for every flow, how it travels. The
+ * stress test (`simulate.ts`) runs a plan through the situations and gives a score.
+ *
+ * Everything here is plain data (no classes, no functions) so a level can be stored as JSON.
+ */
+
+export type NodeKind = 'router' | 'switch' | 'server' | 'client' | 'firewall' | 'radio';
+
+export interface NetNode {
+  id: string;
+  name: string;
+  kind: NodeKind;
+  /** The zone of the node (chapter 10), for example "office" or "guests" */
+  zone?: string;
+  /** Where the node is drawn, in a box of 0 to 100 on both axes */
+  x: number;
+  y: number;
+}
+
+/** A cable between two nodes. Links are undirected and carry traffic in both directions together. */
+export interface NetLink {
+  id: string;
+  a: string;
+  b: string;
+  /** Units of traffic per step, a whole number */
+  capacity: number;
+  /** Time a packet needs to cross, a whole number */
+  delay: number;
+  /** The share of the traffic this link loses, from 0 to 1 */
+  loss: number;
+  /** What the link costs in a level with a Build phase */
+  cost?: number;
+}
+
+export type ProfileId = 'voice' | 'control' | 'transaction' | 'video' | 'web' | 'bulk';
+
+/** What a kind of traffic cares about. The table is in `profiles.ts`. */
+export interface Profile {
+  id: ProfileId;
+  name: string;
+  /** What one unit of delivered traffic is worth */
+  weight: number;
+  /** How late the flow may be before it loses value, in units of delay. `undefined`: never late. */
+  latencyBudget: number | undefined;
+  /** How fast the value falls when later than the budget (1: it is worth nothing at twice the budget) */
+  steepness: number;
+  /** Value is the delivered share to this power: high for traffic that cannot lose anything */
+  lossExponent: number;
+  /** The queue on a link, 0 is served first */
+  queue: 0 | 1 | 2;
+  /** Whether the player may hold the flow back to make room for others */
+  throttlable: boolean;
+}
+
+export interface Flow {
+  id: string;
+  name: string;
+  source: string;
+  target: string;
+  profile: ProfileId;
+  /** Units of traffic per step in a calm situation */
+  demand: number;
+}
+
+/** What happens during a situation. `from` is included, `to` is excluded, both are steps. */
+export type NetEvent =
+  | { kind: 'burst'; flow: string; from: number; to: number; factor: number }
+  | { kind: 'down'; link: string; from: number; to: number }
+  | { kind: 'lossy'; link: string; from: number; to: number; loss: number }
+  | { kind: 'slow'; link: string; from: number; to: number; factor: number };
+
+export interface Situation {
+  id: string;
+  name: string;
+  steps: number;
+  events: readonly NetEvent[];
+}
+
+export interface Level {
+  id: string;
+  title: string;
+  /** Where it takes place and what is going on, a few lines */
+  story: string;
+  nodes: readonly NetNode[];
+  links: readonly NetLink[];
+  flows: readonly Flow[];
+  situations: readonly Situation[];
+}
+
+/** A path as the nodes it passes, from the source to the target. */
+export type NodePath = readonly string[];
+
+export interface WeightedPath {
+  nodes: NodePath;
+  /** The share of the flow on this path, the shares of a stage add up to 1 */
+  share: number;
+}
+
+/** From step `from` on, the flow travels like this (until the next stage). */
+export interface RouteStage {
+  from: number;
+  paths: readonly WeightedPath[];
+}
+
+export type Redundancy = 0 | 0.25 | 0.5;
+
+export interface FlowPlan {
+  /** At least one stage, the first one starts at step 0 */
+  stages: readonly RouteStage[];
+  /** Taken at once when the path in use is cut; without it the network repairs the route later */
+  backup?: NodePath;
+  redundancy: Redundancy;
+  /** The share of the demand that is sent at all, from 0 to 1 (only for profiles that can be held back) */
+  throttle: number;
+}
+
+/** A plan has an entry for a flow, or leaves it out (it then carries nothing). */
+export type Plan = Readonly<Record<string, FlowPlan>>;
+
+export interface FlowStepResult {
+  /** Units the flow wanted to send in this step (burst and throttle applied) */
+  sent: number;
+  /** The share of the original demand that arrived, 0 to 1 */
+  delivered: number;
+  /** The time the traffic needed, 0 when nothing arrived */
+  latency: number;
+  /** The value earned in this step */
+  value: number;
+  /** The most the flow could have earned */
+  maxValue: number;
+}
+
+export interface LinkStepResult {
+  /** Traffic that wanted to use the link */
+  offered: number;
+  /** Capacity of the link in this step (0 when it is down) */
+  capacity: number;
+  down: boolean;
+}
+
+export interface StepResult {
+  flows: Readonly<Record<string, FlowStepResult>>;
+  links: Readonly<Record<string, LinkStepResult>>;
+}
+
+export interface SituationResult {
+  situation: string;
+  /** 0 to 1: the value earned divided by the most that could have been earned */
+  score: number;
+  steps: readonly StepResult[];
+}
+
+export interface Evaluation {
+  /** 0 to 1: the mean of the situations with the worst one counted twice */
+  score: number;
+  situations: readonly SituationResult[];
+}
