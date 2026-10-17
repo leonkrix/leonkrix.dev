@@ -64,6 +64,12 @@ function page(body: string, init: ResponseInit = {}): Response {
   });
 }
 
+/** The tag of a page that names its preview picture */
+const card = (id: string): string =>
+  `<meta property="og:image" content="https://leonkrix.dev/og/${id}.png">`;
+
+const image = (): Response => new Response('png', { headers: { 'content-type': 'image/png' } });
+
 /** A fake of the whole site. `routes` replaces answers by "METHOD url". */
 function fakeSite(
   routes: Record<string, Route | Response | undefined> = {},
@@ -199,7 +205,7 @@ describe('runLiveChecks', () => {
   });
 
   describe('playground', () => {
-    const GAME = `<html><head><title>Tech Words | Leon Krix</title></head><body><h1>Tech Words</h1>
+    const GAME = `<html><head><title>Tech Words | Leon Krix</title>${card('games/tech-words')}</head><body><h1>Tech Words</h1>
 <astro-island component-url="/_astro/game.js" renderer-url="/_astro/client.js"></astro-island></body></html>`;
     const HOME_WITH_PLAYGROUND = HOME.replace(
       '<section id="contact">',
@@ -213,13 +219,26 @@ describe('runLiveChecks', () => {
       return fakeSite({
         [`GET ${BASE}/`]: page(HOME_WITH_PLAYGROUND),
         [`GET ${BASE}/sitemap.xml`]: new Response(SITEMAP),
-        [`GET ${BASE}/games/`]: page('<title>Playground | Leon Krix</title><h1>Playground</h1>'),
+        [`GET ${BASE}/games/`]: page(
+          `<title>Playground | Leon Krix</title>${card('games')}<h1>Playground</h1>`,
+        ),
         [`GET ${BASE}/games/tech-words/`]: page(GAME),
+        [`GET ${BASE}/og/games.png`]: image(),
+        [`GET ${BASE}/og/games/tech-words.png`]: image(),
         [`GET ${BASE}/_astro/game.js`]: script(),
         [`GET ${BASE}/_astro/client.js`]: script(),
         ...extra,
       });
     }
+
+    it('fails when the preview picture of a game is not served', async () => {
+      const missing = withGames({
+        [`GET ${BASE}/og/games/tech-words.png`]: new Response('', { status: 404 }),
+      });
+      expect(find(await runLiveChecks(options({ fetch: missing })), 'playground').detail).toContain(
+        '/games/tech-words/: the preview picture /og/games/tech-words.png answers HTTP 404',
+      );
+    });
 
     it('has nothing to check while no game is published', async () => {
       const result = find(await runLiveChecks(options()), 'playground');
@@ -271,19 +290,44 @@ describe('runLiveChecks', () => {
 
   describe('notes', () => {
     const SITEMAP = `<urlset><url><loc>https://leonkrix.dev/</loc></url><url><loc>https://leonkrix.dev/notes/</loc></url><url><loc>https://leonkrix.dev/notes/root-cause/</loc></url></urlset>`;
-    const OVERVIEW =
-      '<title>Behind the scenes | Leon Krix</title><h1>Behind the scenes</h1><a href="/notes/root-cause/">Root Cause</a>';
-    const NOTE =
-      '<title>Root Cause | Leon Krix</title><h1>Root Cause</h1><a href="/notes/">Behind the scenes</a>';
+    const OVERVIEW = `<title>Behind the scenes | Leon Krix</title>${card('notes')}<h1>Behind the scenes</h1><a href="/notes/root-cause/">Root Cause</a>`;
+    const NOTE = `<title>Root Cause | Leon Krix</title>${card('notes/root-cause')}<h1>Root Cause</h1><a href="/notes/">Behind the scenes</a>`;
 
     function withNotes(extra: Record<string, Route | Response | undefined> = {}): typeof fetch {
       return fakeSite({
         [`GET ${BASE}/sitemap.xml`]: new Response(SITEMAP),
         [`GET ${BASE}/notes/`]: page(OVERVIEW),
         [`GET ${BASE}/notes/root-cause/`]: page(NOTE),
+        [`GET ${BASE}/og/notes.png`]: image(),
+        [`GET ${BASE}/og/notes/root-cause.png`]: image(),
         ...extra,
       });
     }
+
+    it('fails when the preview picture of a note is not served, or a note names none', async () => {
+      const missing = withNotes({
+        [`GET ${BASE}/og/notes/root-cause.png`]: new Response('', { status: 404 }),
+      });
+      expect(find(await runLiveChecks(options({ fetch: missing })), 'notes').detail).toContain(
+        '/notes/root-cause/: the preview picture /og/notes/root-cause.png answers HTTP 404',
+      );
+      const wrongType = withNotes({
+        [`GET ${BASE}/og/notes.png`]: new Response('<html>', {
+          headers: { 'content-type': 'text/html' },
+        }),
+      });
+      expect(find(await runLiveChecks(options({ fetch: wrongType })), 'notes').detail).toContain(
+        '/notes/: the preview picture /og/notes.png answers HTTP 200',
+      );
+      const none = withNotes({
+        [`GET ${BASE}/notes/root-cause/`]: page(
+          '<title>Root Cause | Leon Krix</title><h1>x</h1><a href="/notes/">x</a>',
+        ),
+      });
+      expect(find(await runLiveChecks(options({ fetch: none })), 'notes').detail).toContain(
+        '/notes/root-cause/: no preview picture (og:image)',
+      );
+    });
 
     it('has nothing to check while no note is published', async () => {
       const result = find(await runLiveChecks(options()), 'notes');

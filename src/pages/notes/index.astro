@@ -5,6 +5,7 @@ import Icon from '@/components/Icon.astro';
 import Reveal from '@/components/Reveal.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { formatUpdated, noteGroups, notePath, readingMinutes, sortNotes } from '@/lib/notes';
+import { ogPath } from '@/lib/og';
 import { siteConfig } from '@/lib/site';
 
 const notes = sortNotes(await getCollection('notes'));
@@ -16,6 +17,8 @@ const groups = noteGroups
 <BaseLayout
   title={`Behind the scenes | ${siteConfig.name}`}
   description="How things on this site are made: short write-ups of the problems behind the games and the site itself, and how they are solved."
+  image={ogPath('notes')}
+  imageAlt="Behind the scenes: how things on this site are made"
   calm
 >
   <Reveal />

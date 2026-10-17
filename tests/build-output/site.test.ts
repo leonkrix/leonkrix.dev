@@ -240,12 +240,12 @@ describe('contact form switch', () => {
 });
 
 describe('link preview image', () => {
-  it('every page points to the same absolute og:image and Twitter card', () => {
+  it('every page has an absolute og:image and the same one for the Twitter card (which card: see og.test.ts)', () => {
     for (const { file, html } of pages) {
-      expect(html, file).toContain(`<meta property="og:image" content="${siteConfig.url}/og.png">`);
-      expect(html, file).toContain(
-        `<meta name="twitter:image" content="${siteConfig.url}/og.png">`,
-      );
+      const image = /<meta property="og:image" content="([^"]+)"/.exec(html)?.[1] ?? '';
+      expect(image.startsWith(`${siteConfig.url}/og`), `${file}: ${image}`).toBe(true);
+      expect(image.endsWith('.png'), `${file}: ${image}`).toBe(true);
+      expect(html, file).toContain(`<meta name="twitter:image" content="${image}">`);
       expect(html, file).toContain('<meta name="twitter:card" content="summary_large_image">');
       expect(html, file).toContain('<meta property="og:image:width" content="1200">');
       expect(html, file).toMatch(/<meta property="og:image:alt" content="[^"]+">/);
