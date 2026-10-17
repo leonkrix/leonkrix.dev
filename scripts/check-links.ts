@@ -37,6 +37,8 @@ export const PAGES: readonly string[] = [
   '/notes/a-page-that-never-moves/',
   '/notes/a-contact-form-without-a-third-party/',
   '/notes/watching-the-live-site/',
+  '/notes/one-page-four-scores/',
+  '/notes/fonts-that-arrive-late/',
 ];
 
 /** External links that are on none of the pages above but must keep working. */

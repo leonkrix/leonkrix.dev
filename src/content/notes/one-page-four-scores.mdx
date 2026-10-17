@@ -1,0 +1,89 @@
+---
+title: 'One page, four scores: why Lighthouse jumped between 98 and 73'
+summary: 'The same page scored 98, 89, 75 and 73. Lighthouse replays a recording on a simulated slow phone, and one request in the wrong place made a paint wait for 2 MB.'
+tag: 'Site · Performance'
+code: src/games/word-radar/data
+group: site
+order: 5
+updated: '2026-10-17'
+---
+
+import Code from '@/components/notes/Code.astro';
+import probe from './snippets/lighthouse-paint-probe.snippet?raw';
+import gate from './snippets/lighthouse-paint-gate.snippet?raw';
+import Stats from '@/components/notes/Stats.astro';
+
+For a few days the CI of this site failed now and then on one page, and I could not make it fail on purpose. The page was the one of Word Radar, the game that has to download 2 MB of word data. Lighthouse gave it 98, a few minutes later 89, then 75, then 73. Same code, same machine. Running it again turned the check green, and that is what makes this kind of problem bad: a check that you rerun until it passes is a check you learn to ignore.
+
+I wanted to know why it flipped. The answer was more interesting than “the runner is slow”, and my first explanation of it was wrong.
+
+<Stats
+  items={[
+    { value: '98 → 73', label: 'same code' },
+    { value: '12.3 s', label: 'largest paint, worst' },
+    { value: '1.9 MB', label: 'it waited for' },
+    { value: '16 / 16', label: 'runs at 98 now' },
+  ]}
+/>
+
+## What the score is made of
+
+The performance score is a weighted sum of five metrics, each turned into a number between 0 and 1 by a curve. Total Blocking Time counts for 30 %, the Largest Contentful Paint for 25 %, the Cumulative Layout Shift for 25 %, the First Contentful Paint and the Speed Index for 10 % each (the weights are in the configuration of Lighthouse 13).
+
+On this page four of the five metrics are close to 1 on every run: nothing blocks, nothing moves, the first paint is early. That leaves one metric that can move the score, and a metric with a quarter of the weight can move it a lot. If the largest paint scores 0, the page is at 75 at best. So 98 and 73 are the same page with a largest paint of about two seconds and of twelve.
+
+## Lighthouse does not time the page
+
+This is the part I had to learn. Lighthouse loads the page once in Chrome without slowing anything down, and records what happened: every request, every long task, every paint. Then it **simulates** what a phone on a slow connection would have seen, from that recording. For the mobile test that phone has a round trip of 150 ms, 1.6 Mbit/s and a processor four times slower than the one the recording was made on.
+
+So the number is not a measurement of the page, it is a computation on a recording. A small difference in the recording can change the result a lot, and a recording made on a slower machine, like the one of the CI, is a different recording.
+
+## The rule that decided it
+
+For the largest paint the simulation asks one question: what did the browser have to finish before it could draw this? It takes the requests of the recording that were **finished before that paint**, treats them as things the paint waited for, and plays them again on the slow phone. The metric is the average of an optimistic and a pessimistic version of that, and a plain download is part of both. A request that ended after the paint is not part of the story at all.
+
+Everything is decided in the recording, and the recording was made on a fast machine: the 2 MB came from my own computer in about ten milliseconds. Whether those ten milliseconds ended before or after the largest paint of the recording was a matter of luck. If before, the simulation made the paint wait for 1.9 MB on a line of 1.6 Mbit/s, which is ten seconds. If after, the download did not exist for the score. On the slower machine of the CI the paints and the request moved around, and the order was no longer the same every time.
+
+My first explanation, which I wrote into the note of the game, was that the download competed with the fonts and the text for the slow line. That is not what the simulation does. It is simpler and more brutal than that, and the fix I had found back then, a low priority for the request, helped for a while, but I never understood why. It probably only moved the request a little later.
+
+## Six rounds
+
+The fix sounds obvious: start the download after the page has painted. It took six rounds, and the table is what a real browser did each time and what Lighthouse then said.
+
+| Round | What the page did                                   | Largest paints in the browser  | The files started         | Score                              |
+| ----- | --------------------------------------------------- | ------------------------------ | ------------------------- | ---------------------------------- |
+| 1     | Started the download as soon as the page had loaded | not looked at yet              | with the first paint      | 98, 89, 75 or 73, by luck          |
+| 2     | Waited for the first largest paint                  | 92 ms and 268 ms               | 201 ms, between the two   | 74 in 10 of 10 runs                |
+| 3     | Waited until the page had been quiet for 300 ms     | 100 ms and 512 ms              | 433 ms, before the second | failed the new test                |
+| 4     | Waited for the game to say that it had drawn itself | 92 ms and 332 ms               | 254 ms, before the second | 74 or 75 in 8 of 8 runs            |
+| 5     | Waited for the largest paint inside the game        | 96 ms, a second one never came | not within 3.5 seconds    | 98 or 99, and the words never came |
+| 6     | The message of the game is final from the start     | 96 ms, and nothing after it    | 289 ms, after it          | 98 in 16 of 16 runs                |
+
+Round 2 is where the real cause showed. I had just preloaded the fonts on every page, a change that is good for layout shift ([that is another note](/notes/fonts-that-arrive-late/)) and makes the first paint come earlier. It did not break the page. It took away the luck that had kept the two paints and the request together before.
+
+The second paint is the interesting one. While the words loaded, the game said “Loading the words (about 2 MB)”, a short line. When the words had arrived it said the rule of the game, “Find the hidden word. The closer a guess is…”, a longer line and therefore the biggest text of the page. So the largest paint of the page could only happen **after the download**, and the simulation was right to make it wait for it. The page was wrong, not Lighthouse.
+
+<Code lang="plaintext" code={probe} />
+
+Round 5 is the one I am least proud of. The page waited for a paint that itself needed the data, so nothing happened until a safety timeout of four seconds, and Lighthouse measured a page that never downloaded anything: 98 or 99. I saw it only because I printed the requests next to the score, and the files were missing.
+
+## The fix is not a timer
+
+What worked is to remove the dependence. The message of the game is the rule of the game from the very first paint, and the loading hint moved into the input field, where it is not the biggest text of the page. Now there is one largest paint, and it does not need the download. The download starts after it, after the load and after the fonts, because a swap of the fonts can paint the text again.
+
+<Code lang="ts" code={gate} />
+
+The words now start a moment after the first paint instead of with it (289 ms in the last probe, the first paint at 96 ms), and a visitor loses nothing: the game cannot be played before the words are there anyway, and the download takes longer than the wait.
+
+## How to look for a flip like this
+
+- **Run the page many times and print every metric of every run.** A median of three runs can hide a flip that happens in one run out of four, because it can look at the three that agree.
+- **Ask a real browser what it paints.** A `PerformanceObserver` for the largest paint, with the element and the time, next to the time at which the big files start. If a request starts between two paints, there is the problem.
+- **Slow the processor down** (eight times) to look like the machine of the CI.
+- **Look at the requests, not only at the score.** A score can be green for the wrong reason.
+
+## What keeps it fixed
+
+A browser test plays the page in English and in German and checks that every file starts after the first and the **last** largest paint and after the fonts have arrived. It would have caught rounds 2 to 5. The rule that came out of it is written down for the next time: a large request starts only after the page has painted for the last time, and the biggest text of a page must not depend on a large download.
+
+What I take from it is that a flaky check was telling me something true. The page depended on the order of two things that no one had put in order, and I came close to fixing the number instead of the cause. The game itself is described in [its own note](/notes/word-radar/), and the way a change reaches this site in [the overview](/notes/how-this-site-is-built/).

@@ -34,9 +34,10 @@ let painted: Promise<void> | undefined;
  * a tab in the background) the fetch starts after 4 seconds.
  *
  * Why: Lighthouse works out the time of the largest paint on a slow phone from what it saw. A
- * request that started before that paint counts as something the paint waits for, and the
- * simulation then waits for 2 MB on a slow line (12 seconds, a score of 73 or 74), a request that
- * started after it does not (1.8 seconds, a score of 98). The paint it looks at is the LAST largest
+ * request that had finished before that paint (in the recording, which is made on a fast machine)
+ * counts as something the paint waits for, and the simulation then waits for 2 MB on a slow line
+ * (12 seconds, a score of 73 or 74), a request that comes after it does not (1.8 seconds, a score of
+ * 98). The note "One page, four scores" tells the whole story. The paint it looks at is the LAST largest
  * paint, and this page has two: first the text of the page (92 ms in a real browser), then the
  * message of the game, which is bigger (332 ms: the game has been drawn long before, but the
  * message is only shown then). A fetch that waited only for the first one started between the two

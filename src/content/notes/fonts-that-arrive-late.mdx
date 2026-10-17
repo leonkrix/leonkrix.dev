@@ -1,0 +1,74 @@
+---
+title: 'Fonts that arrive late: a fallback measured to fit'
+summary: 'A page jumps when its font arrives and the text is set again. A preload is half of the cure, a fallback font with measured sizes is the other half: from up to 0.17 to almost nothing.'
+tag: 'Site · Fonts'
+code: src/styles
+group: site
+order: 6
+updated: '2026-10-17'
+---
+
+import Code from '@/components/notes/Code.astro';
+import fallback from './snippets/fonts-fallback.snippet?raw';
+import measures from './snippets/fonts-measures.snippet?raw';
+import Stats from '@/components/notes/Stats.astro';
+
+A web font is a file. Until it has arrived, the browser sets the text in a font of the visitor's own system, and when it arrives the text is set again, in Inter this time. If the two fonts are not exactly as wide and as high, the lines break at other places, the paragraphs get a line more or less, and everything below moves. On a fast connection that happens before you have read a word. On a slow one you read the first paragraph, and then the page jumps under your eyes.
+
+I wanted that to be impossible on this site, and it took two measures, not one. The first is the one everybody mentions, and it is only half of the answer.
+
+<Stats
+  items={[
+    { value: '0.17', label: 'worst jump, before' },
+    { value: '0.03', label: 'worst jump, now' },
+    { value: '38', label: 'pages and sizes tested' },
+    { value: '88 KB', label: 'preloaded fonts' },
+  ]}
+/>
+
+## The first half: ask for the fonts at once
+
+The browser finds out which fonts a page needs when it has read the stylesheet and drawn the first text. Only then does it start the download. A **preload** moves that to the very beginning: two lines in the head of every page tell the browser to fetch the two files before it reads anything else. Only the latin files are asked for (Inter 48 KB, JetBrains Mono 40 KB, together 88 KB; the other alphabets of the two families are separate files and are only fetched when a page uses a letter from them), and the preload needs the attribute `crossorigin`, or the browser fetches the file twice.
+
+I had done this for the text pages after Lighthouse found a layout shift of 0.07 on the notes, and I had left the games out, for a reason that turned out to be wrong: the page of Word Radar fell from 98 to 75 with the preload, and I blamed the preload. The cause was a different one and is in [its own note](/notes/one-page-four-scores/); the preload had only made it visible. So the preload is now on every page, and a test checks that both fonts are requested on all of them, before the first style, and that nothing else is.
+
+## Why that is not enough
+
+A preload makes the font **early**, not **instant**. On a slow line the file still arrives after the first paint, and then the swap happens anyway. So I asked a different question: what does every page do when the fonts come late?
+
+The measurement is simple. Every font file is held back for 1.5 seconds, every page is opened at a desktop and at a phone size, and the browser reports the layout shifts it saw, the same number that Lighthouse and Google call CLS. Google calls a page good below 0.1.
+
+| What the pages had                        | Worst page | Pages and sizes above 0.01 |
+| ----------------------------------------- | ---------- | -------------------------- |
+| The preload on every page                 | 0.082      | 15 of 38                   |
+| The preload and the fallback font (below) | 0.028      | 1 of 38                    |
+
+The browser test of the repository, with another window size and a delay of 1.2 seconds, sees more without the fallback font: up to 0.17, on the Uses page. Different set-ups, different numbers, the same finding. The notes and the legal pages, the pages that are mostly text, jump the most, which is what you would expect: a text that is a bit wider breaks at another word.
+
+## The second half: a fallback that is the same size
+
+The browser does not have to use its default font while it waits. A page can say which system font to use as the stand-in, and CSS can stretch and shift that font so that it takes up the same room as the real one. Three properties do it: `size-adjust` scales the letters, `ascent-override` and `descent-override` move the baseline and the height of a line.
+
+I did not take the numbers from a recipe. I measured them, with the real font files, on 6,000 characters of text of this site, by setting the same text in the web font and in the stand-in and comparing the widths, and by asking for the height above and below the baseline.
+
+<Code lang="plaintext" code={measures} />
+
+Inter is 6.75 % wider than Arial, which is why a paragraph in Arial is a line shorter than in Inter and why it jumps. JetBrains Mono is exactly as wide as Courier New (both letters are 0.6 em), so only its height differs. The semi-bold and bold weights of Inter are much closer to Arial Bold than the regular weight is to Arial, so the stand-in has two faces, one for the regular weights and one for the bold ones, and the monospace font has two as well. The vertical values are the heights of the web font divided by the size adjustment, because the size adjustment scales the lines as well.
+
+<Code lang="css" code={fallback} />
+
+The faces name Arial, and the fonts that have the same measures by design: Liberation Sans on Linux (where the CI runs), Arimo on Chrome OS, and for the monospace font Courier New, Liberation Mono and Cousine. A visitor whose device has none of them, an Android phone for example, gets the generic stand-in as before, and the page behaves as it did. Nothing is loaded for any of this: the fonts are already on the device.
+
+## What is left
+
+One paragraph. On the note about Word Radar a single paragraph still breaks one line earlier on a desktop screen when the font swaps, and the page shifts by 0.028. A fallback with the average width of a font cannot match its exact width in every line, and a paragraph that ends close to the edge of a line can go either way. I could chase it by tuning the numbers for that one paragraph, and then another would take its place, so I left it, and the test does not ask for zero.
+
+## The test
+
+`slow-fonts.spec.ts` opens every page of the site, the 404 page included, with every font file held back for 1.2 seconds, adds up the layout shifts the browser reports and fails above 0.05. That is half of what Google calls good, and about one paragraph of slack. The layout guard of the other tests is switched off for this one, with a comment that says why: it fails on any movement at all, and a swap of fonts can move one line, so here the size of the movement is what is limited.
+
+To see whether the test can fail, I took the fallback fonts out again. It failed on the legal pages, the notes and the Uses page, with values between 0.05 and 0.17.
+
+## What I take from it
+
+A preload moves a problem in time and does not remove it. The cure for a late font is a stand-in that is the same size, and the numbers for that are a measurement, not a setting. And a rule like “no jumps” is only as good as the test that makes the font late on purpose: on my own machine the fonts arrive in a few milliseconds, and nothing ever jumps. The way the guard that watches every frame works is in [the note about the layout](/notes/a-page-that-never-moves/).
