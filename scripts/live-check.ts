@@ -434,6 +434,27 @@ export async function runLiveChecks(options: LiveCheckOptions): Promise<CheckRes
   });
 
   // The Playground pages exist exactly while games are published; the sitemap tells which ones
+  /**
+   * The preview picture that a page names (og:image) must be served: a link that is shared shows
+   * it. The address of the picture is taken from the page and asked for on the site that is
+   * checked, so a check of a local copy works too. Returns what is wrong, or undefined.
+   */
+  const previewImageProblem = async (path: string, html: string): Promise<string | undefined> => {
+    const address = /<meta property="og:image" content="([^"]+)"/.exec(html)?.[1];
+    if (address === undefined) {
+      return `${path}: no preview picture (og:image)`;
+    }
+    const picture = new URL(address).pathname;
+    const answer = await get(picture);
+    if (
+      answer.status !== 200 ||
+      !(answer.headers.get('content-type') ?? '').includes('image/png')
+    ) {
+      return `${path}: the preview picture ${picture} answers HTTP ${String(answer.status)}`;
+    }
+    return undefined;
+  };
+
   await run('playground', async () => {
     const sitemap = await get('/sitemap.xml');
     const paths = [
@@ -459,6 +480,10 @@ export async function runLiveChecks(options: LiveCheckOptions): Promise<CheckRes
       }
       if (!/<h1[\s>]/.test(game.body)) {
         problems.push(`${path}: no main heading`);
+      }
+      const gamePicture = await previewImageProblem(path, game.body);
+      if (gamePicture !== undefined) {
+        problems.push(gamePicture);
       }
       // A game is a script on the page: the files of the island must be served
       for (const asset of game.body.matchAll(/(?:component-url|renderer-url)="([^"]+)"/g)) {
@@ -506,6 +531,10 @@ export async function runLiveChecks(options: LiveCheckOptions): Promise<CheckRes
       }
       if (!/<h1[\s>]/.test(note.body)) {
         problems.push(`${path}: no main heading`);
+      }
+      const notePicture = await previewImageProblem(path, note.body);
+      if (notePicture !== undefined) {
+        problems.push(notePicture);
       }
       if (path !== overview) {
         if (!note.body.includes(`href="${overview}"`)) {

@@ -5,6 +5,7 @@ import Icon from '@/components/Icon.astro';
 import { type GameDefinition, gamesPath } from '@/games/registry';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { notePath } from '@/lib/notes';
+import { ogPath } from '@/lib/og';
 import { siteConfig } from '@/lib/site';
 
 interface Props {
@@ -29,6 +30,8 @@ const panels = [
 <BaseLayout
   title={`${game.name} | ${siteConfig.name}`}
   description={`${game.name}: ${game.description}`}
+  image={ogPath(`games/${game.slug}`)}
+  imageAlt={`${game.name} (Playground)`}
   calm
 >
   <main id="main" class="flex-1">

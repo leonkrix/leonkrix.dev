@@ -1,168 +1,143 @@
 /**
- * Generates the Open Graph preview image (the card that appears when the link is shared) as
- * public/og.png, 1200 x 630 pixels. The image is a screenshot of a small HTML page that uses the
- * same fonts, colors and wordmark as the site, rendered with the Chromium that Playwright already
- * provides, so it needs no extra dependency. The result is committed: a build must not depend on a
- * browser. Run it again (pnpm og) after changing the name, the role, the wordmark or the colors.
+ * Generates the Open Graph preview images (the cards that appear when a link is shared), 1200 x 630
+ * pixels: the card of the home page (public/og.png, also used by every page without a card of its
+ * own) and a card for every note, every live game and the overviews and the Uses page
+ * (public/og/<id>.png). A card is a screenshot of a small HTML page (scripts/og-template.ts) that
+ * uses the same fonts, colors and wordmark as the site, rendered with the Chromium that Playwright
+ * already provides, so it needs no extra dependency. The pictures are committed: a build must not
+ * depend on a browser.
  *
- * Usage: pnpm og   (needs the Playwright browser: pnpm exec playwright install chromium)
+ * Only the cards whose content (or the template) changed are made again; the fingerprint of every
+ * picture is in scripts/og-fingerprints.json, and tests/build-output/og.test.ts fails when a
+ * picture is out of date or missing. Run it after changing a title or a summary of a note, a game
+ * or the template, and commit the result.
+ *
+ * Usage: pnpm og          (the cards that changed)
+ *        pnpm og --all    (every card, also the ones that did not change)
+ *        Needs the Playwright browser: pnpm exec playwright install chromium
  */
-import { mkdtemp, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { chromium } from '@playwright/test';
 
-// Node 24 runs TypeScript files directly, so the text always comes from the site configuration
-import { siteConfig } from '../src/lib/site.ts';
+import { OG_HEIGHT, OG_WIDTH } from '../src/lib/og.ts';
+import { expectedFingerprints, fileOf, homeCard, loadCards } from './og-cards.ts';
+import { cardHtml, homeHtml } from './og-template.ts';
 
-const WIDTH = 1200;
-const HEIGHT = 630;
-const OUTPUT = resolve('public', 'og.png');
+const FINGERPRINTS = resolve('scripts', 'og-fingerprints.json');
+const all = process.argv.includes('--all');
 
 const fontUrl = (name) =>
   pathToFileURL(resolve('node_modules', '@fontsource-variable', ...name.split('/'))).href;
+const fonts = {
+  inter: fontUrl('inter/files/inter-latin-wght-normal.woff2'),
+  mono: fontUrl('jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2'),
+};
 
-const html = `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<style>
-  @font-face {
-    font-family: 'Inter';
-    font-weight: 100 900;
-    src: url('${fontUrl('inter/files/inter-latin-wght-normal.woff2')}') format('woff2');
-  }
-  @font-face {
-    font-family: 'JetBrains Mono';
-    font-weight: 100 800;
-    src: url('${fontUrl('jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2')}') format('woff2');
-  }
-  :root {
-    --bg: #0a0d12;
-    --border: #1e2632;
-    --fg: #e6edf3;
-    --muted: #8b98a9;
-    --accent: #4f8cff;
-    --accent-2: #22d3ee;
-  }
-  * { box-sizing: border-box; margin: 0; }
-  html, body { width: ${WIDTH}px; height: ${HEIGHT}px; background: var(--bg); }
-  body {
-    position: relative;
-    overflow: hidden;
-    color: var(--fg);
-    font-family: 'Inter', sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  /* The same light and grid as the hero of the site */
-  .light {
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(900px 420px at 50% -120px, rgba(79, 140, 255, 0.2), transparent 70%),
-      radial-gradient(520px 340px at 88% 8%, rgba(34, 211, 238, 0.09), transparent 70%);
-  }
-  .grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(to right, rgba(30, 38, 50, 0.9) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(30, 38, 50, 0.9) 1px, transparent 1px);
-    background-size: 56px 56px;
-    mask-image: radial-gradient(ellipse 75% 110% at 90% 0%, #000 0%, rgba(0, 0, 0, 0.5) 45%, transparent 100%);
-  }
-  .frame {
-    position: absolute;
-    inset: 0;
-    padding: 64px 80px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  .wordmark {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 34px;
-    font-weight: 500;
-    letter-spacing: -0.02em;
-  }
-  .wordmark svg { width: 40px; height: 40px; }
-  .wordmark .cursor { color: var(--accent-2); }
-  .hello {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 28px;
-    color: var(--accent-2);
-  }
-  h1 {
-    margin-top: 18px;
-    font-size: 132px;
-    font-weight: 600;
-    line-height: 1;
-    letter-spacing: -0.03em;
-  }
-  .role {
-    margin-top: 18px;
-    font-size: 58px;
-    font-weight: 500;
-    background: linear-gradient(to right, var(--accent), var(--accent-2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    width: fit-content;
-  }
-  .domain {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 28px;
-    color: var(--muted);
-  }
-</style>
-</head>
-<body>
-  <div class="light"></div>
-  <div class="grid"></div>
-  <div class="frame">
-    <div class="wordmark">
-      <svg viewBox="0 0 32 32" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 10l7 6-7 6" stroke="#4f8cff"></path>
-        <path d="M18 23h6" stroke="#22d3ee"></path>
-      </svg>
-      <span>leonkrix<span class="cursor">_</span></span>
-    </div>
-    <div>
-      <p class="hello">Hello, I'm</p>
-      <h1>${siteConfig.name}</h1>
-      <p class="role">${siteConfig.role}</p>
-    </div>
-    <p class="domain">${new URL(siteConfig.url).hostname}</p>
-  </div>
-</body>
-</html>`;
-
-const directory = await mkdtemp(join(tmpdir(), 'og-'));
-const page = join(directory, 'og.html');
-await writeFile(page, html, 'utf8');
-
-const browser = await chromium.launch();
+const expected = expectedFingerprints();
+let known = {};
 try {
-  const context = await browser.newContext({
-    viewport: { width: WIDTH, height: HEIGHT },
-    deviceScaleFactor: 1,
-  });
-  const tab = await context.newPage();
-  await tab.goto(pathToFileURL(page).href);
-  // Make sure both fonts are loaded before the picture is taken
-  await tab.evaluate(() => document.fonts.ready);
-  await tab.screenshot({ path: OUTPUT, type: 'png' });
-} finally {
-  await browser.close();
-  await rm(directory, { recursive: true, force: true });
+  known = JSON.parse(await readFile(FINGERPRINTS, 'utf8'));
+} catch {
+  // the first time there is none
 }
 
-const { size } = await stat(OUTPUT);
+const cards = new Map(loadCards().map((card) => [card.id, card]));
+const exists = async (file) => {
+  try {
+    await stat(resolve('public', `.${file}`));
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const todo = [];
+for (const [id, fingerprint] of Object.entries(expected)) {
+  if (all || known[id] !== fingerprint || !(await exists(fileOf(id)))) {
+    todo.push(id);
+  }
+}
+
+const directory = await mkdtemp(join(tmpdir(), 'og-'));
+const made = [];
+if (todo.length > 0) {
+  const browser = await chromium.launch();
+  try {
+    const context = await browser.newContext({
+      viewport: { width: OG_WIDTH, height: OG_HEIGHT },
+      deviceScaleFactor: 1,
+    });
+    const tab = await context.newPage();
+    for (const id of todo) {
+      const card = cards.get(id);
+      const html =
+        id === 'home'
+          ? homeHtml(fonts, homeCard.name, homeCard.role, homeCard.address)
+          : cardHtml(fonts, card);
+      const file = join(directory, 'card.html');
+      await writeFile(file, html, 'utf8');
+      await tab.goto(pathToFileURL(file).href);
+      // Make sure both fonts are loaded before the picture is taken
+      await tab.evaluate(() => document.fonts.ready);
+      // A title or a text that does not fit must be changed: no card is made with a cut-off title
+      const problem = await tab.evaluate(() => {
+        const title = document.querySelector('.title');
+        // Lines of the title: its height by the height of a line (the letters reach a little out of it)
+        if (
+          title &&
+          title.scrollHeight / (parseFloat(getComputedStyle(title).fontSize) * 1.08) > 3.5
+        ) {
+          return 'the title does not fit in three lines';
+        }
+        const frame = document.querySelector('.frame');
+        if (frame && frame.scrollHeight > frame.clientHeight + 1) {
+          return 'the card has more on it than fits';
+        }
+        return '';
+      });
+      if (problem) {
+        throw new Error(`Card "${id}": ${problem}. Shorten the title or the text.`);
+      }
+      const output = resolve('public', `.${fileOf(id)}`);
+      await mkdir(dirname(output), { recursive: true });
+      await tab.screenshot({ path: output, type: 'png' });
+      const { size } = await stat(output);
+      made.push(`${fileOf(id)}  ${String(Math.round(size / 1024))} KB`);
+    }
+  } finally {
+    await browser.close();
+  }
+}
+await rm(directory, { recursive: true, force: true });
+
+// Pictures of cards that are gone (a note that was deleted) do not stay behind
+const published = new Set(Object.keys(expected).map(fileOf));
+const removed = [];
+async function sweep(folder, prefix) {
+  const entries = await readdir(folder, { withFileTypes: true }).catch(() => []);
+  for (const entry of entries) {
+    const path = `${prefix}/${entry.name}`;
+    if (entry.isDirectory()) {
+      await sweep(join(folder, entry.name), path);
+    } else if (!published.has(path)) {
+      await unlink(join(folder, entry.name));
+      removed.push(path);
+    }
+  }
+}
+await sweep(resolve('public', 'og'), '/og');
+
+const sorted = Object.fromEntries(Object.entries(expected).sort(([a], [b]) => a.localeCompare(b)));
+await writeFile(FINGERPRINTS, `${JSON.stringify(sorted, null, 2)}\n`, 'utf8');
+
 process.stdout.write(
-  `${OUTPUT}: ${String(WIDTH)}x${String(HEIGHT)}, ${String(Math.round(size / 1024))} KB\n`,
+  made.length === 0 && removed.length === 0
+    ? `All ${String(Object.keys(expected).length)} cards are up to date.\n`
+    : `${made.map((line) => `made     ${line}`).join('\n')}${made.length > 0 ? '\n' : ''}${removed
+        .map((path) => `removed  ${path}`)
+        .join('\n')}${removed.length > 0 ? '\n' : ''}`,
 );

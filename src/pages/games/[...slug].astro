@@ -11,6 +11,7 @@ import {
   playgroundIntro,
 } from '@/games/registry';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { ogPath } from '@/lib/og';
 import { siteConfig } from '@/lib/site';
 
 // One route for the overview (/games/) and every live game (/games/<slug>/). With no live game
@@ -57,6 +58,8 @@ const games = liveGames();
   <BaseLayout
     title={`Playground | ${siteConfig.name}`}
     description="Small games by Leon Krix: tech words, logic puzzles and machine learning, running in your browser."
+    image={ogPath('games')}
+    imageAlt="Playground: small games in the browser"
     calm
   >
     <Reveal />

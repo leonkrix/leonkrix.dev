@@ -5,20 +5,24 @@ interface Props {
   title: string;
   description?: string | undefined;
   image?: string | undefined;
+  /** What the preview image shows, for people who cannot see it; by default the name and the role */
+  imageAlt?: string | undefined;
   noindex?: boolean | undefined;
 }
 
-// The preview image (public/og.png, made by scripts/generate-og.mjs) is the default for every page
+// The preview image (public/og.png, made by scripts/generate-og.mjs) is the default for every page;
+// the notes, the games and their overviews and the Uses page have a card of their own (public/og/,
+// see src/lib/og.ts)
 const {
   title,
   description = siteConfig.description,
   image = '/og.png',
+  imageAlt = `${siteConfig.name}, ${siteConfig.role}`,
   noindex = false,
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? siteConfig.url);
 const imageUrl = new URL(image, canonical);
-const imageAlt = `${siteConfig.name}, ${siteConfig.role}`;
 ---
 
 <meta name="description" content={description} />

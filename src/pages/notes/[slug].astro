@@ -10,6 +10,7 @@ import CodeBlock from '@/components/notes/CodeBlock.astro';
 import { gamePath, games } from '@/games/registry';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { formatUpdated, notePath, notesPath, readingMinutes, sortNotes } from '@/lib/notes';
+import { ogPath } from '@/lib/og';
 import { siteConfig } from '@/lib/site';
 
 export const getStaticPaths = (async () => {
@@ -31,7 +32,13 @@ const { title, summary, tag, updated, code } = entry.data;
 const game = games.find((one) => one.slug === entry.data.game && one.status === 'live');
 ---
 
-<BaseLayout title={`${title} | ${siteConfig.name}`} description={summary} calm>
+<BaseLayout
+  title={`${title} | ${siteConfig.name}`}
+  description={summary}
+  image={ogPath(`notes/${entry.id}`)}
+  imageAlt={`${title} (Behind the scenes)`}
+  calm
+>
   <main id="main" class="flex-1">
     <div class="mx-auto max-w-5xl px-6 py-6 sm:py-16">
       <a

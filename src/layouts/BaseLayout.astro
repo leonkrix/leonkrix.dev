@@ -14,12 +14,20 @@ interface Props {
   title?: string | undefined;
   description?: string | undefined;
   image?: string | undefined;
+  imageAlt?: string | undefined;
   noindex?: boolean | undefined;
   /** Pages with a lot of text get a calm background without the grid */
   calm?: boolean | undefined;
 }
 
-const { title = siteConfig.title, description, image, noindex, calm = false } = Astro.props;
+const {
+  title = siteConfig.title,
+  description,
+  image,
+  imageAlt,
+  noindex,
+  calm = false,
+} = Astro.props;
 ---
 
 <!doctype html>
@@ -38,7 +46,13 @@ const { title = siteConfig.title, description, image, noindex, calm = false } = 
     {/* The two fonts of every page, requested at once, before the stylesheet is read (see tests/build-output/fonts.test.ts) */}
     <link rel="preload" href={interUrl} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={monoUrl} as="font" type="font/woff2" crossorigin />
-    <Seo title={title} description={description} image={image} noindex={noindex} />
+    <Seo
+      title={title}
+      description={description}
+      image={image}
+      imageAlt={imageAlt}
+      noindex={noindex}
+    />
     <slot name="head" />
   </head>
   <body class="relative flex min-h-dvh flex-col">
