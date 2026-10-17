@@ -431,6 +431,12 @@ describe('legal texts', () => {
         'Art. 22 GDPR',
         'Status:',
         'legally binding original',
+        // The right to object in a section of its own (Art. 21(4) GDPR asks for that)
+        'Right to object in particular cases (Art. 21 GDPR)',
+        'Art. 21(1) GDPR',
+        // The legal norm of the cookie of Cloudflare, and what the command palette does
+        'Section 25(2) no. 2 TDDDG',
+        'writes my email address to the clipboard',
       ],
     ],
     [
@@ -446,6 +452,10 @@ describe('legal texts', () => {
         'Art. 22 DSGVO',
         'Stand:',
         'rechtlich maßgebliche Originalfassung',
+        'Widerspruchsrecht in besonderen Fällen (Art. 21 DSGVO)',
+        'Art. 21 Abs. 1 DSGVO',
+        '§ 25 Abs. 2 Nr. 2 TDDDG',
+        'schreibt Ihr Browser auf Ihren Wunsch meine E-Mail-Adresse in die Zwischenablage',
       ],
     ],
   ] as const)(
@@ -453,6 +463,19 @@ describe('legal texts', () => {
     (language, phrases) => {
       const text = textOf(sectionHtml('privacy-policy', language));
       expect(text.length).toBeGreaterThan(2000);
+      for (const phrase of phrases) {
+        expect(text, phrase).toContain(phrase);
+      }
+    },
+  );
+
+  it.each([
+    ['en', ['All rights reserved', 'third-party content', 'THIRD_PARTY.md', 'CC BY-SA 4.0']],
+    ['de', ['Alle Rechte vorbehalten', 'Inhalte Dritter', 'THIRD_PARTY.md', 'CC BY-SA 4.0']],
+  ] as const)(
+    'the legal notice in %s says that third-party content and the German word lists have their own licences',
+    (language, phrases) => {
+      const text = textOf(sectionHtml('legal-notice', language));
       for (const phrase of phrases) {
         expect(text, phrase).toContain(phrase);
       }
