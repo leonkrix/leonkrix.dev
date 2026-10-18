@@ -152,6 +152,60 @@ test.describe('Backbone', () => {
     }
   });
 
+  test('names the events of a step as tags in the status line', async ({ page }) => {
+    // A level of the pool with something going on in one of its situations
+    const record = levels.find((entry) =>
+      entry.level.situations.some((situation) => situation.events.length > 0),
+    );
+    expect(record).toBeDefined();
+    const at = record?.level.situations.findIndex((situation) => situation.events.length > 0) ?? 0;
+    const situation = record?.level.situations[at];
+    const event = situation?.events[0];
+    expect(event).toBeDefined();
+    await open(page, record?.id ?? 'c1-1');
+    await page.getByRole('button', { name: 'Auto: balanced' }).click();
+    await page.getByRole('button', { name: 'Run' }).click();
+    await page.getByRole('button', { name: /Pause|Play/ }).click();
+    await page.getByRole('group', { name: 'Situation' }).getByRole('button').nth(at).click();
+    await page.getByRole('button', { name: /Pause|Play/ }).click();
+    await page.getByRole('slider', { name: 'Step' }).fill(String(event?.from ?? 0));
+    const status = page.locator('.bb-step-text');
+    await expect(status.locator('.bb-step-count')).toContainText(
+      `Step ${String((event?.from ?? 0) + 1)} of`,
+    );
+    await expect(status.getByRole('list', { name: 'What happens in this step' })).toBeVisible();
+    expect(await status.locator('.bb-step-events li').count()).toBeGreaterThanOrEqual(1);
+    // A step without an event says so
+    await page.getByRole('slider', { name: 'Step' }).fill('0');
+    const quiet = situation?.events.every((entry) => entry.from > 0) ?? false;
+    if (quiet) {
+      await expect(status.locator('.bb-step-quiet')).toHaveText('All quiet');
+    }
+  });
+
+  test('shows the result in blocks with a heading each and words what went wrong', async ({
+    page,
+  }) => {
+    await open(page, 'c2-4');
+    await page.getByRole('button', { name: 'Auto: shortest' }).click();
+    await page.getByRole('button', { name: 'Run' }).click();
+    const result = page.locator('.bb-result');
+    for (const name of ['Your result', 'What each flow earned', 'Your plan next to the others']) {
+      await expect(result.getByRole('heading', { name })).toBeVisible();
+    }
+    await expect(
+      result.getByRole('heading', { name: /Where your plan fell short|How your plan held up/ }),
+    ).toBeVisible();
+    // A fault is worded as a fault of the plan
+    await expect(result.locator('.bb-problems li').first()).toContainText(
+      /^(Your plan |No cable was overloaded)/,
+    );
+    // Picking a flow in the table looks at it on the map
+    const row = result.locator('.bb-row-flow').first();
+    await row.click();
+    await expect(row).toHaveAttribute('aria-pressed', 'true');
+  });
+
   test('has a text version with every cable and flow', async ({ page }) => {
     const record = levelOf('c1-1');
     await open(page, 'c1-1');
@@ -188,7 +242,7 @@ test.describe('Backbone', () => {
     const record = levelOf('c1-1');
     await open(page, 'c1-1');
     // Every flow has a number in the list and badges at its nodes: filled at the start, outlined at the end
-    await expect(page.locator('.bb-flow-number')).toHaveCount(record.level.flows.length);
+    await expect(page.locator('.bb-flows .bb-flow-number')).toHaveCount(record.level.flows.length);
     await expect(page.locator('.bb-badge[data-end="false"]')).toHaveCount(
       record.level.flows.length,
     );
@@ -247,7 +301,7 @@ test.describe('Backbone', () => {
     await expect(page.getByRole('status').filter({ hasText: /Hint 2 of 3/ })).toBeVisible();
     await page.getByRole('button', { name: 'Hint' }).click();
     await expect(
-      page.getByRole('status').filter({ hasText: /Hint 3 of 3.*earns no stars/ }),
+      page.getByRole('status').filter({ hasText: /Hint 3 of 3 \(no stars this run\)/ }),
     ).toBeVisible();
     expect(record.level.flows.length).toBeGreaterThan(0);
   });

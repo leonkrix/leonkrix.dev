@@ -478,6 +478,16 @@
   right: calc(50% + 0.8rem);
 }
 
+/* A name above a node whose flow numbers would be under it: one badge higher */
+.bb-node-name[data-side='above'][data-lift] {
+  bottom: calc(100% + 0.35rem + 0.4rem);
+}
+
+.bb-node-name[data-side='above-right'][data-lift],
+.bb-node-name[data-side='above-left'][data-lift] {
+  bottom: calc(100% + 0.22rem + 0.4rem);
+}
+
 /* While a path is drawn, the nodes it can go to next are marked */
 .bb-node[data-next='true'] {
   border-color: var(--color-fg);
@@ -518,7 +528,7 @@
 }
 
 .bb-under {
-  min-height: 7.6rem;
+  min-height: 11rem;
 }
 
 .bb-actions,
@@ -531,7 +541,7 @@
 /* On a wide map every button is in one line, and "Run" is at the end of it */
 @container (min-width: 40rem) {
   .bb-under {
-    min-height: 4.4rem;
+    min-height: 6.4rem;
   }
 
   .bb-timeline {
@@ -625,9 +635,78 @@
 }
 
 .bb-step-text {
+  display: flex;
+  flex-wrap: wrap;
+  /* Everything starts at the top, so the step count stays where it is whatever the tags do */
+  align-items: flex-start;
+  gap: 0.4rem 0.7rem;
+  min-height: 3.6rem;
   margin: 0;
   color: var(--color-muted);
   font-size: 0.82rem;
+}
+
+.bb-step-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.7rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.bb-step-count strong {
+  color: var(--color-fg);
+  font-weight: 600;
+}
+
+.bb-step-events {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bb-step-events li,
+.bb-step-quiet {
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--bb-event, var(--color-border));
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--bb-event, var(--color-border)) 12%, transparent);
+  color: var(--color-fg);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.bb-step-events li[data-kind='down'],
+.bb-step-events li[data-kind='flood'] {
+  --bb-event: var(--bb-over);
+}
+
+.bb-step-events li[data-kind='lossy'],
+.bb-step-events li[data-kind='slow'] {
+  --bb-event: var(--bb-busy);
+}
+
+.bb-step-events li[data-kind='burst'] {
+  --bb-event: var(--color-accent-2);
+}
+
+.bb-step-quiet {
+  color: var(--color-muted);
+}
+
+.bb-step-events li[data-kind='more'] {
+  color: var(--color-muted);
+}
+
+/* On a narrow map every tag has a line of its own: room for the count and two tags */
+@container (max-width: 40rem) {
+  .bb-step-text {
+    min-height: 5.2rem;
+  }
 }
 
 /* ---- Panel ---- */
@@ -733,15 +812,28 @@
 
 .bb-options {
   display: grid;
-  gap: 0.7rem;
-  padding-top: 0.2rem;
+  gap: 1rem;
+  padding-top: 0.9rem;
   border-top: 1px solid var(--color-border);
+}
+
+.bb-options-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
 }
 
 .bb-options-title,
 .bb-option-label,
+.bb-options-meta,
 .bb-hint {
   margin: 0;
+}
+
+.bb-options-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.25;
 }
 
 .bb-options-meta,
@@ -750,9 +842,13 @@
   font-size: 0.82rem;
 }
 
+.bb-options-meta {
+  margin-top: 0.1rem;
+}
+
 .bb-option {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.6rem;
 }
 
 .bb-option-label {
@@ -981,7 +1077,10 @@
 }
 
 .bb-route-chip {
-  padding: 0.15rem 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem 0.15rem 0.4rem;
   border: 1px solid color-mix(in srgb, var(--bb-color) 55%, var(--color-border));
   border-radius: 999px;
   background-color: color-mix(in srgb, var(--bb-color) 10%, transparent);
@@ -1066,15 +1165,21 @@
 .bb-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  /* Every card is as high as the highest one, in every row */
+  grid-auto-rows: 1fr;
   gap: 0.6rem;
   margin: 0.2rem 0 0;
   padding: 0;
   list-style: none;
 }
 
+.bb-cards > li {
+  display: flex;
+}
+
 .bb-card {
   display: grid;
-  text-decoration: none;
+  height: 100%;
   text-decoration: none;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 0.7rem;
@@ -1317,13 +1422,21 @@
 
 .bb-status-row .bb-status {
   flex: 1;
-  height: 2.6rem;
+  height: 3.5rem;
   min-height: 0;
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+@container (max-width: 30rem) {
+  .bb-status-row .bb-status {
+    height: 4.6rem;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+  }
 }
 
 .bb-game button.bb-hint-button {
@@ -1439,4 +1552,64 @@
 .bb-strategies dd {
   margin: 0;
   color: var(--color-muted);
+}
+
+/* ---- The result panel in blocks with a heading each ---- */
+
+.bb-result {
+  gap: 1.1rem;
+}
+
+.bb-result-block {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.bb-result-block + .bb-result-block {
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.bb-result-block h2 {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.bb-result-help {
+  margin: -0.3rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
+.bb-problems {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.bb-problems li {
+  padding: 0.35rem 0.7rem;
+  border-left: 3px solid var(--bb-ok);
+  border-radius: 0 0.4rem 0.4rem 0;
+  background-color: color-mix(in srgb, var(--bb-ok) 8%, transparent);
+}
+
+.bb-problems li[data-problem='true'] {
+  border-left-color: var(--bb-over);
+  background-color: color-mix(in srgb, var(--bb-over) 10%, transparent);
+}
+
+.bb-chip-icon {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: none;
+  color: var(--bb-color);
 }

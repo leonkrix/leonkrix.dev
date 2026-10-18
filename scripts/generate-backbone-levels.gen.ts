@@ -31,7 +31,7 @@ import {
 } from '../src/games/backbone/data/pool';
 import { dress } from '../src/games/backbone/data/settings';
 import { generateChecked } from '../src/games/backbone/logic/generate';
-import { placeNames } from '../src/games/backbone/logic/labels';
+import { placeNames, tagConflicts } from '../src/games/backbone/logic/labels';
 import { solveDesign } from '../src/games/backbone/logic/solver';
 import { isAdmissible, strategyScores } from '../src/games/backbone/logic/stars';
 import { hashSeed } from '../src/games/shared/random';
@@ -76,7 +76,8 @@ function makeRecord(plan: (typeof LEVEL_PLAN)[number], number: number): LevelRec
   }
   const level = dress(raw, plan.setting);
   // Every name must have a place on the map where it covers nothing
-  if (placeNames(level).conflicts > 0) {
+  const placement = placeNames(level);
+  if (placement.conflicts > 0 || tagConflicts(level, placement) > 0) {
     return undefined;
   }
   const solution = solveDesign(level, {

@@ -1,6 +1,9 @@
 import { type LevelIndex } from '../logic/graph';
-import { eventsAt } from '../logic/text';
+import { eventTexts } from '../logic/text';
 import { Svg } from './Svg';
+
+/** More events than this in one step are counted ("+1 more"), so the status line keeps its height */
+const MOST_TAGS = 2;
 
 interface TimelineProps {
   index: LevelIndex;
@@ -25,7 +28,7 @@ export function Timeline({
   const { situations } = index.level;
   const current = situations[situation];
   const steps = current?.steps ?? 1;
-  const events = current === undefined ? [] : eventsAt(index, current, step);
+  const events = current === undefined ? [] : eventTexts(index, current, step);
   return (
     <div className="bb-timeline">
       <div className="bb-row" role="group" aria-label="Situation">
@@ -86,10 +89,34 @@ export function Timeline({
           <Svg set="ui" name="step-forward" />
         </button>
       </div>
-      <p className="bb-step-text" role="status">
-        Step {step + 1} of {steps}
-        {events.length > 0 ? ` · ${events.join(' · ')}` : ' · all quiet'}
-      </p>
+      <div className="bb-step-text" role="status">
+        <span className="bb-step-count">
+          Step <strong>{step + 1}</strong> of {steps}
+        </span>
+        {events.length > 0 ? (
+          <ul className="bb-step-events" aria-label="What happens in this step">
+            {events.slice(0, MOST_TAGS).map((event) => (
+              <li key={`${event.kind}-${event.text}`} data-kind={event.kind}>
+                {event.text}
+              </li>
+            ))}
+            {events.length > MOST_TAGS && (
+              <li data-kind="more">
+                +{events.length - MOST_TAGS} more
+                <span className="bb-sr">
+                  :{' '}
+                  {events
+                    .slice(MOST_TAGS)
+                    .map((event) => event.text)
+                    .join(', ')}
+                </span>
+              </li>
+            )}
+          </ul>
+        ) : (
+          <span className="bb-step-quiet">All quiet</span>
+        )}
+      </div>
     </div>
   );
 }

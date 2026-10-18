@@ -2,7 +2,7 @@ import { createRandom, hashSeed } from '../../shared/random';
 import { type LevelRecord } from '../data/pool';
 import { dress, type SettingId, settings } from '../data/settings';
 import { generateChecked, type LevelSpec } from './generate';
-import { placeNames } from './labels';
+import { placeNames, tagConflicts } from './labels';
 import { solveDesign } from './solver';
 import { isAdmissible, strategyScores } from './stars';
 import { type Job, type Tier, tiers } from './tiers';
@@ -161,7 +161,8 @@ export function tryLevel(tier: Tier, seed: string, proofMs: number): LevelRecord
     title: `Random level, ${tiers[tier - 1]?.name.toLowerCase() ?? ''}`,
     story: `A ${settings[setting].name.toLowerCase()} made just for you. Seed ${seed}.`,
   };
-  if (placeNames(level).conflicts > 0) {
+  const placement = placeNames(level);
+  if (placement.conflicts > 0 || tagConflicts(level, placement) > 0) {
     return undefined;
   }
   const started = performance.now();

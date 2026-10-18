@@ -55,6 +55,9 @@ function start(): PlayState {
   );
 }
 
+/** The first flow again: after its first route the game has moved on to the next flow. */
+const first = (state: PlayState): PlayState => selectFlow(state, 'f1');
+
 function drawn(state: PlayState, nodes: string[]): PlayState {
   return nodes.reduce((current, node) => clickNode(current, node), state);
 }
@@ -69,8 +72,24 @@ describe('drawing a path', () => {
     expect(state.draft?.nodes).toEqual(['A', 'B']);
     state = clickNode(state, 'D');
     expect(state.draft).toBeUndefined();
-    expect(editedPath(state)).toEqual(['A', 'B', 'D']);
+    expect(editedPath(first(state))).toEqual(['A', 'B', 'D']);
     expect(problemsOfPlan(state.index, state.plan)).toEqual([]);
+  });
+
+  it('goes on with the next flow without a route after the first route of a flow', () => {
+    const state = drawn(start(), ['A', 'B', 'D']);
+    expect(state.selected).toBe('f2');
+    expect(state.message).toContain('Backup selected');
+    // The last flow has no flow after it that lacks a route: the selection stays where it is
+    const done = drawPath(state, ['A', 'C', 'D']);
+    expect(done.selected).toBe('f2');
+    // A route that is redrawn does not move the selection
+    expect(drawPath(selectFlow(done, 'f1'), ['A', 'C', 'D']).selected).toBe('f1');
+    // Neither does the fastest route when the flow had one before
+    expect(suggestPath(selectFlow(done, 'f1')).selected).toBe('f1');
+    // The list is a circle: the first flow is next after the last
+    const last = drawPath(selectFlow(start(), 'f2'), ['A', 'C', 'D']);
+    expect(last.selected).toBe('f1');
   });
 
   it('refuses a node that is not next to the last one', () => {
@@ -87,7 +106,7 @@ describe('drawing a path', () => {
   });
 
   it('replaces the old path only when the new one is finished', () => {
-    let state = drawn(start(), ['A', 'B', 'D']);
+    let state = first(drawn(start(), ['A', 'B', 'D']));
     state = drawn(state, ['A', 'C']);
     expect(editedPath(state)).toEqual(['A', 'B', 'D']);
     state = clickNode(state, 'D');
@@ -96,20 +115,20 @@ describe('drawing a path', () => {
 
   it('accepts a path drawn in one go and refuses a wrong one', () => {
     const good = drawPath(start(), ['A', 'C', 'D']);
-    expect(editedPath(good)).toEqual(['A', 'C', 'D']);
+    expect(editedPath(first(good))).toEqual(['A', 'C', 'D']);
     const bad = drawPath(start(), ['A', 'D']);
     expect(bad.plan).toEqual({});
   });
 
   it('suggests the shortest path', () => {
-    expect(editedPath(suggestPath(start()))).toEqual(['A', 'B', 'D']);
+    expect(editedPath(first(suggestPath(start())))).toEqual(['A', 'B', 'D']);
   });
 });
 
 describe('undo and the helpers', () => {
   it('undoes and redoes', () => {
-    const first = drawPath(start(), ['A', 'B', 'D']);
-    const second = drawPath(first, ['A', 'C', 'D']);
+    const one = first(drawPath(start(), ['A', 'B', 'D']));
+    const second = drawPath(one, ['A', 'C', 'D']);
     const back = undo(second);
     expect(editedPath(back)).toEqual(['A', 'B', 'D']);
     expect(editedPath(redo(back))).toEqual(['A', 'C', 'D']);
@@ -134,7 +153,7 @@ describe('undo and the helpers', () => {
 });
 
 describe('the options of a flow', () => {
-  const routed = (): PlayState => drawPath(start(), ['A', 'B', 'D']);
+  const routed = (): PlayState => first(drawPath(start(), ['A', 'B', 'D']));
 
   it('splits a flow in quarters and keeps the plan valid', () => {
     let state = addLane(routed());
@@ -206,7 +225,7 @@ describe('the options of a flow', () => {
         },
       }),
     );
-    const state = drawPath(plain, ['A', 'B', 'D']);
+    const state = first(drawPath(plain, ['A', 'B', 'D']));
     for (const next of [
       addLane(state),
       addBackup(state),
@@ -219,14 +238,14 @@ describe('the options of a flow', () => {
   });
 
   it('can undo an option', () => {
-    const split = addLane(drawPath(start(), ['A', 'B', 'D']));
+    const split = addLane(first(drawPath(start(), ['A', 'B', 'D'])));
     expect(undo(split).plan.f1?.stages[0]?.paths).toHaveLength(1);
   });
 });
 
 describe('taking a route away', () => {
   it('removes the plan of the selected flow only, and can be undone', () => {
-    let state = drawPath(start(), ['A', 'B', 'D']);
+    let state = first(drawPath(start(), ['A', 'B', 'D']));
     state = drawPath(selectFlow(state, 'f2'), ['A', 'C', 'D']);
     const removed = removeFlowPlan(state);
     expect(Object.keys(removed.plan)).toEqual(['f1']);

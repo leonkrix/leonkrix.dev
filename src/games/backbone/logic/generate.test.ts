@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { allRules } from './fixtures';
-import { type Family, generateChecked, generateLevel, type LevelSpec } from './generate';
+import {
+  distinctDemandsWanted,
+  type Family,
+  generateChecked,
+  generateLevel,
+  type LevelSpec,
+} from './generate';
 import { problemsOfLevel } from './validate';
 
 function spec(seed: number, overrides: Partial<LevelSpec> = {}): LevelSpec {
@@ -40,6 +46,51 @@ describe('the level generator', () => {
             }),
           );
           expect(problems, `${family}, ${String(nodes)} nodes, seed ${String(seed)}`).toEqual([]);
+        }
+      }
+    }
+  });
+
+  it('uses the whole width and height of the map, inside the border kept free', () => {
+    for (const family of families) {
+      for (let seed = 1; seed <= 8; seed += 1) {
+        const level = generateLevel(spec(seed * 5, { family, nodes: 6 + (seed % 5) * 2 }));
+        const xs = level.nodes.map((node) => node.x);
+        const ys = level.nodes.map((node) => node.y);
+        const label = `${family}, seed ${String(seed)}`;
+        expect(Math.min(...xs), label).toBeCloseTo(10, 6);
+        expect(Math.max(...xs), label).toBeCloseTo(90, 6);
+        expect(Math.min(...ys), label).toBeCloseTo(14, 6);
+        expect(Math.max(...ys), label).toBeCloseTo(86, 6);
+      }
+    }
+  });
+
+  it('lets the flows send different amounts, also flows of one kind', () => {
+    expect(distinctDemandsWanted(1)).toBe(1);
+    expect(distinctDemandsWanted(2)).toBe(2);
+    expect(distinctDemandsWanted(3)).toBe(3);
+    expect(distinctDemandsWanted(8)).toBe(3);
+    const lists: LevelSpec['profiles'][] = [
+      ['voice', 'web'],
+      ['bulk', 'bulk'],
+      ['video', 'video', 'video'],
+      ['control', 'voice', 'transaction', 'web', 'video', 'bulk'],
+      ['bulk', 'bulk', 'voice', 'voice', 'control', 'control', 'video', 'video'],
+    ];
+    for (const profiles of lists) {
+      for (let seed = 1; seed <= 12; seed += 1) {
+        for (const pressure of [0.6, 1.2, 2]) {
+          const level = generateLevel(spec(seed * 7, { profiles, pressure, situations: ['calm'] }));
+          const demands = level.flows.map((flow) => flow.demand);
+          const label = `${profiles.join(',')}, seed ${String(seed)}, pressure ${String(pressure)}`;
+          expect(new Set(demands).size, label).toBeGreaterThanOrEqual(
+            distinctDemandsWanted(profiles.length),
+          );
+          expect(
+            demands.every((demand) => Number.isInteger(demand) && demand >= 1),
+            label,
+          ).toBe(true);
         }
       }
     }

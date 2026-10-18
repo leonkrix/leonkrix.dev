@@ -305,10 +305,54 @@ function buildFlows(spec: LevelSpec, nodes: readonly NetNode[], random: Random):
       source: source.id,
       target: target.id,
       profile,
-      demand: BASE_DEMAND[profile],
+      // Two flows of one kind are not alike: each sends between 0.6 and 1.5 times the usual
+      demand: BASE_DEMAND[profile] * (0.6 + random.next() * 0.9),
     };
   });
   return flows;
+}
+
+/** How many different demands a level with this many flows shows: two flows differ, more than two have three. */
+export function distinctDemandsWanted(flows: number): number {
+  return Math.min(flows, flows <= 2 ? 2 : 3);
+}
+
+/**
+ * Makes the demands differ: while fewer values occur than `distinctDemandsWanted` asks for, the
+ * flows that share the most common value are moved apart: the heaviest kind of traffic sends a
+ * little more, the next one a little less, then two more and two less, and so on (never to a value
+ * that another flow sends, never below 1). So video and bulk stay big and voice and control small,
+ * and the pressure on the network stays about the same.
+ */
+function spreadDemands(level: Level): Level {
+  const demands = level.flows.map((flow) => Math.max(1, Math.round(flow.demand)));
+  const weight = (position: number): number =>
+    BASE_DEMAND[level.flows[position]?.profile ?? 'voice'];
+  const wanted = distinctDemandsWanted(demands.length);
+  for (let round = 0; round < 6 && new Set(demands).size < wanted; round += 1) {
+    const counts = new Map<number, number[]>();
+    for (const [position, value] of demands.entries()) {
+      counts.set(value, [...(counts.get(value) ?? []), position]);
+    }
+    const crowd = [...counts.values()].sort((a, b) => b.length - a.length)[0] ?? [];
+    const ordered = [...crowd].sort((a, b) => weight(b) - weight(a) || b - a);
+    const value = demands[ordered[0] ?? 0] ?? 1;
+    const used = new Set(demands.filter((_, position) => !crowd.includes(position)));
+    used.add(value);
+    // The lightest of the crowd keeps the value, the others take the free values around it
+    const around = [1, -1, 2, -2, 3, -3, 4, -4].map((offset) => value + offset);
+    for (const position of ordered.slice(0, -1)) {
+      const fresh = around.find((candidate) => candidate >= 1 && !used.has(candidate));
+      if (fresh !== undefined) {
+        demands[position] = fresh;
+        used.add(fresh);
+      }
+    }
+  }
+  return {
+    ...level,
+    flows: level.flows.map((flow, position) => ({ ...flow, demand: demands[position] ?? 1 })),
+  };
 }
 
 /** Scales the demands so that the busiest link is `pressure` times full when all take the shortest path. */
@@ -586,7 +630,7 @@ export function generateLevel(spec: LevelSpec): Level {
     ...(zoned === undefined ? {} : { zones: ZONES }),
   };
   const scaled = markOptional(
-    scaleDemand(narrowShortcuts(base, spec.trap ?? 0), spec.pressure),
+    spreadDemands(scaleDemand(narrowShortcuts(base, spec.trap ?? 0), spec.pressure)),
     spec.optional ?? 0,
     random,
   );

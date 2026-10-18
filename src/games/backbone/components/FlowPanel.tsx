@@ -114,6 +114,7 @@ function RouteChips({
   flow: Flow;
   path: readonly string[] | undefined;
 }) {
+  const nodes = new Map(state.index.level.nodes.map((node) => [node.id, node]));
   const names = new Map(state.index.level.nodes.map((node) => [node.id, node.name]));
   const drawing = state.draft?.nodes;
   const shown = drawing ?? path;
@@ -132,14 +133,21 @@ function RouteChips({
         data-drawing={drawing !== undefined}
         aria-label="Nodes of the route"
       >
-        {shown.map((node, at) => (
-          <li key={node}>
-            {at > 0 && <span aria-hidden="true">→</span>}
-            <span className="bb-route-chip" data-end={node === flow.source || node === flow.target}>
-              {names.get(node) ?? node}
-            </span>
-          </li>
-        ))}
+        {shown.map((node, at) => {
+          const kind = nodes.get(node)?.kind;
+          return (
+            <li key={node}>
+              {at > 0 && <span aria-hidden="true">→</span>}
+              <span
+                className="bb-route-chip"
+                data-end={node === flow.source || node === flow.target}
+              >
+                {kind !== undefined && <Svg set="node" name={kind} className="bb-chip-icon" />}
+                {names.get(node) ?? node}
+              </span>
+            </li>
+          );
+        })}
         {drawing !== undefined && (
           <li aria-hidden="true">
             <span>→</span>
@@ -187,12 +195,21 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
 
   return (
     <div className="bb-options" data-profile={flow.profile}>
-      <p className="bb-options-title">
-        <strong>
-          {state.index.level.flows.indexOf(flow) + 1} · {flow.name}
-        </strong>
-        <span className="bb-options-meta"> needs: {wantsOf(flow)}</span>
-      </p>
+      <div className="bb-options-head">
+        <span className="bb-flow-icon">
+          <Svg set="profile" name={flow.profile} />
+          <span className="bb-flow-number" aria-hidden="true">
+            {state.index.level.flows.indexOf(flow) + 1}
+          </span>
+        </span>
+        <div>
+          <h3 className="bb-options-title">
+            <span className="bb-sr">Flow {state.index.level.flows.indexOf(flow) + 1}: </span>
+            {flow.name}
+          </h3>
+          <p className="bb-options-meta">Needs: {wantsOf(flow)}</p>
+        </div>
+      </div>
 
       <div className="bb-option">
         <p className="bb-option-label">{state.target === 'backup' ? 'Backup route' : 'Route'}</p>

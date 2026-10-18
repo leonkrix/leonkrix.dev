@@ -44,6 +44,13 @@ const LABEL_HEIGHT = 2.3;
 const CHARACTER_WIDTH = 0.88;
 const TAG_WIDTH = 4.6;
 const LINK_LABEL: Readonly<{ width: number; height: number }> = { width: 7.4, height: 2.5 };
+/** The numbers of the flows that start or end at a node sit on its top right corner (CSS: `.bb-node-badges`) */
+const BADGE = { width: 3, height: 2.7, left: 2.5, top: -5.2 };
+/** A name above a node is lifted by this much when it would touch the numbers (they reach 0.45 rem above the node) */
+const LIFT = 1.1;
+/** Nothing is placed closer than this to the border of the map (sideways, and up and down) */
+const BORDER_X = 2.5;
+const BORDER_Y = 2;
 
 function boxAt(center: Point, width: number, height: number): Box {
   return { x: center.x - width / 2, y: center.y - height / 2, width, height };
@@ -124,6 +131,8 @@ interface Scene {
   nodes: Map<string, Point>;
   segments: { id: string; from: Point; to: Point }[];
   linkLabels: Box[];
+  /** The rows of flow numbers on the corners of the nodes, nothing may lie on them */
+  badges: Box[];
 }
 
 function sceneOf(level: Level): Scene {
@@ -140,13 +149,40 @@ function sceneOf(level: Level): Scene {
       LINK_LABEL.height,
     ),
   );
-  return { nodes, segments, linkLabels };
+  const badges = level.nodes.flatMap((node) => {
+    const count = level.flows.filter(
+      (flow) => flow.source === node.id || flow.target === node.id,
+    ).length;
+    const point = nodes.get(node.id);
+    return count === 0 || point === undefined
+      ? []
+      : [
+          {
+            x: point.x + BADGE.left,
+            y: point.y + BADGE.top,
+            width: BADGE.width * count,
+            height: BADGE.height,
+          },
+        ];
+  });
+  return { nodes, segments, linkLabels, badges };
 }
 
 /** How badly a label box collides with the rest of the drawing (0 is perfect). */
-function cost(scene: Scene, owner: string, box: Box, placed: readonly Box[]): number {
+function cost(
+  scene: Scene,
+  owner: string,
+  box: Box,
+  placed: readonly Box[],
+  badges: boolean,
+): number {
   let total = 0;
-  if (box.x < 0 || box.y < 0 || box.x + box.width > MAP_WIDTH || box.y + box.height > MAP_HEIGHT) {
+  if (
+    box.x < BORDER_X ||
+    box.y < BORDER_Y ||
+    box.x + box.width > MAP_WIDTH - BORDER_X ||
+    box.y + box.height > MAP_HEIGHT - BORDER_Y
+  ) {
     total += 200;
   }
   for (const [id, point] of scene.nodes) {
@@ -157,6 +193,13 @@ function cost(scene: Scene, owner: string, box: Box, placed: readonly Box[]): nu
   for (const other of placed) {
     if (boxesOverlap(box, other)) {
       total += 100;
+    }
+  }
+  if (badges) {
+    for (const badge of scene.badges) {
+      if (boxesOverlap(box, badge, 0.3)) {
+        total += 100;
+      }
     }
   }
   for (const other of scene.linkLabels) {
@@ -175,32 +218,45 @@ function cost(scene: Scene, owner: string, box: Box, placed: readonly Box[]): nu
 export interface Placement {
   /** The side of every node where its name goes */
   names: ReadonlyMap<string, Side>;
+  /** The names that sit one badge higher than usual because the numbers of the flows are there */
+  lifted: ReadonlySet<string>;
   /** What is still colliding, summed over all labels (0 means nothing is) */
   conflicts: number;
 }
 
-function nameBox(scene: Scene, level: Level, id: string, side: Side): Box {
+function nameBox(scene: Scene, level: Level, id: string, side: Side, lifted = false): Box {
   const node = level.nodes.find((entry) => entry.id === id);
   const point = scene.nodes.get(id) ?? { x: 0, y: 0 };
   const width = Math.max(4, (node?.name.length ?? 4) * CHARACTER_WIDTH + 1.2);
-  return labelBox(point, side, width, LABEL_HEIGHT);
+  const box = labelBox(point, side, width, LABEL_HEIGHT);
+  return lifted ? { ...box, y: box.y - LIFT } : box;
 }
 
-/** Chooses a side for the name of every node: the one with the fewest collisions, below first. */
+/** Only names above a node can lie on its numbers (they are on the top right corner). */
+const isAbove = (side: Side): boolean => side.startsWith('above');
+
+/**
+ * Chooses a side for the name of every node: the one with the fewest collisions, below first.
+ * Where the name would lie on the numbers of the flows it is lifted a little instead of moving
+ * to another side; only when that does not help it takes the side that is free.
+ */
 export function placeNames(level: Level): Placement {
   const scene = sceneOf(level);
   const chosen = new Map<string, Side>();
+  const lifted = new Set<string>();
   const order = [...level.nodes].sort((a, b) => a.id.localeCompare(b.id));
-  // Two rounds: the second one looks at the sides the others took in the first
+  const othersOf = (id: string): Box[] =>
+    [...chosen]
+      .filter(([other]) => other !== id)
+      .map(([other, side]) => nameBox(scene, level, other, side, lifted.has(other)));
+  // Rounds, so that the later nodes see the sides the earlier ones took
   for (let round = 0; round < 3; round += 1) {
     for (const node of order) {
-      const others = [...chosen]
-        .filter(([id]) => id !== node.id)
-        .map(([id, side]) => nameBox(scene, level, id, side));
+      const others = othersOf(node.id);
       let best: Side = 'below';
       let lowest = Infinity;
       for (const side of SIDES) {
-        const value = cost(scene, node.id, nameBox(scene, level, node.id, side), others);
+        const value = cost(scene, node.id, nameBox(scene, level, node.id, side), others, false);
         if (value < lowest) {
           lowest = value;
           best = side;
@@ -209,44 +265,96 @@ export function placeNames(level: Level): Placement {
       chosen.set(node.id, best);
     }
   }
+  // The numbers of the flows: lift the name, or as a last resort look for another side
+  for (const node of order) {
+    const side = chosen.get(node.id) ?? 'below';
+    const others = othersOf(node.id);
+    const plain = cost(scene, node.id, nameBox(scene, level, node.id, side), others, true);
+    if (plain === 0) {
+      continue;
+    }
+    if (
+      isAbove(side) &&
+      cost(scene, node.id, nameBox(scene, level, node.id, side, true), others, true) === 0
+    ) {
+      lifted.add(node.id);
+      continue;
+    }
+    let best = { side, lift: false, value: plain };
+    for (const other of SIDES) {
+      for (const lift of isAbove(other) ? [false, true] : [false]) {
+        const value = cost(
+          scene,
+          node.id,
+          nameBox(scene, level, node.id, other, lift),
+          others,
+          true,
+        );
+        if (value < best.value) {
+          best = { side: other, lift, value };
+        }
+      }
+    }
+    chosen.set(node.id, best.side);
+    if (best.lift) {
+      lifted.add(node.id);
+    }
+  }
   let conflicts = 0;
   for (const node of level.nodes) {
-    const others = [...chosen]
-      .filter(([id]) => id !== node.id)
-      .map(([id, side]) => nameBox(scene, level, id, side));
     conflicts += cost(
       scene,
       node.id,
-      nameBox(scene, level, node.id, chosen.get(node.id) ?? 'below'),
-      others,
+      nameBox(scene, level, node.id, chosen.get(node.id) ?? 'below', lifted.has(node.id)),
+      othersOf(node.id),
+      true,
     );
   }
-  return { names: chosen, conflicts };
+  return { names: chosen, lifted, conflicts };
 }
 
-/** The side for the "from" or "to" mark of a node: free of cables and not where the name is. */
-export function placeTag(level: Level, placement: Placement, id: string): Side {
+/** The best side for the "from" or "to" mark of a node and how badly it still collides (0 is fine). */
+function bestTag(level: Level, placement: Placement, id: string): { side: Side; cost: number } {
   const scene = sceneOf(level);
   const point = scene.nodes.get(id) ?? { x: 0, y: 0 };
   const nameSide = placement.names.get(id);
   const names = [...placement.names]
     .filter(([other]) => other !== id)
-    .map(([other, side]) => nameBox(scene, level, other, side));
-  const own = nameSide === undefined ? [] : [nameBox(scene, level, id, nameSide)];
+    .map(([other, side]) => nameBox(scene, level, other, side, placement.lifted.has(other)));
+  const own =
+    nameSide === undefined ? [] : [nameBox(scene, level, id, nameSide, placement.lifted.has(id))];
   let best: Side = 'above';
   let lowest = Infinity;
   for (const side of SIDES) {
     if (side === nameSide) {
       continue;
     }
-    const value = cost(scene, id, labelBox(point, side, TAG_WIDTH, LABEL_HEIGHT), [
-      ...names,
-      ...own,
-    ]);
+    const value = cost(
+      scene,
+      id,
+      labelBox(point, side, TAG_WIDTH, LABEL_HEIGHT),
+      [...names, ...own],
+      true,
+    );
     if (value < lowest) {
       lowest = value;
       best = side;
     }
   }
-  return best;
+  return { side: best, cost: lowest };
+}
+
+/** The side for the "from" or "to" mark of a node: free of cables, numbers and the name. */
+export function placeTag(level: Level, placement: Placement, id: string): Side {
+  return bestTag(level, placement, id).side;
+}
+
+/** What is still colliding with the "from" and "to" marks the flows of the level can have (0 is fine). */
+export function tagConflicts(level: Level, placement: Placement): number {
+  let total = 0;
+  for (const flow of level.flows) {
+    total +=
+      bestTag(level, placement, flow.source).cost + bestTag(level, placement, flow.target).cost;
+  }
+  return total;
 }

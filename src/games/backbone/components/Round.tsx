@@ -267,9 +267,9 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
   };
   const status =
     hint !== undefined
-      ? `Hint ${String(hint.stage)} of 3: ${hint.text}${hint.givesAway ? ' (this run earns no stars)' : ''}`
+      ? `Hint ${String(hint.stage)} of 3${hint.givesAway ? ' (no stars this run)' : ''}: ${hint.text}`
       : run !== undefined
-        ? `Stress test of ${level.title}`
+        ? `Stress test of “${level.title}”`
         : play.message !== ''
           ? play.message
           : missing.length > 0
@@ -313,6 +313,7 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
             source={run === undefined ? selectedFlow?.source : undefined}
             target={run === undefined ? selectedFlow?.target : undefined}
             nameSides={placement.names}
+            lifted={placement.lifted}
             sourceSide={
               selectedFlow === undefined ? 'above' : placeTag(level, placement, selectedFlow.source)
             }

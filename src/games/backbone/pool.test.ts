@@ -13,8 +13,9 @@ import {
 } from './data/pool';
 import { settings } from './data/settings';
 import { withBuilt } from './logic/build';
+import { distinctDemandsWanted } from './logic/generate';
 import { indexLevel } from './logic/graph';
-import { placeNames } from './logic/labels';
+import { placeNames, tagConflicts } from './logic/labels';
 import { problemsOfPlan } from './logic/plan';
 import { evaluate } from './logic/simulate';
 import { solveDesign } from './logic/solver';
@@ -61,9 +62,17 @@ describe('the level pool', () => {
       expect(record.level.situations.map((situation) => situation.id)).toEqual(plan?.situations);
     });
 
+    it('has flows that send different amounts', () => {
+      const demands = record.level.flows.map((flow) => flow.demand);
+      expect(new Set(demands).size).toBeGreaterThanOrEqual(distinctDemandsWanted(demands.length));
+    });
+
     it('is well formed, drawn without overlaps and named from its setting', () => {
       expect(problemsOfLevel(record.level)).toEqual([]);
-      expect(placeNames(record.level).conflicts).toBe(0);
+      const placement = placeNames(record.level);
+      expect(placement.conflicts).toBe(0);
+      // The "from" and "to" marks of every flow have a free place too
+      expect(tagConflicts(record.level, placement)).toBe(0);
       const pool = settings[record.setting];
       expect(pool.name.length).toBeGreaterThan(2);
       expect(new Set(record.level.nodes.map((node) => node.name)).size).toBe(

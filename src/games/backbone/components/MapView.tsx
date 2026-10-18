@@ -51,6 +51,8 @@ interface MapViewProps {
   target: string | undefined;
   /** The side of the node where its name, and the "from" and "to" marks, are written */
   nameSides: ReadonlyMap<string, Side>;
+  /** The names that sit a little higher, because the numbers of flows are at the node */
+  lifted: ReadonlySet<string>;
   sourceSide: Side;
   targetSide: Side;
   /** The path being drawn */
@@ -136,6 +138,7 @@ export function MapView({
   source,
   target,
   nameSides,
+  lifted,
   sourceSide,
   targetSide,
   draft,
@@ -525,7 +528,11 @@ export function MapView({
                 </span>
               ))}
             </span>
-            <span className="bb-node-name" data-side={nameSides.get(node.id) ?? 'below'}>
+            <span
+              className="bb-node-name"
+              data-side={nameSides.get(node.id) ?? 'below'}
+              data-lift={lifted.has(node.id) || undefined}
+            >
               {node.name}
             </span>
             {isSource && (

@@ -119,7 +119,7 @@ function withFlowPlan(
   return commit(state, { ...state.plan, [flowId]: flowPlan }, message);
 }
 
-function nameOf(state: PlayState, node: string): string {
+export function nameOf(state: PlayState, node: string): string {
   return state.index.level.nodes.find((entry) => entry.id === node)?.name ?? node;
 }
 
@@ -188,12 +188,32 @@ function replaceEditedPath(state: PlayState, flow: Flow, path: NodePath): PlaySt
         }
       : stage,
   );
-  return withFlowPlan(
+  const done = withFlowPlan(
     state,
     flow.id,
     { ...flowPlan, stages },
     `${flow.name} goes ${describePath(state, path)}.`,
   );
+  // The first route of a flow is done: go on with the next flow that still has none
+  const next = state.plan[flow.id] === undefined ? nextUnrouted(done, flow.id) : undefined;
+  if (next === undefined) {
+    return done;
+  }
+  const moved = selectFlow(done, next.id);
+  return { ...moved, message: `${done.message} Next: ${moved.message}` };
+}
+
+/** The flow after the given one in the list (the list is a circle) that has no route yet. */
+function nextUnrouted(state: PlayState, after: string): Flow | undefined {
+  const { flows } = state.index.level;
+  const start = flows.findIndex((flow) => flow.id === after);
+  for (let step = 1; step < flows.length; step += 1) {
+    const flow = flows[(start + step) % flows.length];
+    if (flow !== undefined && state.plan[flow.id] === undefined) {
+      return flow;
+    }
+  }
+  return undefined;
 }
 
 export function describePath(state: PlayState, path: NodePath): string {

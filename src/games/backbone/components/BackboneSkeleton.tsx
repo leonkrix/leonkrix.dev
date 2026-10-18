@@ -44,9 +44,14 @@ export default function BackboneSkeleton({
           <div className="bb-stage">
             <div className="bb-left">
               <div className="bb-map" style={{ aspectRatio: '100 / 80' }} aria-hidden="true" />
-              <p className="bb-status" role="status">
-                {message}
-              </p>
+              <div className="bb-status-row">
+                <p className="bb-status" role="status">
+                  {message}
+                </p>
+                <button type="button" className="bb-hint-button" disabled tabIndex={-1}>
+                  Hint
+                </button>
+              </div>
               <div className="bb-under">
                 <div className="bb-actions">
                   {['Undo', 'Redo', 'Clear', 'Auto: shortest', 'Auto: balanced', 'Run'].map(

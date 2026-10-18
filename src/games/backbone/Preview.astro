@@ -1,32 +1,150 @@
 ---
-// The tile of the game on the Playground section: a small network plays a round. Two flows leave
-// the left node for the right one. At first both take the fast way over the top and that link turns
-// red, a packet is lost there. Then the second flow moves to the lower road, the red link turns
-// green and the packets get through. It plays when the tile appears, and again whenever it is
-// pointed at or focused. Pure CSS, no script. The final picture (both roads in use, all green) is
-// also the normal look, so the tile is right without any motion.
+// The tile of the game on the Playground section: a plan, judged twice. Two flows leave the
+// computer on the left for the server on the right. At first both take the fast way over the top,
+// that cable turns red and a packet is dropped in the middle of it. Then the second flow moves to
+// the lower road, the cable turns green and both packets arrive. It plays when the tile appears,
+// and again whenever it is pointed at or focused. Pure CSS, no script. The final picture (both
+// roads in use, nothing red) is also the normal look, so the tile is right without any motion.
+// The pictures of the nodes are the ones of the game (`data/icons.ts`), the colours the ones of
+// the kinds of traffic. Every animated part has the class `pv-a`; its variant class says what it
+// does (`--an`) and the numbers in its style tell when (`--dur`, `--delay`, `--n`).
+import { NODE_ICONS } from './data/icons';
 
-// The four nodes of the picture (the units of the picture)
-const nodes = [
-  { id: 'a', x: 26, y: 70 },
-  { id: 'b', x: 100, y: 28 },
-  { id: 'c', x: 100, y: 112 },
-  { id: 'd', x: 174, y: 70 },
+type Point = readonly [number, number];
+
+const nodes = {
+  a: { at: [30, 70], kind: 'client' },
+  b: { at: [100, 28], kind: 'router' },
+  c: { at: [100, 112], kind: 'router' },
+  d: { at: [170, 70], kind: 'server' },
+} as const satisfies Record<string, { at: Point; kind: string }>;
+type NodeId = keyof typeof nodes;
+
+const point = (id: NodeId): Point => nodes[id].at;
+const cables: readonly (readonly [NodeId, NodeId])[] = [
+  ['a', 'b'],
+  ['b', 'd'],
+  ['a', 'c'],
+  ['c', 'd'],
 ];
+
+const blue = 'var(--color-accent)';
+const amber = 'var(--color-contrast)';
+
+/** The line of a route over its nodes, moved sideways by `shift` (so two flows on one cable show both). */
+function lane(route: readonly NodeId[], shift = 0) {
+  return route.slice(1).map((to, step) => {
+    const [x1, y1] = point(route[step] as NodeId);
+    const [x2, y2] = point(to);
+    const length = Math.hypot(x2 - x1, y2 - y1);
+    const nx = (-(y2 - y1) / length) * shift;
+    const ny = ((x2 - x1) / length) * shift;
+    return { x1: x1 + nx, y1: y1 + ny, x2: x2 + nx, y2: y2 + ny };
+  });
+}
+
+const along = (from: NodeId, to: NodeId, share: number): Point => {
+  const [x1, y1] = point(from);
+  const [x2, y2] = point(to);
+  return [x1 + (x2 - x1) * share, y1 + (y2 - y1) * share];
+};
+
+/** The corners of the way of a packet (the vars of the animation) */
+function way(points: readonly Point[]): string {
+  return points
+    .map(([x, y], at) => `--x${String(at)}:${String(x)}px;--y${String(at)}:${String(y)}px`)
+    .join(';');
+}
+
+const topWay = way([point('a'), point('b'), point('d')]);
+const lowWay = way([point('a'), point('c'), point('d')]);
+// The packet that is dropped runs to the middle of the full cable and stops there
+const droppedWay = way([point('a'), point('b'), along('b', 'd', 0.5)]);
+
+const resting = [
+  { color: blue, at: along('b', 'd', 0.42) },
+  { color: amber, at: along('c', 'd', 0.42) },
+];
+
+const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
 ---
 
 <div class="pv" aria-hidden="true">
   <svg viewBox="0 0 200 140" focusable="false">
-    <line class="pv-link" x1="26" y1="70" x2="100" y2="28"></line>
-    <line class="pv-link pv-bd" x1="100" y1="28" x2="174" y2="70"></line>
-    <line class="pv-link pv-low" x1="26" y1="70" x2="100" y2="112"></line>
-    <line class="pv-link pv-low" x1="100" y1="112" x2="174" y2="70"></line>
-    {nodes.map((node) => (
-      <rect class="pv-node" x={node.x - 9} y={node.y - 9} width="18" height="18" rx="5" />
+    {cables.map(([from, to]) => (
+      <line
+        class="pv-cable"
+        x1={point(from)[0]}
+        y1={point(from)[1]}
+        x2={point(to)[0]}
+        y2={point(to)[1]}
+      />
     ))}
-    <circle class="pv-packet pv-one" cx="0" cy="0" r="3.6"></circle>
-    <circle class="pv-packet pv-two" cx="0" cy="0" r="3.6"></circle>
-    <circle class="pv-packet pv-lost" cx="0" cy="0" r="3.6"></circle>
+    <line
+      class="pv-hot pv-a pv-out"
+      x1={point('b')[0]}
+      y1={point('b')[1]}
+      x2={point('d')[0]}
+      y2={point('d')[1]}
+    />
+
+    {lane(['a', 'b', 'd'], -2).map((line) => (
+      <line class="pv-lane" style={`--c:${blue}`} {...line} />
+    ))}
+    {lane(['a', 'b', 'd'], 2).map((line) => (
+      <line class="pv-lane pv-a pv-out" style={`--c:${amber}`} {...line} />
+    ))}
+    {lane(['a', 'c', 'd']).map((line) => (
+      <line class="pv-lane pv-a pv-in" style={`--c:${amber}`} {...line} />
+    ))}
+
+    {Object.values(nodes).map((node) => (
+      <>
+        <rect
+          class="pv-node"
+          x={node.at[0] - 14}
+          y={node.at[1] - 14}
+          width="28"
+          height="28"
+          rx="8"
+        />
+        <g
+          class="pv-icon"
+          transform={`translate(${node.at[0] - 8} ${node.at[1] - 8}) scale(0.667)`}
+          set:html={icon(node.kind)}
+        />
+      </>
+    ))}
+
+    <circle
+      class="pv-packet pv-a pv-travel"
+      r="3.6"
+      style={`--c:${blue};--end:${blue};--dur:1300ms;--n:2;${topWay}`}
+    />
+    <circle
+      class="pv-packet pv-a pv-travel"
+      r="3.6"
+      style={`--c:${amber};--end:var(--color-danger);--dur:1300ms;--n:2;--delay:0.3s;${droppedWay}`}
+    />
+    <circle
+      class="pv-packet pv-a pv-travel"
+      r="3.6"
+      style={`--c:${blue};--end:${blue};--dur:1200ms;--n:2;--delay:3.2s;${topWay}`}
+    />
+    <circle
+      class="pv-packet pv-a pv-travel"
+      r="3.6"
+      style={`--c:${amber};--end:${amber};--dur:1200ms;--n:2;--delay:3.2s;${lowWay}`}
+    />
+    {resting.map((dot) => (
+      <circle
+        class="pv-packet pv-a pv-in pv-rest"
+        r="3.6"
+        cx={dot.at[0]}
+        cy={dot.at[1]}
+        style={`--c:${dot.color}`}
+      />
+    ))}
   </svg>
 </div>
 
@@ -44,11 +162,26 @@ const nodes = [
     height: 8.4rem;
   }
 
-  .pv-link {
-    stroke: var(--color-status);
-    stroke-width: 4;
+  .pv-cable,
+  .pv-hot,
+  .pv-lane {
     stroke-linecap: round;
-    opacity: 0.85;
+  }
+
+  .pv-cable {
+    stroke: color-mix(in srgb, var(--color-fg) 11%, transparent);
+    stroke-width: 8;
+  }
+
+  .pv-hot {
+    stroke: var(--color-danger);
+    stroke-width: 8;
+    opacity: 0;
+  }
+
+  .pv-lane {
+    stroke: var(--c);
+    stroke-width: 2.6;
   }
 
   .pv-node {
@@ -57,309 +190,137 @@ const nodes = [
     stroke-width: 1.2;
   }
 
+  .pv-icon {
+    color: var(--color-fg);
+  }
+
   .pv-packet {
+    fill: var(--c);
     stroke: var(--color-bg);
     stroke-width: 1.2;
   }
 
-  /* Where the packets stand at the end: the first on the top road, the second on the lower road */
-  .pv-one {
-    fill: var(--color-accent-2);
-    transform: translate(137px, 49px);
-  }
-
-  .pv-two {
-    fill: var(--color-contrast);
-    transform: translate(137px, 91px);
-  }
-
-  .pv-lost {
-    fill: var(--color-danger);
+  /* What is only there while the wrong plan runs is not there in the final picture */
+  .pv-out {
     opacity: 0;
-    transform: translate(137px, 49px);
   }
 
-  .pv-bd,
-  .pv-low,
-  .pv-one,
-  .pv-two,
-  .pv-lost {
-    animation-duration: 5600ms;
-    animation-fill-mode: backwards;
+  /* One rule for every animated part: its variant says which animation, the style the numbers */
+  .pv-a {
+    animation-name: var(--an), none;
+    animation-duration: var(--dur, 5600ms);
+    animation-delay: var(--delay, 0s);
+    animation-iteration-count: var(--n, 1);
     animation-timing-function: linear;
+    animation-fill-mode: backwards;
   }
 
-  .pv-bd {
-    animation-name: pvb-bd, none;
+  .pv-out {
+    --an: pvb-out;
+    --again: pvb-out-again;
   }
 
-  .pv-low {
-    animation-name: pvb-low, none;
+  /* What comes in is what goes out, played backwards */
+  .pv-in {
+    --an: pvb-out;
+    --again: pvb-out-again;
+    animation-direction: reverse;
   }
 
-  .pv-one {
-    animation-name: pvb-one, none;
+  .pv-travel {
+    --an: pvb-travel;
+    --again: pvb-travel-again;
+    opacity: 0;
   }
 
-  .pv-two {
-    animation-name: pvb-two, none;
-  }
-
-  .pv-lost {
-    animation-name: pvb-lost, none;
+  /* The resting packets appear late: the same fade as the lower road, started two seconds later */
+  .pv-rest {
+    --delay: 2s;
   }
 
   /* A tile that is waiting to be revealed has not started yet: it begins when it appears */
-  :global(.reveal-pending) .pv-bd,
-  :global(.reveal-pending) .pv-low,
-  :global(.reveal-pending) .pv-one,
-  :global(.reveal-pending) .pv-two,
-  :global(.reveal-pending) .pv-lost {
+  :global(.reveal-pending) .pv-a {
     animation-name: none, none;
   }
 
   /* Pointing at the tile plays it again: the same animations under other names start from the start */
-  :global(.game-tile):hover .pv-bd,
-  :global(.game-tile):focus-visible .pv-bd {
-    animation-name: pvb-bd, pvb-bd-again;
-  }
-
-  :global(.game-tile):hover .pv-low,
-  :global(.game-tile):focus-visible .pv-low {
-    animation-name: pvb-low, pvb-low-again;
-  }
-
-  :global(.game-tile):hover .pv-one,
-  :global(.game-tile):focus-visible .pv-one {
-    animation-name: pvb-one, pvb-one-again;
-  }
-
-  :global(.game-tile):hover .pv-two,
-  :global(.game-tile):focus-visible .pv-two {
-    animation-name: pvb-two, pvb-two-again;
-  }
-
-  :global(.game-tile):hover .pv-lost,
-  :global(.game-tile):focus-visible .pv-lost {
-    animation-name: pvb-lost, pvb-lost-again;
+  :global(.game-tile):hover .pv-a,
+  :global(.game-tile):focus-visible .pv-a {
+    animation-name: var(--an), var(--again);
   }
 
   /* The names start with "pvb-": keyframes are not scoped to a component */
-  @keyframes pvb-bd {
+  @keyframes pvb-out {
     0%,
-    45% {
-      stroke: var(--color-danger);
-    }
-    60%,
-    100% {
-      stroke: var(--color-status);
-    }
-  }
-
-  @keyframes pvb-bd-again {
-    0%,
-    45% {
-      stroke: var(--color-danger);
-    }
-    60%,
-    100% {
-      stroke: var(--color-status);
-    }
-  }
-
-  @keyframes pvb-low {
-    0%,
-    45% {
-      opacity: 0.2;
-    }
-    60%,
-    100% {
-      opacity: 0.85;
-    }
-  }
-
-  @keyframes pvb-low-again {
-    0%,
-    45% {
-      opacity: 0.2;
-    }
-    60%,
-    100% {
-      opacity: 0.85;
-    }
-  }
-
-  /* The first packet always takes the top road: left node, top node, right node, three times */
-  @keyframes pvb-one {
-    0% {
-      transform: translate(26px, 70px);
-    }
-    14% {
-      transform: translate(100px, 28px);
-    }
-    28% {
-      transform: translate(174px, 70px);
-    }
-    28.1% {
-      transform: translate(26px, 70px);
-    }
-    42% {
-      transform: translate(100px, 28px);
-    }
-    56% {
-      transform: translate(174px, 70px);
-    }
-    56.1% {
-      transform: translate(26px, 70px);
-    }
-    78% {
-      transform: translate(100px, 28px);
-    }
-    100% {
-      transform: translate(174px, 70px);
-    }
-  }
-
-  @keyframes pvb-one-again {
-    0% {
-      transform: translate(26px, 70px);
-    }
-    14% {
-      transform: translate(100px, 28px);
-    }
-    28% {
-      transform: translate(174px, 70px);
-    }
-    28.1% {
-      transform: translate(26px, 70px);
-    }
-    42% {
-      transform: translate(100px, 28px);
-    }
-    56% {
-      transform: translate(174px, 70px);
-    }
-    56.1% {
-      transform: translate(26px, 70px);
-    }
-    78% {
-      transform: translate(100px, 28px);
-    }
-    100% {
-      transform: translate(174px, 70px);
-    }
-  }
-
-  /* The second packet follows the first over the top at first, then takes the lower road */
-  @keyframes pvb-two {
-    0% {
-      transform: translate(26px, 70px);
-    }
-    14% {
-      transform: translate(100px, 28px);
-    }
-    28% {
-      transform: translate(174px, 70px);
-    }
-    28.1% {
-      transform: translate(26px, 70px);
-    }
-    56% {
-      transform: translate(100px, 112px);
-    }
-    78% {
-      transform: translate(174px, 70px);
-    }
-    78.1% {
-      transform: translate(26px, 70px);
-    }
-    89% {
-      transform: translate(100px, 112px);
-    }
-    100% {
-      transform: translate(174px, 70px);
-    }
-  }
-
-  @keyframes pvb-two-again {
-    0% {
-      transform: translate(26px, 70px);
-    }
-    14% {
-      transform: translate(100px, 28px);
-    }
-    28% {
-      transform: translate(174px, 70px);
-    }
-    28.1% {
-      transform: translate(26px, 70px);
-    }
-    56% {
-      transform: translate(100px, 112px);
-    }
-    78% {
-      transform: translate(174px, 70px);
-    }
-    78.1% {
-      transform: translate(26px, 70px);
-    }
-    89% {
-      transform: translate(100px, 112px);
-    }
-    100% {
-      transform: translate(174px, 70px);
-    }
-  }
-
-  /* A third packet is lost on the full link at the beginning */
-  @keyframes pvb-lost {
-    0% {
+    48% {
       opacity: 1;
-      transform: translate(26px, 70px);
     }
-    22% {
-      opacity: 1;
-      transform: translate(100px, 28px);
-    }
-    34%,
+    56%,
     100% {
       opacity: 0;
-      transform: translate(130px, 45px);
     }
   }
 
-  @keyframes pvb-lost-again {
-    0% {
+  @keyframes pvb-out-again {
+    0%,
+    48% {
       opacity: 1;
-      transform: translate(26px, 70px);
     }
-    22% {
-      opacity: 1;
-      transform: translate(100px, 28px);
-    }
-    34%,
+    56%,
     100% {
       opacity: 0;
-      transform: translate(130px, 45px);
+    }
+  }
+
+  /* A packet: from its first corner over the second to the third, it is seen on the way only */
+  @keyframes pvb-travel {
+    0% {
+      opacity: 0;
+      transform: translate(var(--x0), var(--y0));
+    }
+    8% {
+      opacity: 1;
+    }
+    50% {
+      transform: translate(var(--x1), var(--y1));
+    }
+    86% {
+      opacity: 1;
+      fill: var(--end);
+    }
+    100% {
+      opacity: 0;
+      fill: var(--end);
+      transform: translate(var(--x2), var(--y2));
+    }
+  }
+
+  @keyframes pvb-travel-again {
+    0% {
+      opacity: 0;
+      transform: translate(var(--x0), var(--y0));
+    }
+    8% {
+      opacity: 1;
+    }
+    50% {
+      transform: translate(var(--x1), var(--y1));
+    }
+    86% {
+      opacity: 1;
+      fill: var(--end);
+    }
+    100% {
+      opacity: 0;
+      fill: var(--end);
+      transform: translate(var(--x2), var(--y2));
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .pv-bd,
-    .pv-low,
-    .pv-one,
-    .pv-two,
-    .pv-lost,
-    :global(.game-tile):hover .pv-bd,
-    :global(.game-tile):hover .pv-low,
-    :global(.game-tile):hover .pv-one,
-    :global(.game-tile):hover .pv-two,
-    :global(.game-tile):hover .pv-lost,
-    :global(.game-tile):focus-visible .pv-bd,
-    :global(.game-tile):focus-visible .pv-low,
-    :global(.game-tile):focus-visible .pv-one,
-    :global(.game-tile):focus-visible .pv-two,
-    :global(.game-tile):focus-visible .pv-lost {
+    .pv-a,
+    :global(.game-tile):hover .pv-a,
+    :global(.game-tile):focus-visible .pv-a {
       animation-name: none, none;
     }
   }

@@ -30,10 +30,12 @@ const CATEGORIES = ['performance', 'accessibility', 'best-practices', 'seo'];
 /**
  * Budgets in bytes of transferred data. The preview server does not compress, so these are
  * conservative. Measured on 2026-10-01 (with the contact form): scripts 4.5 KB, stylesheets 7.1 KB, total 134 KB.
+ * The stylesheet limit was raised from 20 to 21 KB on 2026-10-18: the home page carries the pictures of
+ * the tiles of all five games (the Backbone tile came last), it measured 20.2 KB with a smaller tile.
  */
 const BUDGETS = {
   script: 10 * 1024,
-  stylesheet: 20 * 1024,
+  stylesheet: 21 * 1024,
   total: 200 * 1024,
 };
 
@@ -60,8 +62,9 @@ const GAME_BUDGETS = {
 async function listPages() {
   const pages = [{ path: '/', budgets: BUDGETS }];
   if (existsSync('dist/games/index.html')) {
-    // The overview loads the shared Playground stylesheet (2026-10-13: 21.6 KB, all games in one file)
-    pages.push({ path: '/games/', budgets: { ...BUDGETS, stylesheet: 24 * 1024 } });
+    // The overview loads the shared Playground stylesheet (2026-10-13: 21.6 KB, all games in one file;
+    // 2026-10-18: 26.4 KB with five games, so the limit is the one of the Backbone page)
+    pages.push({ path: '/games/', budgets: { ...BUDGETS, stylesheet: 28 * 1024 } });
   }
   if (existsSync('dist/games')) {
     const folders = await readdir('dist/games', { withFileTypes: true });

@@ -1,6 +1,6 @@
-import { describePath, type PlayState, readyToRun, unrouted } from './play';
+import { nameOf, type PlayState, readyToRun, unrouted } from './play';
 import { evaluate } from './simulate';
-import { describeBusiest, linkName, summarize } from './text';
+import { describeOverload, linkName, summarize } from './text';
 import type { FlowPlan, Plan } from './types';
 
 /**
@@ -29,11 +29,51 @@ export interface Guide {
   score: number;
 }
 
+/** The longest text of a hint that fits the status line (three lines, four on a narrow map). */
+const MOST = 120;
+
 /** How close to the best plan counts as "as good as it gets". */
 const CLOSE = 0.01;
 
 function sameFlowPlan(a: FlowPlan | undefined, b: FlowPlan | undefined): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/** Names for a sentence: at most three, then "and 2 more". */
+function listOf(names: readonly string[]): string {
+  if (names.length <= 3) {
+    return names.join(' and ');
+  }
+  return `${names.slice(0, 2).join(', ')} and ${String(names.length - 2)} more`;
+}
+
+/** The hint for a path or a split, as short as it can be said: long paths are left out. */
+function splitText(
+  state: PlayState,
+  flow: string,
+  paths: readonly { nodes: readonly string[]; share: number }[],
+  first: readonly string[],
+): string {
+  if (paths.length <= 1) {
+    return `Try sending ${flow} ${via(state, first)}.`;
+  }
+  const shares = paths.map((path) => String(Math.round(path.share * 100)));
+  const full = `Split ${flow} over ${String(paths.length)} paths: ${paths
+    .map((path, at) => `${shares[at] ?? ''} % ${via(state, path.nodes)}`)
+    .join(', ')}.`;
+  if (full.length <= MOST) {
+    return full;
+  }
+  const main = `Split ${flow} over ${String(paths.length)} paths, ${shares.join(' / ')} %. The first ${via(state, paths[0]?.nodes ?? [])}.`;
+  return main.length <= MOST
+    ? main
+    : `Split ${flow} over ${String(paths.length)} paths, ${shares.join(' / ')} %.`;
+}
+
+/** A path in a few words: the nodes between the two ends, which are named by the flow anyway. */
+function via(state: PlayState, nodes: readonly string[]): string {
+  const between = nodes.slice(1, -1).map((node) => nameOf(state, node));
+  return between.length === 0 ? 'the direct cable' : `via ${between.join(' and ')}`;
 }
 
 /** What the first flow that differs from the best plan should do, in words. */
@@ -57,15 +97,7 @@ function difference(state: PlayState, guide: Guide): { text: string; flow: strin
     if (JSON.stringify(mine?.stages) !== JSON.stringify(best.stages)) {
       return {
         flow: flow.id,
-        text:
-          paths.length > 1
-            ? `Split ${flow.name} over ${String(paths.length)} paths: ${paths
-                .map(
-                  (path) =>
-                    `${describePath(state, path.nodes)} (${String(Math.round(path.share * 100))} %)`,
-                )
-                .join(' and ')}.`
-            : `Try sending ${flow.name} over ${describePath(state, first?.paths[0]?.nodes ?? [])}.`,
+        text: splitText(state, flow.name, paths, first?.paths[0]?.nodes ?? []),
       };
     }
     if (best.backup !== undefined && mine?.backup === undefined) {
@@ -119,7 +151,7 @@ export function hintFor(state: PlayState, guide: Guide, stage: 1 | 2 | 3): Hint 
       stage,
       text:
         busiest !== undefined
-          ? `${describeBusiest(state.index, summary)} What does not fit is dropped or has to wait.`
+          ? describeOverload(state.index, busiest)
           : worst !== undefined
             ? `${names.get(worst.flow) ?? worst.flow} loses ${String(Math.round(worst.lost * 100))} % of its value. Look at what it needs.`
             : 'Nothing is overfull, but the best plan does more with the same network.',
@@ -137,7 +169,7 @@ export function hintFor(state: PlayState, guide: Guide, stage: 1 | 2 | 3): Hint 
       return {
         ...none,
         stage,
-        text: `${linkName(state.index, busiest.link)} is used by ${users.length > 0 ? users.map((flow) => flow.name).join(' and ') : 'a flood'}. Could one of them go another way?`,
+        text: `${linkName(state.index, busiest.link)} is used by ${users.length > 0 ? listOf(users.map((flow) => flow.name)) : 'a flood'}. Could one of them go another way?`,
         links: [busiest.link],
         flows: users.map((flow) => flow.id),
       };

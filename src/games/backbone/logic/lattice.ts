@@ -17,13 +17,11 @@ interface Cell {
   row: number;
 }
 
-/** The place of a cell in the units of a level (the y is squeezed later, see `mapPoint`). */
-function pointOfCell(cell: Cell, columns: number, rows: number): Point {
-  return {
-    x: 10 + (cell.column * 80) / Math.max(1, columns - 1),
-    y: 12 + (cell.row * 76) / Math.max(1, rows - 1),
-  };
-}
+/** The room kept free at the border of the map for the names (units of a level, the y is squeezed later). */
+const LEFT = 10;
+const RIGHT = 90;
+const TOP = 14;
+const BOTTOM = 86;
 
 function shuffled<T>(random: Random, items: readonly T[]): T[] {
   return random.shuffle(items);
@@ -145,7 +143,7 @@ function meshCells(
 
 /** The points for `count` nodes in the units of a level. */
 export function latticePoints(family: LatticeFamily, count: number, random: Random): Point[] {
-  const { cells, columns, rows } =
+  const { cells } =
     family === 'grid'
       ? gridCells(count, random)
       : family === 'ring'
@@ -153,5 +151,16 @@ export function latticePoints(family: LatticeFamily, count: number, random: Rand
         : family === 'hub'
           ? hubCells(count, random)
           : meshCells(count, random);
-  return cells.map((cell) => pointOfCell(cell, columns, rows));
+  // The cells that are used are stretched over the whole map (inside the border that is kept free),
+  // so a level never uses only a part of it, however the cells were chosen
+  const span = (values: readonly number[]): { low: number; size: number } => {
+    const low = Math.min(...values);
+    return { low, size: Math.max(1, Math.max(...values) - low) };
+  };
+  const across = span(cells.map((cell) => cell.column));
+  const down = span(cells.map((cell) => cell.row));
+  return cells.map((cell) => ({
+    x: LEFT + ((cell.column - across.low) * (RIGHT - LEFT)) / across.size,
+    y: TOP + ((cell.row - down.low) * (BOTTOM - TOP)) / down.size,
+  }));
 }

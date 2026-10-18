@@ -1,7 +1,8 @@
 ---
 import GameGrid from '@/components/games/GameGrid.astro';
+import Icon from '@/components/Icon.astro';
 import Section from '@/components/Section.astro';
-import { gamesPath, liveGames, playgroundIntro } from '@/games/registry';
+import { gamesPath, homeGames, liveGames, playgroundIntro } from '@/games/registry';
 
 interface Props {
   /** Number shown above the title, e.g. "04" */
@@ -9,7 +10,8 @@ interface Props {
 }
 
 const { index } = Astro.props;
-const games = liveGames();
+const games = homeGames();
+const all = liveGames().length;
 ---
 
 {games.length > 0 && (
@@ -18,12 +20,10 @@ const games = liveGames();
     <div class="mt-10">
       <GameGrid games={games} />
     </div>
-    <p class="reveal mt-8 text-sm">
-      <a
-        href={gamesPath}
-        class="text-muted underline-offset-4 transition-colors hover:text-fg hover:underline"
-      >
-        All games
+    <p class="reveal mt-8">
+      <a href={gamesPath} class="btn-outline inline-flex items-center gap-2">
+        All games ({all})
+        <Icon name="lucide:arrow-right" class="size-4" />
       </a>
     </p>
   </Section>

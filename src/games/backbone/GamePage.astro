@@ -43,7 +43,8 @@ const { game } = Astro.props;
         <strong>Numbers:</strong> every flow has a number, in the list and on the map. A filled
         number sits at the node where the flow starts, an outlined one where it ends. The colour is
         the kind of traffic, not the flow. The selected flow stands out, and "Remove route" takes
-        its plan away.
+        its plan away. When a flow has its first route, the next flow without one is selected, so
+        you can go through the list from top to bottom.
       </li>
       <li>
         <strong>Different traffic wants different things:</strong> voice must be fast, a payment
