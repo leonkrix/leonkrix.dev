@@ -40,6 +40,12 @@ const { game } = Astro.props;
         second number on it); what does not fit is dropped.
       </li>
       <li>
+        <strong>Numbers:</strong> every flow has a number, in the list and on the map. A filled
+        number sits at the node where the flow starts, an outlined one where it ends. The colour is
+        the kind of traffic, not the flow. The selected flow stands out, and "Remove route" takes
+        its plan away.
+      </li>
+      <li>
         <strong>Different traffic wants different things:</strong> voice must be fast, a payment
         must not lose a packet, a backup does not care. The list says what each flow wants.
       </li>
@@ -50,7 +56,11 @@ const { game } = Astro.props;
       <li>
         <strong>Stars:</strong> one star for beating the shortest path, two for beating the load
         balanced strategy as well, three for coming close to the best plan. You can try as often as
-        you like. A level you solved lets you load the best plan.
+        you like. A level you solved lets you load the best plan. <em>Shortest path</em> sends every
+        flow on its fastest path. <em>Load balanced</em> places the heaviest flows first, each on
+        the one path where the fullest cable ends up least full; it never splits a flow and knows
+        nothing about priorities, delay, loss or a cut cable, which is why the shortest path is
+        sometimes better.
       </li>
       <li>
         Each chapter adds a rule: splitting a flow over several paths, backup paths, holding traffic

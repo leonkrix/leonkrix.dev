@@ -11,11 +11,13 @@ import {
   clickNode,
   drawPath,
   editedPath,
+  flowNumber,
   moveShare,
   type PlayState,
   readyToRun,
   redo,
   removeBackup,
+  removeFlowPlan,
   removeLane,
   removeStage,
   resetPlan,
@@ -219,5 +221,23 @@ describe('the options of a flow', () => {
   it('can undo an option', () => {
     const split = addLane(drawPath(start(), ['A', 'B', 'D']));
     expect(undo(split).plan.f1?.stages[0]?.paths).toHaveLength(1);
+  });
+});
+
+describe('taking a route away', () => {
+  it('removes the plan of the selected flow only, and can be undone', () => {
+    let state = drawPath(start(), ['A', 'B', 'D']);
+    state = drawPath(selectFlow(state, 'f2'), ['A', 'C', 'D']);
+    const removed = removeFlowPlan(state);
+    expect(Object.keys(removed.plan)).toEqual(['f1']);
+    expect(removed.message).toContain('has no route any more');
+    expect(Object.keys(undo(removed).plan).sort()).toEqual(['f1', 'f2']);
+    expect(removeFlowPlan(removed)).toBe(removed);
+  });
+
+  it('numbers the flows from one', () => {
+    const level = start().index.level;
+    expect(flowNumber(level, 'f1')).toBe(1);
+    expect(flowNumber(level, 'f2')).toBe(2);
   });
 });

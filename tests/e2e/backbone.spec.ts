@@ -34,7 +34,7 @@ const node = (page: Page, id: string) => page.locator(`.bb-node[data-node="${id}
 
 /** Draws the path of a flow by clicking its nodes one after the other. */
 async function drawByClicks(page: Page, flowName: string, nodes: readonly string[]): Promise<void> {
-  await page.getByRole('button', { name: new RegExp(`^${flowName}`) }).click();
+  await page.getByRole('button', { name: new RegExp(`^Flow [0-9]+: ${flowName}`) }).click();
   for (const id of nodes) {
     await node(page, id).click();
   }
@@ -99,7 +99,7 @@ test.describe('Backbone', () => {
     // Backspace takes a node back while a path is drawn, Escape cancels it
     const second = record.level.flows[1];
     if (second !== undefined) {
-      await page.getByRole('button', { name: new RegExp(`^${second.name}`) }).click();
+      await page.getByRole('button', { name: new RegExp(`^Flow [0-9]+: ${second.name}`) }).click();
       await node(page, second.source).focus();
       await page.keyboard.press('Enter');
       await expect(page.locator('.bb-route-chips[data-drawing="true"]')).toBeVisible();
@@ -180,6 +180,51 @@ test.describe('Backbone', () => {
     await expect(page.getByText(/is built for/)).toBeVisible();
     await page.getByRole('button', { name: 'Remove', exact: true }).first().click();
     await expect(page.getByText(/is not built any more/)).toBeVisible();
+  });
+
+  test('numbers the flows, takes one route away and looks at one flow in the result', async ({
+    page,
+  }) => {
+    const record = levelOf('c1-1');
+    await open(page, 'c1-1');
+    // Every flow has a number in the list and badges at its nodes: filled at the start, outlined at the end
+    await expect(page.locator('.bb-flow-number')).toHaveCount(record.level.flows.length);
+    await expect(page.locator('.bb-badge[data-end="false"]')).toHaveCount(
+      record.level.flows.length,
+    );
+    await expect(page.locator('.bb-badge[data-end="true"]')).toHaveCount(record.level.flows.length);
+    await playBest(page, record);
+    await expect(page.getByRole('button', { name: 'Run' })).toBeEnabled();
+    // Take the route of the selected flow away: only that flow loses its path
+    const first = record.level.flows[0];
+    await page
+      .getByRole('button', { name: new RegExp(`^Flow [0-9]+: ${first?.name ?? ''}`) })
+      .click();
+    await page.getByRole('button', { name: 'Remove route' }).click();
+    await expect(
+      page.getByRole('status').filter({ hasText: /has no route any more/ }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Run' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Remove route' })).toHaveCount(0);
+    await page.getByRole('button', { name: /Undo/ }).click();
+    await expect(page.getByRole('button', { name: 'Run' })).toBeEnabled();
+    // In the result a flow can be picked: the others fade on the map
+    await page.getByRole('button', { name: 'Run' }).click();
+    const row = page.locator('.bb-row-flow').first();
+    await expect(row).toHaveAttribute('aria-pressed', 'false');
+    await row.click();
+    await expect(row).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.bb-badge[data-dim="true"]').first()).toBeVisible();
+    await row.click();
+    await expect(row).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('explains the two simple strategies in the result', async ({ page }) => {
+    await open(page, 'c1-1');
+    await page.getByRole('button', { name: 'Auto: shortest' }).click();
+    await page.getByRole('button', { name: 'Run' }).click();
+    await expect(page.getByText('Every flow takes its fastest path.')).toBeVisible();
+    await expect(page.getByText(/never splits a flow/).first()).toBeVisible();
   });
 
   test('gives hints that get more concrete, and the last one costs the stars', async ({ page }) => {

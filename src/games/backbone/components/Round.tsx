@@ -65,6 +65,8 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
   const [focused, setFocused] = useState(record.level.nodes[0]?.id ?? '');
   const [justSolved, setJustSolved] = useState(false);
   const [hover, setHover] = useState<string | undefined>();
+  // The flow the result looks at (picked in its table)
+  const [focusFlow, setFocusFlow] = useState<string | undefined>();
   // The hint that was asked for, and the plan it was asked for: a change of the plan ends it
   const [asked, setAsked] = useState<
     { plan: PlayState['plan']; built: PlayState['built']; stage: 1 | 2 | 3 } | undefined
@@ -185,6 +187,7 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
   };
 
   const onEdit = (): void => {
+    setFocusFlow(undefined);
     setRun(undefined);
     setPlaying(false);
   };
@@ -304,6 +307,7 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
             loads={loads}
             forecast={forecast}
             hinted={new Set(hint?.links ?? [])}
+            emphasis={run === undefined ? play.selected : focusFlow}
             routes={routes}
             packets={packets}
             source={run === undefined ? selectedFlow?.source : undefined}
@@ -474,6 +478,8 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
               solved={solved || justSolved}
               onEdit={onEdit}
               next={next}
+              focus={focusFlow}
+              onFocus={setFocusFlow}
               onLoadBest={() => {
                 setPlay(loadDesign(play, record.best.plan, record.best.built));
                 onEdit();

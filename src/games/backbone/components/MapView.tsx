@@ -42,6 +42,8 @@ interface MapViewProps {
   forecast: Readonly<Record<string, LinkStepResult>>;
   /** Cables a hint points at */
   hinted: ReadonlySet<string>;
+  /** The flow to look at: the routes and packets of the others fade. Nothing fades without one. */
+  emphasis: string | undefined;
   routes: readonly DrawnRoute[];
   packets: readonly Packet[];
   /** The selected flow's end points are marked */
@@ -86,6 +88,30 @@ const ARROW_DIRECTIONS: Readonly<Record<string, Direction>> = {
   ArrowDown: 'down',
 };
 
+/** The numbers of the flows that start (filled) or end (outlined) at a node. */
+function badgesOf(
+  level: LevelIndex['level'],
+  node: string,
+): { flow: string; number: number; profile: string; end: boolean }[] {
+  return level.flows.flatMap((flow, at) => [
+    ...(flow.source === node
+      ? [{ flow: flow.id, number: at + 1, profile: flow.profile, end: false }]
+      : []),
+    ...(flow.target === node
+      ? [{ flow: flow.id, number: at + 1, profile: flow.profile, end: true }]
+      : []),
+  ]);
+}
+
+/** For a screen reader: which flows start and end at a node. */
+function endsHere(level: LevelIndex['level'], node: string): string {
+  const name = (flow: LevelIndex['level']['flows'][number]): string =>
+    `flow ${String(level.flows.indexOf(flow) + 1)} (${flow.name})`;
+  const starts = level.flows.filter((flow) => flow.source === node).map(name);
+  const ends = level.flows.filter((flow) => flow.target === node).map(name);
+  return `${starts.length > 0 ? `, starts ${starts.join(', ')}` : ''}${ends.length > 0 ? `, ends ${ends.join(', ')}` : ''}`;
+}
+
 function trim(value: number): string {
   return String(Math.round(value * 10) / 10);
 }
@@ -104,6 +130,7 @@ export function MapView({
   loads,
   forecast,
   hinted,
+  emphasis,
   routes,
   packets,
   source,
@@ -290,7 +317,11 @@ export function MapView({
               data-profile={profile}
               data-active={route.active}
               data-backup={route.backup === true}
-              style={{ opacity: 0.35 + 0.65 * route.share }}
+              style={{
+                opacity:
+                  (0.35 + 0.65 * route.share) *
+                  (emphasis === undefined || route.flow === emphasis ? 1 : 0.3),
+              }}
             >
               {points.slice(1).map((point, step) => {
                 const before = points[step];
@@ -340,7 +371,9 @@ export function MapView({
               cx={packet.point.x}
               cy={packet.point.y}
               r={0.95}
-              opacity={packet.opacity}
+              opacity={
+                packet.opacity * (emphasis === undefined || packet.flow === emphasis ? 1 : 0.18)
+              }
             />
           );
         })}
@@ -431,7 +464,7 @@ export function MapView({
             data-zone={node.zone}
             tabIndex={node.id === focused ? 0 : -1}
             disabled={!editable}
-            aria-label={`${node.name}, ${node.kind}${isSource ? ', start of the selected flow' : ''}${isTarget ? ', end of the selected flow' : ''}`}
+            aria-label={`${node.name}, ${node.kind}${isSource ? ', start of the selected flow' : ''}${isTarget ? ', end of the selected flow' : ''}${endsHere(level, node.id)}`}
             style={{
               left: `${String((point.x / MAP_WIDTH) * 100)}%`,
               top: `${String((point.y / MAP_HEIGHT) * 100)}%`,
@@ -479,6 +512,19 @@ export function MapView({
             }}
           >
             <Svg set="node" name={node.kind} className="bb-node-icon" />
+            <span className="bb-node-badges" aria-hidden="true">
+              {badgesOf(level, node.id).map((badge) => (
+                <span
+                  key={`${badge.flow}-${String(badge.end)}`}
+                  className="bb-badge"
+                  data-profile={badge.profile}
+                  data-end={badge.end}
+                  data-dim={emphasis !== undefined && badge.flow !== emphasis}
+                >
+                  {badge.number}
+                </span>
+              ))}
+            </span>
             <span className="bb-node-name" data-side={nameSides.get(node.id) ?? 'below'}>
               {node.name}
             </span>

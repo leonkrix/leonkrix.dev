@@ -1351,3 +1351,92 @@
   min-width: 11.5rem;
   justify-content: center;
 }
+
+/* ---- Numbers of the flows ---- */
+
+.bb-flow-icon {
+  position: relative;
+}
+
+.bb-flow-number {
+  position: absolute;
+  right: -0.35rem;
+  bottom: -0.35rem;
+  display: grid;
+  place-items: center;
+  min-width: 0.95rem;
+  height: 0.95rem;
+  border-radius: 999px;
+  background-color: var(--bb-color);
+  color: var(--color-bg);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.bb-node-badges {
+  position: absolute;
+  bottom: calc(100% - 0.55rem);
+  left: calc(100% - 0.55rem);
+  display: flex;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.bb-badge {
+  display: grid;
+  place-items: center;
+  min-width: 1rem;
+  height: 1rem;
+  border: 1.5px solid var(--bb-color);
+  border-radius: 999px;
+  background-color: var(--bb-color);
+  color: var(--color-bg);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: opacity 160ms ease;
+}
+
+.bb-badge[data-end='true'] {
+  background-color: var(--color-bg);
+  color: var(--bb-color);
+}
+
+.bb-badge[data-dim='true'] {
+  opacity: 0.35;
+}
+
+.bb-game button.bb-row-flow {
+  padding: 0.1rem 0.4rem;
+  border-color: transparent;
+  background-color: transparent;
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.bb-game button.bb-row-flow[aria-pressed='true'] {
+  border-color: var(--color-accent-2);
+  background-color: color-mix(in srgb, var(--color-accent-2) 14%, transparent);
+}
+
+.bb-strategies {
+  display: grid;
+  gap: 0.1rem;
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.bb-strategies dt {
+  margin-top: 0.35rem;
+  color: var(--color-fg);
+  font-weight: 500;
+}
+
+.bb-strategies dd {
+  margin: 0;
+  color: var(--color-muted);
+}

@@ -5,6 +5,7 @@ import {
   moveShare,
   type PlayState,
   removeBackup,
+  removeFlowPlan,
   removeLane,
   removeStage,
   selectEdit,
@@ -71,9 +72,15 @@ export function FlowList({ state, hinted, onSelect }: FlowListProps) {
             >
               <span className="bb-flow-icon">
                 <Svg set="profile" name={flow.profile} />
+                <span className="bb-flow-number" aria-hidden="true">
+                  {level.flows.indexOf(flow) + 1}
+                </span>
               </span>
               <span className="bb-flow-text">
-                <span className="bb-flow-name">{flow.name}</span>
+                <span className="bb-flow-name">
+                  <span className="bb-sr">Flow {level.flows.indexOf(flow) + 1}: </span>
+                  {flow.name}
+                </span>
                 <span className="bb-flow-meta">
                   {names.get(flow.source)} → {names.get(flow.target)}
                 </span>
@@ -181,7 +188,9 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
   return (
     <div className="bb-options" data-profile={flow.profile}>
       <p className="bb-options-title">
-        <strong>{flow.name}</strong>
+        <strong>
+          {state.index.level.flows.indexOf(flow) + 1} · {flow.name}
+        </strong>
         <span className="bb-options-meta"> needs: {wantsOf(flow)}</span>
       </p>
 
@@ -197,6 +206,16 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
           >
             Use the fastest route
           </button>
+          {plan !== undefined && (
+            <button
+              type="button"
+              onClick={() => {
+                onChange(removeFlowPlan(state));
+              }}
+            >
+              Remove route
+            </button>
+          )}
         </div>
       </div>
 

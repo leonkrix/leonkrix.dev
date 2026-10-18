@@ -23,6 +23,9 @@ interface ResultPanelProps {
   /** The level has been solved (one star or more) in this visit, so the best plan may be shown */
   solved: boolean;
   next: { label: string; onClick: () => void } | undefined;
+  /** The flow whose routes the map shows (the table lets the player pick one) */
+  focus: string | undefined;
+  onFocus: (flow: string | undefined) => void;
   onEdit: () => void;
   onLoadBest: () => void;
 }
@@ -45,6 +48,8 @@ export function ResultPanel({
   situation,
   solved,
   next,
+  focus,
+  onFocus,
   onEdit,
   onLoadBest,
 }: ResultPanelProps) {
@@ -120,6 +125,19 @@ export function ResultPanel({
         />
       </div>
 
+      <dl className="bb-strategies">
+        <dt>Shortest path</dt>
+        <dd>Every flow takes its fastest path. It knows nothing else.</dd>
+        <dt>Load balanced</dt>
+        <dd>
+          The heaviest flows first, each on the one path where the fullest cable ends up the least
+          full. It never splits a flow and knows nothing about priorities, delay, loss or a cut
+          cable.
+        </dd>
+        <dt>Best plan</dt>
+        <dd>The best plan there is, proven by a search before you saw the level.</dd>
+      </dl>
+
       <ul className="bb-notes">
         <li>{describeBusiest(index, summary)}</li>
         {worst !== undefined && (
@@ -130,7 +148,7 @@ export function ResultPanel({
       </ul>
 
       <table className="bb-table">
-        <caption>What each flow earned</caption>
+        <caption>What each flow earned (pick one to look at it on the map)</caption>
         <thead>
           <tr>
             <th scope="col">Flow</th>
@@ -140,7 +158,19 @@ export function ResultPanel({
         <tbody>
           {summary.flows.map((entry) => (
             <tr key={entry.flow}>
-              <th scope="row">{names.get(entry.flow)}</th>
+              <th scope="row">
+                <button
+                  type="button"
+                  className="bb-row-flow"
+                  aria-pressed={focus === entry.flow}
+                  onClick={() => {
+                    onFocus(focus === entry.flow ? undefined : entry.flow);
+                  }}
+                >
+                  {index.level.flows.findIndex((flow) => flow.id === entry.flow) + 1} ·{' '}
+                  {names.get(entry.flow)}
+                </button>
+              </th>
               <td>
                 <span className="bb-bar" aria-hidden="true">
                   <span style={{ width: `${String(Math.round(entry.earned * 100))}%` }} />

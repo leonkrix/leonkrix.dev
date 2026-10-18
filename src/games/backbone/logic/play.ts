@@ -661,3 +661,23 @@ export function loadDesign(state: PlayState, plan: Plan, built: readonly string[
 export function budgetLeft(state: PlayState): number {
   return (state.base.budget ?? 0) - spent(state.base, state.built);
 }
+
+/** Takes the whole plan of the selected flow away (path, split, backup and options). */
+export function removeFlowPlan(state: PlayState): PlayState {
+  const flow = flowOf(state, state.selected);
+  if (flow === undefined || state.plan[flow.id] === undefined) {
+    return state;
+  }
+  const rest = Object.fromEntries(Object.entries(state.plan).filter(([id]) => id !== flow.id));
+  return {
+    ...commit(state, rest, `${flow.name} has no route any more.`),
+    stage: 0,
+    lane: 0,
+    target: 'path',
+  };
+}
+
+/** The number of a flow in the list of the level (from 1): its short name on the map. */
+export function flowNumber(level: Level, flowId: string): number {
+  return level.flows.findIndex((flow) => flow.id === flowId) + 1;
+}
