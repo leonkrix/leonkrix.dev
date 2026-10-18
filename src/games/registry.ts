@@ -63,7 +63,7 @@ export const games: readonly GameDefinition[] = [
     tag: 'Network',
     description: 'Route traffic through a network, then survive the stress test.',
     icon: 'lucide:network',
-    status: 'hidden',
+    status: 'live',
   },
 ];
 

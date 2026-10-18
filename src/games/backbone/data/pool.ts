@@ -1,4 +1,5 @@
 import type { Level, Plan, Rules } from '../logic/types';
+import type { SettingId } from './settings';
 
 /**
  * One level of the pool as it is stored in `levels.json`: the level itself, the plan the solver
@@ -7,11 +8,13 @@ import type { Level, Plan, Rules } from '../logic/types';
 export interface LevelRecord {
   id: string;
   chapter: number;
+  /** Where the level takes place (its names come from there) */
+  setting: SettingId;
   /** The seed that made the level, so it can be made again */
   seed: number;
   level: Level;
-  /** The proven best plan and its score */
-  best: { plan: Plan; score: number };
+  /** The proven best plan, the optional cables it builds, and its score */
+  best: { plan: Plan; score: number; built: string[] };
   /** The scores of the two simple strategies */
   shortest: number;
   balanced: number;
@@ -36,4 +39,27 @@ export function featuresUsed(plan: Plan): Rules {
     used.throttle ||= flowPlan.throttle < 1;
   }
   return used;
+}
+
+/** What the overview of the campaign needs to know about a level: small, so it is always at hand. */
+export interface CatalogEntry {
+  id: string;
+  chapter: number;
+  setting: SettingId;
+  title: string;
+  nodes: number;
+  flows: number;
+  situations: number;
+}
+
+export function toCatalogEntry(record: LevelRecord): CatalogEntry {
+  return {
+    id: record.id,
+    chapter: record.chapter,
+    setting: record.setting,
+    title: record.level.title,
+    nodes: record.level.nodes.length,
+    flows: record.level.flows.length,
+    situations: record.level.situations.length,
+  };
 }

@@ -52,6 +52,8 @@ const GAME_BUDGETS = {
   'link-up': { script: 130 * 1024, stylesheet: 24 * 1024, total: 260 * 1024 },
   // Measured on 2026-10-13 (React, the game, and the word data of about 2 MB that is fetched when the page opens: 1.9 MB of vectors, 0.27 MB of words): scripts 78 KB, stylesheets 24.2 KB, total 2196 KB; performance 98
   'word-radar': { script: 130 * 1024, stylesheet: 24 * 1024, total: 2600 * 1024 },
+  // Measured on 2026-10-18 (React, the game and the overview of the campaign; the level pool and the generator of random levels are separate files that are only fetched after the first paint or for a random level, so they are not in the first load): scripts 117 KB, stylesheets 25.7 KB, total 243 KB; performance 97
+  backbone: { script: 130 * 1024, stylesheet: 28 * 1024, total: 300 * 1024 },
 };
 
 /** The pages to test: the home page, the Playground pages once a game is live, and the notes. */

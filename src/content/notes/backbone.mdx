@@ -1,0 +1,87 @@
+---
+title: 'Backbone: a planning game that a simulation judges'
+summary: 'You route traffic through a network, a stress test runs your plan, and a solver has proven the best possible plan before you see the level. How the model, the proof and the drawing rules fit together.'
+tag: 'Network · Backbone'
+game: backbone
+code: src/games/backbone
+group: games
+order: 5
+updated: '2026-10-18'
+---
+
+import BackboneFigure from '@/components/notes/BackboneFigure.astro';
+import Code from '@/components/notes/Code.astro';
+import Stats from '@/components/notes/Stats.astro';
+import Steps from '@/components/notes/Steps.astro';
+import starsSnippet from './snippets/backbone-stars.snippet?raw';
+
+Backbone is a game about networks. A level is a small network, a list of flows (traffic that has to get from one node to another) and one to three situations: a quiet day, a rush, a cut cable. You draw a path for every flow, press Run, and a stress test plays your plan through every situation. There are no dice. The same plan always gives the same result, and the game is judged by that result, not by a rule check.
+
+The other games on this site check a rule: a guess is right or wrong, a group is found or not. This one needed something else. A plan is not right or wrong, it is better or worse, and to say how good it is, the game has to know what the best plan would have been. So the interesting part is not the map. It is the model that judges a plan, and the proof of what the best plan is.
+
+<Stats
+  items={[
+    { value: '41', label: 'levels, 11 chapters' },
+    { value: '88 ms', label: 'median proof' },
+    { value: '376', label: 'unit tests' },
+    { value: '0', label: 'overlapping maps' },
+  ]}
+/>
+
+## What the stress test does
+
+In every step, every flow sends its demand along the paths of its plan. On every cable the traffic is served in the order of its profile (voice and control first, web and video next, bulk last) until the capacity is used up, and the rest is dropped. A flow is as fast as the narrowest cable on its path. It earns `weight × demand × delivered^k × timeliness` per step, where k says how much its kind of traffic hates loss: a payment cannot lose a packet (k = 4), a backup hardly cares (k = 1). A flow that arrives later than its budget loses value. A cut cable loses the traffic of the flows on it for two steps unless they have a backup path, then the network reroutes them. Extra coded packets (redundancy) can recover loss, but they use capacity too.
+
+The first version multiplied the shares of every cable on a path, so one bottleneck was punished twice. Two flows on a path of two cables showed it at once: 16 units wanted a cable of 10, and the flow arrived with 39 percent instead of 63. The share of a flow is now the smallest share any cable grants it, which is also what a reader of the map expects.
+
+<BackboneFigure level="c2-1" />
+
+## Proving the best plan
+
+For a score to mean something, the game needs the best plan, and "the best I found" is not good enough, because a player could beat it. So every level is solved exactly: a branch and bound search places the flows one after the other and runs the stress test on the partial plan. That works because of one property of the model, which a test checks on 150 random levels: **adding traffic to a plan never helps a flow that is already in it.** What the placed flows earn can only go down as more flows are added, so it is an upper bound, and a branch that cannot beat the best plan found so far is cut off without losing the optimum.
+
+A second copy of the stress test, written for speed on arrays instead of readable records, runs inside the search (more than four times faster). A test compares it with the readable one on 120 random plans, so they cannot drift apart. The solver itself is compared with trying every combination on 12 small levels, with three different sets of rules.
+
+The numbers, measured on the 41 levels of the campaign: the median proof takes 88 milliseconds, a tenth of them take about two seconds or more, and the slowest takes 12.5 seconds. The slow ones are the levels where several flows can be split and bulk traffic can be held back at the same time, because every flow then has hundreds of ways to be planned. Those are proven once, by a script, and stored. Random levels are proven in the browser, in background threads, with a time limit: a level whose proof takes too long is thrown away and another is made.
+
+## Stars that mean something
+
+The game compares your plan with two simple strategies, as in the master thesis the idea comes from: everybody on the shortest path, and flows spread over the network one after the other. A level is only admitted when the best plan beats both by a clear margin, so the steps between the stars are real.
+
+<Code lang="ts" code={starsSnippet} />
+
+One star is at least as good as the shortest path. Two stars beat both strategies and are well on the way to the best plan. Three are within five percent of the distance to it. A plan filled in by a helper never earns stars.
+
+One thing I got wrong at first: the generator kept levels where even the best plan only scored 78 out of 100. The first level of the game could not be played perfectly, which feels like a bug in the game and not like a mistake of the player. The score is now absolute (100 is everything delivered in time), and the first four chapters only admit levels whose best plan is nearly perfect. Later chapters have losses that nobody can avoid, such as two steps of a cut cable or bulk traffic that is held back, and the best score of such a level is lower on purpose.
+
+## Maps without overlaps
+
+A generated level also has to be drawable. The first maps had nodes in random places, and a cable could run straight through another node: you could not see it. Now every level has to pass the drawing rules before it is admitted:
+
+<Steps
+  columns={2}
+  steps={[
+    {
+      title: 'Room for every node',
+      text: 'Nodes stand on a lattice, so nodes in a row share their height. The four families (grid, ring, hub, cluster) choose different cells.',
+    },
+    {
+      title: 'No cable over a node',
+      text: 'A cable keeps a distance from every node it does not join, and cables leave a node at an angle of at least 24 degrees.',
+    },
+    {
+      title: 'No crossings',
+      text: 'No two cables cross. If the points allow no network like that, the generator tries new points.',
+    },
+    {
+      title: 'Names with room',
+      text: 'Every name and every from/to mark gets a side (below, above, beside, in a corner) where it covers no cable, node or label. A level where one cannot is not used.',
+    },
+  ]}
+/>
+
+Each rule is a function with a test, and the level pool is checked in CI: every one of the 41 levels is validated again, its best plan is run through the stress test and must give the stored score, and the cheap proofs are repeated.
+
+## What is tested
+
+Beside the 376 unit tests (the model, the plan moves, the solver, the generator, the stars, the drawing and the pool), 13 browser tests play the game on a desktop and a phone: with clicks, with the keyboard, with a helper, through the stress test step by step, building a cable, making a random level. The layout guard of the site watches all of them, so nothing on the page moves when the result appears, and an accessibility scan runs on the overview, a level and a result.

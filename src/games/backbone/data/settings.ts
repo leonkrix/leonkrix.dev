@@ -21,6 +21,7 @@ export const settings: Readonly<Record<SettingId, Setting>> = {
     id: 'office',
     name: 'Small office',
     nodes: {
+      firewall: ['Firewall', 'Gatekeeper'],
       router: ['Gateway', 'Core', 'Floor 1', 'Floor 2', 'Annex', 'Hub', 'Edge', 'Spare'],
       switch: ['Switch A', 'Switch B', 'Switch C', 'Switch D'],
       server: ['File server', 'Mail server'],
@@ -39,6 +40,7 @@ export const settings: Readonly<Record<SettingId, Setting>> = {
     id: 'hospital',
     name: 'Hospital',
     nodes: {
+      firewall: ['Patient firewall', 'Gatekeeper'],
       router: [
         'Core',
         'Ward hub',
@@ -66,6 +68,7 @@ export const settings: Readonly<Record<SettingId, Setting>> = {
     id: 'campus',
     name: 'University campus',
     nodes: {
+      firewall: ['Campus firewall', 'Gatekeeper'],
       router: ['Core', 'Library', 'Science', 'Arts', 'Gate', 'Annex', 'Edge', 'Spare'],
       switch: ['Hall A', 'Hall B', 'Hall C', 'Hall D'],
       server: ['Course portal', 'Research store'],
@@ -84,6 +87,7 @@ export const settings: Readonly<Record<SettingId, Setting>> = {
     id: 'festival',
     name: 'Music festival',
     nodes: {
+      firewall: ['Gate firewall', 'Gatekeeper'],
       router: [
         'Control tent',
         'North field',
@@ -119,6 +123,7 @@ export const settings: Readonly<Record<SettingId, Setting>> = {
     id: 'datacentre',
     name: 'Data centre',
     nodes: {
+      firewall: ['Edge firewall', 'Gatekeeper'],
       router: ['Spine 1', 'Spine 2', 'Leaf 1', 'Leaf 2', 'Leaf 3', 'Border', 'Edge', 'Spare'],
       switch: ['Rack A', 'Rack B', 'Rack C', 'Rack D'],
       server: ['Database', 'Storage'],
@@ -137,6 +142,7 @@ export const settings: Readonly<Record<SettingId, Setting>> = {
     id: 'drones',
     name: 'Drone swarm',
     nodes: {
+      firewall: ['Ground filter', 'Gatekeeper'],
       router: [
         'Relay 1',
         'Relay 2',
@@ -165,6 +171,7 @@ export const settings: Readonly<Record<SettingId, Setting>> = {
     id: 'provider',
     name: 'Regional provider',
     nodes: {
+      firewall: ['Border firewall', 'Gatekeeper'],
       router: ['Core 1', 'Core 2', 'Metro N', 'Metro S', 'Metro E', 'Metro W', 'Peering', 'Spare'],
       switch: ['Agg A', 'Agg B', 'Agg C', 'Agg D'],
       server: ['Peering point', 'Content cache'],

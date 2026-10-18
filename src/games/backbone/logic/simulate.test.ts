@@ -298,3 +298,57 @@ describe('the fast stress test of the solver', () => {
     }
   });
 });
+
+describe('policy: a flow that has to pass a node', () => {
+  const guarded = diamond({
+    flows: [
+      { id: 'f1', name: 'Guest', source: 'A', target: 'D', profile: 'web', demand: 6, via: ['C'] },
+    ],
+  });
+
+  it('carries nothing on a path that skips the node', () => {
+    const skipped = evaluate(guarded, { f1: singlePath(fast) });
+    expect(skipped.score).toBe(0);
+    expect(evaluate(guarded, { f1: singlePath(slow) }).score).toBeCloseTo(1, 9);
+  });
+
+  it('says so when a plan skips the node', () => {
+    expect(problemsOfPlan(guarded, { f1: singlePath(fast) })[0]).toContain('skips a node');
+    expect(problemsOfPlan(guarded, { f1: singlePath(slow) })).toEqual([]);
+  });
+
+  it('is not repaired by the network when its path is cut', () => {
+    const cut = diamond({
+      flows: guarded.flows,
+      situations: [
+        {
+          id: 'cut',
+          name: 'Cut',
+          steps: 8,
+          events: [{ kind: 'down', link: 'CD', from: 1, to: 8 }],
+        },
+      ],
+    });
+    const steps = evaluate(cut, { f1: singlePath(slow) }).situations[0]?.steps ?? [];
+    expect(steps[7]?.flows.f1?.delivered).toBe(0);
+  });
+
+  it('is measured against strategies that obey the policy, and the fast evaluator agrees', async () => {
+    const { shortestPathPlan, loadBalancedPlan } = await import('./baselines');
+    const { FastEvaluator } = await import('./fast');
+    const { indexLevel } = await import('./graph');
+    for (const plan of [shortestPathPlan(guarded), loadBalancedPlan(guarded)]) {
+      expect(problemsOfPlan(guarded, plan)).toEqual([]);
+    }
+    const index = indexLevel(guarded);
+    const fastEvaluator = new FastEvaluator(index);
+    for (const plan of [{ f1: singlePath(fast) }, { f1: singlePath(slow) }]) {
+      const earned = fastEvaluator.earned([fastEvaluator.compile('f1', plan.f1)]);
+      const expected = (evaluate(index, plan).situations[0]?.steps ?? []).reduce(
+        (sum, step) => sum + (step.flows.f1?.value ?? 0),
+        0,
+      );
+      expect(earned[0]).toBeCloseTo(expected, 9);
+    }
+  });
+});

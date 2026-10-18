@@ -1,4 +1,5 @@
-import { indexLevel, shortestPath } from './graph';
+import { geometryProblems } from './geometry';
+import { indexLevel, routesOf, shortestPath } from './graph';
 import { profiles } from './profiles';
 import type { Level } from './types';
 
@@ -95,6 +96,38 @@ export function problemsOfLevel(level: Level): string[] {
   if (problems.length > 0) {
     return problems;
   }
+  problems.push(...geometryProblems(level));
+
+  // Optional cables: a cost for each, a budget, and a network without them that still works
+  const optional = level.links.filter((link) => link.optional === true);
+  if (optional.length > 0) {
+    if (optional.some((link) => !Number.isInteger(link.cost) || (link.cost ?? 0) < 1)) {
+      problems.push('an optional cable needs a whole cost of at least 1');
+    }
+    if (!Number.isInteger(level.budget) || (level.budget ?? 0) < 1) {
+      problems.push('a level with optional cables needs a whole budget of at least 1');
+    }
+    const base = indexLevel(level);
+    for (const flow of level.flows) {
+      if (
+        shortestPath(
+          base,
+          flow.source,
+          flow.target,
+          (id) => base.linkById.get(id)?.optional !== true,
+        ) === undefined
+      ) {
+        problems.push(`${flow.id} has no way through without the optional cables`);
+      }
+    }
+  }
+
+  // A flow that has to pass a node needs a route that does
+  for (const flow of level.flows) {
+    if ((flow.via ?? []).length > 0 && routesOf(indexLevel(level), flow, 1).length === 0) {
+      problems.push(`${flow.id} has no route through the node it has to pass`);
+    }
+  }
 
   // Every flow needs a way through in every step, otherwise nobody could score the level fully.
   const index = indexLevel(level);
@@ -106,6 +139,9 @@ export function problemsOfLevel(level: Level): string[] {
         ),
       );
       for (const flow of level.flows) {
+        if (flow.via?.some((node) => !nodeIds.has(node)) === true) {
+          problems.push(`${flow.id} has to pass a node that does not exist`);
+        }
         if (shortestPath(index, flow.source, flow.target, (id) => !down.has(id)) === undefined) {
           problems.push(`${flow.id} has no way through in step ${String(step)} of ${situation.id}`);
         }

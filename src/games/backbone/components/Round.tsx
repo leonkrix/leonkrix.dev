@@ -2,10 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LevelRecord } from '../data/pool';
 import { loadBalancedPlan, shortestPathPlan } from '../logic/baselines';
+import { optionalLinks, simpleBuild, withBuilt } from '../logic/build';
+import { indexLevel } from '../logic/graph';
+import { placeNames, placeTag } from '../logic/labels';
 import {
   applyStrategy,
+  budgetLeft,
   cancelDraft,
   clickNode,
+  loadDesign,
   type PlayState,
   readyToRun,
   redo,
@@ -13,14 +18,16 @@ import {
   selectFlow,
   startState,
   stepBack,
+  toggleBuild,
   undo,
   unrouted,
 } from '../logic/play';
 import { evaluate } from '../logic/simulate';
 import { starsFor, starThresholds } from '../logic/stars';
 import { linkName } from '../logic/text';
-import type { Evaluation } from '../logic/types';
-import { advanceClock, type Clock, nodesOfLinks, packetsAt } from '../logic/view';
+import type { Evaluation, LinkStepResult } from '../logic/types';
+import { advanceClock, type Clock, linkBetween, nodesOfLinks, packetsAt } from '../logic/view';
+import { BuildPanel } from './BuildPanel';
 import { FlowList, FlowOptions } from './FlowPanel';
 import { type DrawnRoute, MapView } from './MapView';
 import { ResultPanel } from './ResultPanel';
@@ -38,9 +45,9 @@ interface RoundProps {
   chapterRule: string | undefined;
   /** The level was solved earlier in this visit */
   solved: boolean;
-  next: LevelRecord | undefined;
+  /** What the result offers after the level: the next level, or another random one */
+  next: { label: string; onClick: () => void } | undefined;
   onStars: (stars: 0 | 1 | 2 | 3) => void;
-  onOpen: (id: string) => void;
 }
 
 interface Run {
@@ -49,13 +56,14 @@ interface Run {
 }
 
 /** One level: planning, running the stress test and looking at the result. */
-export function Round({ record, chapterRule, solved, next, onStars, onOpen }: RoundProps) {
+export function Round({ record, chapterRule, solved, next, onStars }: RoundProps) {
   const [play, setPlay] = useState<PlayState>(() => startState(record.level));
   const [run, setRun] = useState<Run | undefined>();
   const [clock, setClock] = useState<Clock>({ situation: 0, step: 0, time: STILL_TIME });
   const [playing, setPlaying] = useState(false);
   const [focused, setFocused] = useState(record.level.nodes[0]?.id ?? '');
   const [justSolved, setJustSolved] = useState(false);
+  const [hover, setHover] = useState<string | undefined>();
   const reducedRef = useRef(false);
   const clockRef = useRef(clock);
 
@@ -75,20 +83,60 @@ export function Round({ record, chapterRule, solved, next, onStars, onOpen }: Ro
       }),
     [record],
   );
-  const ghosts = useMemo(
-    () => ({
-      shortest: evaluate(index, shortestPathPlan(index)),
-      balanced: evaluate(index, loadBalancedPlan(index)),
-      best: evaluate(index, record.best.plan),
-    }),
-    [index, record],
-  );
+  // The two simple strategies build in their own simple way, the best plan builds what it needs
+  const designs = useMemo(() => {
+    const simpleIndex = indexLevel(withBuilt(record.level, simpleBuild(record.level)));
+    const bestIndex = indexLevel(withBuilt(record.level, record.best.built));
+    return {
+      simpleIndex,
+      bestIndex,
+      shortest: evaluate(simpleIndex, shortestPathPlan(simpleIndex)),
+      balanced: evaluate(simpleIndex, loadBalancedPlan(simpleIndex)),
+      best: evaluate(bestIndex, record.best.plan),
+    };
+  }, [record]);
 
   // The loads of the plan so far on a quiet day: feedback while planning
   const preview = useMemo(
     () => evaluate(index, play.plan).situations[0]?.steps[0],
     [index, play.plan],
   );
+
+  const placement = useMemo(() => placeNames(level), [level]);
+
+  // The loads of the quiet day without the selected flow: what a new path for it adds to
+  const withoutSelected = useMemo(() => {
+    const rest = Object.fromEntries(
+      Object.entries(play.plan).filter(([id]) => id !== play.selected),
+    );
+    return evaluate(index, rest).situations[0]?.steps[0]?.links;
+  }, [index, play.plan, play.selected]);
+
+  // A forecast for the path being drawn: the load every cable on it would have
+  const forecast = useMemo(() => {
+    const flow = level.flows.find((entry) => entry.id === play.selected);
+    const drawn = play.draft?.nodes;
+    if (flow === undefined || drawn === undefined || withoutSelected === undefined) {
+      return {};
+    }
+    const last = drawn[drawn.length - 1];
+    const candidate =
+      hover !== undefined &&
+      last !== undefined &&
+      !drawn.includes(hover) &&
+      linkBetween(level, last, hover) !== undefined
+        ? [...drawn, hover]
+        : drawn;
+    const result: Record<string, LinkStepResult> = {};
+    for (let at = 1; at < candidate.length; at += 1) {
+      const id = linkBetween(level, candidate[at - 1] ?? '', candidate[at] ?? '');
+      const base = id === undefined ? undefined : withoutSelected[id];
+      if (id !== undefined && base !== undefined) {
+        result[id] = { ...base, offered: base.offered + flow.demand };
+      }
+    }
+    return result;
+  }, [level, play.draft, play.selected, withoutSelected, hover]);
 
   // Plays the stress test: step after step, situation after situation
   useEffect(() => {
@@ -225,19 +273,33 @@ export function Round({ record, chapterRule, solved, next, onStars, onOpen }: Ro
           <MapView
             index={index}
             loads={loads}
+            forecast={forecast}
             routes={routes}
             packets={packets}
             source={run === undefined ? selectedFlow?.source : undefined}
             target={run === undefined ? selectedFlow?.target : undefined}
+            nameSides={placement.names}
+            sourceSide={
+              selectedFlow === undefined ? 'above' : placeTag(level, placement, selectedFlow.source)
+            }
+            targetSide={
+              selectedFlow === undefined ? 'above' : placeTag(level, placement, selectedFlow.target)
+            }
             draft={play.draft?.nodes}
             focused={focused}
             onFocus={setFocused}
+            onHover={setHover}
             onNode={(node) => {
               if (run === undefined) {
                 setPlay(clickNode(play, node));
               }
             }}
             editable={run === undefined}
+            unbuilt={optionalLinks(play.base).filter((link) => !play.built.includes(link.id))}
+            budgetLeft={budgetLeft(play)}
+            onBuild={(id) => {
+              setPlay(toggleBuild(play, id));
+            }}
           />
           <p className="bb-status" role="status">
             {status}
@@ -274,19 +336,21 @@ export function Round({ record, chapterRule, solved, next, onStars, onOpen }: Ro
                 </button>
                 <button
                   type="button"
+                  title="Every flow takes its fastest path. A run like this earns no stars."
                   onClick={() => {
                     setPlay(applyStrategy(play, 'shortest'));
                   }}
                 >
-                  Shortest for all
+                  Auto: shortest
                 </button>
                 <button
                   type="button"
+                  title="Flows are spread over the network one after the other. A run like this earns no stars."
                   onClick={() => {
                     setPlay(applyStrategy(play, 'balanced'));
                   }}
                 >
-                  Balance for me
+                  Auto: balanced
                 </button>
                 <button type="button" data-primary disabled={!readyToRun(play)} onClick={onRun}>
                   Run
@@ -328,12 +392,22 @@ export function Round({ record, chapterRule, solved, next, onStars, onOpen }: Ro
               <div className="bb-brief">
                 <h2>{level.title}</h2>
                 <p>{level.story}</p>
+                {level.zones !== undefined && (
+                  <ul className="bb-zones" aria-label="Zones">
+                    {level.zones.map((zone) => (
+                      <li key={zone.id} data-zone={zone.id}>
+                        {zone.name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 {chapterRule !== undefined && (
                   <p className="bb-rule">
                     <strong>New:</strong> {chapterRule}
                   </p>
                 )}
               </div>
+              <BuildPanel state={play} onChange={setPlay} />
               <FlowList
                 state={play}
                 onSelect={(id) => {
@@ -346,9 +420,11 @@ export function Round({ record, chapterRule, solved, next, onStars, onOpen }: Ro
             <ResultPanel
               index={index}
               you={run.evaluation}
-              shortest={ghosts.shortest}
-              balanced={ghosts.balanced}
-              best={ghosts.best}
+              simpleIndex={designs.simpleIndex}
+              bestIndex={designs.bestIndex}
+              shortest={designs.shortest}
+              balanced={designs.balanced}
+              best={designs.best}
               baselines={{
                 shortest: record.shortest,
                 balanced: record.balanced,
@@ -358,15 +434,10 @@ export function Round({ record, chapterRule, solved, next, onStars, onOpen }: Ro
               assisted={run.assisted}
               situation={clock.situation}
               solved={solved || justSolved}
-              isLast={next === undefined}
               onEdit={onEdit}
-              onNext={() => {
-                if (next !== undefined) {
-                  onOpen(next.id);
-                }
-              }}
+              next={next}
               onLoadBest={() => {
-                setPlay({ ...applyStrategy(play, 'shortest'), plan: record.best.plan });
+                setPlay(loadDesign(play, record.best.plan, record.best.built));
                 onEdit();
               }}
             />

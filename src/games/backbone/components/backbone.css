@@ -2,7 +2,8 @@
    The moving parts are the packets (moved by the component, one frame at a time) and a few CSS
    transitions; reduced motion is handled at the end of the file. */
 
-.bb {
+.bb,
+.bb-game {
   --bb-panel-height: 34rem;
   --bb-voice: var(--color-accent-2);
   --bb-control: var(--color-danger);
@@ -57,32 +58,49 @@
   flex: none;
 }
 
-/* ---- Top bar: chapter and levels ---- */
+/* ---- Top bar: all levels, the chapter and its levels ---- */
+
+.bb-game {
+  display: grid;
+  gap: 1.4rem;
+  container-type: inline-size;
+}
 
 .bb-top {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  height: 2.75rem;
+  gap: 0.9rem;
+  min-height: 3.3rem;
 }
 
-.bb-chapter select {
-  height: 2.5rem;
-  padding: 0 0.7rem;
-  border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
-  background-color: var(--color-surface);
-  color: var(--color-fg);
-  font-size: 0.9rem;
-  max-width: 11rem;
+.bb-where {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.bb-where span {
+  color: var(--color-accent-2);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.7rem;
+}
+
+.bb-where strong {
+  overflow: hidden;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bb-levels {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.5rem;
   min-width: 0;
-  margin: 0;
-  padding: 0;
+  margin: 0 0 0 auto;
+  padding: 0.15rem;
   list-style: none;
   overflow-x: auto;
 }
@@ -90,15 +108,16 @@
 .bb-level {
   display: grid;
   justify-items: center;
-  gap: 0.1rem;
-  min-width: 2.75rem;
-  height: 2.5rem;
-  padding: 0.2rem 0.5rem;
+  align-content: center;
+  gap: 0.3rem;
+  min-width: 3rem;
+  height: 3.1rem;
+  padding: 0.3rem 0.6rem;
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border-radius: 0.6rem;
   background-color: color-mix(in srgb, var(--color-surface) 70%, transparent);
   color: var(--color-fg);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   line-height: 1;
 }
 
@@ -109,10 +128,35 @@
 
 .bb-level-stars {
   display: flex;
-  gap: 1px;
+  gap: 2px;
 }
 
 .bb-level .bb-star {
+  width: 0.55rem;
+  height: 0.55rem;
+}
+
+@container (max-width: 40rem) {
+  .bb-top {
+    flex-wrap: wrap;
+    row-gap: 0.7rem;
+  }
+
+  .bb-where {
+    flex: 1;
+  }
+
+  .bb-levels {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}
+
+.bb-body {
+  position: relative;
+}
+
+.bb-star {
   width: 0.5rem;
   height: 0.5rem;
 }
@@ -314,39 +358,134 @@
   height: 1.3rem;
 }
 
-.bb-node-name {
+/* The name and the from/to mark of a node sit on the side where nothing else is (placed by
+   logic/labels.ts); the gap keeps them clear of the node */
+.bb-node-name,
+.bb-node-tag {
   position: absolute;
-  top: 100%;
-  left: 50%;
-  max-width: 6rem;
-  margin-top: 0.15rem;
-  overflow: hidden;
-  color: var(--color-muted);
-  font-size: 0.64rem;
-  line-height: 1;
-  text-align: center;
-  text-overflow: ellipsis;
-  text-shadow: 0 0 4px var(--color-bg);
-  transform: translateX(-50%);
   white-space: nowrap;
 }
 
+.bb-node-name {
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  line-height: 1;
+  text-shadow:
+    0 0 3px var(--color-bg),
+    0 0 6px var(--color-bg);
+}
+
 .bb-node-tag {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  padding: 0 0.3rem;
+  padding: 0 0.35rem;
   border-radius: 0.5rem;
   background-color: var(--color-accent-2);
   color: var(--color-bg);
-  font-size: 0.6rem;
+  font-size: 0.62rem;
   font-weight: 600;
-  line-height: 1.05rem;
-  transform: translateX(-50%);
+  line-height: 1.1rem;
 }
 
 .bb-node[data-target='true'] .bb-node-tag {
   background-color: var(--color-contrast);
+}
+
+.bb-node-name[data-side='below'] {
+  top: calc(100% + 0.35rem);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.bb-node-name[data-side='above'] {
+  bottom: calc(100% + 0.35rem);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.bb-node-name[data-side='right'] {
+  top: 50%;
+  left: calc(100% + 0.45rem);
+  transform: translateY(-50%);
+}
+
+.bb-node-name[data-side='left'] {
+  top: 50%;
+  right: calc(100% + 0.45rem);
+  transform: translateY(-50%);
+}
+
+.bb-node-tag[data-side='below'] {
+  top: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.bb-node-tag[data-side='above'] {
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.bb-node-tag[data-side='right'] {
+  top: 50%;
+  left: calc(100% + 0.5rem);
+  transform: translateY(-50%);
+}
+
+.bb-node-tag[data-side='left'] {
+  top: 50%;
+  right: calc(100% + 0.5rem);
+  transform: translateY(-50%);
+}
+
+/* Corners: next to a node that has cables on all four sides */
+.bb-node-name[data-side='below-right'] {
+  top: calc(100% + 0.22rem);
+  left: calc(50% + 0.8rem);
+}
+
+.bb-node-name[data-side='below-left'] {
+  top: calc(100% + 0.22rem);
+  right: calc(50% + 0.8rem);
+}
+
+.bb-node-name[data-side='above-right'] {
+  bottom: calc(100% + 0.22rem);
+  left: calc(50% + 0.8rem);
+}
+
+.bb-node-name[data-side='above-left'] {
+  bottom: calc(100% + 0.22rem);
+  right: calc(50% + 0.8rem);
+}
+
+.bb-node-tag[data-side='below-right'] {
+  top: calc(100% + 0.22rem);
+  left: calc(50% + 0.8rem);
+}
+
+.bb-node-tag[data-side='below-left'] {
+  top: calc(100% + 0.22rem);
+  right: calc(50% + 0.8rem);
+}
+
+.bb-node-tag[data-side='above-right'] {
+  bottom: calc(100% + 0.22rem);
+  left: calc(50% + 0.8rem);
+}
+
+.bb-node-tag[data-side='above-left'] {
+  bottom: calc(100% + 0.22rem);
+  right: calc(50% + 0.8rem);
+}
+
+/* While a path is drawn, the nodes it can go to next are marked */
+.bb-node[data-next='true'] {
+  border-color: var(--color-fg);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-fg) 14%, transparent);
+}
+
+.bb-draft-pointer {
+  opacity: 0.55;
 }
 
 @container (max-width: 30rem) {
@@ -379,13 +518,7 @@
 }
 
 .bb-under {
-  min-height: 5.8rem;
-}
-
-@container (min-width: 40rem) {
-  .bb-under {
-    min-height: 3.1rem;
-  }
+  min-height: 7.6rem;
 }
 
 .bb-actions,
@@ -395,7 +528,39 @@
   gap: 0.5rem;
 }
 
-.bb button:not(.bb-node, .bb-level, .bb-flow) {
+/* On a wide map every button is in one line, and "Run" is at the end of it */
+@container (min-width: 40rem) {
+  .bb-under {
+    min-height: 4.4rem;
+  }
+
+  .bb-timeline {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 1rem;
+  }
+
+  .bb-step-text {
+    grid-column: 1 / -1;
+  }
+
+  .bb-actions {
+    flex-wrap: nowrap;
+  }
+
+  .bb-actions button {
+    padding-inline: 0.6rem !important;
+    font-size: 0.8rem !important;
+    white-space: nowrap;
+  }
+
+  .bb-actions button[data-primary] {
+    margin-left: auto;
+    padding-inline: 1.2rem !important;
+  }
+}
+
+.bb-game button:not(.bb-node, .bb-level, .bb-flow, .bb-card) {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -411,22 +576,22 @@
     transform 160ms ease;
 }
 
-.bb button:not(.bb-node, .bb-level, .bb-flow):hover:not(:disabled) {
+.bb-game button:not(.bb-node, .bb-level, .bb-flow, .bb-card):hover:not(:disabled) {
   border-color: var(--color-accent-2);
   transform: translateY(-1px);
 }
 
-.bb button:not(.bb-node, .bb-level, .bb-flow):active:not(:disabled) {
+.bb-game button:not(.bb-node, .bb-level, .bb-flow, .bb-card):active:not(:disabled) {
   transform: translateY(0) scale(0.97);
 }
 
-.bb button[data-primary] {
+.bb-game button[data-primary] {
   border-color: var(--color-accent);
   background-color: var(--color-accent);
   color: var(--color-bg);
 }
 
-.bb button:disabled {
+.bb-game button:disabled {
   opacity: 0.45;
   cursor: default;
 }
@@ -795,6 +960,184 @@
   font-size: 0.9rem;
 }
 
+/* ---- Route chips in the panel ---- */
+
+.bb-route-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bb-route-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.bb-route-chip {
+  padding: 0.15rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--bb-color) 55%, var(--color-border));
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--bb-color) 10%, transparent);
+  color: var(--color-fg);
+}
+
+.bb-route-chip[data-end='true'] {
+  background-color: color-mix(in srgb, var(--bb-color) 24%, transparent);
+  font-weight: 500;
+}
+
+.bb-route-chip[data-open] {
+  border-style: dashed;
+}
+
+.bb-route-chips[data-drawing='true'] .bb-route-chip {
+  border-style: dashed;
+}
+
+/* A forecast on a cable while a path is drawn */
+.bb-link-label[data-forecast='true'] {
+  outline: 1px dashed currentcolor;
+}
+
+/* ---- The overview of the campaign: a page of its own ---- */
+
+.bb-select {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.bb-select-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.bb-select-intro {
+  max-width: 44rem;
+  margin: -0.6rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.bb-chapter-block {
+  display: grid;
+  gap: 0.5rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.bb-chapter-block h3 {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 600;
+}
+
+.bb-chapter-number {
+  margin-right: 0.4rem;
+  color: var(--color-accent-2);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.bb-chapter-rule {
+  margin: 0;
+  max-width: 44rem;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.bb-chapter-stars {
+  margin: 0;
+  color: var(--color-muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.72rem;
+}
+
+.bb-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.6rem;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bb-card {
+  display: grid;
+  text-decoration: none;
+  text-decoration: none;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: center;
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.7rem;
+  background-color: color-mix(in srgb, var(--color-surface) 55%, transparent);
+  color: var(--color-fg);
+  text-align: left;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.bb-card:hover {
+  border-color: var(--color-accent-2);
+  transform: translateY(-1px);
+}
+
+.bb-card[aria-current='true'] {
+  border-color: var(--color-accent);
+}
+
+.bb-card-number {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 0.5rem;
+  background-color: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8rem;
+}
+
+.bb-card-text {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.bb-card-title {
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.bb-card-meta {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.bb-card-stars {
+  display: flex;
+  gap: 1px;
+}
+
+.bb-card-stars .bb-star {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
 @keyframes bb-star-in {
   from {
     opacity: 0;
@@ -810,4 +1153,141 @@
     animation-delay: 0ms !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+.bb-all {
+  display: inline-flex;
+  align-items: center;
+  height: 2.6rem;
+  padding: 0 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+  background-color: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  color: var(--color-fg);
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: border-color 160ms ease;
+}
+
+.bb-all:hover {
+  border-color: var(--color-accent-2);
+}
+
+/* ---- Zones (chapter 10) ---- */
+
+[data-zone='guests'] {
+  --bb-zone: var(--color-contrast);
+}
+
+[data-zone='office'] {
+  --bb-zone: var(--color-accent);
+}
+
+[data-zone='servers'] {
+  --bb-zone: var(--color-status);
+}
+
+.bb-node[data-zone] {
+  border-color: color-mix(in srgb, var(--bb-zone) 60%, transparent);
+  background-color: color-mix(in srgb, var(--bb-zone) 10%, var(--color-surface));
+}
+
+.bb-node[data-kind='firewall'] {
+  border-width: 2px;
+}
+
+.bb-zones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bb-zones li {
+  padding: 0.1rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--bb-zone) 60%, transparent);
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--bb-zone) 12%, transparent);
+  font-size: 0.75rem;
+}
+
+.bb-flow-policy {
+  color: var(--color-contrast);
+}
+
+/* ---- Building (chapter 7) ---- */
+
+.bb-link-ghost {
+  stroke: color-mix(in srgb, var(--color-fg) 22%, transparent);
+  stroke-dasharray: 1.2 1.6;
+  stroke-linecap: round;
+}
+
+.bb-game button.bb-build-label {
+  position: absolute;
+  z-index: 3;
+  padding: 0 0.5rem;
+  border: 1px dashed color-mix(in srgb, var(--color-contrast) 70%, transparent);
+  border-radius: 999px;
+  background-color: var(--color-bg);
+  color: var(--color-contrast);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.68rem;
+  line-height: 1.4rem;
+  transform: translate(-50%, -50%);
+}
+
+.bb-budget {
+  display: grid;
+  gap: 0.5rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.bb-budget-bar {
+  display: block;
+  height: 0.45rem;
+  border-radius: 0.25rem;
+  background-color: var(--color-border);
+}
+
+.bb-budget-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 0.25rem;
+  background-color: var(--color-contrast);
+  transition: width 240ms ease;
+}
+
+.bb-cables {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bb-cable {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+}
+
+.bb-cable[data-built='true'] .bb-cable-name {
+  color: var(--color-fg);
+}
+
+.bb-cable-name {
+  color: var(--color-muted);
+}
+
+.bb-select-error {
+  min-height: 1.3rem;
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 0.82rem;
 }

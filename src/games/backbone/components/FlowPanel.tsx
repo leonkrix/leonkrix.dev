@@ -2,7 +2,6 @@ import {
   addBackup,
   addLane,
   addStage,
-  describePath,
   moveShare,
   type PlayState,
   removeBackup,
@@ -73,10 +72,16 @@ export function FlowList({ state, onSelect }: FlowListProps) {
               <span className="bb-flow-text">
                 <span className="bb-flow-name">{flow.name}</span>
                 <span className="bb-flow-meta">
-                  {names.get(flow.source)} → {names.get(flow.target)} ·{' '}
-                  {profiles[flow.profile].name}, {flow.demand}
-                  /step · {wantsOf(flow)}
+                  {names.get(flow.source)} → {names.get(flow.target)}
                 </span>
+                <span className="bb-flow-meta">
+                  {profiles[flow.profile].name} · sends {flow.demand} per step · {wantsOf(flow)}
+                </span>
+                {(flow.via ?? []).length > 0 && (
+                  <span className="bb-flow-meta bb-flow-policy">
+                    Must pass: {(flow.via ?? []).map((node) => names.get(node) ?? node).join(', ')}
+                  </span>
+                )}
               </span>
               <span className="bb-flow-state">
                 {plan === undefined ? 'no path' : lanes > 1 ? `${String(lanes)} paths` : 'routed'}
@@ -86,6 +91,58 @@ export function FlowList({ state, onSelect }: FlowListProps) {
         );
       })}
     </ul>
+  );
+}
+
+/** The route of a flow as a row of chips, one for every node, and a hint while it is drawn. */
+function RouteChips({
+  state,
+  flow,
+  path,
+}: {
+  state: PlayState;
+  flow: Flow;
+  path: readonly string[] | undefined;
+}) {
+  const names = new Map(state.index.level.nodes.map((node) => [node.id, node.name]));
+  const drawing = state.draft?.nodes;
+  const shown = drawing ?? path;
+  if (shown === undefined) {
+    return (
+      <p className="bb-hint">
+        Click the nodes from {names.get(flow.source)} to {names.get(flow.target)}, or drag across
+        them.
+      </p>
+    );
+  }
+  return (
+    <>
+      <ol
+        className="bb-route-chips"
+        data-drawing={drawing !== undefined}
+        aria-label="Nodes of the route"
+      >
+        {shown.map((node, at) => (
+          <li key={node}>
+            {at > 0 && <span aria-hidden="true">→</span>}
+            <span className="bb-route-chip" data-end={node === flow.source || node === flow.target}>
+              {names.get(node) ?? node}
+            </span>
+          </li>
+        ))}
+        {drawing !== undefined && (
+          <li aria-hidden="true">
+            <span>→</span>
+            <span className="bb-route-chip" data-open>
+              …
+            </span>
+          </li>
+        )}
+      </ol>
+      {drawing !== undefined && (
+        <p className="bb-hint">Now click the next node, up to {names.get(flow.target)}.</p>
+      )}
+    </>
   );
 }
 
@@ -122,16 +179,12 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
     <div className="bb-options" data-profile={flow.profile}>
       <p className="bb-options-title">
         <strong>{flow.name}</strong>
-        <span className="bb-options-meta"> wants: {wantsOf(flow)}</span>
+        <span className="bb-options-meta"> needs: {wantsOf(flow)}</span>
       </p>
 
       <div className="bb-option">
-        <p className="bb-option-label">Path</p>
-        <p className="bb-hint" data-testid="path">
-          {editing === undefined
-            ? 'Click the nodes from the start to the end, or drag across them.'
-            : describePath(state, editing)}
-        </p>
+        <p className="bb-option-label">{state.target === 'backup' ? 'Backup route' : 'Route'}</p>
+        <RouteChips state={state} flow={flow} path={editing} />
         <div className="bb-row">
           <button
             type="button"
@@ -139,7 +192,7 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
               onChange(suggestPath(state));
             }}
           >
-            Fastest path
+            Use the fastest route
           </button>
         </div>
       </div>

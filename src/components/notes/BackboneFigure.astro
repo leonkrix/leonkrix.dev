@@ -1,0 +1,150 @@
+---
+// One level of Backbone with the three plans it is measured against: the shortest path, the
+// load balanced strategy and the best plan the solver proved. The maps are drawn from the real
+// level (src/games/backbone/data/levels.json) and the real stress test, at build time, so the
+// picture cannot disagree with the game: the colors are how full every cable got in the worst
+// moment of the run, the numbers are the scores.
+import levelsJson from '@/games/backbone/data/levels.json';
+import type { LevelRecord } from '@/games/backbone/data/pool';
+import { loadBalancedPlan, shortestPathPlan } from '@/games/backbone/logic/baselines';
+import { indexLevel } from '@/games/backbone/logic/graph';
+import { evaluate } from '@/games/backbone/logic/simulate';
+import { loadClass, loadRatio, MAP_HEIGHT, MAP_WIDTH, pointOf } from '@/games/backbone/logic/view';
+
+import Figure from './Figure.astro';
+
+interface Props {
+  level: string;
+}
+
+const { level: id } = Astro.props;
+const record = (levelsJson as unknown as LevelRecord[]).find((entry) => entry.id === id);
+if (record === undefined) {
+  throw new Error(`BackboneFigure: there is no level ${id}.`);
+}
+const index = indexLevel(record.level);
+
+const plans = [
+  { name: 'Shortest path', plan: shortestPathPlan(index) },
+  { name: 'Load balanced', plan: loadBalancedPlan(index) },
+  { name: 'Best plan', plan: record.best.plan },
+].map(({ name, plan }) => {
+  const evaluation = evaluate(index, plan);
+  const peak = new Map<string, number>();
+  for (const situation of evaluation.situations) {
+    for (const step of situation.steps) {
+      for (const [link, result] of Object.entries(step.links)) {
+        peak.set(link, Math.max(peak.get(link) ?? 0, loadRatio(result)));
+      }
+    }
+  }
+  return { name, score: Math.round(evaluation.score * 100), peak };
+});
+
+const nodes = record.level.nodes.map((node) => ({ ...pointOf(node), name: node.name }));
+const at = (nodeId: string) => nodes[record.level.nodes.findIndex((node) => node.id === nodeId)];
+const over = plans.map(
+  (plan) => [...plan.peak.values()].filter((value) => value > 1 + 1e-9).length,
+);
+const caption = `${record.level.title}: ${record.level.nodes.length} nodes, ${record.level.flows.length} flows. The same level, the same stress test, three plans. Cables are colored by how full they got (green: up to 70 %, amber: nearly full, red and dashed: over capacity, so traffic was dropped). The shortest path overloads ${String(over[0])} cable${over[0] === 1 ? '' : 's'} and scores ${String(plans[0]?.score)}, the load balanced strategy overloads ${String(over[1])} and scores ${String(plans[1]?.score)}, the best plan overloads ${String(over[2])} and scores ${String(plans[2]?.score)}.`;
+---
+
+<Figure caption={caption}>
+  <div class="maps">
+    {plans.map((plan) => (
+      <figure>
+        <svg
+          viewBox={`0 0 ${String(MAP_WIDTH)} ${String(MAP_HEIGHT)}`}
+          role="img"
+          aria-label={`${plan.name}: score ${String(plan.score)}`}
+        >
+          {record.level.links.map((link) => {
+            const from = at(link.a);
+            const to = at(link.b);
+            return (
+              <line
+                class="link"
+                data-load={loadClass(plan.peak.get(link.id) ?? 0)}
+                x1={from?.x}
+                y1={from?.y}
+                x2={to?.x}
+                y2={to?.y}
+                stroke-width={1 + link.capacity * 0.28}
+              />
+            );
+          })}
+          {nodes.map((node) => (
+            <circle class="node" cx={node.x} cy={node.y} r="2.6" />
+          ))}
+        </svg>
+        <figcaption>
+          <span>{plan.name}</span>
+          <strong>{plan.score}</strong>
+        </figcaption>
+      </figure>
+    ))}
+  </div>
+</Figure>
+
+<style>
+  .maps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  @media (max-width: 40rem) {
+    .maps {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    aspect-ratio: 100 / 80;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  }
+
+  .link {
+    stroke: color-mix(in srgb, var(--color-fg) 22%, transparent);
+    stroke-linecap: round;
+  }
+
+  .link[data-load='ok'] {
+    stroke: var(--color-status);
+  }
+
+  .link[data-load='busy'] {
+    stroke: var(--color-contrast);
+  }
+
+  .link[data-load='over'] {
+    stroke: var(--color-danger);
+    stroke-dasharray: 3 2;
+  }
+
+  .node {
+    fill: var(--color-surface);
+    stroke: color-mix(in srgb, var(--color-fg) 40%, transparent);
+    stroke-width: 0.6;
+  }
+
+  figcaption {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--color-muted);
+  }
+
+  figcaption strong {
+    color: var(--color-fg);
+  }
+</style>

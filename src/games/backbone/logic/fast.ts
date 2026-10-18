@@ -1,7 +1,7 @@
 import type { LevelIndex } from './graph';
 import { linksOfPath, shortestPath } from './graph';
 import { profiles } from './profiles';
-import { REPAIR_DELAY } from './simulate';
+import { obeysPolicy, REPAIR_DELAY } from './simulate';
 import type { FlowPlan } from './types';
 
 /**
@@ -14,6 +14,8 @@ import type { FlowPlan } from './types';
 interface CompiledPath {
   links: Int32Array;
   share: number;
+  /** The path is not a path of the network or skips a node the flow has to pass: it carries nothing */
+  blocked: boolean;
 }
 
 export interface CompiledOption {
@@ -140,6 +142,9 @@ export class FastEvaluator {
   }
 
   compile(flowId: string, plan: FlowPlan): CompiledOption {
+    const flow = this.index.level.flows.find((entry) => entry.id === flowId);
+    const allowed = (path: readonly string[]): boolean =>
+      flow !== undefined && obeysPolicy(flow, path) && linksOfPath(this.index, path) !== undefined;
     return {
       flow: this.flowNumber.get(flowId) ?? -1,
       stages: plan.stages.map((stage) => ({
@@ -147,9 +152,11 @@ export class FastEvaluator {
         paths: stage.paths.map((entry) => ({
           links: this.numbers(entry.nodes),
           share: entry.share,
+          blocked: !allowed(entry.nodes),
         })),
       })),
-      backup: plan.backup === undefined ? undefined : this.numbers(plan.backup),
+      backup:
+        plan.backup === undefined || !allowed(plan.backup) ? undefined : this.numbers(plan.backup),
       redundancy: plan.redundancy,
       throttle: plan.throttle,
     };
@@ -217,8 +224,8 @@ export class FastEvaluator {
           }
           const demand = table.demand[step * flowCount + flow] ?? 0;
           for (const entry of stage?.paths ?? []) {
-            let links: Int32Array | undefined = entry.links;
-            if (!this.allUp(table, step, links)) {
+            let links: Int32Array | undefined = entry.blocked ? undefined : entry.links;
+            if (links !== undefined && !this.allUp(table, step, links)) {
               if (option.backup !== undefined && this.allUp(table, step, option.backup)) {
                 links = option.backup;
               } else {
@@ -230,8 +237,9 @@ export class FastEvaluator {
                 ) {
                   brokenFor += 1;
                 }
+                // A flow with a policy is not rerouted by itself
                 links =
-                  brokenFor <= REPAIR_DELAY
+                  brokenFor <= REPAIR_DELAY || (this.index.level.flows[flow]?.via ?? []).length > 0
                     ? undefined
                     : this.repaired(situation, table, step, flow);
               }

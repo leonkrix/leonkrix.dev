@@ -1,4 +1,5 @@
 import { loadBalancedPlan, shortestPathPlan } from './baselines';
+import { maximalBuilds, optionalLinks, withBuilt } from './build';
 import { type CompiledOption, FastEvaluator } from './fast';
 import { indexLevel, type LevelIndex } from './graph';
 import { defaultLimits, flowOptions, type OptionLimits } from './options';
@@ -293,4 +294,40 @@ export function solve(level: Level | LevelIndex, options: SolveOptions = {}): So
     complete: state.complete,
     milliseconds: performance.now() - started,
   };
+}
+
+export interface DesignSolution extends Solution {
+  /** The optional cables the best plan builds */
+  built: string[];
+}
+
+/**
+ * The best design of a level with a Build phase: for every set of cables that fits the budget and
+ * cannot be made bigger, the best plan on that network; the best of them. A level without optional
+ * cables is solved as it is.
+ */
+export function solveDesign(level: Level, options: SolveOptions = {}): DesignSolution {
+  if (optionalLinks(level).length === 0) {
+    return { ...solve(level, options), built: [] };
+  }
+  const started = performance.now();
+  let best: DesignSolution | undefined;
+  let explored = 0;
+  let complete = true;
+  for (const built of maximalBuilds(level)) {
+    const spentTime = performance.now() - started;
+    const solution = solve(withBuilt(level, built), {
+      ...options,
+      ...(options.timeLimitMs === undefined
+        ? {}
+        : { timeLimitMs: Math.max(1, options.timeLimitMs - spentTime) }),
+    });
+    explored += solution.explored;
+    complete &&= solution.complete;
+    if (best === undefined || solution.score > best.score + 1e-12) {
+      best = { ...solution, built };
+    }
+  }
+  const final = best ?? { ...solve(withBuilt(level, []), options), built: [] };
+  return { ...final, explored, complete, milliseconds: performance.now() - started };
 }

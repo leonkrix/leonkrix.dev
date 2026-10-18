@@ -1,4 +1,4 @@
-import { candidatePaths, type LevelIndex } from './graph';
+import { type LevelIndex, routesOf } from './graph';
 import { profiles } from './profiles';
 import type { Flow, FlowPlan, NodePath, Redundancy, WeightedPath } from './types';
 
@@ -84,7 +84,7 @@ export function flowOptions(
   limits: OptionLimits = defaultLimits,
 ): FlowPlan[] {
   const { rules } = index.level;
-  const paths = candidatePaths(index, flow.source, flow.target, limits.pathLimit);
+  const paths = routesOf(index, flow, limits.pathLimit);
   const options: FlowPlan[] = [];
   const redundancies: Redundancy[] = rules.redundancy ? [0, 0.25, 0.5] : [0];
   const throttles = rules.throttle && profiles[flow.profile].throttlable ? [1, 0.5, 0.25] : [1];

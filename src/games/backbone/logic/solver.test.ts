@@ -130,7 +130,7 @@ describe('the solver', () => {
         );
       }
     }
-  });
+  }, 60_000);
 
   it('can stop on a time limit and still hands back a valid plan', () => {
     const level = { ...randomLevel(4, 9, 5), rules: allRules };

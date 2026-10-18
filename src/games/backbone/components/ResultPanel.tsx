@@ -6,7 +6,11 @@ import { MiniMap } from './MiniMap';
 import { Star } from './Svg';
 
 interface ResultPanelProps {
+  /** The network of the plan of the player */
   index: LevelIndex;
+  /** The network the two simple strategies built, and the one the best plan built */
+  simpleIndex: LevelIndex;
+  bestIndex: LevelIndex;
   you: Evaluation;
   shortest: Evaluation;
   balanced: Evaluation;
@@ -18,9 +22,8 @@ interface ResultPanelProps {
   situation: number;
   /** The level has been solved (one star or more) in this visit, so the best plan may be shown */
   solved: boolean;
-  isLast: boolean;
+  next: { label: string; onClick: () => void } | undefined;
   onEdit: () => void;
-  onNext: () => void;
   onLoadBest: () => void;
 }
 
@@ -30,6 +33,8 @@ function points(score: number): string {
 
 export function ResultPanel({
   index,
+  simpleIndex,
+  bestIndex,
   you,
   shortest,
   balanced,
@@ -39,9 +44,8 @@ export function ResultPanel({
   assisted,
   situation,
   solved,
-  isLast,
+  next,
   onEdit,
-  onNext,
   onLoadBest,
 }: ResultPanelProps) {
   const stars = assisted ? 0 : starsFor(you.score, thresholds);
@@ -58,6 +62,7 @@ export function ResultPanel({
         </p>
         <p
           className="bb-stars"
+          role="img"
           aria-label={
             assisted ? 'No stars: a helper filled in the plan' : `${String(stars)} of 3 stars`
           }
@@ -92,21 +97,21 @@ export function ResultPanel({
           you
         />
         <MiniMap
-          index={index}
+          index={simpleIndex}
           evaluation={shortest}
           situation={situation}
           title="Shortest path"
           score={baselines.shortest}
         />
         <MiniMap
-          index={index}
+          index={simpleIndex}
           evaluation={balanced}
           situation={situation}
           title="Load balanced"
           score={baselines.balanced}
         />
         <MiniMap
-          index={index}
+          index={bestIndex}
           evaluation={best}
           situation={situation}
           title="Best plan"
@@ -156,9 +161,9 @@ export function ResultPanel({
             Load the best plan
           </button>
         )}
-        {!isLast && (
-          <button type="button" data-primary onClick={onNext}>
-            Next level
+        {next !== undefined && (
+          <button type="button" data-primary onClick={next.onClick}>
+            {next.label}
           </button>
         )}
       </div>

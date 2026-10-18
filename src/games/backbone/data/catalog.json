@@ -1,0 +1,371 @@
+[
+  {
+    "id": "c1-1",
+    "chapter": 1,
+    "setting": "office",
+    "title": "The new printer",
+    "nodes": 6,
+    "flows": 2,
+    "situations": 1
+  },
+  {
+    "id": "c1-2",
+    "chapter": 1,
+    "setting": "office",
+    "title": "Monday morning",
+    "nodes": 6,
+    "flows": 2,
+    "situations": 1
+  },
+  {
+    "id": "c1-3",
+    "chapter": 1,
+    "setting": "campus",
+    "title": "Exam week",
+    "nodes": 6,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c1-4",
+    "chapter": 1,
+    "setting": "office",
+    "title": "Open plan",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c2-1",
+    "chapter": 2,
+    "setting": "hospital",
+    "title": "Morning rounds",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c2-2",
+    "chapter": 2,
+    "setting": "campus",
+    "title": "Lecture night",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 1
+  },
+  {
+    "id": "c2-3",
+    "chapter": 2,
+    "setting": "festival",
+    "title": "Gates open",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 1
+  },
+  {
+    "id": "c2-4",
+    "chapter": 2,
+    "setting": "provider",
+    "title": "Prime time",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c3-1",
+    "chapter": 3,
+    "setting": "datacentre",
+    "title": "Two roads",
+    "nodes": 6,
+    "flows": 2,
+    "situations": 1
+  },
+  {
+    "id": "c3-2",
+    "chapter": 3,
+    "setting": "festival",
+    "title": "Main stage",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c3-3",
+    "chapter": 3,
+    "setting": "campus",
+    "title": "Open day",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c3-4",
+    "chapter": 3,
+    "setting": "provider",
+    "title": "Cup final",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c4-1",
+    "chapter": 4,
+    "setting": "office",
+    "title": "The long call",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c4-2",
+    "chapter": 4,
+    "setting": "hospital",
+    "title": "Nurse call",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c4-3",
+    "chapter": 4,
+    "setting": "festival",
+    "title": "Crew radio",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c4-4",
+    "chapter": 4,
+    "setting": "datacentre",
+    "title": "On-call",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c5-1",
+    "chapter": 5,
+    "setting": "office",
+    "title": "Backup night",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c5-2",
+    "chapter": 5,
+    "setting": "hospital",
+    "title": "Scan archive",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c5-3",
+    "chapter": 5,
+    "setting": "datacentre",
+    "title": "Batch window",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c5-4",
+    "chapter": 5,
+    "setting": "campus",
+    "title": "Mirror sync",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c6-1",
+    "chapter": 6,
+    "setting": "office",
+    "title": "The cut cable",
+    "nodes": 6,
+    "flows": 2,
+    "situations": 2
+  },
+  {
+    "id": "c6-2",
+    "chapter": 6,
+    "setting": "hospital",
+    "title": "Night shift",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c6-3",
+    "chapter": 6,
+    "setting": "provider",
+    "title": "Storm",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c6-4",
+    "chapter": 6,
+    "setting": "datacentre",
+    "title": "Pulled plug",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 3
+  },
+  {
+    "id": "c7-1",
+    "chapter": 7,
+    "setting": "office",
+    "title": "The new wing",
+    "nodes": 6,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c7-2",
+    "chapter": 7,
+    "setting": "campus",
+    "title": "Summer upgrade",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 1
+  },
+  {
+    "id": "c7-3",
+    "chapter": 7,
+    "setting": "provider",
+    "title": "New ring",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c7-4",
+    "chapter": 7,
+    "setting": "festival",
+    "title": "Pop-up network",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c8-1",
+    "chapter": 8,
+    "setting": "provider",
+    "title": "Wet cable",
+    "nodes": 6,
+    "flows": 2,
+    "situations": 2
+  },
+  {
+    "id": "c8-2",
+    "chapter": 8,
+    "setting": "office",
+    "title": "Payday",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c8-3",
+    "chapter": 8,
+    "setting": "drones",
+    "title": "Over the ridge",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c8-4",
+    "chapter": 8,
+    "setting": "hospital",
+    "title": "Telemetry",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 3
+  },
+  {
+    "id": "c9-1",
+    "chapter": 9,
+    "setting": "drones",
+    "title": "Passing relay",
+    "nodes": 6,
+    "flows": 2,
+    "situations": 2
+  },
+  {
+    "id": "c9-2",
+    "chapter": 9,
+    "setting": "drones",
+    "title": "Search pattern",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c9-3",
+    "chapter": 9,
+    "setting": "festival",
+    "title": "Parade",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c10-1",
+    "chapter": 10,
+    "setting": "office",
+    "title": "Guest wifi",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c10-2",
+    "chapter": 10,
+    "setting": "hospital",
+    "title": "Visitors and patients",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c10-3",
+    "chapter": 10,
+    "setting": "campus",
+    "title": "The open lab",
+    "nodes": 10,
+    "flows": 4,
+    "situations": 3
+  },
+  {
+    "id": "c11-1",
+    "chapter": 11,
+    "setting": "campus",
+    "title": "The big day",
+    "nodes": 10,
+    "flows": 5,
+    "situations": 3
+  },
+  {
+    "id": "c11-2",
+    "chapter": 11,
+    "setting": "provider",
+    "title": "Black Friday",
+    "nodes": 11,
+    "flows": 5,
+    "situations": 3
+  },
+  {
+    "id": "c11-3",
+    "chapter": 11,
+    "setting": "drones",
+    "title": "Rescue",
+    "nodes": 11,
+    "flows": 5,
+    "situations": 3
+  }
+]

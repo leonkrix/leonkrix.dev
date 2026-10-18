@@ -1,5 +1,17 @@
 import { createRandom, type Random } from '../../shared/random';
+import {
+  angleBetween,
+  distance,
+  distanceToSegment,
+  EDGE_CLEARANCE,
+  mapPoint,
+  MIN_ANGLE,
+  NODE_MIN_DISTANCE,
+  type Point,
+  segmentsCross,
+} from './geometry';
 import { indexLevel, shortestPath } from './graph';
+import { latticePoints } from './lattice';
 import { profiles } from './profiles';
 import type {
   Flow,
@@ -11,6 +23,7 @@ import type {
   ProfileId,
   Rules,
   Situation,
+  Zone,
 } from './types';
 import { problemsOfLevel } from './validate';
 
@@ -40,15 +53,14 @@ export interface LevelSpec {
   pressure: number;
   /** Links that lose part of the traffic all the time */
   lossyLinks: number;
+  /** Cables that only exist when the player builds them (chapter 7): how many, with a budget for about half of them */
+  optional?: number;
+  /** Zones (chapter 10): guests on the left, the office in the middle, servers on the right, and a firewall flows from the guests to the servers have to pass */
+  zones?: boolean;
   /** How much narrower the middle of every shortest path is than the other roads, 0 to 0.8 (0: not at all) */
   trap?: number;
   title?: string;
   story?: string;
-}
-
-interface Point {
-  x: number;
-  y: number;
 }
 
 const SITUATION_NAMES: Record<SituationKind, string> = {
@@ -70,81 +82,24 @@ const BASE_DEMAND: Record<ProfileId, number> = {
   bulk: 8,
 };
 
-function distance(a: Point, b: Point): number {
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
-
-function ccw(a: Point, b: Point, c: Point): number {
-  return (c.y - a.y) * (b.x - a.x) - (b.y - a.y) * (c.x - a.x);
-}
-
-/** Whether the segments cross (segments that only share an end point do not). */
-function cross(a: readonly [Point, Point], b: readonly [Point, Point]): boolean {
-  const [p1, p2] = a;
-  const [p3, p4] = b;
-  if (p1 === p3 || p1 === p4 || p2 === p3 || p2 === p4) {
-    return false;
-  }
-  return ccw(p1, p3, p4) * ccw(p2, p3, p4) < 0 && ccw(p1, p2, p3) * ccw(p1, p2, p4) < 0;
-}
-
 function place(spec: LevelSpec, random: Random): Point[] {
-  const count = spec.nodes;
-  const jitter = (amount: number): number => (random.next() - 0.5) * amount;
-  const points: Point[] = [];
-  if (spec.family === 'ring') {
-    for (let position = 0; position < count; position += 1) {
-      const angle = (position / count) * 2 * Math.PI - Math.PI / 2;
-      points.push({ x: 50 + 40 * Math.cos(angle), y: 50 + 38 * Math.sin(angle) });
-    }
-  } else if (spec.family === 'hub') {
-    points.push({ x: 50, y: 50 });
-    const outer = count - 1;
-    for (let position = 0; position < outer; position += 1) {
-      const angle = (position / outer) * 2 * Math.PI - Math.PI / 2;
-      const radius = position % 2 === 0 ? 40 : 24;
-      points.push({ x: 50 + radius * Math.cos(angle), y: 50 + radius * 0.95 * Math.sin(angle) });
-    }
-  } else if (spec.family === 'grid') {
-    const columns = Math.ceil(Math.sqrt(count * 1.6));
-    const rows = Math.ceil(count / columns);
-    for (let position = 0; position < count; position += 1) {
-      const column = position % columns;
-      const row = Math.floor(position / columns);
-      points.push({
-        x: 12 + (column * 76) / Math.max(1, columns - 1) + jitter(8),
-        y: 14 + (row * 72) / Math.max(1, rows - 1) + jitter(8),
-      });
-    }
-  } else {
-    const minimum = 62 / Math.sqrt(count);
-    for (let attempts = 0; points.length < count && attempts < 4000; attempts += 1) {
-      const candidate = { x: 8 + random.next() * 84, y: 10 + random.next() * 80 };
-      const factor = attempts > 2000 ? 0.6 : 1;
-      if (points.every((other) => distance(other, candidate) >= minimum * factor)) {
-        points.push(candidate);
-      }
-    }
-    while (points.length < count) {
-      points.push({ x: 8 + random.next() * 84, y: 10 + random.next() * 80 });
-    }
-  }
-  return points.map((point) => ({
-    x: Math.round(Math.min(96, Math.max(4, point.x)) * 10) / 10,
-    y: Math.round(Math.min(96, Math.max(4, point.y)) * 10) / 10,
-  }));
+  return latticePoints(spec.family, spec.nodes, random);
 }
 
-/** The pairs of node numbers to join: a connected network without crossings where possible. */
-function connect(points: readonly Point[], extra: number): [number, number][] {
+/**
+ * The pairs of node numbers to join: a connected network that obeys the drawing rules (no cable
+ * over another or through a node, cables leave a node at an angle), or `undefined` when the
+ * points do not allow one.
+ */
+function connect(points: readonly Point[], extra: number): [number, number][] | undefined {
   const count = points.length;
+  const at = (n: number): Point => mapPoint(points[n] ?? { x: 0, y: 0 });
   const pairs: [number, number][] = [];
   for (let a = 0; a < count; a += 1) {
     for (let b = a + 1; b < count; b += 1) {
       pairs.push([a, b]);
     }
   }
-  const at = (n: number): Point => points[n] ?? { x: 0, y: 0 };
   pairs.sort(
     (p, q) =>
       distance(at(p[0]), at(p[1])) - distance(at(q[0]), at(q[1])) || p[0] - q[0] || p[1] - q[1],
@@ -159,8 +114,34 @@ function connect(points: readonly Point[], extra: number): [number, number][] {
     }
     return root;
   };
-  const crossesAny = (pair: readonly [number, number]): boolean =>
-    edges.some((edge) => cross([at(pair[0]), at(pair[1])], [at(edge[0]), at(edge[1])]));
+  /** Whether the pair can be joined without breaking a drawing rule */
+  const allowed = (pair: readonly [number, number]): boolean => {
+    const from = at(pair[0]);
+    const to = at(pair[1]);
+    for (let other = 0; other < count; other += 1) {
+      if (
+        other !== pair[0] &&
+        other !== pair[1] &&
+        distanceToSegment(at(other), from, to) < EDGE_CLEARANCE
+      ) {
+        return false;
+      }
+    }
+    for (const edge of edges) {
+      const common = pair.find((node) => node === edge[0] || node === edge[1]);
+      if (segmentsCross([from, to], [at(edge[0]), at(edge[1])], common !== undefined)) {
+        return false;
+      }
+      if (common !== undefined) {
+        const far = (pairOf: readonly [number, number]): number =>
+          pairOf[0] === common ? pairOf[1] : pairOf[0];
+        if (angleBetween(at(common), at(far(pair)), at(far(edge))) < MIN_ANGLE) {
+          return false;
+        }
+      }
+    }
+    return true;
+  };
   const add = (pair: [number, number]): void => {
     edges.push(pair);
     degree[pair[0]] = (degree[pair[0]] ?? 0) + 1;
@@ -168,15 +149,12 @@ function connect(points: readonly Point[], extra: number): [number, number][] {
     group[find(pair[0])] = find(pair[1]);
   };
   for (const pair of pairs) {
-    if (find(pair[0]) !== find(pair[1]) && !crossesAny(pair)) {
+    if (find(pair[0]) !== find(pair[1]) && allowed(pair)) {
       add(pair);
     }
   }
-  // If crossings blocked the connection, join what is left by the shortest pairs, crossing or not.
-  for (const pair of pairs) {
-    if (find(pair[0]) !== find(pair[1])) {
-      add(pair);
-    }
+  if (new Set(group.map((_, node) => find(node))).size > 1) {
+    return undefined;
   }
   let added = 0;
   for (const pair of pairs) {
@@ -184,7 +162,7 @@ function connect(points: readonly Point[], extra: number): [number, number][] {
       break;
     }
     const exists = edges.some((edge) => edge[0] === pair[0] && edge[1] === pair[1]);
-    if (!exists && (degree[pair[0]] ?? 0) < 4 && (degree[pair[1]] ?? 0) < 4 && !crossesAny(pair)) {
+    if (!exists && (degree[pair[0]] ?? 0) < 4 && (degree[pair[1]] ?? 0) < 4 && allowed(pair)) {
       add(pair);
       added += 1;
     }
@@ -192,12 +170,37 @@ function connect(points: readonly Point[], extra: number): [number, number][] {
   return edges;
 }
 
+/** Places the nodes and joins them, trying again with new positions until the drawing rules hold. */
+function layoutNetwork(
+  spec: LevelSpec,
+  random: Random,
+): { points: Point[]; edges: [number, number][] } {
+  const extra = Math.max(spec.family === 'ring' ? 1 : 0, Math.round(spec.extraLinks * spec.nodes));
+  let points: Point[] = [];
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    points = place(spec, random);
+    const apart = points.every((one, at) =>
+      points
+        .slice(at + 1)
+        .every((two) => distance(mapPoint(one), mapPoint(two)) >= NODE_MIN_DISTANCE),
+    );
+    const edges = apart ? connect(points, extra) : undefined;
+    if (edges !== undefined) {
+      return { points, edges };
+    }
+  }
+  return { points, edges: [] };
+}
+
 function farthestPair(points: readonly Point[]): [number, number] {
   let best: [number, number] = [0, Math.min(1, points.length - 1)];
   let longest = -1;
   for (let a = 0; a < points.length; a += 1) {
     for (let b = a + 1; b < points.length; b += 1) {
-      const length = distance(points[a] ?? { x: 0, y: 0 }, points[b] ?? { x: 0, y: 0 });
+      const length = distance(
+        mapPoint(points[a] ?? { x: 0, y: 0 }),
+        mapPoint(points[b] ?? { x: 0, y: 0 }),
+      );
       if (length > longest) {
         longest = length;
         best = [a, b];
@@ -208,11 +211,7 @@ function farthestPair(points: readonly Point[]): [number, number] {
 }
 
 function buildNetwork(spec: LevelSpec, random: Random): { nodes: NetNode[]; links: NetLink[] } {
-  const points = place(spec, random);
-  const edges = connect(
-    points,
-    Math.max(spec.family === 'ring' ? 1 : 0, Math.round(spec.extraLinks * spec.nodes)),
-  );
+  const { points, edges } = layoutNetwork(spec, random);
   const degree = new Array<number>(spec.nodes).fill(0);
   for (const [a, b] of edges) {
     degree[a] = (degree[a] ?? 0) + 1;
@@ -265,7 +264,10 @@ function buildNetwork(spec: LevelSpec, random: Random): { nodes: NetNode[]; link
     lossyPicks.add(random.int(edges.length));
   }
   const links: NetLink[] = edges.map(([a, b], position) => {
-    const length = distance(points[a] ?? { x: 0, y: 0 }, points[b] ?? { x: 0, y: 0 });
+    const length = distance(
+      mapPoint(points[a] ?? { x: 0, y: 0 }),
+      mapPoint(points[b] ?? { x: 0, y: 0 }),
+    );
     const core = (degree[a] ?? 0) >= 3 && (degree[b] ?? 0) >= 3;
     return {
       id: `l${String(position)}`,
@@ -436,20 +438,127 @@ function eventsFor(kind: SituationKind, level: Level, steps: number, random: Ran
   }
 }
 
+/**
+ * Makes some cables optional: they cost something and exist only when built. The network without
+ * them must still connect every flow, and the budget pays for about half of them, so the player
+ * has to choose.
+ */
+function markOptional(level: Level, count: number, random: Random): Level {
+  if (count <= 0) {
+    return level;
+  }
+  const chosen: string[] = [];
+  const index = indexLevel(level);
+  for (const link of random.shuffle(level.links)) {
+    if (chosen.length >= count) {
+      break;
+    }
+    const without = [...chosen, link.id];
+    const connected = level.flows.every(
+      (flow) =>
+        shortestPath(index, flow.source, flow.target, (id) => !without.includes(id)) !== undefined,
+    );
+    if (connected) {
+      chosen.push(link.id);
+    }
+  }
+  const cost = (capacity: number): number => Math.max(2, Math.ceil(capacity / 2));
+  const total = level.links
+    .filter((link) => chosen.includes(link.id))
+    .reduce((sum, link) => sum + cost(link.capacity), 0);
+  return {
+    ...level,
+    links: level.links.map((link) =>
+      chosen.includes(link.id) ? { ...link, optional: true, cost: cost(link.capacity) } : link,
+    ),
+    budget: Math.max(2, Math.floor(total * 0.55)),
+  };
+}
+
+const ZONES: readonly Zone[] = [
+  { id: 'guests', name: 'Guests' },
+  { id: 'office', name: 'Office' },
+  { id: 'servers', name: 'Servers' },
+];
+
+function zoneOf(node: Pick<NetNode, 'x'>): string {
+  return node.x < 38 ? 'guests' : node.x < 66 ? 'office' : 'servers';
+}
+
+/**
+ * Gives the nodes zones by where they stand, makes one node of the middle the firewall, and makes
+ * the flows from the guests to the servers pass it.
+ */
+function applyZones(
+  nodes: readonly NetNode[],
+  links: readonly NetLink[],
+  flows: readonly Flow[],
+  random: Random,
+): { nodes: NetNode[]; flows: Flow[] } {
+  const degree = (id: string): number =>
+    links.filter((link) => link.a === id || link.b === id).length;
+  const candidates = nodes.filter(
+    (node) => node.kind !== 'server' && zoneOf(node) === 'office' && degree(node.id) >= 2,
+  );
+  const wall = candidates.length > 0 ? random.pick(candidates) : undefined;
+  const zoned: NetNode[] = nodes.map((node) => ({
+    ...node,
+    zone: zoneOf(node),
+    ...(node.id === wall?.id ? { kind: 'firewall' as const } : {}),
+  }));
+  if (wall === undefined) {
+    return { nodes: zoned, flows: [...flows] };
+  }
+  const inZone = (zone: string): NetNode[] =>
+    zoned.filter((node) => node.zone === zone && node.id !== wall.id);
+  const guarded = flows.map((flow) => {
+    const from = zoned.find((node) => node.id === flow.source);
+    const to = zoned.find((node) => node.id === flow.target);
+    return from?.zone === 'guests' && to?.zone === 'servers' ? { ...flow, via: [wall.id] } : flow;
+  });
+  if (guarded.some((flow) => (flow.via ?? []).length > 0) || guarded.length === 0) {
+    return { nodes: zoned, flows: guarded };
+  }
+  const guests = inZone('guests');
+  const servers = inZone('servers');
+  const first = guarded[0];
+  if (first === undefined || guests.length === 0 || servers.length === 0) {
+    return { nodes: zoned, flows: guarded };
+  }
+  const forced: Flow = {
+    ...first,
+    source: random.pick(guests).id,
+    target: random.pick(servers).id,
+    via: [wall.id],
+  };
+  return { nodes: zoned, flows: [forced, ...guarded.slice(1)] };
+}
+
 export function generateLevel(spec: LevelSpec): Level {
   const random = createRandom(spec.seed);
-  const { nodes, links } = buildNetwork(spec, random);
+  const built = buildNetwork(spec, random);
+  const zoned =
+    spec.zones === true
+      ? applyZones(built.nodes, built.links, buildFlows(spec, built.nodes, random), random)
+      : undefined;
+  const nodes = zoned?.nodes ?? built.nodes;
+  const links = built.links;
   const base: Level = {
     id: `generated-${String(spec.seed)}`,
     title: spec.title ?? 'Generated level',
     story: spec.story ?? '',
     nodes,
     links,
-    flows: buildFlows(spec, nodes, random),
+    flows: zoned?.flows ?? buildFlows(spec, nodes, random),
     situations: [],
     rules: spec.rules,
+    ...(zoned === undefined ? {} : { zones: ZONES }),
   };
-  const scaled = scaleDemand(narrowShortcuts(base, spec.trap ?? 0), spec.pressure);
+  const scaled = markOptional(
+    scaleDemand(narrowShortcuts(base, spec.trap ?? 0), spec.pressure),
+    spec.optional ?? 0,
+    random,
+  );
   const situations: Situation[] = spec.situations.map((kind) => {
     const steps = kind === 'calm' ? 6 : 8;
     return {

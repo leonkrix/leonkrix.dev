@@ -22,11 +22,11 @@ import { format, resolveConfig } from 'prettier';
 import { describe, it } from 'vitest';
 
 import { LEVEL_PLAN, specOf } from '../src/games/backbone/data/campaign-plan';
-import { featuresUsed, type LevelRecord } from '../src/games/backbone/data/pool';
+import { featuresUsed, type LevelRecord, toCatalogEntry } from '../src/games/backbone/data/pool';
 import { dress } from '../src/games/backbone/data/settings';
 import { generateChecked } from '../src/games/backbone/logic/generate';
-import { indexLevel } from '../src/games/backbone/logic/graph';
-import { solve } from '../src/games/backbone/logic/solver';
+import { placeNames } from '../src/games/backbone/logic/labels';
+import { solveDesign } from '../src/games/backbone/logic/solver';
 import { isAdmissible, strategyScores } from '../src/games/backbone/logic/stars';
 import { hashSeed } from '../src/games/shared/random';
 
@@ -53,6 +53,13 @@ async function save(records: LevelRecord[]): Promise<void> {
   const order = LEVEL_PLAN.map((plan) => plan.id);
   records.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
   await write(out, records);
+  // The overview of the campaign reads a small file instead of the whole pool
+  if (out === resolve(DEFAULT_OUT)) {
+    await write(
+      resolve('src/games/backbone/data/catalog.json'),
+      records.map((record) => toCatalogEntry(record)),
+    );
+  }
 }
 
 function makeRecord(plan: (typeof LEVEL_PLAN)[number], number: number): LevelRecord | undefined {
@@ -62,13 +69,22 @@ function makeRecord(plan: (typeof LEVEL_PLAN)[number], number: number): LevelRec
     return undefined;
   }
   const level = dress(raw, plan.setting);
-  const index = indexLevel(level);
-  const solution = solve(index, { timeLimitMs: proofMs });
-  if (!solution.complete) {
+  // Every name must have a place on the map where it covers nothing
+  if (placeNames(level).conflicts > 0) {
     return undefined;
   }
-  const baselines = strategyScores(index);
+  const solution = solveDesign(level, {
+    timeLimitMs: proofMs,
+    limits: { pathLimit: plan.chapter >= 5 ? 4 : 5 },
+  });
+  if (!solution.complete || solution.score < plan.minBest) {
+    return undefined;
+  }
+  const baselines = strategyScores(level);
   if (!isAdmissible({ ...baselines, best: solution.score })) {
+    return undefined;
+  }
+  if (plan.optional > 0 && solution.built.length === 0) {
     return undefined;
   }
   const used = featuresUsed(solution.plan);
@@ -78,9 +94,10 @@ function makeRecord(plan: (typeof LEVEL_PLAN)[number], number: number): LevelRec
   return {
     id: plan.id,
     chapter: plan.chapter,
+    setting: plan.setting,
     seed,
     level: { ...level, id: plan.id },
-    best: { plan: solution.plan, score: solution.score },
+    best: { plan: solution.plan, score: solution.score, built: solution.built },
     shortest: baselines.shortest,
     balanced: baselines.balanced,
     proof: { milliseconds: Math.round(solution.milliseconds), explored: solution.explored },

@@ -7,7 +7,7 @@ import { type GameDefinition } from '@/games/registry';
 import GameLayout from '@/layouts/GameLayout.astro';
 
 import Backbone from './components/Backbone';
-import BackboneSkeleton from './components/BackboneSkeleton';
+import OverviewSkeleton from './components/OverviewSkeleton';
 
 interface Props {
   game: GameDefinition;
@@ -19,7 +19,7 @@ const { game } = Astro.props;
 <GameLayout game={game}>
   {/* Rendered in the browser only: it reads the address and the levels are fetched when it runs */}
   <Backbone client:only="react">
-    <BackboneSkeleton slot="fallback" />
+    <OverviewSkeleton slot="fallback" />
   </Backbone>
   <noscript>
     <p class="text-muted">

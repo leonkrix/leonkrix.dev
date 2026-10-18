@@ -32,8 +32,10 @@ export interface NetLink {
   delay: number;
   /** The share of the traffic this link loses, from 0 to 1 */
   loss: number;
-  /** What the link costs in a level with a Build phase */
+  /** What the link costs to build (a link of a level with a Build phase) */
   cost?: number;
+  /** The link does not exist until the player builds it (chapter 7) */
+  optional?: boolean;
 }
 
 export type ProfileId = 'voice' | 'control' | 'transaction' | 'video' | 'web' | 'bulk';
@@ -64,6 +66,8 @@ export interface Flow {
   profile: ProfileId;
   /** Units of traffic per step in a calm situation */
   demand: number;
+  /** Nodes every path of the flow has to pass (a firewall between zones). A path that skips one carries nothing. */
+  via?: readonly string[];
 }
 
 /** What happens during a situation. `from` is included, `to` is excluded, both are steps. */
@@ -97,6 +101,11 @@ export interface Rules {
   stages: boolean;
 }
 
+export interface Zone {
+  id: string;
+  name: string;
+}
+
 export interface Level {
   id: string;
   title: string;
@@ -107,6 +116,10 @@ export interface Level {
   flows: readonly Flow[];
   situations: readonly Situation[];
   rules: Rules;
+  /** What the player may spend on building optional links (chapter 7) */
+  budget?: number;
+  /** The zones the nodes belong to (chapter 10), for the drawing and the legend */
+  zones?: readonly Zone[];
 }
 
 /** A path as the nodes it passes, from the source to the target. */

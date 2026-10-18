@@ -2,7 +2,7 @@
 
 A planning game about networks: you route traffic through a small network, then a stress test judges the plan. Our own game, our own levels, texts and drawings. The concept (the reasoning behind every rule) is in [docs/network-game-concept.md](../../../docs/network-game-concept.md).
 
-Status: **built, hidden** (`status: 'hidden'` in the registry; it is playable in `pnpm dev` at `/games/backbone/`). Done: the model, the stress test, the exact solver, the level generator and the campaign pool, the interface. Still open: the Build phase and zones (chapters 7 and 10), random levels, the note, the browser tests and the Lighthouse budget (see PLAN.md, 4.5).
+Status: **built and live in this branch** (set to `live` in the registry; it is merged after Leon's okay). The model, the stress test, the exact solver, the generator, the campaign pool (11 chapters, 41 levels), the interface, the overview page, random levels in five tiers, the note, the browser tests and the Lighthouse budget are done. Open: polish (fonts, animation, real packets instead of dots), see PLAN.md, 4.5.
 
 ## Rules
 
@@ -13,6 +13,8 @@ Status: **built, hidden** (`status: 'hidden'` in the registry; it is playable in
 - The **score** of a plan is the mean of its situations with the worst one counted twice, from 0 to 100.
 - **Stars** (`logic/stars.ts`): one star for at least the shortest path, two for beating both simple strategies and being 40 percent of the way to the best plan, three for coming within 5 percent of the distance to the best plan. A level is only admitted when those steps are real (`isAdmissible`).
 - **Helpers** ("Shortest for all", "Balance for me") fill in the plan; a run with a helper earns no stars. A solved level can load the best plan.
+- **Chapters:** capacity, sharing, splitting, latency, priorities, failures and backup paths, **building** (optional cables with a cost and a budget, `logic/build.ts`), loss and redundancy, moving links (a change of path at a step), **zones** (a flow can have to pass a node, the firewall, `Flow.via`), everything. `Level.rules` says which options a level offers.
+- **Random levels** (`logic/random-level.ts`): five tiers, made in background threads (`components/generate.worker.ts`), only shown after the best plan was proven and the level passed the same checks as the campaign. The address (`?level=random&tier=3&seed=...`) makes the same level again.
 - Unlimited tries, nothing is saved.
 
 ## Design decisions
@@ -33,8 +35,10 @@ Everything is our own. Icons are from Lucide (ISC, see THIRD_PARTY.md), copied i
 
 1. Add an entry to `LEVEL_PLAN` in `data/campaign-plan.ts` (id `c<chapter>-<number>`, setting, title, story, shape, `requires`).
 2. Run `LEVELS=c3-5 pnpm levels-backbone`. Existing levels are kept unless `LEVELS_FORCE=1`. `LEVELS_OUT`, `LEVELS_CANDIDATES`, `LEVELS_PROOF_MS` and `LEVELS_JOIN` are described at the top of `scripts/generate-backbone-levels.gen.ts` (several runs can work in parallel and be merged).
-3. Look at the level in `pnpm dev` and play it.
+3. Look at the level in `pnpm dev` and play it. The script also writes `data/catalog.json` (what the overview needs); `pool.test.ts` checks the pool and the catalog against the plan.
+
+A change of the generator, the model or the settings changes the levels: run the script again (`LEVELS_FORCE=1`) and commit the pool.
 
 ## Tests
 
-Unit tests for the model (`simulate.test.ts`: every rule, the monotonicity the solver needs, the fast stress test), the plan moves (`play.test.ts`), the solver (`solver.test.ts`), the generator (`generate.test.ts`), the stars (`stars.test.ts`) and the drawing logic (`view.test.ts`).
+Unit tests for the model (`simulate.test.ts`: every rule, the monotonicity the solver needs, the fast stress test, policies), the plan moves (`play.test.ts`), building (`build.test.ts`), the solver (`solver.test.ts`), the generator and the drawing rules (`generate.test.ts`, `geometry.test.ts`, which also covers the labels), the stars (`stars.test.ts`), the drawing logic (`view.test.ts`), random levels (`random-level.test.ts`) and the pool as a gate (`pool.test.ts`). Browser tests: `tests/e2e/backbone.spec.ts` (clicks, keyboard, helpers, the stress test, building, random levels, storage, axe, reduced motion).

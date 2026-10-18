@@ -1,4 +1,4 @@
-import { candidatePaths, indexLevel, type LevelIndex, linksOfPath, shortestPath } from './graph';
+import { fastestRoute, indexLevel, type LevelIndex, linksOfPath, routesOf } from './graph';
 import { singlePath } from './plan';
 import { profiles } from './profiles';
 import type { Level, NodePath, Plan } from './types';
@@ -15,7 +15,7 @@ export function shortestPathPlan(level: Level | LevelIndex): Plan {
   const index = 'linkById' in level ? level : indexLevel(level);
   const plan: Record<string, ReturnType<typeof singlePath>> = {};
   for (const flow of index.level.flows) {
-    const path = shortestPath(index, flow.source, flow.target);
+    const path = fastestRoute(index, flow);
     if (path !== undefined) {
       plan[flow.id] = singlePath(path);
     }
@@ -42,7 +42,7 @@ export function loadBalancedPlan(level: Level | LevelIndex): Plan {
   for (const flow of order) {
     let best: NodePath | undefined;
     let bestBusiest = Infinity;
-    for (const path of candidatePaths(index, flow.source, flow.target, BALANCE_CANDIDATES)) {
+    for (const path of routesOf(index, flow, BALANCE_CANDIDATES)) {
       const links = linksOfPath(index, path) ?? [];
       const busiest = Math.max(
         ...links.map(

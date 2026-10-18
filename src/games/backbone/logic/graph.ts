@@ -1,4 +1,4 @@
-import type { Level, NetLink, NodePath } from './types';
+import type { Flow, Level, NetLink, NodePath } from './types';
 
 /** A level prepared for fast lookups. Build it once with `indexLevel`, then pass it around. */
 export interface LevelIndex {
@@ -115,13 +115,16 @@ export function candidatePaths(
   target: string,
   limit: number,
   maxHops = 7,
+  via: readonly string[] = [],
 ): NodePath[] {
   const found: { path: string[]; delay: number }[] = [];
   const visited = new Set<string>();
   const stack: string[] = [source];
   const walk = (node: string, delay: number): void => {
     if (node === target) {
-      found.push({ path: [...stack], delay });
+      if (via.every((required) => stack.includes(required))) {
+        found.push({ path: [...stack], delay });
+      }
       return;
     }
     if (stack.length > maxHops) {
@@ -146,4 +149,17 @@ export function candidatePaths(
       x.path.join().localeCompare(y.path.join()),
   );
   return found.slice(0, limit).map((entry) => entry.path);
+}
+
+/** The paths a flow may take: the fastest simple paths that pass every node the flow has to pass. */
+export function routesOf(index: LevelIndex, flow: Flow, limit: number): NodePath[] {
+  const via = flow.via ?? [];
+  return candidatePaths(index, flow.source, flow.target, limit, via.length > 0 ? 9 : 7, via);
+}
+
+/** The fastest path of a flow that obeys its policy. */
+export function fastestRoute(index: LevelIndex, flow: Flow): NodePath | undefined {
+  return (flow.via ?? []).length === 0
+    ? shortestPath(index, flow.source, flow.target)
+    : routesOf(index, flow, 1)[0];
 }

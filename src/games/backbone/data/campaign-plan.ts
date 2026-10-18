@@ -30,8 +30,18 @@ export interface LevelPlan {
   situations: readonly SituationKind[];
   pressure: number;
   lossyLinks: number;
+  /**
+   * The least the best plan has to score. In the first chapters it is (nearly) 100: everything fits
+   * if it is routed well, and what is lost is the player's doing. Later chapters have losses that
+   * nobody can avoid (a cut cable, a link that drops packets, bulk traffic that is held back).
+   */
+  minBest: number;
   /** See `LevelSpec.trap` */
   trap: number;
+  /** How many cables are optional and cost money (chapter 7) */
+  optional: number;
+  /** Zones and a firewall (chapter 10) */
+  zones: boolean;
   /** Options the best plan has to use, so that the new rule of the chapter matters in the level */
   requires: readonly (keyof Rules)[];
 }
@@ -52,8 +62,10 @@ export const chapterRules: Readonly<Record<number, Rules>> = {
   4: { ...none, split: true },
   5: { ...none, split: true, throttle: true },
   6: { ...none, split: true, throttle: true, backup: true },
+  7: { ...none, split: true, throttle: true, backup: true },
   8: { ...none, split: true, throttle: true, backup: true, redundancy: true },
   9: { split: true, throttle: true, backup: true, redundancy: true, stages: true },
+  10: { split: true, throttle: true, backup: true, redundancy: true, stages: true },
   11: { split: true, throttle: true, backup: true, redundancy: true, stages: true },
 };
 
@@ -89,6 +101,11 @@ export const chapters: readonly Chapter[] = [
     rule: 'A cable will be cut. Give a flow a backup path and it switches at once; without one it is lost for a while.',
   },
   {
+    number: 7,
+    title: 'Budget',
+    rule: 'Some cables do not exist yet. Build the ones that matter within the budget, then route the traffic over what you built.',
+  },
+  {
     number: 8,
     title: 'Loss',
     rule: 'Some links lose packets. Redundancy sends extra coded packets to recover them, but they use capacity too.',
@@ -99,11 +116,31 @@ export const chapters: readonly Chapter[] = [
     rule: 'Links come and go. Plan a change of path for the moment a link appears or disappears.',
   },
   {
+    number: 10,
+    title: 'Zones',
+    rule: 'Guests may not talk to the servers directly. Their traffic has to pass the firewall, so the shortest path is no longer allowed.',
+  },
+  {
     number: 11,
     title: 'Everything',
     rule: 'All of it at once, in bigger networks, with more than one bad day to survive.',
   },
 ];
+
+/** See `LevelPlan.minBest`, by chapter */
+const MIN_BEST: Readonly<Record<number, number>> = {
+  1: 0.999,
+  2: 0.999,
+  3: 0.999,
+  4: 0.96,
+  5: 0.75,
+  6: 0.9,
+  7: 0.97,
+  8: 0.85,
+  9: 0.8,
+  10: 0.8,
+  11: 0.8,
+};
 
 function level(
   id: string,
@@ -111,7 +148,19 @@ function level(
   title: string,
   story: string,
   shape: Pick<LevelPlan, 'nodes' | 'family' | 'profiles' | 'situations'> &
-    Partial<Pick<LevelPlan, 'extraLinks' | 'pressure' | 'lossyLinks' | 'requires' | 'trap'>>,
+    Partial<
+      Pick<
+        LevelPlan,
+        | 'extraLinks'
+        | 'pressure'
+        | 'lossyLinks'
+        | 'requires'
+        | 'trap'
+        | 'minBest'
+        | 'zones'
+        | 'optional'
+      >
+    >,
 ): LevelPlan {
   return {
     id,
@@ -122,6 +171,9 @@ function level(
     extraLinks: 0.5,
     pressure: 1.4,
     lossyLinks: 0,
+    minBest: MIN_BEST[Number(/^c(\d+)-/.exec(id)?.[1] ?? 0)] ?? 0.8,
+    zones: false,
+    optional: 0,
     trap: Number(/^c(\d+)-/.exec(id)?.[1] ?? 0) <= 2 ? 0.45 : 0,
     requires: [],
     ...shape,
@@ -346,11 +398,11 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     'Backup night',
     'The nightly backup wants every cable. Let it have what is left.',
     {
-      nodes: 6,
-      family: 'ring',
-      profiles: ['web', 'bulk'],
+      nodes: 7,
+      family: 'mesh',
+      profiles: ['voice', 'web', 'bulk'],
       situations: ['calm'],
-      pressure: 1.7,
+      pressure: 1.5,
       requires: ['throttle'],
     },
   ),
@@ -451,6 +503,63 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
       situations: ['calm', 'rush', 'cut'],
       pressure: 1.2,
       requires: ['backup'],
+    },
+  ),
+  // 7. Budget: some cables are optional and cost money
+  level(
+    'c7-1',
+    'office',
+    'The new wing',
+    'Two cables could connect the new wing. The budget pays for one.',
+    {
+      nodes: 6,
+      family: 'grid',
+      profiles: ['web', 'web', 'video'],
+      situations: ['calm'],
+      pressure: 1.2,
+      optional: 3,
+    },
+  ),
+  level(
+    'c7-2',
+    'campus',
+    'Summer upgrade',
+    'A summer to rebuild the campus network, with money for part of the plan.',
+    {
+      nodes: 8,
+      family: 'mesh',
+      profiles: ['video', 'web', 'web', 'voice'],
+      situations: ['calm'],
+      pressure: 1.2,
+      optional: 4,
+    },
+  ),
+  level(
+    'c7-3',
+    'provider',
+    'New ring',
+    'Close the ring in the north, or lay a shortcut across the lake. Not both.',
+    {
+      nodes: 9,
+      family: 'ring',
+      profiles: ['video', 'video', 'web', 'transaction'],
+      situations: ['calm', 'rush'],
+      pressure: 1.2,
+      optional: 4,
+    },
+  ),
+  level(
+    'c7-4',
+    'festival',
+    'Pop-up network',
+    'Three days, a field and a budget. Lay the cables that the crowd will need.',
+    {
+      nodes: 9,
+      family: 'hub',
+      profiles: ['voice', 'video', 'web', 'bulk'],
+      situations: ['calm', 'rush'],
+      pressure: 1.2,
+      optional: 5,
     },
   ),
   // 8. Loss
@@ -557,6 +666,49 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
       requires: ['stages'],
     },
   ),
+  // 10. Zones: guests may not reach the servers except through the firewall
+  level(
+    'c10-1',
+    'office',
+    'Guest wifi',
+    'Visitors may use the web, but never talk to the file server directly. Everything goes through the firewall.',
+    {
+      nodes: 7,
+      family: 'grid',
+      profiles: ['web', 'web', 'video'],
+      situations: ['calm'],
+      pressure: 1.2,
+      zones: true,
+    },
+  ),
+  level(
+    'c10-2',
+    'hospital',
+    'Visitors and patients',
+    'Visitors, staff and the record system share one network. The firewall decides who passes.',
+    {
+      nodes: 9,
+      family: 'mesh',
+      profiles: ['voice', 'web', 'video', 'transaction'],
+      situations: ['calm', 'rush'],
+      pressure: 1.2,
+      zones: true,
+    },
+  ),
+  level(
+    'c10-3',
+    'campus',
+    'The open lab',
+    'Students bring their own devices. Research data stays behind the firewall, and the firewall has only so much capacity.',
+    {
+      nodes: 10,
+      family: 'grid',
+      profiles: ['voice', 'video', 'web', 'transaction'],
+      situations: ['calm', 'rush', 'cut'],
+      pressure: 1.2,
+      zones: true,
+    },
+  ),
   // 11. Everything
   level('c11-1', 'campus', 'The big day', 'Enrolment, an open day and a storm in the same week.', {
     nodes: 10,
@@ -607,6 +759,8 @@ export function specOf(plan: LevelPlan, seed: number): LevelSpec {
     pressure: plan.pressure,
     lossyLinks: plan.lossyLinks,
     trap: plan.trap,
+    zones: plan.zones,
+    optional: plan.optional,
     title: plan.title,
     story: plan.story,
   };

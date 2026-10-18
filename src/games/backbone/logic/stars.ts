@@ -1,4 +1,5 @@
 import { loadBalancedPlan, shortestPathPlan } from './baselines';
+import { simpleBuild, withBuilt } from './build';
 import { indexLevel, type LevelIndex } from './graph';
 import { evaluate } from './simulate';
 import type { Level } from './types';
@@ -65,7 +66,9 @@ export function isAdmissible({ shortest, balanced, best }: Baselines): boolean {
 export function strategyScores(
   level: Level | LevelIndex,
 ): Pick<Baselines, 'shortest' | 'balanced'> {
-  const index = 'linkById' in level ? level : indexLevel(level);
+  const full = 'linkById' in level ? level.level : level;
+  // The simple strategies also build in a simple way (see simpleBuild in build.ts)
+  const index = indexLevel(withBuilt(full, simpleBuild(full)));
   return {
     shortest: evaluate(index, shortestPathPlan(index)).score,
     balanced: evaluate(index, loadBalancedPlan(index)).score,

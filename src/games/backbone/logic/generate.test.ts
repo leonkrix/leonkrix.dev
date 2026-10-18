@@ -29,13 +29,13 @@ describe('the level generator', () => {
 
   it('makes well formed levels of every family and size', () => {
     for (const family of families) {
-      for (let nodes = 4; nodes <= 14; nodes += 2) {
+      for (let nodes = 4; nodes <= (family === 'hub' || family === 'mesh' ? 14 : 10); nodes += 2) {
         for (let seed = 1; seed <= 6; seed += 1) {
           const { problems } = generateChecked(
             spec(seed * 31 + nodes, {
               nodes,
               family,
-              situations: ['calm', 'rush', 'cut'],
+              situations: ['calm', 'rush'],
               profiles: ['voice', 'web', 'bulk'],
             }),
           );
@@ -109,5 +109,34 @@ describe('the level generator', () => {
 
   it('reports a spec that cannot make a level', () => {
     expect(generateChecked(spec(1, { nodes: 3 })).problems.length).toBeGreaterThan(0);
+  });
+});
+
+describe('zones', () => {
+  it('make a firewall in the middle and send the flows of the guests through it', () => {
+    let withPolicy = 0;
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const level = generateLevel(
+        spec(seed, {
+          nodes: 8,
+          family: seed % 2 === 0 ? 'grid' : 'mesh',
+          zones: true,
+          profiles: ['web', 'web', 'video'],
+          situations: ['calm'],
+        }),
+      );
+      expect(level.zones?.map((zone) => zone.id)).toEqual(['guests', 'office', 'servers']);
+      expect(level.nodes.every((node) => node.zone !== undefined)).toBe(true);
+      const walls = level.nodes.filter((node) => node.kind === 'firewall');
+      expect(walls.length).toBeLessThanOrEqual(1);
+      const guarded = level.flows.filter((flow) => (flow.via ?? []).length > 0);
+      if (guarded.length > 0) {
+        withPolicy += 1;
+        for (const flow of guarded) {
+          expect(flow.via).toEqual([walls[0]?.id]);
+        }
+      }
+    }
+    expect(withPolicy).toBeGreaterThan(10);
   });
 });

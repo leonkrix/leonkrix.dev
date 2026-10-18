@@ -1,3 +1,4 @@
+import { mapPoint, type Point } from './geometry';
 import type { LevelIndex } from './graph';
 import type { Level, LinkStepResult, NetNode, StepResult } from './types';
 
@@ -6,17 +7,10 @@ import type { Level, LinkStepResult, NetNode, StepResult } from './types';
  * link is, where the packets are. Pure functions, so the drawing is simple and this is tested.
  */
 
-/** The map is 100 wide and 80 high; a node's y in the level (0 to 100) is squeezed to fit. */
-export const MAP_WIDTH = 100;
-export const MAP_HEIGHT = 80;
-
-export interface Point {
-  x: number;
-  y: number;
-}
+export { MAP_HEIGHT, MAP_WIDTH, type Point } from './geometry';
 
 export function pointOf(node: NetNode): Point {
-  return { x: node.x, y: Math.round(node.y * (MAP_HEIGHT / 100) * 10) / 10 };
+  return mapPoint(node);
 }
 
 /** How full a link is: the traffic that wants it divided by what it can carry (infinity when it carries nothing). */

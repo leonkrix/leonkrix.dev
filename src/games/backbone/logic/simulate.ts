@@ -2,6 +2,7 @@ import { indexLevel, type LevelIndex, linksOfPath, shortestPath } from './graph'
 import { profiles } from './profiles';
 import type {
   Evaluation,
+  Flow,
   FlowPlan,
   FlowStepResult,
   Level,
@@ -107,20 +108,26 @@ function isUp(states: readonly Map<string, LinkState>[], step: number, link: str
  * path is cut and the backup is whole, a freshly found fastest path once the break is older than
  * the repair delay, otherwise nothing (the traffic is lost).
  */
+/** Whether a path passes every node the flow has to pass. */
+export function obeysPolicy(flow: Flow, path: readonly string[]): boolean {
+  return (flow.via ?? []).every((node) => path.includes(node));
+}
+
 function resolve(
   index: LevelIndex,
   states: readonly Map<string, LinkState>[],
   flowPlan: FlowPlan,
   links: readonly string[],
-  source: string,
-  target: string,
+  flow: Flow,
   step: number,
 ): readonly string[] | undefined {
   if (links.every((link) => isUp(states, step, link))) {
     return links;
   }
   if (flowPlan.backup !== undefined) {
-    const backup = linksOfPath(index, flowPlan.backup);
+    const backup = obeysPolicy(flow, flowPlan.backup)
+      ? linksOfPath(index, flowPlan.backup)
+      : undefined;
     if (backup?.every((link) => isUp(states, step, link)) === true) {
       return backup;
     }
@@ -135,7 +142,13 @@ function resolve(
   if (brokenFor <= REPAIR_DELAY) {
     return undefined;
   }
-  const repaired = shortestPath(index, source, target, (link) => isUp(states, step, link));
+  // A flow with a policy is not rerouted by itself: it would not know where it may go
+  if ((flow.via ?? []).length > 0) {
+    return undefined;
+  }
+  const repaired = shortestPath(index, flow.source, flow.target, (link) =>
+    isUp(states, step, link),
+  );
   return repaired === undefined ? undefined : linksOfPath(index, repaired);
 }
 
@@ -170,9 +183,9 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
       for (const weighted of stage.paths) {
         const planned = linksOfPath(index, weighted.nodes);
         const links =
-          planned === undefined
+          planned === undefined || !obeysPolicy(flow, weighted.nodes)
             ? undefined
-            : resolve(index, states, flowPlan, planned, flow.source, flow.target, step);
+            : resolve(index, states, flowPlan, planned, flow, step);
         const amount = demand * flowPlan.throttle * weighted.share * (1 + flowPlan.redundancy);
         paths.push({
           share: weighted.share,

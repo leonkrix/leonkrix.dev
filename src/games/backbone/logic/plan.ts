@@ -1,5 +1,6 @@
 import { indexLevel, type LevelIndex, linksOfPath } from './graph';
 import { profiles } from './profiles';
+import { obeysPolicy } from './simulate';
 import type { FlowPlan, Level, NodePath, Plan } from './types';
 
 /** A plan for one flow that sends everything on one path. */
@@ -28,6 +29,8 @@ export function problemsOfPlan(level: Level | LevelIndex, plan: Plan): string[] 
         problems.push(`${flowId}: ${what} is not a path of the network`);
       } else if (path[0] !== flow.source || path[path.length - 1] !== flow.target) {
         problems.push(`${flowId}: ${what} does not go from the source to the target`);
+      } else if (!obeysPolicy(flow, path)) {
+        problems.push(`${flowId}: ${what} skips a node the flow has to pass`);
       }
     };
     if (flowPlan.stages.length === 0 || flowPlan.stages[0]?.from !== 0) {

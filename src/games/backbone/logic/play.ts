@@ -1,5 +1,6 @@
 import { loadBalancedPlan, shortestPathPlan } from './baselines';
-import { candidatePaths, indexLevel, type LevelIndex, linksOfPath, shortestPath } from './graph';
+import { costOf, optionalLinks, simpleBuild, spent, withBuilt } from './build';
+import { fastestRoute, indexLevel, type LevelIndex, linksOfPath, routesOf } from './graph';
 import { switchSteps } from './options';
 import { problemsOfPlan, singlePath } from './plan';
 import { profiles } from './profiles';
@@ -21,8 +22,18 @@ export interface Draft {
   nodes: NodePath;
 }
 
+/** What undo goes back to: the plan and the cables that were built */
+export interface Snapshot {
+  plan: Plan;
+  built: readonly string[];
+}
+
 export interface PlayState {
+  /** The network as it is now: the level with the cables that are built */
   index: LevelIndex;
+  /** The level with all its optional cables, built or not */
+  base: Level;
+  built: readonly string[];
   plan: Plan;
   selected: string | undefined;
   /** Which stage and which lane (path of a split) the player is editing */
@@ -30,8 +41,8 @@ export interface PlayState {
   lane: number;
   target: Target;
   draft: Draft | undefined;
-  past: readonly Plan[];
-  future: readonly Plan[];
+  past: readonly Snapshot[];
+  future: readonly Snapshot[];
   /** True when a helper filled in the plan: the run then earns no stars */
   assisted: boolean;
   /** The last thing worth telling the player, also for the screen reader */
@@ -43,7 +54,9 @@ const MOST_HISTORY = 100;
 
 export function startState(level: Level): PlayState {
   return {
-    index: indexLevel(level),
+    index: indexLevel(withBuilt(level, [])),
+    base: level,
+    built: [],
     plan: {},
     selected: level.flows[0]?.id,
     stage: 0,
@@ -65,15 +78,35 @@ function say(state: PlayState, message: string): PlayState {
   return { ...state, message };
 }
 
-/** Puts a new plan in place, remembering the old one for undo. */
-function commit(state: PlayState, plan: Plan, message: string): PlayState {
+/** Puts a new plan (and, if given, new cables) in place, remembering the old ones for undo. */
+function commit(
+  state: PlayState,
+  plan: Plan,
+  message: string,
+  built: readonly string[] = state.built,
+): PlayState {
   return {
     ...state,
+    index: built === state.built ? state.index : indexLevel(withBuilt(state.base, built)),
+    built,
     plan,
-    past: [...state.past, state.plan].slice(-MOST_HISTORY),
+    past: [...state.past, { plan: state.plan, built: state.built }].slice(-MOST_HISTORY),
     future: [],
     draft: undefined,
     message,
+  };
+}
+
+function restore(state: PlayState, snapshot: Snapshot): PlayState {
+  return {
+    ...state,
+    index:
+      snapshot.built === state.built
+        ? state.index
+        : indexLevel(withBuilt(state.base, snapshot.built)),
+    built: snapshot.built,
+    plan: snapshot.plan,
+    draft: undefined,
   };
 }
 
@@ -231,7 +264,7 @@ export function suggestPath(state: PlayState): PlayState {
   if (flow === undefined) {
     return say(state, 'Select a flow first.');
   }
-  const path = shortestPath(state.index, flow.source, flow.target);
+  const path = fastestRoute(state.index, flow);
   return path === undefined
     ? say(state, 'There is no way through.')
     : replaceEditedPath(state, flow, path);
@@ -255,7 +288,7 @@ export function addLane(state: PlayState): PlayState {
   if (stage.paths.length >= MOST_LANES) {
     return say(state, `A flow can use at most ${String(MOST_LANES)} paths.`);
   }
-  const options = candidatePaths(state.index, flow.source, flow.target, 8);
+  const options = routesOf(state.index, flow, 8);
   const used = new Set(stage.paths.map((entry) => entry.nodes.join()));
   const fresh =
     options.find((path) => !used.has(path.join())) ?? options[0] ?? stage.paths[0]?.nodes ?? [];
@@ -364,7 +397,7 @@ export function addBackup(state: PlayState): PlayState {
       (entry) => linksOfPath(state.index, entry.nodes) ?? [],
     ),
   );
-  const options = candidatePaths(state.index, flow.source, flow.target, 8)
+  const options = routesOf(state.index, flow, 8)
     .map((path) => ({
       path,
       shared: (linksOfPath(state.index, path) ?? []).filter((id) => main.has(id)).length,
@@ -503,11 +536,9 @@ export function undo(state: PlayState): PlayState {
     return state;
   }
   return {
-    ...state,
-    plan: previous,
+    ...restore(state, previous),
     past: state.past.slice(0, -1),
-    future: [state.plan, ...state.future],
-    draft: undefined,
+    future: [{ plan: state.plan, built: state.built }, ...state.future],
     message: 'Undone.',
   };
 }
@@ -518,11 +549,9 @@ export function redo(state: PlayState): PlayState {
     return state;
   }
   return {
-    ...state,
-    plan: next,
-    past: [...state.past, state.plan],
+    ...restore(state, next),
+    past: [...state.past, { plan: state.plan, built: state.built }],
     future: state.future.slice(1),
-    draft: undefined,
     message: 'Redone.',
   };
 }
@@ -535,7 +564,10 @@ export function resetPlan(state: PlayState): PlayState {
 
 /** A helper fills in the whole plan. The run is marked as assisted and earns no stars. */
 export function applyStrategy(state: PlayState, which: 'shortest' | 'balanced'): PlayState {
-  const plan = which === 'shortest' ? shortestPathPlan(state.index) : loadBalancedPlan(state.index);
+  // The helpers build in their own simple way, too
+  const built = optionalLinks(state.base).length > 0 ? simpleBuild(state.base) : state.built;
+  const index = indexLevel(withBuilt(state.base, built));
+  const plan = which === 'shortest' ? shortestPathPlan(index) : loadBalancedPlan(index);
   return {
     ...commit(
       state,
@@ -543,6 +575,7 @@ export function applyStrategy(state: PlayState, which: 'shortest' | 'balanced'):
       which === 'shortest'
         ? 'Everybody takes the shortest path. This run earns no stars.'
         : 'The load is balanced for you. This run earns no stars.',
+      built,
     ),
     assisted: true,
     stage: 0,
@@ -573,4 +606,58 @@ export function stepBack(state: PlayState): PlayState {
   return draft.length <= 1
     ? { ...state, draft: undefined, message: 'Drawing cancelled.' }
     : { ...state, draft: { nodes: draft.slice(0, -1) }, message: 'Last node taken back.' };
+}
+
+/** Builds a cable, or takes it away again. Taking one away removes the paths that used it. */
+export function toggleBuild(state: PlayState, linkId: string): PlayState {
+  const link = optionalLinks(state.base).find((entry) => entry.id === linkId);
+  if (link === undefined) {
+    return state;
+  }
+  const names = new Map(state.base.nodes.map((node) => [node.id, node.name]));
+  const name = `${names.get(link.a) ?? link.a} – ${names.get(link.b) ?? link.b}`;
+  if (state.built.includes(linkId)) {
+    const built = state.built.filter((id) => id !== linkId);
+    const next = indexLevel(withBuilt(state.base, built));
+    // A flow whose paths no longer exist has to be routed again
+    const plan = Object.fromEntries(
+      Object.entries(state.plan).filter(
+        ([id, flowPlan]) => problemsOfPlan(next, { [id]: flowPlan }).length === 0,
+      ),
+    );
+    const lost = Object.keys(state.plan).length - Object.keys(plan).length;
+    return commit(
+      state,
+      plan,
+      `${name} is not built any more.${lost > 0 ? ` ${String(lost)} flow${lost === 1 ? '' : 's'} lost the path over it.` : ''}`,
+      built,
+    );
+  }
+  const left = (state.base.budget ?? 0) - spent(state.base, state.built);
+  if (costOf(link) > left) {
+    return say(
+      state,
+      `${name} costs ${String(costOf(link))}, and only ${String(left)} is left of the budget.`,
+    );
+  }
+  return commit(state, state.plan, `${name} is built for ${String(costOf(link))}.`, [
+    ...state.built,
+    linkId,
+  ]);
+}
+
+/** Loads a whole design (cables and plan), as the best plan of a solved level does. */
+export function loadDesign(state: PlayState, plan: Plan, built: readonly string[]): PlayState {
+  return {
+    ...commit(state, plan, 'The best plan is loaded. This run earns no stars.', built),
+    assisted: true,
+    stage: 0,
+    lane: 0,
+    target: 'path',
+  };
+}
+
+/** What is left of the budget. */
+export function budgetLeft(state: PlayState): number {
+  return (state.base.budget ?? 0) - spent(state.base, state.built);
 }
