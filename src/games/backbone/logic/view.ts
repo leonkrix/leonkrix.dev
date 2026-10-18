@@ -1,0 +1,254 @@
+import type { LevelIndex } from './graph';
+import type { Level, LinkStepResult, NetNode, StepResult } from './types';
+
+/**
+ * What the drawing needs, worked out from the level and the results: where things are, how full a
+ * link is, where the packets are. Pure functions, so the drawing is simple and this is tested.
+ */
+
+/** The map is 100 wide and 80 high; a node's y in the level (0 to 100) is squeezed to fit. */
+export const MAP_WIDTH = 100;
+export const MAP_HEIGHT = 80;
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export function pointOf(node: NetNode): Point {
+  return { x: node.x, y: Math.round(node.y * (MAP_HEIGHT / 100) * 10) / 10 };
+}
+
+/** How full a link is: the traffic that wants it divided by what it can carry (infinity when it carries nothing). */
+export function loadRatio(
+  result: Pick<LinkStepResult, 'offered' | 'capacity'> | undefined,
+): number {
+  if (result === undefined || result.offered <= 0) {
+    return 0;
+  }
+  return result.capacity > 0 ? result.offered / result.capacity : Infinity;
+}
+
+/**
+ * Load in four classes. The drawing uses a color and, for the last class, a dashed line too, and
+ * the number is always written, so the class is never the only signal.
+ */
+export type LoadClass = 'idle' | 'ok' | 'busy' | 'over';
+
+export function loadClass(ratio: number): LoadClass {
+  if (ratio <= 0) {
+    return 'idle';
+  }
+  if (ratio <= 0.7) {
+    return 'ok';
+  }
+  return ratio <= 1 + 1e-9 ? 'busy' : 'over';
+}
+
+/** The points of a path along the nodes. */
+export function polyline(index: LevelIndex, nodes: readonly string[]): Point[] {
+  return nodes.flatMap((id) => {
+    const node = index.level.nodes.find((entry) => entry.id === id);
+    return node === undefined ? [] : [pointOf(node)];
+  });
+}
+
+/** The nodes a path passes, from the links it uses, starting at `from`. */
+export function nodesOfLinks(index: LevelIndex, from: string, links: readonly string[]): string[] {
+  const nodes = [from];
+  let current = from;
+  for (const id of links) {
+    const link = index.linkById.get(id);
+    if (link === undefined) {
+      break;
+    }
+    current = link.a === current ? link.b : link.a;
+    nodes.push(current);
+  }
+  return nodes;
+}
+
+function length(points: readonly Point[]): number {
+  let total = 0;
+  for (let at = 1; at < points.length; at += 1) {
+    const a = points[at - 1];
+    const b = points[at];
+    if (a !== undefined && b !== undefined) {
+      total += Math.hypot(b.x - a.x, b.y - a.y);
+    }
+  }
+  return total;
+}
+
+/** The point at a fraction (0 to 1) of the way along a polyline. */
+export function along(points: readonly Point[], fraction: number): Point {
+  const first = points[0] ?? { x: 0, y: 0 };
+  const total = length(points);
+  if (total === 0) {
+    return first;
+  }
+  let remaining = Math.min(1, Math.max(0, fraction)) * total;
+  for (let at = 1; at < points.length; at += 1) {
+    const a = points[at - 1];
+    const b = points[at];
+    if (a === undefined || b === undefined) {
+      continue;
+    }
+    const segment = Math.hypot(b.x - a.x, b.y - a.y);
+    if (remaining <= segment || at === points.length - 1) {
+      const share = segment === 0 ? 0 : Math.min(1, remaining / segment);
+      return { x: a.x + (b.x - a.x) * share, y: a.y + (b.y - a.y) * share };
+    }
+    remaining -= segment;
+  }
+  return points[points.length - 1] ?? first;
+}
+
+export interface Packet {
+  key: string;
+  flow: string;
+  point: Point;
+  /** 1 while it travels; falls to 0 as a dropped packet reaches the link that drops it */
+  opacity: number;
+  dropped: boolean;
+}
+
+const PACKET_UNIT = 2;
+const MOST_PACKETS = 6;
+
+/**
+ * The packets of one step at a moment `time` (0 to 1) inside it. A path carries a few packets per
+ * unit of traffic; the share that does not arrive is dropped where the first overfull link ends.
+ */
+export function packetsAt(index: LevelIndex, step: StepResult, time: number): Packet[] {
+  const packets: Packet[] = [];
+  for (const flow of index.level.flows) {
+    const result = step.flows[flow.id];
+    if (result === undefined) {
+      continue;
+    }
+    result.paths.forEach((path, pathAt) => {
+      const nodes = nodesOfLinks(index, flow.source, path.links);
+      const points = polyline(index, nodes);
+      const count = Math.max(
+        1,
+        Math.min(MOST_PACKETS, Math.round((result.sent * path.share) / PACKET_UNIT)),
+      );
+      const keep = Math.round(
+        count *
+          Math.min(1, result.delivered / Math.max(path.share, 1e-9)) *
+          (path.share > 0 ? 1 : 0),
+      );
+      const bad = path.links.findIndex((id) => loadRatio(step.links[id]) > 1 + 1e-9);
+      const dropAt = bad >= 0 ? polyline(index, nodes.slice(0, bad + 2)) : [];
+      const dropFraction = bad >= 0 ? length(dropAt) / Math.max(length(points), 1e-9) : 0.6;
+      for (let packet = 0; packet < count; packet += 1) {
+        const progress = (time + packet / count) % 1;
+        const dropped = packet >= keep;
+        const visible = dropped ? progress <= dropFraction : true;
+        if (!visible) {
+          continue;
+        }
+        packets.push({
+          key: `${flow.id}:${String(pathAt)}:${String(packet)}`,
+          flow: flow.id,
+          point: along(points, progress),
+          opacity: dropped ? 1 - Math.max(0, progress - (dropFraction - 0.12)) / 0.12 : 1,
+          dropped,
+        });
+      }
+    });
+  }
+  return packets;
+}
+
+export type Direction = 'left' | 'right' | 'up' | 'down';
+
+const VECTORS: Record<Direction, Point> = {
+  left: { x: -1, y: 0 },
+  right: { x: 1, y: 0 },
+  up: { x: 0, y: -1 },
+  down: { x: 0, y: 1 },
+};
+
+/**
+ * The node an arrow key moves to: of the neighbours of the node, the one that lies most in that
+ * direction; if none lies in it, of all nodes the one that does. `undefined` when nothing does.
+ */
+export function nodeInDirection(
+  index: LevelIndex,
+  from: string,
+  direction: Direction,
+): string | undefined {
+  const origin = index.level.nodes.find((node) => node.id === from);
+  if (origin === undefined) {
+    return undefined;
+  }
+  const here = pointOf(origin);
+  const vector = VECTORS[direction];
+  const score = (node: NetNode): number => {
+    const there = pointOf(node);
+    const dx = there.x - here.x;
+    const dy = there.y - here.y;
+    const distance = Math.hypot(dx, dy);
+    const aligned = (dx * vector.x + dy * vector.y) / (distance || 1);
+    return aligned < 0.35 ? -Infinity : aligned * 3 - distance / 40;
+  };
+  const neighbourIds = new Set((index.neighbours.get(from) ?? []).map((entry) => entry.node));
+  const best = (nodes: readonly NetNode[]): string | undefined => {
+    let winner: NetNode | undefined;
+    let top = -Infinity;
+    for (const node of nodes) {
+      const value = score(node);
+      if (value > top) {
+        top = value;
+        winner = node;
+      }
+    }
+    return winner?.id;
+  };
+  return (
+    best(index.level.nodes.filter((node) => neighbourIds.has(node.id))) ??
+    best(index.level.nodes.filter((node) => node.id !== from))
+  );
+}
+
+/** Which links two nodes are joined by, in either direction, or `undefined`. */
+export function linkBetween(level: Level, a: string, b: string): string | undefined {
+  return level.links.find(
+    (link) => (link.a === a && link.b === b) || (link.a === b && link.b === a),
+  )?.id;
+}
+
+/** Where the stress test is: the situation, the step in it and how far inside the step (0 to 1). */
+export interface Clock {
+  situation: number;
+  step: number;
+  time: number;
+}
+
+/**
+ * Moves the clock on by `fraction` of a step. It runs through the steps of a situation and then on
+ * into the next situation; at the end of the last one it stops on the last step and says so.
+ */
+export function advanceClock(
+  stepsOf: readonly number[],
+  clock: Clock,
+  fraction: number,
+): { clock: Clock; finished: boolean } {
+  let { situation, step, time } = clock;
+  time += fraction;
+  while (time >= 1) {
+    time -= 1;
+    const steps = stepsOf[situation] ?? 1;
+    if (step + 1 < steps) {
+      step += 1;
+    } else if (situation + 1 < stepsOf.length) {
+      situation += 1;
+      step = 0;
+    } else {
+      return { clock: { situation, step, time: 0 }, finished: true };
+    }
+  }
+  return { clock: { situation, step, time }, finished: false };
+}

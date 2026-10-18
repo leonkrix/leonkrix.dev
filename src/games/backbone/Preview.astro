@@ -1,0 +1,366 @@
+---
+// The tile of the game on the Playground section: a small network plays a round. Two flows leave
+// the left node for the right one. At first both take the fast way over the top and that link turns
+// red, a packet is lost there. Then the second flow moves to the lower road, the red link turns
+// green and the packets get through. It plays when the tile appears, and again whenever it is
+// pointed at or focused. Pure CSS, no script. The final picture (both roads in use, all green) is
+// also the normal look, so the tile is right without any motion.
+
+// The four nodes of the picture (the units of the picture)
+const nodes = [
+  { id: 'a', x: 26, y: 70 },
+  { id: 'b', x: 100, y: 28 },
+  { id: 'c', x: 100, y: 112 },
+  { id: 'd', x: 174, y: 70 },
+];
+---
+
+<div class="pv" aria-hidden="true">
+  <svg viewBox="0 0 200 140" focusable="false">
+    <line class="pv-link" x1="26" y1="70" x2="100" y2="28"></line>
+    <line class="pv-link pv-bd" x1="100" y1="28" x2="174" y2="70"></line>
+    <line class="pv-link pv-low" x1="26" y1="70" x2="100" y2="112"></line>
+    <line class="pv-link pv-low" x1="100" y1="112" x2="174" y2="70"></line>
+    {nodes.map((node) => (
+      <rect class="pv-node" x={node.x - 9} y={node.y - 9} width="18" height="18" rx="5" />
+    ))}
+    <circle class="pv-packet pv-one" cx="0" cy="0" r="3.6"></circle>
+    <circle class="pv-packet pv-two" cx="0" cy="0" r="3.6"></circle>
+    <circle class="pv-packet pv-lost" cx="0" cy="0" r="3.6"></circle>
+  </svg>
+</div>
+
+<style>
+  .pv {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  svg {
+    display: block;
+    width: 12rem;
+    height: 8.4rem;
+  }
+
+  .pv-link {
+    stroke: var(--color-status);
+    stroke-width: 4;
+    stroke-linecap: round;
+    opacity: 0.85;
+  }
+
+  .pv-node {
+    fill: var(--color-surface);
+    stroke: color-mix(in srgb, var(--color-fg) 32%, transparent);
+    stroke-width: 1.2;
+  }
+
+  .pv-packet {
+    stroke: var(--color-bg);
+    stroke-width: 1.2;
+  }
+
+  /* Where the packets stand at the end: the first on the top road, the second on the lower road */
+  .pv-one {
+    fill: var(--color-accent-2);
+    transform: translate(137px, 49px);
+  }
+
+  .pv-two {
+    fill: var(--color-contrast);
+    transform: translate(137px, 91px);
+  }
+
+  .pv-lost {
+    fill: var(--color-danger);
+    opacity: 0;
+    transform: translate(137px, 49px);
+  }
+
+  .pv-bd,
+  .pv-low,
+  .pv-one,
+  .pv-two,
+  .pv-lost {
+    animation-duration: 5600ms;
+    animation-fill-mode: backwards;
+    animation-timing-function: linear;
+  }
+
+  .pv-bd {
+    animation-name: pvb-bd, none;
+  }
+
+  .pv-low {
+    animation-name: pvb-low, none;
+  }
+
+  .pv-one {
+    animation-name: pvb-one, none;
+  }
+
+  .pv-two {
+    animation-name: pvb-two, none;
+  }
+
+  .pv-lost {
+    animation-name: pvb-lost, none;
+  }
+
+  /* A tile that is waiting to be revealed has not started yet: it begins when it appears */
+  :global(.reveal-pending) .pv-bd,
+  :global(.reveal-pending) .pv-low,
+  :global(.reveal-pending) .pv-one,
+  :global(.reveal-pending) .pv-two,
+  :global(.reveal-pending) .pv-lost {
+    animation-name: none, none;
+  }
+
+  /* Pointing at the tile plays it again: the same animations under other names start from the start */
+  :global(.game-tile):hover .pv-bd,
+  :global(.game-tile):focus-visible .pv-bd {
+    animation-name: pvb-bd, pvb-bd-again;
+  }
+
+  :global(.game-tile):hover .pv-low,
+  :global(.game-tile):focus-visible .pv-low {
+    animation-name: pvb-low, pvb-low-again;
+  }
+
+  :global(.game-tile):hover .pv-one,
+  :global(.game-tile):focus-visible .pv-one {
+    animation-name: pvb-one, pvb-one-again;
+  }
+
+  :global(.game-tile):hover .pv-two,
+  :global(.game-tile):focus-visible .pv-two {
+    animation-name: pvb-two, pvb-two-again;
+  }
+
+  :global(.game-tile):hover .pv-lost,
+  :global(.game-tile):focus-visible .pv-lost {
+    animation-name: pvb-lost, pvb-lost-again;
+  }
+
+  /* The names start with "pvb-": keyframes are not scoped to a component */
+  @keyframes pvb-bd {
+    0%,
+    45% {
+      stroke: var(--color-danger);
+    }
+    60%,
+    100% {
+      stroke: var(--color-status);
+    }
+  }
+
+  @keyframes pvb-bd-again {
+    0%,
+    45% {
+      stroke: var(--color-danger);
+    }
+    60%,
+    100% {
+      stroke: var(--color-status);
+    }
+  }
+
+  @keyframes pvb-low {
+    0%,
+    45% {
+      opacity: 0.2;
+    }
+    60%,
+    100% {
+      opacity: 0.85;
+    }
+  }
+
+  @keyframes pvb-low-again {
+    0%,
+    45% {
+      opacity: 0.2;
+    }
+    60%,
+    100% {
+      opacity: 0.85;
+    }
+  }
+
+  /* The first packet always takes the top road: left node, top node, right node, three times */
+  @keyframes pvb-one {
+    0% {
+      transform: translate(26px, 70px);
+    }
+    14% {
+      transform: translate(100px, 28px);
+    }
+    28% {
+      transform: translate(174px, 70px);
+    }
+    28.1% {
+      transform: translate(26px, 70px);
+    }
+    42% {
+      transform: translate(100px, 28px);
+    }
+    56% {
+      transform: translate(174px, 70px);
+    }
+    56.1% {
+      transform: translate(26px, 70px);
+    }
+    78% {
+      transform: translate(100px, 28px);
+    }
+    100% {
+      transform: translate(174px, 70px);
+    }
+  }
+
+  @keyframes pvb-one-again {
+    0% {
+      transform: translate(26px, 70px);
+    }
+    14% {
+      transform: translate(100px, 28px);
+    }
+    28% {
+      transform: translate(174px, 70px);
+    }
+    28.1% {
+      transform: translate(26px, 70px);
+    }
+    42% {
+      transform: translate(100px, 28px);
+    }
+    56% {
+      transform: translate(174px, 70px);
+    }
+    56.1% {
+      transform: translate(26px, 70px);
+    }
+    78% {
+      transform: translate(100px, 28px);
+    }
+    100% {
+      transform: translate(174px, 70px);
+    }
+  }
+
+  /* The second packet follows the first over the top at first, then takes the lower road */
+  @keyframes pvb-two {
+    0% {
+      transform: translate(26px, 70px);
+    }
+    14% {
+      transform: translate(100px, 28px);
+    }
+    28% {
+      transform: translate(174px, 70px);
+    }
+    28.1% {
+      transform: translate(26px, 70px);
+    }
+    56% {
+      transform: translate(100px, 112px);
+    }
+    78% {
+      transform: translate(174px, 70px);
+    }
+    78.1% {
+      transform: translate(26px, 70px);
+    }
+    89% {
+      transform: translate(100px, 112px);
+    }
+    100% {
+      transform: translate(174px, 70px);
+    }
+  }
+
+  @keyframes pvb-two-again {
+    0% {
+      transform: translate(26px, 70px);
+    }
+    14% {
+      transform: translate(100px, 28px);
+    }
+    28% {
+      transform: translate(174px, 70px);
+    }
+    28.1% {
+      transform: translate(26px, 70px);
+    }
+    56% {
+      transform: translate(100px, 112px);
+    }
+    78% {
+      transform: translate(174px, 70px);
+    }
+    78.1% {
+      transform: translate(26px, 70px);
+    }
+    89% {
+      transform: translate(100px, 112px);
+    }
+    100% {
+      transform: translate(174px, 70px);
+    }
+  }
+
+  /* A third packet is lost on the full link at the beginning */
+  @keyframes pvb-lost {
+    0% {
+      opacity: 1;
+      transform: translate(26px, 70px);
+    }
+    22% {
+      opacity: 1;
+      transform: translate(100px, 28px);
+    }
+    34%,
+    100% {
+      opacity: 0;
+      transform: translate(130px, 45px);
+    }
+  }
+
+  @keyframes pvb-lost-again {
+    0% {
+      opacity: 1;
+      transform: translate(26px, 70px);
+    }
+    22% {
+      opacity: 1;
+      transform: translate(100px, 28px);
+    }
+    34%,
+    100% {
+      opacity: 0;
+      transform: translate(130px, 45px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pv-bd,
+    .pv-low,
+    .pv-one,
+    .pv-two,
+    .pv-lost,
+    :global(.game-tile):hover .pv-bd,
+    :global(.game-tile):hover .pv-low,
+    :global(.game-tile):hover .pv-one,
+    :global(.game-tile):hover .pv-two,
+    :global(.game-tile):hover .pv-lost,
+    :global(.game-tile):focus-visible .pv-bd,
+    :global(.game-tile):focus-visible .pv-low,
+    :global(.game-tile):focus-visible .pv-one,
+    :global(.game-tile):focus-visible .pv-two,
+    :global(.game-tile):focus-visible .pv-lost {
+      animation-name: none, none;
+    }
+  }
+</style>

@@ -1,12 +1,20 @@
 import { createRandom } from '../../shared/random';
 import { candidatePaths, indexLevel } from './graph';
 import { profileIds } from './profiles';
-import type { Flow, FlowPlan, Level, NetLink, NetNode, Plan, Redundancy } from './types';
+import type { Flow, FlowPlan, Level, NetLink, NetNode, Plan, Redundancy, Rules } from './types';
 
 /**
  * Small levels for the tests. `diamond` is the smallest network where routing matters: two ways
  * from A to D, a fast one (through B) and a slower one (through C).
  */
+export const allRules: Rules = {
+  split: true,
+  backup: true,
+  redundancy: true,
+  throttle: true,
+  stages: true,
+};
+
 export function diamond(overrides: Partial<Level> = {}): Level {
   const nodes: NetNode[] = [
     { id: 'A', name: 'A', kind: 'router', x: 10, y: 50 },
@@ -31,6 +39,7 @@ export function diamond(overrides: Partial<Level> = {}): Level {
     links,
     flows,
     situations: [{ id: 'calm', name: 'Calm', steps: 6, events: [] }],
+    rules: allRules,
     ...overrides,
   };
 }
@@ -86,6 +95,7 @@ export function randomLevel(seed: number, nodeCount = 7, flowCount = 4): Level {
     id: `random-${String(seed)}`,
     title: 'Random',
     story: '',
+    rules: allRules,
     nodes,
     links,
     flows,

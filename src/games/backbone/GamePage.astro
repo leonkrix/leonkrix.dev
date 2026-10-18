@@ -1,0 +1,97 @@
+---
+// The styles of the game belong to the page: the picture of the game that the page renders on the
+// server and the game itself use the same ones, which are sent once
+import './components/backbone.css';
+
+import { type GameDefinition } from '@/games/registry';
+import GameLayout from '@/layouts/GameLayout.astro';
+
+import Backbone from './components/Backbone';
+import BackboneSkeleton from './components/BackboneSkeleton';
+
+interface Props {
+  game: GameDefinition;
+}
+
+const { game } = Astro.props;
+---
+
+<GameLayout game={game}>
+  {/* Rendered in the browser only: it reads the address and the levels are fetched when it runs */}
+  <Backbone client:only="react">
+    <BackboneSkeleton slot="fallback" />
+  </Backbone>
+  <noscript>
+    <p class="text-muted">
+      This game needs JavaScript to run. Nothing is sent anywhere, it all happens in your browser.
+    </p>
+  </noscript>
+
+  <div slot="rules">
+    <p>
+      You are the network engineer. Every level is a small network and a list of{' '}
+      <strong>flows</strong>: traffic that has to get from one node to another. You decide how each
+      flow travels, then run a <strong>stress test</strong> and see how it goes.
+    </p>
+    <ul>
+      <li>
+        <strong>Plan:</strong> pick a flow, then click the nodes one after the other from its start
+        to its end, or drag across them. A link carries only so much (the width of the line and the
+        second number on it); what does not fit is dropped.
+      </li>
+      <li>
+        <strong>Different traffic wants different things:</strong> voice must be fast, a payment
+        must not lose a packet, a backup does not care. The list says what each flow wants.
+      </li>
+      <li>
+        <strong>Run:</strong> the stress test plays one to three situations (a quiet day, a rush, a
+        cut cable). Your score is the mean, and the worst situation counts twice.
+      </li>
+      <li>
+        <strong>Stars:</strong> one star for beating the shortest path, two for beating the load
+        balanced strategy as well, three for coming close to the best plan. You can try as often as
+        you like. A level you solved lets you load the best plan.
+      </li>
+      <li>
+        Each chapter adds a rule: splitting a flow over several paths, backup paths, holding traffic
+        back, redundancy, and changes of path in time.
+      </li>
+    </ul>
+    <p>
+      The helpers fill in the plan for you (shortest path for all, or balanced). A run with a helper
+      earns no stars. Nothing is saved, and nothing leaves your browser.
+    </p>
+  </div>
+
+  <div slot="keys">
+    <ul>
+      <li>
+        <kbd>Tab</kbd> moves into the map, the arrow keys <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd>
+        <kbd>↓</kbd> move to the next node in that direction
+      </li>
+      <li>
+        <kbd>Enter</kbd> or <kbd>Space</kbd> adds the node to the path (start at the node marked
+        "from")
+      </li>
+      <li>
+        <kbd>Backspace</kbd> takes the last node back, <kbd>Esc</kbd> cancels the path
+      </li>
+      <li>
+        <kbd>Ctrl</kbd> + <kbd>Z</kbd> undoes, <kbd>Ctrl</kbd> + <kbd>Y</kbd> redoes
+      </li>
+    </ul>
+    <p>
+      The text version below the map lists every cable with its load and the path of every flow.
+      What happens is announced to screen readers.
+    </p>
+  </div>
+
+  <div slot="built">
+    <p>
+      The stress test is a small deterministic model in pure TypeScript with unit tests: queues on
+      every link, drops, latency, loss and redundancy, failures with backup paths. The best plan of
+      every level is proven by an exact search before the level is shown. The user interface is a
+      React component that only draws what the model says.
+    </p>
+  </div>
+</GameLayout>

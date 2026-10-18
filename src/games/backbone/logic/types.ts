@@ -80,6 +80,23 @@ export interface Situation {
   events: readonly NetEvent[];
 }
 
+/**
+ * Which options of a plan a level offers. The interface shows only these, and the solver only looks
+ * at plans that use only these, so a level of chapter 2 is proven with the options of chapter 2.
+ */
+export interface Rules {
+  /** Send one flow over several paths */
+  split: boolean;
+  /** A path that is taken at once when the main path is cut */
+  backup: boolean;
+  /** Coded packets that recover loss */
+  redundancy: boolean;
+  /** Hold bulk traffic back */
+  throttle: boolean;
+  /** Change the path at a planned step */
+  stages: boolean;
+}
+
 export interface Level {
   id: string;
   title: string;
@@ -89,6 +106,7 @@ export interface Level {
   links: readonly NetLink[];
   flows: readonly Flow[];
   situations: readonly Situation[];
+  rules: Rules;
 }
 
 /** A path as the nodes it passes, from the source to the target. */
@@ -121,6 +139,12 @@ export interface FlowPlan {
 /** A plan has an entry for a flow, or leaves it out (it then carries nothing). */
 export type Plan = Readonly<Record<string, FlowPlan>>;
 
+/** A path a flow really used in a step: the planned one, the backup or a repaired one. */
+export interface UsedPath {
+  links: readonly string[];
+  share: number;
+}
+
 export interface FlowStepResult {
   /** Units the flow wanted to send in this step (burst and throttle applied) */
   sent: number;
@@ -128,6 +152,8 @@ export interface FlowStepResult {
   delivered: number;
   /** The time the traffic needed, 0 when nothing arrived */
   latency: number;
+  /** The paths the traffic used in this step (none when it was lost) */
+  paths: readonly UsedPath[];
   /** The value earned in this step */
   value: number;
   /** The most the flow could have earned */

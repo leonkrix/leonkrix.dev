@@ -1,0 +1,137 @@
+/**
+ * Makes the level pool of Backbone (`src/games/backbone/data/levels.json`).
+ *
+ * Run it with `pnpm levels-backbone`. Levels that are in the file already are kept (they are only
+ * made again with LEVELS_FORCE=1), so the file changes only when you ask for it. Settings:
+ *   LEVELS=c1-1,c3-2       only these levels
+ *   LEVELS_OUT=file.json   write to another file (to make several levels in parallel)
+ *   LEVELS_FORCE=1         make levels again even if they exist
+ *   LEVELS_CANDIDATES=4    how many levels that pass the gate to compare (the one with the biggest
+ *                          gap between the best plan and the simple strategies is kept)
+ *   LEVELS_PROOF_MS=20000  the longest a proof may take, a seed that needs more is dropped
+ *   LEVELS_JOIN=a.json,b.json  merge files made in parallel into the pool
+ *
+ * For every level the script tries seeds "<id>-1", "<id>-2", ... until the generator makes a
+ * level that is well formed, whose best plan is proven in time, that leaves room for the stars
+ * (`isAdmissible`) and whose best plan uses the rules the chapter teaches (`requires`).
+ */
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+import { format, resolveConfig } from 'prettier';
+import { describe, it } from 'vitest';
+
+import { LEVEL_PLAN, specOf } from '../src/games/backbone/data/campaign-plan';
+import { featuresUsed, type LevelRecord } from '../src/games/backbone/data/pool';
+import { dress } from '../src/games/backbone/data/settings';
+import { generateChecked } from '../src/games/backbone/logic/generate';
+import { indexLevel } from '../src/games/backbone/logic/graph';
+import { solve } from '../src/games/backbone/logic/solver';
+import { isAdmissible, strategyScores } from '../src/games/backbone/logic/stars';
+import { hashSeed } from '../src/games/shared/random';
+
+const DEFAULT_OUT = 'src/games/backbone/data/levels.json';
+const out = resolve(process.env.LEVELS_OUT ?? DEFAULT_OUT);
+const only = process.env.LEVELS?.split(',').filter((id) => id !== '');
+const force = process.env.LEVELS_FORCE === '1';
+const candidateCount = Number(process.env.LEVELS_CANDIDATES ?? '4');
+const proofMs = Number(process.env.LEVELS_PROOF_MS ?? '20000');
+const join = process.env.LEVELS_JOIN?.split(',').filter((file) => file !== '');
+const MAX_SEEDS = 600;
+
+function load(file: string): LevelRecord[] {
+  return existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')) as LevelRecord[]) : [];
+}
+
+/** Writes the file the way Prettier formats JSON, so that the format check passes */
+async function write(file: string, data: unknown): Promise<void> {
+  const options = await resolveConfig(file);
+  writeFileSync(file, await format(JSON.stringify(data), { ...options, filepath: file }));
+}
+
+async function save(records: LevelRecord[]): Promise<void> {
+  const order = LEVEL_PLAN.map((plan) => plan.id);
+  records.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  await write(out, records);
+}
+
+function makeRecord(plan: (typeof LEVEL_PLAN)[number], number: number): LevelRecord | undefined {
+  const seed = hashSeed(`${plan.id}-${String(number)}`);
+  const { level: raw, problems } = generateChecked(specOf(plan, seed));
+  if (problems.length > 0) {
+    return undefined;
+  }
+  const level = dress(raw, plan.setting);
+  const index = indexLevel(level);
+  const solution = solve(index, { timeLimitMs: proofMs });
+  if (!solution.complete) {
+    return undefined;
+  }
+  const baselines = strategyScores(index);
+  if (!isAdmissible({ ...baselines, best: solution.score })) {
+    return undefined;
+  }
+  const used = featuresUsed(solution.plan);
+  if (plan.requires.some((rule) => !used[rule])) {
+    return undefined;
+  }
+  return {
+    id: plan.id,
+    chapter: plan.chapter,
+    seed,
+    level: { ...level, id: plan.id },
+    best: { plan: solution.plan, score: solution.score },
+    shortest: baselines.shortest,
+    balanced: baselines.balanced,
+    proof: { milliseconds: Math.round(solution.milliseconds), explored: solution.explored },
+  };
+}
+
+function gapOf(record: LevelRecord): number {
+  return record.best.score - Math.max(record.shortest, record.balanced);
+}
+
+describe('make the Backbone pool', () => {
+  it('fills levels.json', async () => {
+    if (join !== undefined) {
+      const merged = new Map(load(out).map((record) => [record.id, record]));
+      for (const file of join) {
+        for (const record of load(resolve(file))) {
+          merged.set(record.id, record);
+        }
+      }
+      await save([...merged.values()]);
+      return;
+    }
+    const records = load(out);
+    for (const plan of LEVEL_PLAN) {
+      if (only !== undefined && !only.includes(plan.id)) {
+        continue;
+      }
+      if (!force && records.some((record) => record.id === plan.id)) {
+        continue;
+      }
+      const found: LevelRecord[] = [];
+      for (let number = 1; number <= MAX_SEEDS && found.length < candidateCount; number += 1) {
+        const record = makeRecord(plan, number);
+        if (record !== undefined) {
+          found.push(record);
+        }
+      }
+      const best = found.sort((a, b) => gapOf(b) - gapOf(a))[0];
+      if (best === undefined) {
+        console.warn(`${plan.id}: no level passed in ${String(MAX_SEEDS)} seeds`);
+        continue;
+      }
+      const at = records.findIndex((record) => record.id === plan.id);
+      if (at >= 0) {
+        records.splice(at, 1);
+      }
+      records.push(best);
+      console.warn(
+        `${plan.id}: ${String(found.length)} candidates, kept gap ${gapOf(best).toFixed(3)} (${String(best.proof.milliseconds)} ms)`,
+      );
+      await save(records);
+    }
+  });
+});

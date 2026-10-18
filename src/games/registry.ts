@@ -57,6 +57,14 @@ export const games: readonly GameDefinition[] = [
     icon: 'lucide:link',
     status: 'live',
   },
+  {
+    slug: 'backbone',
+    name: 'Backbone',
+    tag: 'Network',
+    description: 'Route traffic through a network, then survive the stress test.',
+    icon: 'lucide:network',
+    status: 'hidden',
+  },
 ];
 
 /** Address of the overview page. */

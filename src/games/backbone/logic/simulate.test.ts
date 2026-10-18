@@ -263,3 +263,38 @@ describe('problems of a plan', () => {
     expect(problemsOfPlan(level, { f1: { ...singlePath(fast), throttle: 0.5 } })).toHaveLength(1);
   });
 });
+
+describe('the fast stress test of the solver', () => {
+  it('earns exactly what the readable one earns', async () => {
+    const { FastEvaluator } = await import('./fast');
+    const { indexLevel } = await import('./graph');
+    for (let seed = 1; seed <= 120; seed += 1) {
+      const level = randomLevel(seed, 6 + (seed % 4), 4);
+      const index = indexLevel(level);
+      const plan = randomPlan(
+        level,
+        seed * 5,
+        level.flows.map((entry) => entry.id),
+      );
+      const fast = new FastEvaluator(index);
+      const slots = level.flows.map((entry) => {
+        const flowPlan = plan[entry.id];
+        return flowPlan === undefined ? undefined : fast.compile(entry.id, flowPlan);
+      });
+      const earned = fast.earned(slots);
+      const slow = evaluate(index, plan);
+      slow.situations.forEach((situation, position) => {
+        level.flows.forEach((entry, flowPosition) => {
+          const expected = situation.steps.reduce(
+            (sum, step) => sum + (step.flows[entry.id]?.value ?? 0),
+            0,
+          );
+          expect(
+            earned[position * level.flows.length + flowPosition],
+            `seed ${String(seed)}`,
+          ).toBeCloseTo(expected, 9);
+        });
+      });
+    }
+  });
+});

@@ -1,0 +1,576 @@
+import { loadBalancedPlan, shortestPathPlan } from './baselines';
+import { candidatePaths, indexLevel, type LevelIndex, linksOfPath, shortestPath } from './graph';
+import { switchSteps } from './options';
+import { problemsOfPlan, singlePath } from './plan';
+import { profiles } from './profiles';
+import type { Flow, FlowPlan, Level, NodePath, Plan, Redundancy, RouteStage } from './types';
+
+/**
+ * The moves of the player, as pure functions on an immutable state. The React component only draws
+ * the state and calls these. Nothing here knows about the screen.
+ *
+ * The plan is always runnable for the flows it contains: a move that would leave a flow with a
+ * broken path is refused with a message instead. The only thing in progress is a `draft`, a path
+ * the player is drawing node by node; it replaces a path when it reaches the target.
+ */
+
+/** What the player edits on the selected flow: one of its paths, or its backup. */
+export type Target = 'path' | 'backup';
+
+export interface Draft {
+  nodes: NodePath;
+}
+
+export interface PlayState {
+  index: LevelIndex;
+  plan: Plan;
+  selected: string | undefined;
+  /** Which stage and which lane (path of a split) the player is editing */
+  stage: number;
+  lane: number;
+  target: Target;
+  draft: Draft | undefined;
+  past: readonly Plan[];
+  future: readonly Plan[];
+  /** True when a helper filled in the plan: the run then earns no stars */
+  assisted: boolean;
+  /** The last thing worth telling the player, also for the screen reader */
+  message: string;
+}
+
+const MOST_LANES = 3;
+const MOST_HISTORY = 100;
+
+export function startState(level: Level): PlayState {
+  return {
+    index: indexLevel(level),
+    plan: {},
+    selected: level.flows[0]?.id,
+    stage: 0,
+    lane: 0,
+    target: 'path',
+    draft: undefined,
+    past: [],
+    future: [],
+    assisted: false,
+    message: '',
+  };
+}
+
+function flowOf(state: PlayState, id: string | undefined): Flow | undefined {
+  return state.index.level.flows.find((flow) => flow.id === id);
+}
+
+function say(state: PlayState, message: string): PlayState {
+  return { ...state, message };
+}
+
+/** Puts a new plan in place, remembering the old one for undo. */
+function commit(state: PlayState, plan: Plan, message: string): PlayState {
+  return {
+    ...state,
+    plan,
+    past: [...state.past, state.plan].slice(-MOST_HISTORY),
+    future: [],
+    draft: undefined,
+    message,
+  };
+}
+
+function withFlowPlan(
+  state: PlayState,
+  flowId: string,
+  flowPlan: FlowPlan,
+  message: string,
+): PlayState {
+  return commit(state, { ...state.plan, [flowId]: flowPlan }, message);
+}
+
+function nameOf(state: PlayState, node: string): string {
+  return state.index.level.nodes.find((entry) => entry.id === node)?.name ?? node;
+}
+
+export function selectFlow(state: PlayState, id: string): PlayState {
+  const flow = flowOf(state, id);
+  if (flow === undefined) {
+    return state;
+  }
+  return {
+    ...state,
+    selected: id,
+    stage: 0,
+    lane: 0,
+    target: 'path',
+    draft: undefined,
+    message: `${flow.name} selected. It goes from ${nameOf(state, flow.source)} to ${nameOf(state, flow.target)}.`,
+  };
+}
+
+export function selectEdit(
+  state: PlayState,
+  stage: number,
+  lane: number,
+  target: Target,
+): PlayState {
+  const flowPlan = state.selected === undefined ? undefined : state.plan[state.selected];
+  const stageCount = flowPlan?.stages.length ?? 1;
+  const laneCount = flowPlan?.stages[stage]?.paths.length ?? 1;
+  return {
+    ...state,
+    stage: Math.min(stage, stageCount - 1),
+    lane: Math.min(lane, laneCount - 1),
+    target,
+    draft: undefined,
+  };
+}
+
+/** The path the player is editing now, if it exists. */
+export function editedPath(state: PlayState): NodePath | undefined {
+  const flowPlan = state.selected === undefined ? undefined : state.plan[state.selected];
+  if (flowPlan === undefined) {
+    return undefined;
+  }
+  return state.target === 'backup'
+    ? flowPlan.backup
+    : flowPlan.stages[state.stage]?.paths[state.lane]?.nodes;
+}
+
+function replaceEditedPath(state: PlayState, flow: Flow, path: NodePath): PlayState {
+  const flowPlan = state.plan[flow.id] ?? singlePath(path);
+  if (state.target === 'backup') {
+    return withFlowPlan(
+      state,
+      flow.id,
+      { ...flowPlan, backup: path },
+      `Backup for ${flow.name} set.`,
+    );
+  }
+  const stages = flowPlan.stages.map((stage, stageAt) =>
+    stageAt === state.stage
+      ? {
+          ...stage,
+          paths: stage.paths.map((entry, laneAt) =>
+            laneAt === state.lane ? { ...entry, nodes: path } : entry,
+          ),
+        }
+      : stage,
+  );
+  return withFlowPlan(
+    state,
+    flow.id,
+    { ...flowPlan, stages },
+    `${flow.name} goes ${describePath(state, path)}.`,
+  );
+}
+
+export function describePath(state: PlayState, path: NodePath): string {
+  return path.map((node) => nameOf(state, node)).join(', ');
+}
+
+/** The player clicks (or taps) a node while drawing a path. */
+export function clickNode(state: PlayState, node: string): PlayState {
+  const flow = flowOf(state, state.selected);
+  if (flow === undefined) {
+    return say(state, 'Select a flow first.');
+  }
+  const draft = state.draft?.nodes;
+  if (draft === undefined) {
+    if (node !== flow.source) {
+      return say(state, `Start at ${nameOf(state, flow.source)}, where ${flow.name} begins.`);
+    }
+    return { ...state, draft: { nodes: [node] }, message: `Drawing from ${nameOf(state, node)}.` };
+  }
+  const position = draft.indexOf(node);
+  if (position >= 0) {
+    // Clicking a node already on the path takes the path back to it.
+    return {
+      ...state,
+      draft: { nodes: draft.slice(0, position + 1) },
+      message: `Back to ${nameOf(state, node)}.`,
+    };
+  }
+  const last = draft[draft.length - 1] ?? flow.source;
+  if (!state.index.neighbours.get(last)?.some((step) => step.node === node)) {
+    return say(state, `${nameOf(state, node)} is not next to ${nameOf(state, last)}.`);
+  }
+  const next = [...draft, node];
+  if (node === flow.target) {
+    return replaceEditedPath(state, flow, next);
+  }
+  return { ...state, draft: { nodes: next }, message: `${nameOf(state, node)} added.` };
+}
+
+/** A path drawn in one go (a drag over the nodes). */
+export function drawPath(state: PlayState, nodes: NodePath): PlayState {
+  const flow = flowOf(state, state.selected);
+  if (flow === undefined) {
+    return say(state, 'Select a flow first.');
+  }
+  if (
+    linksOfPath(state.index, nodes) === undefined ||
+    nodes[0] !== flow.source ||
+    nodes[nodes.length - 1] !== flow.target
+  ) {
+    return say(
+      state,
+      `Draw from ${nameOf(state, flow.source)} to ${nameOf(state, flow.target)} along the cables.`,
+    );
+  }
+  return replaceEditedPath(state, flow, nodes);
+}
+
+export function cancelDraft(state: PlayState): PlayState {
+  return state.draft === undefined
+    ? state
+    : { ...state, draft: undefined, message: 'Drawing cancelled.' };
+}
+
+/** The fastest path for the edited lane (no helper: the player could draw it). */
+export function suggestPath(state: PlayState): PlayState {
+  const flow = flowOf(state, state.selected);
+  if (flow === undefined) {
+    return say(state, 'Select a flow first.');
+  }
+  const path = shortestPath(state.index, flow.source, flow.target);
+  return path === undefined
+    ? say(state, 'There is no way through.')
+    : replaceEditedPath(state, flow, path);
+}
+
+function evenShares(count: number): number[] {
+  return count === 1 ? [1] : count === 2 ? [0.5, 0.5] : [0.5, 0.25, 0.25];
+}
+
+/** Splits the edited stage over one more path (a copy of the first one, to be redrawn). */
+export function addLane(state: PlayState): PlayState {
+  const flow = flowOf(state, state.selected);
+  const flowPlan = flow === undefined ? undefined : state.plan[flow.id];
+  const stage = flowPlan?.stages[state.stage];
+  if (flow === undefined || flowPlan === undefined || stage === undefined) {
+    return say(state, 'Draw a path first.');
+  }
+  if (!state.index.level.rules.split) {
+    return say(state, 'This level does not split flows yet.');
+  }
+  if (stage.paths.length >= MOST_LANES) {
+    return say(state, `A flow can use at most ${String(MOST_LANES)} paths.`);
+  }
+  const options = candidatePaths(state.index, flow.source, flow.target, 8);
+  const used = new Set(stage.paths.map((entry) => entry.nodes.join()));
+  const fresh =
+    options.find((path) => !used.has(path.join())) ?? options[0] ?? stage.paths[0]?.nodes ?? [];
+  const count = stage.paths.length + 1;
+  const shares = evenShares(count);
+  const paths = [...stage.paths.map((entry) => entry.nodes), fresh].map((nodes, at) => ({
+    nodes,
+    share: shares[at] ?? 0.25,
+  }));
+  const stages = flowPlan.stages.map((entry, at) =>
+    at === state.stage ? { ...entry, paths } : entry,
+  );
+  return {
+    ...withFlowPlan(
+      state,
+      flow.id,
+      { ...flowPlan, stages },
+      `${flow.name} now uses ${String(count)} paths. Redraw the new one if you like.`,
+    ),
+    lane: count - 1,
+    target: 'path',
+  };
+}
+
+/** Takes a path out of a split; its share goes to the first other path. */
+export function removeLane(state: PlayState): PlayState {
+  const flow = flowOf(state, state.selected);
+  const flowPlan = flow === undefined ? undefined : state.plan[flow.id];
+  const stage = flowPlan?.stages[state.stage];
+  if (
+    flow === undefined ||
+    flowPlan === undefined ||
+    stage === undefined ||
+    stage.paths.length < 2
+  ) {
+    return state;
+  }
+  const gone = stage.paths[state.lane];
+  const rest = stage.paths.filter((_, at) => at !== state.lane);
+  const paths = rest.map((entry, at) =>
+    at === 0 ? { ...entry, share: entry.share + (gone?.share ?? 0) } : entry,
+  );
+  const stages = flowPlan.stages.map((entry, at) =>
+    at === state.stage ? { ...entry, paths } : entry,
+  );
+  return {
+    ...withFlowPlan(
+      state,
+      flow.id,
+      { ...flowPlan, stages },
+      `${flow.name} uses ${String(paths.length)} path${paths.length === 1 ? '' : 's'}.`,
+    ),
+    lane: 0,
+  };
+}
+
+/** Moves a quarter of the flow from one path of the split to another. */
+export function moveShare(state: PlayState, from: number, to: number): PlayState {
+  const flow = flowOf(state, state.selected);
+  const flowPlan = flow === undefined ? undefined : state.plan[flow.id];
+  const stage = flowPlan?.stages[state.stage];
+  const source = stage?.paths[from];
+  const target = stage?.paths[to];
+  if (
+    flow === undefined ||
+    flowPlan === undefined ||
+    stage === undefined ||
+    source === undefined ||
+    target === undefined
+  ) {
+    return state;
+  }
+  if (from === to || source.share <= 0.25) {
+    return say(state, 'Every path of a split keeps at least a quarter.');
+  }
+  const paths = stage.paths.map((entry, at) =>
+    at === from
+      ? { ...entry, share: entry.share - 0.25 }
+      : at === to
+        ? { ...entry, share: entry.share + 0.25 }
+        : entry,
+  );
+  const stages = flowPlan.stages.map((entry, at) =>
+    at === state.stage ? { ...entry, paths } : entry,
+  );
+  return withFlowPlan(
+    state,
+    flow.id,
+    { ...flowPlan, stages },
+    `${flow.name}: ${paths.map((entry) => `${String(entry.share * 100)} %`).join(', ')}.`,
+  );
+}
+
+/** Gives the flow a backup: the path that shares the fewest cables with the one in use. */
+export function addBackup(state: PlayState): PlayState {
+  const flow = flowOf(state, state.selected);
+  const flowPlan = flow === undefined ? undefined : state.plan[flow.id];
+  if (flow === undefined || flowPlan === undefined) {
+    return say(state, 'Draw a path first.');
+  }
+  if (!state.index.level.rules.backup) {
+    return say(state, 'This level has no backup paths yet.');
+  }
+  const main = new Set(
+    (flowPlan.stages[0]?.paths ?? []).flatMap(
+      (entry) => linksOfPath(state.index, entry.nodes) ?? [],
+    ),
+  );
+  const options = candidatePaths(state.index, flow.source, flow.target, 8)
+    .map((path) => ({
+      path,
+      shared: (linksOfPath(state.index, path) ?? []).filter((id) => main.has(id)).length,
+    }))
+    .sort((a, b) => a.shared - b.shared);
+  const best = options[0];
+  if (best === undefined) {
+    return say(state, 'There is no other way through.');
+  }
+  return {
+    ...withFlowPlan(
+      state,
+      flow.id,
+      { ...flowPlan, backup: best.path },
+      `Backup for ${flow.name}: ${describePath(state, best.path)}.`,
+    ),
+    target: 'backup',
+  };
+}
+
+export function removeBackup(state: PlayState): PlayState {
+  const flow = flowOf(state, state.selected);
+  const flowPlan = flow === undefined ? undefined : state.plan[flow.id];
+  if (flow === undefined || flowPlan?.backup === undefined) {
+    return state;
+  }
+  const rest: FlowPlan = {
+    stages: flowPlan.stages,
+    redundancy: flowPlan.redundancy,
+    throttle: flowPlan.throttle,
+  };
+  return {
+    ...withFlowPlan(state, flow.id, rest, `Backup for ${flow.name} removed.`),
+    target: 'path',
+  };
+}
+
+export function setRedundancy(state: PlayState, redundancy: Redundancy): PlayState {
+  const flow = flowOf(state, state.selected);
+  const flowPlan = flow === undefined ? undefined : state.plan[flow.id];
+  if (flow === undefined || flowPlan === undefined) {
+    return say(state, 'Draw a path first.');
+  }
+  if (!state.index.level.rules.redundancy) {
+    return say(state, 'This level has no redundancy yet.');
+  }
+  return withFlowPlan(
+    state,
+    flow.id,
+    { ...flowPlan, redundancy },
+    `${flow.name}: ${String(redundancy * 100)} % extra packets.`,
+  );
+}
+
+export function setThrottle(state: PlayState, throttle: number): PlayState {
+  const flow = flowOf(state, state.selected);
+  const flowPlan = flow === undefined ? undefined : state.plan[flow.id];
+  if (flow === undefined || flowPlan === undefined) {
+    return say(state, 'Draw a path first.');
+  }
+  if (!state.index.level.rules.throttle || !profiles[flow.profile].throttlable) {
+    return say(state, `${profiles[flow.profile].name} traffic cannot be held back.`);
+  }
+  return withFlowPlan(
+    state,
+    flow.id,
+    { ...flowPlan, throttle },
+    `${flow.name} sends ${String(throttle * 100)} % of its traffic.`,
+  );
+}
+
+/** From a step on, the flow takes other paths (a link that moves). The new stage starts as a copy. */
+export function addStage(state: PlayState, from: number): PlayState {
+  const flow = flowOf(state, state.selected);
+  const flowPlan = flow === undefined ? undefined : state.plan[flow.id];
+  if (flow === undefined || flowPlan === undefined) {
+    return say(state, 'Draw a path first.');
+  }
+  if (!state.index.level.rules.stages) {
+    return say(state, 'This level has no planned changes of path yet.');
+  }
+  if (flowPlan.stages.some((stage) => stage.from === from) || from <= 0) {
+    return say(state, `There is already a change at step ${String(from)}.`);
+  }
+  const before =
+    [...flowPlan.stages].filter((stage) => stage.from < from).pop() ?? flowPlan.stages[0];
+  const stages: RouteStage[] = [...flowPlan.stages, { from, paths: before?.paths ?? [] }].sort(
+    (a, b) => a.from - b.from,
+  );
+  const at = stages.findIndex((stage) => stage.from === from);
+  return {
+    ...withFlowPlan(
+      state,
+      flow.id,
+      { ...flowPlan, stages },
+      `${flow.name} changes its path at step ${String(from)}.`,
+    ),
+    stage: at,
+    lane: 0,
+    target: 'path',
+  };
+}
+
+export function removeStage(state: PlayState): PlayState {
+  const flow = flowOf(state, state.selected);
+  const flowPlan = flow === undefined ? undefined : state.plan[flow.id];
+  if (
+    flow === undefined ||
+    flowPlan === undefined ||
+    state.stage === 0 ||
+    flowPlan.stages.length < 2
+  ) {
+    return state;
+  }
+  const stages = flowPlan.stages.filter((_, at) => at !== state.stage);
+  return {
+    ...withFlowPlan(
+      state,
+      flow.id,
+      { ...flowPlan, stages },
+      `${flow.name} no longer changes its path.`,
+    ),
+    stage: 0,
+    lane: 0,
+  };
+}
+
+/** The steps where a change of path can be planned: where something starts or stops. */
+export function stageChoices(state: PlayState): number[] {
+  return switchSteps(state.index);
+}
+
+export function undo(state: PlayState): PlayState {
+  const previous = state.past[state.past.length - 1];
+  if (previous === undefined) {
+    return state;
+  }
+  return {
+    ...state,
+    plan: previous,
+    past: state.past.slice(0, -1),
+    future: [state.plan, ...state.future],
+    draft: undefined,
+    message: 'Undone.',
+  };
+}
+
+export function redo(state: PlayState): PlayState {
+  const next = state.future[0];
+  if (next === undefined) {
+    return state;
+  }
+  return {
+    ...state,
+    plan: next,
+    past: [...state.past, state.plan],
+    future: state.future.slice(1),
+    draft: undefined,
+    message: 'Redone.',
+  };
+}
+
+export function resetPlan(state: PlayState): PlayState {
+  return Object.keys(state.plan).length === 0
+    ? state
+    : { ...commit(state, {}, 'The plan is empty again.'), assisted: false };
+}
+
+/** A helper fills in the whole plan. The run is marked as assisted and earns no stars. */
+export function applyStrategy(state: PlayState, which: 'shortest' | 'balanced'): PlayState {
+  const plan = which === 'shortest' ? shortestPathPlan(state.index) : loadBalancedPlan(state.index);
+  return {
+    ...commit(
+      state,
+      plan,
+      which === 'shortest'
+        ? 'Everybody takes the shortest path. This run earns no stars.'
+        : 'The load is balanced for you. This run earns no stars.',
+    ),
+    assisted: true,
+    stage: 0,
+    lane: 0,
+    target: 'path',
+  };
+}
+
+/** Whether every flow has a path and the plan can run. */
+export function readyToRun(state: PlayState): boolean {
+  return (
+    state.index.level.flows.every((flow) => state.plan[flow.id] !== undefined) &&
+    problemsOfPlan(state.index, state.plan).length === 0
+  );
+}
+
+/** The flows that still need a path. */
+export function unrouted(state: PlayState): Flow[] {
+  return state.index.level.flows.filter((flow) => state.plan[flow.id] === undefined);
+}
+
+/** Takes the last node off the path that is being drawn. */
+export function stepBack(state: PlayState): PlayState {
+  const draft = state.draft?.nodes;
+  if (draft === undefined) {
+    return state;
+  }
+  return draft.length <= 1
+    ? { ...state, draft: undefined, message: 'Drawing cancelled.' }
+    : { ...state, draft: { nodes: draft.slice(0, -1) }, message: 'Last node taken back.' };
+}

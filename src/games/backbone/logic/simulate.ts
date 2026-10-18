@@ -261,6 +261,9 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
         sent: demand * (flowPlan?.throttle ?? 0),
         delivered: share,
         latency: arrived > 0 ? latencySum / arrived : 0,
+        paths: paths
+          .filter((path) => path.amount > 0)
+          .map((path) => ({ links: path.links, share: path.share })),
         value,
         maxValue,
       };
