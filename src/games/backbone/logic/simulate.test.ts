@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { diamond, randomLevel, randomPlan } from './fixtures';
+import { allRules as allRulesForQueues, diamond, randomLevel, randomPlan } from './fixtures';
 import { problemsOfPlan, singlePath } from './plan';
 import { evaluate, REPAIR_DELAY } from './simulate';
 import type { Flow, FlowPlan, Plan } from './types';
@@ -350,5 +350,118 @@ describe('policy: a flow that has to pass a node', () => {
       );
       expect(earned[0]).toBeCloseTo(expected, 9);
     }
+  });
+});
+
+describe('queues: buffers that hold back a burst', () => {
+  const burst = (buffer: number, queues = true, profile: Flow['profile'] = 'web') =>
+    diamond({
+      rules: { ...allRulesForQueues, queues },
+      flows: [{ id: 'f1', name: 'Flow', source: 'A', target: 'D', profile, demand: 8 }],
+      links: diamond().links.map((link) => ({ ...link, buffer })),
+      situations: [
+        {
+          id: 'rush',
+          name: 'Rush',
+          steps: 8,
+          events: [{ kind: 'burst', flow: 'f1', from: 2, to: 4, factor: 2 }],
+        },
+      ],
+    });
+
+  it('absorbs a burst that does not fit, and works it off afterwards', () => {
+    const steps = evaluate(burst(6), { f1: singlePath(fast) }).situations[0]?.steps ?? [];
+    // Step 2 wants 16 on a cable of 10: 10 go through, 6 wait in the buffer
+    expect(steps[2]?.links.AB?.queued).toBeCloseTo(6, 9);
+    expect(steps[2]?.flows.f1?.delivered).toBeCloseTo(1, 9);
+    // Step 3 wants 16 again: the buffer is full, 6 of the new traffic is dropped
+    expect(steps[3]?.flows.f1?.delivered).toBeLessThan(1);
+    // Afterwards the backlog is worked off: 8 new and 6 waiting, 10 through, 4 wait, then 2, then none
+    expect(steps[4]?.links.AB?.queued).toBeCloseTo(4, 9);
+    expect(steps[5]?.links.AB?.queued).toBeCloseTo(2, 9);
+    expect(steps[6]?.links.AB?.queued).toBe(0);
+  });
+
+  it('is better than dropping at once, and slower', () => {
+    const none = evaluate(burst(0), { f1: singlePath(fast) });
+    const some = evaluate(burst(6), { f1: singlePath(fast) });
+    expect(some.score).toBeGreaterThan(none.score);
+    const latency = (evaluation: typeof some, step: number): number =>
+      evaluation.situations[0]?.steps[step]?.flows.f1?.latency ?? 0;
+    expect(latency(some, 3)).toBeGreaterThan(latency(none, 3));
+  });
+
+  it('changes nothing in a level without the rule', () => {
+    const without = evaluate(burst(6, false), { f1: singlePath(fast) });
+    const none = evaluate(burst(0, true), { f1: singlePath(fast) });
+    expect(without.score).toBeCloseTo(none.score, 9);
+    expect(without.situations[0]?.steps[2]?.links.AB?.queued).toBe(0);
+  });
+
+  it('makes traffic wait behind the classes that are served before it', () => {
+    const level = diamond({
+      rules: { ...allRulesForQueues, queues: true },
+      flows: [
+        { id: 'voice', name: 'Voice', source: 'A', target: 'D', profile: 'voice', demand: 4 },
+        { id: 'bulk', name: 'Bulk', source: 'A', target: 'D', profile: 'bulk', demand: 14 },
+      ],
+      links: diamond().links.map((link) => ({ ...link, buffer: 8 })),
+    });
+    const step = evaluate(level, { voice: singlePath(fast), bulk: singlePath(fast) }).situations[0]
+      ?.steps[1];
+    // The bulk backlog is behind the voice: voice does not wait for it
+    expect(step?.flows.voice?.delivered).toBeCloseTo(1, 9);
+    expect(step?.flows.voice?.latency).toBeCloseTo(2 * (1 + 1), 6);
+    expect(step?.links.AB?.queued).toBeGreaterThan(0);
+  });
+});
+
+describe('a flood', () => {
+  const flooded = (firewall: boolean) =>
+    diamond({
+      nodes: diamond().nodes.map((node) =>
+        node.id === 'B' && firewall ? { ...node, kind: 'firewall' as const } : node,
+      ),
+      flows: [{ id: 'f1', name: 'Web', source: 'A', target: 'D', profile: 'web', demand: 6 }],
+      situations: [
+        {
+          id: 'attack',
+          name: 'Attack',
+          steps: 6,
+          events: [{ kind: 'flood', source: 'A', target: 'D', from: 2, to: 5, rate: 8 }],
+        },
+      ],
+    });
+
+  it('fills the cables on its way and takes room from the traffic in its class', () => {
+    const steps = evaluate(flooded(false), { f1: singlePath(fast) }).situations[0]?.steps ?? [];
+    expect(steps[1]?.links.AB?.attack).toBe(0);
+    expect(steps[2]?.links.AB?.attack).toBe(8);
+    expect(steps[2]?.links.BD?.attack).toBe(8);
+    expect(steps[2]?.links.AB?.offered).toBe(14);
+    // 14 wanted on a cable of 10: the attack and the web flow share the middle queue
+    expect(steps[2]?.flows.f1?.delivered).toBeCloseTo(10 / 14, 9);
+    expect(steps[5]?.flows.f1?.delivered).toBeCloseTo(1, 9);
+  });
+
+  it('is kept out of the way by taking the other road', () => {
+    const steps = evaluate(flooded(false), { f1: singlePath(slow) }).situations[0]?.steps ?? [];
+    expect(steps[2]?.flows.f1?.delivered).toBeCloseTo(1, 9);
+    expect(steps[2]?.links.AC?.attack).toBe(0);
+  });
+
+  it('is stopped by the first firewall on its way', () => {
+    const steps = evaluate(flooded(true), { f1: singlePath(fast) }).situations[0]?.steps ?? [];
+    expect(steps[2]?.links.AB?.attack).toBe(8);
+    expect(steps[2]?.links.BD?.attack).toBe(0);
+  });
+
+  it('does not touch traffic that is served before it', () => {
+    const level = diamond({
+      ...flooded(false),
+      flows: [{ id: 'f1', name: 'Voice', source: 'A', target: 'D', profile: 'voice', demand: 6 }],
+    });
+    const steps = evaluate(level, { f1: singlePath(fast) }).situations[0]?.steps ?? [];
+    expect(steps[2]?.flows.f1?.delivered).toBeCloseTo(1, 9);
   });
 });

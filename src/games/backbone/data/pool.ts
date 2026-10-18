@@ -1,3 +1,6 @@
+import { withBuilt } from '../logic/build';
+import { indexLevel } from '../logic/graph';
+import { evaluate } from '../logic/simulate';
 import type { Level, Plan, Rules } from '../logic/types';
 import type { SettingId } from './settings';
 
@@ -30,6 +33,7 @@ export function featuresUsed(plan: Plan): Rules {
     redundancy: false,
     throttle: false,
     stages: false,
+    queues: false,
   };
   for (const flowPlan of Object.values(plan)) {
     used.split ||= flowPlan.stages.some((stage) => stage.paths.length > 1);
@@ -63,3 +67,13 @@ export function toCatalogEntry(record: LevelRecord): CatalogEntry {
     situations: record.level.situations.length,
   };
 }
+
+/** How much the buffers of a level matter: what the best plan scores with them, minus without. */
+export function queueGain(record: LevelRecord): number {
+  const without = { ...record.level, rules: { ...record.level.rules, queues: false } };
+  const index = indexLevel(withBuilt(without, record.best.built));
+  return record.best.score - evaluate(index, record.best.plan).score;
+}
+
+/** The least the buffers have to change the score in a level of the chapter about queues. */
+export const QUEUE_GAIN = 0.03;

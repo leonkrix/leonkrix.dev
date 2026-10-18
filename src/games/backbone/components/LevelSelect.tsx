@@ -1,7 +1,7 @@
-import { chapters } from '../data/campaign-plan';
+import { chapters } from '../data/chapters';
 import type { CatalogEntry } from '../data/pool';
-import { settings } from '../data/settings';
-import { type Tier, tiers } from '../logic/random-level';
+import { settingNames } from '../data/setting-names';
+import { type Tier, tiers } from '../logic/tiers';
 import { Star } from './Svg';
 
 /** The state of the random level maker, which lives in the game */
@@ -83,7 +83,7 @@ export function LevelSelect({ catalog, stars, onPick, random = idle }: LevelSele
                     <span className="bb-card-text">
                       <span className="bb-card-title">{entry.title}</span>
                       <span className="bb-card-meta">
-                        {settings[entry.setting].name} · {entry.nodes} nodes · {entry.flows} flows
+                        {settingNames[entry.setting]} · {entry.nodes} nodes · {entry.flows} flows
                         {entry.situations > 1 ? ` · ${String(entry.situations)} situations` : ''}
                       </span>
                     </span>

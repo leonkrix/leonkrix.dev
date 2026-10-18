@@ -14,6 +14,8 @@ function linkName(index: LevelIndex, id: string): string {
 
 /** What is going on in a step of a situation, one sentence for each event. */
 export function eventsAt(index: LevelIndex, situation: Situation, step: number): string[] {
+  const nodeName = (id: string): string =>
+    index.level.nodes.find((node) => node.id === id)?.name ?? id;
   const flowName = (id: string): string =>
     index.level.flows.find((flow) => flow.id === id)?.name ?? id;
   return situation.events
@@ -26,6 +28,8 @@ export function eventsAt(index: LevelIndex, situation: Situation, step: number):
           return `${linkName(index, event.link)} is cut`;
         case 'lossy':
           return `${linkName(index, event.link)} loses ${String(Math.round(event.loss * 100))} % of its packets`;
+        case 'flood':
+          return `${nodeName(event.source)} floods ${nodeName(event.target)} with ${String(event.rate)} per step`;
         case 'slow':
           return `${linkName(index, event.link)} runs at ${String(Math.round(event.factor * 100))} % speed`;
       }

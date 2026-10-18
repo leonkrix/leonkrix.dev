@@ -1,4 +1,5 @@
 import { createRandom, type Random } from '../../shared/random';
+import { floodLinks } from './flood';
 import {
   angleBetween,
   distance,
@@ -36,7 +37,7 @@ import { problemsOfLevel } from './validate';
 export type Family = 'grid' | 'ring' | 'hub' | 'mesh';
 
 /** What happens in a situation. `calm` has no events. */
-export type SituationKind = 'calm' | 'rush' | 'cut' | 'lossy' | 'moving' | 'slow';
+export type SituationKind = 'calm' | 'rush' | 'cut' | 'lossy' | 'moving' | 'slow' | 'flood';
 
 export interface LevelSpec {
   seed: number;
@@ -70,6 +71,7 @@ const SITUATION_NAMES: Record<SituationKind, string> = {
   lossy: 'Bad weather',
   moving: 'On the move',
   slow: 'Congestion',
+  flood: 'Under attack',
 };
 
 /** Typical demand of a profile before the level is scaled to its pressure. */
@@ -269,13 +271,16 @@ function buildNetwork(spec: LevelSpec, random: Random): { nodes: NetNode[]; link
       mapPoint(points[b] ?? { x: 0, y: 0 }),
     );
     const core = (degree[a] ?? 0) >= 3 && (degree[b] ?? 0) >= 3;
+    const capacity = 5 + random.int(6) + (core ? 3 : 0);
     return {
       id: `l${String(position)}`,
       a: `n${String(a)}`,
       b: `n${String(b)}`,
-      capacity: 5 + random.int(6) + (core ? 3 : 0),
+      capacity,
       delay: Math.min(4, Math.max(1, Math.round(length / 16))),
       loss: lossyPicks.has(position) ? (random.next() < 0.5 ? 0.1 : 0.2) : 0,
+      // With queues some links have no buffer, some a small one and some a big one
+      ...(spec.rules.queues ? { buffer: Math.ceil(capacity * random.pick([0, 0.4, 0.8])) } : {}),
     };
   });
   return { nodes, links };
@@ -417,6 +422,32 @@ function eventsFor(kind: SituationKind, level: Level, steps: number, random: Ran
       return link === undefined
         ? []
         : [{ kind: 'slow', link, from: 2, to: Math.min(steps, 6), factor: 0.5 }];
+    }
+    case 'flood': {
+      const servers = level.nodes.filter((node) => node.kind === 'server');
+      const target = random.pick(servers.length > 0 ? servers : level.nodes);
+      const attackers = level.nodes.filter(
+        (node) =>
+          node.id !== target.id &&
+          node.kind !== 'firewall' &&
+          (shortestPath(index, node.id, target.id)?.length ?? 0) >= 3,
+      );
+      const attacker = attackers.length > 0 ? random.pick(attackers) : undefined;
+      if (attacker === undefined) {
+        return [];
+      }
+      const probe = {
+        kind: 'flood',
+        source: attacker.id,
+        target: target.id,
+        from: 0,
+        to: 1,
+        rate: 1,
+      } as const;
+      const used = floodLinks(index, probe, () => true);
+      const room = Math.min(...used.map((id) => index.linkById.get(id)?.capacity ?? 5));
+      const rate = Math.max(2, Math.round(room * 0.7));
+      return [{ ...probe, from: 2, to: Math.min(steps, 7), rate }];
     }
     case 'moving': {
       const safe = order.filter((id) => keepsConnected(id));

@@ -3,10 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { withBuilt } from './build';
 import { indexLevel } from './graph';
 import { placeNames } from './labels';
-import { isRandom, runJob, seedOf, specFor, tierOf, tiers } from './random-level';
+import { runJob, specFor } from './random-level';
 import { evaluate } from './simulate';
 import { solveDesign } from './solver';
 import { isAdmissible } from './stars';
+import { isRandom, seedOf, tierOf, tiers } from './tiers';
 import { problemsOfLevel } from './validate';
 
 describe('random levels', () => {

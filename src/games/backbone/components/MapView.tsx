@@ -40,6 +40,8 @@ interface MapViewProps {
   loads: Readonly<Record<string, LinkStepResult>> | undefined;
   /** Links whose load would change if the path being drawn were taken: shown as a forecast */
   forecast: Readonly<Record<string, LinkStepResult>>;
+  /** Cables a hint points at */
+  hinted: ReadonlySet<string>;
   routes: readonly DrawnRoute[];
   packets: readonly Packet[];
   /** The selected flow's end points are marked */
@@ -90,13 +92,18 @@ function trim(value: number): string {
 
 /** A number written on a link: what it carries out of what it can carry. */
 function loadLabel(result: LinkStepResult | undefined): string {
-  return result === undefined ? '' : `${trim(result.offered)}/${String(result.capacity)}`;
+  if (result === undefined) {
+    return '';
+  }
+  const waiting = result.queued > 0.05 ? ` · q${trim(result.queued)}` : '';
+  return `${trim(result.offered)}/${String(result.capacity)}${waiting}`;
 }
 
 export function MapView({
   index,
   loads,
   forecast,
+  hinted,
   routes,
   packets,
   source,
@@ -229,6 +236,7 @@ export function MapView({
               data-down={down}
               data-load={loadClass(ratio)}
               data-lossy={link.loss > 0}
+              data-hint={hinted.has(link.id)}
             >
               <line
                 className="bb-link"
@@ -246,6 +254,16 @@ export function MapView({
                 y2={to.y}
                 strokeWidth={Math.max(0.5, width * 0.5)}
               />
+              {(result?.attack ?? 0) > 0 && (
+                <line
+                  className="bb-link-attack"
+                  x1={from.x}
+                  y1={from.y}
+                  x2={to.x}
+                  y2={to.y}
+                  strokeWidth={width * 0.35}
+                />
+              )}
               {link.loss > 0 && (
                 <line
                   className="bb-link-lossy"

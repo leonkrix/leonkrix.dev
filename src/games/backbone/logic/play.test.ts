@@ -194,7 +194,14 @@ describe('the options of a flow', () => {
     const plain = startState(
       diamond({
         flows,
-        rules: { split: false, backup: false, redundancy: false, throttle: false, stages: false },
+        rules: {
+          split: false,
+          backup: false,
+          redundancy: false,
+          throttle: false,
+          stages: false,
+          queues: false,
+        },
       }),
     );
     const state = drawPath(plain, ['A', 'B', 'D']);

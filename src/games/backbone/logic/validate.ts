@@ -82,6 +82,15 @@ export function problemsOfLevel(level: Level): string[] {
         if (!flowIds.has(event.flow) || event.factor <= 0) {
           problems.push(`a burst of ${situation.id} is wrong`);
         }
+      } else if (event.kind === 'flood') {
+        if (
+          !nodeIds.has(event.source) ||
+          !nodeIds.has(event.target) ||
+          event.source === event.target ||
+          event.rate <= 0
+        ) {
+          problems.push(`a flood of ${situation.id} is wrong`);
+        }
       } else if (!linkIds.has(event.link)) {
         problems.push(`an event of ${situation.id} names a link that does not exist`);
       }

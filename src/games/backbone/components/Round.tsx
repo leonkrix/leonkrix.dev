@@ -4,6 +4,7 @@ import type { LevelRecord } from '../data/pool';
 import { loadBalancedPlan, shortestPathPlan } from '../logic/baselines';
 import { optionalLinks, simpleBuild, withBuilt } from '../logic/build';
 import { indexLevel } from '../logic/graph';
+import { hintFor } from '../logic/hint';
 import { placeNames, placeTag } from '../logic/labels';
 import {
   applyStrategy,
@@ -64,6 +65,10 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
   const [focused, setFocused] = useState(record.level.nodes[0]?.id ?? '');
   const [justSolved, setJustSolved] = useState(false);
   const [hover, setHover] = useState<string | undefined>();
+  // The hint that was asked for, and the plan it was asked for: a change of the plan ends it
+  const [asked, setAsked] = useState<
+    { plan: PlayState['plan']; built: PlayState['built']; stage: 1 | 2 | 3 } | undefined
+  >();
   const reducedRef = useRef(false);
   const clockRef = useRef(clock);
 
@@ -235,14 +240,38 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
   const loads = run === undefined ? preview?.links : stressStep?.links;
 
   const missing = unrouted(play);
+  const hint =
+    run === undefined && asked?.plan === play.plan && asked.built === play.built
+      ? hintFor(
+          play,
+          { plan: record.best.plan, built: record.best.built, score: record.best.score },
+          asked.stage,
+        )
+      : undefined;
+  const askForHint = (): void => {
+    const stage = asked?.plan === play.plan && asked.built === play.built ? asked.stage : 0;
+    const next = Math.min(3, stage + 1) as 1 | 2 | 3;
+    const given = hintFor(
+      play,
+      { plan: record.best.plan, built: record.best.built, score: record.best.score },
+      next,
+    );
+    setAsked({ plan: play.plan, built: play.built, stage: next });
+    // A hint that tells what to do is help: a run after it earns no stars
+    if (given.givesAway && !play.assisted) {
+      setPlay({ ...play, assisted: true });
+    }
+  };
   const status =
-    run !== undefined
-      ? `Stress test of ${level.title}`
-      : play.message !== ''
-        ? play.message
-        : missing.length > 0
-          ? `${String(missing.length)} flow${missing.length === 1 ? '' : 's'} still need${missing.length === 1 ? 's' : ''} a path.`
-          : 'Every flow has a path. Run the stress test when you are ready.';
+    hint !== undefined
+      ? `Hint ${String(hint.stage)} of 3: ${hint.text}${hint.givesAway ? ' (this run earns no stars)' : ''}`
+      : run !== undefined
+        ? `Stress test of ${level.title}`
+        : play.message !== ''
+          ? play.message
+          : missing.length > 0
+            ? `${String(missing.length)} flow${missing.length === 1 ? '' : 's'} still need${missing.length === 1 ? 's' : ''} a path.`
+            : 'Every flow has a path. Run the stress test when you are ready.';
 
   return (
     // The keys bubble up from the nodes and buttons inside, which are the interactive elements
@@ -274,6 +303,7 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
             index={index}
             loads={loads}
             forecast={forecast}
+            hinted={new Set(hint?.links ?? [])}
             routes={routes}
             packets={packets}
             source={run === undefined ? selectedFlow?.source : undefined}
@@ -301,9 +331,16 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
               setPlay(toggleBuild(play, id));
             }}
           />
-          <p className="bb-status" role="status">
-            {status}
-          </p>
+          <div className="bb-status-row">
+            <p className="bb-status" role="status">
+              {status}
+            </p>
+            {run === undefined && (
+              <button type="button" className="bb-hint-button" onClick={askForHint}>
+                Hint
+              </button>
+            )}
+          </div>
           <div className="bb-under">
             {run === undefined ? (
               <div className="bb-actions">
@@ -410,6 +447,7 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
               <BuildPanel state={play} onChange={setPlay} />
               <FlowList
                 state={play}
+                hinted={new Set(hint?.flows ?? [])}
                 onSelect={(id) => {
                   setPlay(selectFlow(play, id));
                 }}
@@ -454,6 +492,7 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
               <th scope="col">Cable</th>
               <th scope="col">Capacity</th>
               <th scope="col">Delay</th>
+              <th scope="col">Buffer</th>
               <th scope="col">Traffic</th>
               <th scope="col">Loss</th>
             </tr>
@@ -464,6 +503,7 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
                 <th scope="row">{linkName(index, link.id)}</th>
                 <td>{link.capacity}</td>
                 <td>{link.delay}</td>
+                <td>{index.level.rules.queues ? (link.buffer ?? 0) : 0}</td>
                 <td>{Math.round((loads?.[link.id]?.offered ?? 0) * 10) / 10}</td>
                 <td>{link.loss > 0 ? `${String(Math.round(link.loss * 100))} %` : 'none'}</td>
               </tr>

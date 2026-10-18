@@ -172,7 +172,7 @@ test.describe('Backbone', () => {
     await page.getByRole('button', { name: 'Add path' }).click();
     await expect(page.getByRole('button', { name: /Path 2/ })).toBeVisible();
     await page.getByRole('link', { name: 'All levels' }).click();
-    await page.locator('a[href="?level=c7-1"]').click();
+    await page.locator('a[href="?level=c8-1"]').click();
     await expect(page.getByRole('list', { name: 'Cables that can be built' })).toBeVisible({
       timeout: 15_000,
     });
@@ -180,6 +180,39 @@ test.describe('Backbone', () => {
     await expect(page.getByText(/is built for/)).toBeVisible();
     await page.getByRole('button', { name: 'Remove', exact: true }).first().click();
     await expect(page.getByText(/is not built any more/)).toBeVisible();
+  });
+
+  test('gives hints that get more concrete, and the last one costs the stars', async ({ page }) => {
+    const record = levelOf('c1-1');
+    await open(page, 'c1-1');
+    const status = page.getByRole('status').filter({ hasText: /Hint/ });
+    await page.getByRole('button', { name: 'Hint' }).click();
+    await expect(status).toContainText('Give every flow a path first');
+    await playBest(page, levelOf('c1-1'));
+    // A plan that is already the best one has nothing left to hint at
+    await page.getByRole('button', { name: 'Hint' }).click();
+    await expect(
+      page.getByRole('status').filter({ hasText: /about as good as it gets/ }),
+    ).toBeVisible();
+    // A worse plan: the helper "shortest" is worse in c1-1, so the hints have something to say
+    await page.getByRole('button', { name: 'Auto: shortest' }).click();
+    await page.getByRole('button', { name: 'Hint' }).click();
+    await expect(page.getByRole('status').filter({ hasText: /Hint 1 of 3/ })).toBeVisible();
+    await page.getByRole('button', { name: 'Hint' }).click();
+    await expect(page.getByRole('status').filter({ hasText: /Hint 2 of 3/ })).toBeVisible();
+    await page.getByRole('button', { name: 'Hint' }).click();
+    await expect(
+      page.getByRole('status').filter({ hasText: /Hint 3 of 3.*earns no stars/ }),
+    ).toBeVisible();
+    expect(record.level.flows.length).toBeGreaterThan(0);
+  });
+
+  test('shows the buffers of the links from the chapter about queues on', async ({ page }) => {
+    await open(page, 'c6-1');
+    await page.getByText('Text version of the network').click();
+    await expect(page.getByRole('columnheader', { name: 'Buffer' })).toBeVisible();
+    const buffers = await page.locator('.bb-text tbody tr td:nth-child(4)').allTextContents();
+    expect(buffers.some((value) => Number(value) > 0)).toBe(true);
   });
 
   test('makes a random level in the background', async ({ page }) => {

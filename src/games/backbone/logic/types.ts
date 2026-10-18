@@ -34,8 +34,10 @@ export interface NetLink {
   loss: number;
   /** What the link costs to build (a link of a level with a Build phase) */
   cost?: number;
-  /** The link does not exist until the player builds it (chapter 7) */
+  /** The link does not exist until the player builds it (chapter 8) */
   optional?: boolean;
+  /** How much traffic of each queue class the link can hold back when it is full (chapter 6) */
+  buffer?: number;
 }
 
 export type ProfileId = 'voice' | 'control' | 'transaction' | 'video' | 'web' | 'bulk';
@@ -75,7 +77,8 @@ export type NetEvent =
   | { kind: 'burst'; flow: string; from: number; to: number; factor: number }
   | { kind: 'down'; link: string; from: number; to: number }
   | { kind: 'lossy'; link: string; from: number; to: number; loss: number }
-  | { kind: 'slow'; link: string; from: number; to: number; factor: number };
+  | { kind: 'slow'; link: string; from: number; to: number; factor: number }
+  | { kind: 'flood'; source: string; target: string; from: number; to: number; rate: number };
 
 export interface Situation {
   id: string;
@@ -99,6 +102,8 @@ export interface Rules {
   throttle: boolean;
   /** Change the path at a planned step */
   stages: boolean;
+  /** Links have buffers: a burst that does not fit waits in a queue (and makes traffic late) */
+  queues: boolean;
 }
 
 export interface Zone {
@@ -176,6 +181,11 @@ export interface FlowStepResult {
 export interface LinkStepResult {
   /** Traffic that wanted to use the link */
   offered: number;
+  /** Attack traffic that flooded the link in this step (it is part of `offered`) */
+  attack: number;
+  /** Traffic waiting in the buffers of the link at the end of the step, and what they can hold */
+  queued: number;
+  buffer: number;
   /** Capacity of the link in this step (0 when it is down) */
   capacity: number;
   down: boolean;

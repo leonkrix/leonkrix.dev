@@ -13,6 +13,7 @@ export const allRules: Rules = {
   redundancy: true,
   throttle: true,
   stages: true,
+  queues: true,
 };
 
 export function diamond(overrides: Partial<Level> = {}): Level {
@@ -65,6 +66,7 @@ export function randomLevel(seed: number, nodeCount = 7, flowCount = 4): Level {
       capacity: 4 + random.int(7),
       delay: 1 + random.int(3),
       loss: random.next() < 0.25 ? 0.1 : 0,
+      buffer: random.int(6),
     });
   };
   for (let position = 0; position < nodeCount; position += 1) {
@@ -108,6 +110,21 @@ export function randomLevel(seed: number, nodeCount = 7, flowCount = 4): Level {
         events: [
           { kind: 'down', link: cut.id, from: 2, to: 6 },
           { kind: 'burst', flow: burst.id, from: 3, to: 5, factor: 2 },
+        ],
+      },
+      {
+        id: 'attack',
+        name: 'Attack',
+        steps: 8,
+        events: [
+          {
+            kind: 'flood',
+            source: 'n0',
+            target: `n${String(Math.floor(nodeCount / 2))}`,
+            from: 1,
+            to: 6,
+            rate: 4,
+          },
         ],
       },
     ],

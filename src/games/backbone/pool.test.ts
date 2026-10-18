@@ -3,7 +3,14 @@ import { describe, expect, it } from 'vitest';
 import { LEVEL_PLAN } from './data/campaign-plan';
 import catalogJson from './data/catalog.json';
 import levelsJson from './data/levels.json';
-import { type CatalogEntry, featuresUsed, type LevelRecord, toCatalogEntry } from './data/pool';
+import {
+  type CatalogEntry,
+  featuresUsed,
+  type LevelRecord,
+  QUEUE_GAIN,
+  queueGain,
+  toCatalogEntry,
+} from './data/pool';
 import { settings } from './data/settings';
 import { withBuilt } from './logic/build';
 import { indexLevel } from './logic/graph';
@@ -93,7 +100,13 @@ describe('the level pool', () => {
       expect(record.best.score).toBeGreaterThanOrEqual(plan?.minBest ?? 1);
       const used = featuresUsed(record.best.plan);
       for (const rule of plan?.requires ?? []) {
-        expect(used[rule], rule).toBe(true);
+        if (rule === 'queues') {
+          expect(queueGain(record), 'the buffers change the score').toBeGreaterThanOrEqual(
+            QUEUE_GAIN,
+          );
+        } else {
+          expect(used[rule], rule).toBe(true);
+        }
       }
     });
 

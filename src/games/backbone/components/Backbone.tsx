@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { chapters } from '../data/campaign-plan';
 import catalogJson from '../data/catalog.json';
+import { chapters } from '../data/chapters';
 import { loadPool } from '../data/load';
 import type { CatalogEntry, LevelRecord } from '../data/pool';
-import { isRandom, seedOf, type Tier, tierOf, tiers } from '../logic/random-level';
+import { isRandom, seedOf, type Tier, tierOf, tiers } from '../logic/tiers';
 import BackboneSkeleton from './BackboneSkeleton';
 import { LevelSelect } from './LevelSelect';
 import { Round } from './Round';
@@ -51,6 +51,7 @@ export default function Backbone() {
   const [tier, setTier] = useState<Tier>(1);
   const [random, setRandom] = useState<LevelRecord | undefined>();
   const randomIdRef = useRef<string | undefined>(undefined);
+  const [copied, setCopied] = useState(false);
 
   const address = (query: Record<string, string> | undefined): void => {
     const url = new URL(window.location.href);
@@ -70,11 +71,16 @@ export default function Backbone() {
     address({ level: 'random', tier: String(level.tier), seed: level.seed });
   });
 
+  // The level pool is only fetched when a level of the campaign is opened: the overview needs the
+  // small catalog only, and the first load of the page stays small
+  const needsPool = where.kind === 'level';
   useEffect(() => {
-    loadPool().then(setPool, () => {
-      setFailed(true);
-    });
-  }, []);
+    if (needsPool) {
+      loadPool().then(setPool, () => {
+        setFailed(true);
+      });
+    }
+  }, [needsPool]);
 
   // The back and forward buttons of the browser
   useEffect(() => {
@@ -184,6 +190,23 @@ export default function Backbone() {
             <span>Random level</span>
             <strong>{tiers[where.tier - 1]?.name}</strong>
           </p>
+          <button
+            type="button"
+            className="bb-copy"
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href).then(
+                () => {
+                  setCopied(true);
+                  setTimeout(() => {
+                    setCopied(false);
+                  }, 2000);
+                },
+                () => undefined,
+              );
+            }}
+          >
+            {copied ? 'Link copied' : 'Copy link to this level'}
+          </button>
         </div>
         <div className="bb-body">
           <Round

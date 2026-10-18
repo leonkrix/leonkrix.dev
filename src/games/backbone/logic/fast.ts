@@ -1,6 +1,8 @@
+import { floodLoads } from './flood';
 import type { LevelIndex } from './graph';
 import { linksOfPath, shortestPath } from './graph';
 import { profiles } from './profiles';
+import { bufferSize, QUEUE_DELAY } from './queues';
 import { obeysPolicy, REPAIR_DELAY } from './simulate';
 import type { FlowPlan } from './types';
 
@@ -34,6 +36,8 @@ interface SituationTables {
   up: Uint8Array;
   /** [step * flowCount + flow] */
   demand: Float64Array;
+  /** The attack traffic on every link, [step * linkCount + link] (it does not depend on the plan) */
+  attack: Float64Array;
 }
 
 const NONE = new Int32Array(0);
@@ -54,6 +58,9 @@ export class FastEvaluator {
   private readonly queue: Int32Array;
   private readonly offered: Float64Array;
   private readonly total: Float64Array;
+  private readonly buffer: Float64Array;
+  /** What waits in the buffers, per link and queue class (reset for every situation) */
+  private readonly backlog: Float64Array;
 
   constructor(private readonly index: LevelIndex) {
     const { level } = index;
@@ -67,6 +74,8 @@ export class FastEvaluator {
     this.queue = Int32Array.from(level.flows.map((flow) => profiles[flow.profile].queue));
     this.offered = new Float64Array(this.linkCount * 3);
     this.total = new Float64Array(this.linkCount);
+    this.buffer = Float64Array.from(level.links.map((link) => bufferSize(level, link)));
+    this.backlog = new Float64Array(this.linkCount * 3);
 
     for (const situation of level.situations) {
       const table: SituationTables = {
@@ -75,6 +84,7 @@ export class FastEvaluator {
         loss: new Float64Array(situation.steps * this.linkCount),
         up: new Uint8Array(situation.steps * this.linkCount),
         demand: new Float64Array(situation.steps * this.flowCount),
+        attack: new Float64Array(situation.steps * this.linkCount),
       };
       for (let step = 0; step < situation.steps; step += 1) {
         level.links.forEach((link, position) => {
@@ -84,6 +94,7 @@ export class FastEvaluator {
           for (const event of situation.events) {
             if (
               event.kind === 'burst' ||
+              event.kind === 'flood' ||
               step < event.from ||
               step >= event.to ||
               event.link !== link.id
@@ -117,6 +128,15 @@ export class FastEvaluator {
           }
           table.demand[step * this.flowCount + position] = demand;
         });
+        const attack = floodLoads(
+          this.index,
+          situation.events,
+          step,
+          (id) => table.up[step * this.linkCount + (this.linkNumber.get(id) ?? 0)] === 1,
+        );
+        for (const [id, load] of attack) {
+          table.attack[step * this.linkCount + (this.linkNumber.get(id) ?? 0)] = load;
+        }
       }
       this.tables.push(table);
     }
@@ -206,8 +226,13 @@ export class FastEvaluator {
     const result = new Float64Array(this.situationCount * this.flowCount);
     const { offered, total, linkCount, flowCount } = this;
     this.tables.forEach((table, situation) => {
+      this.backlog.fill(0);
       for (let step = 0; step < table.steps; step += 1) {
         offered.fill(0);
+        // A flood fills the middle queue class
+        for (let link = 0; link < linkCount; link += 1) {
+          offered[link * 3 + 1] = table.attack[step * linkCount + link] ?? 0;
+        }
         const resolved: { links: Int32Array; share: number; amount: number }[][] = [];
         for (let flow = 0; flow < flowCount; flow += 1) {
           const option = options[flow];
@@ -255,21 +280,28 @@ export class FastEvaluator {
             }
           }
         }
-        // Serve the queues of every link in order of priority.
+        // Serve the queues of every link in order of priority; what does not go through waits in
+        // the buffer of its class, what does not fit into the buffer is dropped.
         const satisfied = new Float64Array(linkCount * 3);
+        const waiting = new Float64Array(linkCount * 3);
         for (let link = 0; link < linkCount; link += 1) {
-          let remaining = table.capacity[step * linkCount + link] ?? 0;
+          const capacity = table.capacity[step * linkCount + link] ?? 0;
+          const buffer = this.buffer[link] ?? 0;
+          let remaining = capacity;
           let sum = 0;
+          let queued = 0;
           for (let queue = 0; queue < 3; queue += 1) {
             const want = offered[link * 3 + queue] ?? 0;
             sum += want;
-            if (want <= 0) {
-              satisfied[link * 3 + queue] = 1;
-            } else {
-              const give = Math.min(want, remaining);
-              remaining -= give;
-              satisfied[link * 3 + queue] = give / want;
-            }
+            const content = (this.backlog[link * 3 + queue] ?? 0) + want;
+            const served = Math.min(content, remaining);
+            remaining -= served;
+            const left = content - served;
+            const keep = Math.min(left, buffer);
+            this.backlog[link * 3 + queue] = keep;
+            queued += keep;
+            waiting[link * 3 + queue] = (queued / Math.max(capacity, 1)) * QUEUE_DELAY;
+            satisfied[link * 3 + queue] = want > 0 ? Math.max(0, 1 - (left - keep) / want) : 1;
           }
           total[link] = sum;
           loads?.push(sum);
@@ -297,7 +329,9 @@ export class FastEvaluator {
               passes *= 1 - (table.loss[step * linkCount + link] ?? 0);
               const capacity = table.capacity[step * linkCount + link] ?? 0;
               const load = capacity > 0 ? Math.min(1, (total[link] ?? 0) / capacity) : 1;
-              latency += (this.delay[link] ?? 0) * (1 + load * load);
+              latency +=
+                (this.delay[link] ?? 0) * (1 + load * load) +
+                (waiting[link * 3 + (this.queue[flow] ?? 0)] ?? 0);
             }
             const residual = Math.max(0, 1 - passes - (option?.redundancy ?? 0));
             const delivered = path.share * kept * (1 - residual);

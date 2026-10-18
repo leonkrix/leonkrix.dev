@@ -211,3 +211,14 @@ Open questions are asked during the work, at the step where they matter.
 - **Dragging on touch screens and with a keyboard.** Answer: three ways to build a path, two of them without dragging, and the keyboard model from the start.
 - **Performance of the animation.** Answer: a few hundred small SVG shapes at most, moved by one timeline, and a frame-by-frame mode.
 - **Similarity to the other games.** It has no words, no grid, no grouping, and the judge is a simulation, not a rule check.
+
+## 17. Changes after the first look (2026-10-18)
+
+Decided with Leon after he had played the first version:
+
+- A chapter **Queues** (finite buffers with a backlog that carries over from step to step): bursts are absorbed at the price of waiting time, a full buffer drops. Built as `logic/queues.ts`.
+- A chapter **Under attack** (a flood from one node to another that a firewall stops), `logic/flood.ts`.
+- **Hints** in three steps, `logic/hint.ts`.
+- **Six levels per chapter**, 13 chapters, 78 levels.
+- Links stay **one shared capacity for both directions** (no duplex, a deliberate simplification).
+- **No saving of progress** (it would need local storage and a change of the privacy promise). Ideas for later: an opt-in button to remember progress on the device, a code the player keeps, and an **editor for your own networks (sandbox)**.

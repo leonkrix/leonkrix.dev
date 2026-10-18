@@ -21,9 +21,9 @@ The other games on this site check a rule: a guess is right or wrong, a group is
 
 <Stats
   items={[
-    { value: '41', label: 'levels, 11 chapters' },
-    { value: '88 ms', label: 'median proof' },
-    { value: '376', label: 'unit tests' },
+    { value: '78', label: 'levels, 13 chapters' },
+    { value: '241 ms', label: 'median proof' },
+    { value: '620+', label: 'unit tests' },
     { value: '0', label: 'overlapping maps' },
   ]}
 />
@@ -31,6 +31,8 @@ The other games on this site check a rule: a guess is right or wrong, a group is
 ## What the stress test does
 
 In every step, every flow sends its demand along the paths of its plan. On every cable the traffic is served in the order of its profile (voice and control first, web and video next, bulk last) until the capacity is used up, and the rest is dropped. A flow is as fast as the narrowest cable on its path. It earns `weight × demand × delivered^k × timeliness` per step, where k says how much its kind of traffic hates loss: a payment cannot lose a packet (k = 4), a backup hardly cares (k = 1). A flow that arrives later than its budget loses value. A cut cable loses the traffic of the flows on it for two steps unless they have a backup path, then the network reroutes them. Extra coded packets (redundancy) can recover loss, but they use capacity too.
+
+From the sixth chapter on, links also have **buffers**. What does not go through a cable in a step waits in the buffer of its class and goes on in a later step, as long as the buffer has room; what does not fit is dropped. Waiting makes traffic late, and it waits behind the classes that are served before it, so voice does not wait for a bulk backlog. Without the rule every buffer is empty, which is the model of the first chapters, and a test checks that a level without the rule behaves exactly like one with empty buffers. A flood (chapter 12) is useless traffic from one node to another that nobody can route: it fills the cables on its way and the queues behind them, until a firewall stops it.
 
 The first version multiplied the shares of every cable on a path, so one bottleneck was punished twice. Two flows on a path of two cables showed it at once: 16 units wanted a cable of 10, and the flow arrived with 39 percent instead of 63. The share of a flow is now the smallest share any cable grants it, which is also what a reader of the map expects.
 
@@ -42,7 +44,7 @@ For a score to mean something, the game needs the best plan, and "the best I fou
 
 A second copy of the stress test, written for speed on arrays instead of readable records, runs inside the search (more than four times faster). A test compares it with the readable one on 120 random plans, so they cannot drift apart. The solver itself is compared with trying every combination on 12 small levels, with three different sets of rules.
 
-The numbers, measured on the 41 levels of the campaign: the median proof takes 88 milliseconds, a tenth of them take about two seconds or more, and the slowest takes 12.5 seconds. The slow ones are the levels where several flows can be split and bulk traffic can be held back at the same time, because every flow then has hundreds of ways to be planned. Those are proven once, by a script, and stored. Random levels are proven in the browser, in background threads, with a time limit: a level whose proof takes too long is thrown away and another is made.
+The numbers, measured on the 78 levels of the campaign: the median proof takes 241 milliseconds, a tenth of them take about three seconds or more, and the slowest takes 15 seconds. The slow ones are the levels where several flows can be split and bulk traffic can be held back at the same time, because every flow then has hundreds of ways to be planned. Those are proven once, by a script, and stored. Random levels are proven in the browser, in background threads, with a time limit: a level whose proof takes too long is thrown away and another is made.
 
 ## Stars that mean something
 
@@ -50,7 +52,7 @@ The game compares your plan with two simple strategies, as in the master thesis 
 
 <Code lang="ts" code={starsSnippet} />
 
-One star is at least as good as the shortest path. Two stars beat both strategies and are well on the way to the best plan. Three are within five percent of the distance to it. A plan filled in by a helper never earns stars.
+One star is at least as good as the shortest path. Two stars beat both strategies and are well on the way to the best plan. Three are within five percent of the distance to it. A plan filled in by a helper never earns stars, and neither does a plan after the third hint. The hints are three steps that get more concrete (which cable is overfull, who uses it, what to try), and the best plan of the level is the guide.
 
 One thing I got wrong at first: the generator kept levels where even the best plan only scored 78 out of 100. The first level of the game could not be played perfectly, which feels like a bug in the game and not like a mistake of the player. The score is now absolute (100 is everything delivered in time), and the first four chapters only admit levels whose best plan is nearly perfect. Later chapters have losses that nobody can avoid, such as two steps of a cut cable or bulk traffic that is held back, and the best score of such a level is lower on purpose.
 
@@ -80,8 +82,8 @@ A generated level also has to be drawable. The first maps had nodes in random pl
   ]}
 />
 
-Each rule is a function with a test, and the level pool is checked in CI: every one of the 41 levels is validated again, its best plan is run through the stress test and must give the stored score, and the cheap proofs are repeated.
+Each rule is a function with a test, and the level pool is checked in CI: every one of the 78 levels is validated again, its best plan is run through the stress test and must give the stored score, and the cheap proofs are repeated.
 
 ## What is tested
 
-Beside the 376 unit tests (the model, the plan moves, the solver, the generator, the stars, the drawing and the pool), 13 browser tests play the game on a desktop and a phone: with clicks, with the keyboard, with a helper, through the stress test step by step, building a cable, making a random level. The layout guard of the site watches all of them, so nothing on the page moves when the result appears, and an accessibility scan runs on the overview, a level and a result.
+Beside the 620 and more unit tests (the model, the plan moves, the solver, the generator, the stars, the drawing and the pool), 15 browser tests play the game on a desktop and a phone: with clicks, with the keyboard, with a helper, through the stress test step by step, building a cable, making a random level. The layout guard of the site watches all of them, so nothing on the page moves when the result appears, and an accessibility scan runs on the overview, a level and a result.

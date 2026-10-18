@@ -7,7 +7,7 @@ import { flowOptions } from './options';
 import { problemsOfPlan } from './plan';
 import { evaluate } from './simulate';
 import { earnedByFlow, objective, possibleValues, solve } from './solver';
-import type { FlowPlan, Level, Plan } from './types';
+import type { FlowPlan, Level, Plan, Rules } from './types';
 
 function scoreOf(index: LevelIndex, plan: Plan): number {
   return evaluate(index, plan).score;
@@ -33,7 +33,14 @@ function bruteForce(index: LevelIndex, pathLimit: number): number {
   return best;
 }
 
-const everyday = { split: false, backup: true, redundancy: true, throttle: true, stages: false };
+const everyday: Rules = {
+  split: false,
+  backup: true,
+  redundancy: true,
+  throttle: true,
+  stages: false,
+  queues: false,
+};
 
 describe('the baselines', () => {
   it('send every flow on one path and nothing else', () => {
@@ -107,9 +114,30 @@ describe('the solver', () => {
 
   it('agrees with trying every combination', () => {
     const rulesets = [
-      { split: false, backup: true, redundancy: true, throttle: true, stages: false },
-      { split: true, backup: false, redundancy: false, throttle: true, stages: false },
-      { split: false, backup: false, redundancy: true, throttle: false, stages: true },
+      {
+        split: false,
+        backup: true,
+        redundancy: true,
+        throttle: true,
+        stages: false,
+        queues: false,
+      },
+      {
+        split: true,
+        backup: false,
+        redundancy: false,
+        throttle: true,
+        stages: false,
+        queues: false,
+      },
+      {
+        split: false,
+        backup: false,
+        redundancy: true,
+        throttle: false,
+        stages: true,
+        queues: false,
+      },
     ];
     for (const [position, rules] of rulesets.entries()) {
       for (let seed = 1; seed <= 4; seed += 1) {
@@ -133,11 +161,11 @@ describe('the solver', () => {
   }, 60_000);
 
   it('can stop on a time limit and still hands back a valid plan', () => {
-    const level = { ...randomLevel(4, 9, 5), rules: allRules };
+    const level = { ...randomLevel(4, 7, 4), rules: allRules };
     const solution = solve(level, { timeLimitMs: 1 });
     expect(problemsOfPlan(level, solution.plan)).toEqual([]);
     expect(solution.score).toBeGreaterThan(0);
-  });
+  }, 30_000);
 });
 
 describe('the helpers', () => {

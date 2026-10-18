@@ -2,7 +2,7 @@
 
 A planning game about networks: you route traffic through a small network, then a stress test judges the plan. Our own game, our own levels, texts and drawings. The concept (the reasoning behind every rule) is in [docs/network-game-concept.md](../../../docs/network-game-concept.md).
 
-Status: **built and live in this branch** (set to `live` in the registry; it is merged after Leon's okay). The model, the stress test, the exact solver, the generator, the campaign pool (11 chapters, 41 levels), the interface, the overview page, random levels in five tiers, the note, the browser tests and the Lighthouse budget are done. Open: polish (fonts, animation, real packets instead of dots), see PLAN.md, 4.5.
+Status: **built and live in this branch** (set to `live` in the registry; it is merged after Leon's okay). The model, the stress test, the exact solver, the generator, the campaign pool (13 chapters, 78 levels), the interface, the overview page, random levels in five tiers, the note, the browser tests and the Lighthouse budget are done. Open: polish (fonts, animation, real packets instead of dots), see PLAN.md, 4.5.
 
 ## Rules
 
@@ -13,7 +13,10 @@ Status: **built and live in this branch** (set to `live` in the registry; it is 
 - The **score** of a plan is the mean of its situations with the worst one counted twice, from 0 to 100.
 - **Stars** (`logic/stars.ts`): one star for at least the shortest path, two for beating both simple strategies and being 40 percent of the way to the best plan, three for coming within 5 percent of the distance to the best plan. A level is only admitted when those steps are real (`isAdmissible`).
 - **Helpers** ("Shortest for all", "Balance for me") fill in the plan; a run with a helper earns no stars. A solved level can load the best plan.
-- **Chapters:** capacity, sharing, splitting, latency, priorities, failures and backup paths, **building** (optional cables with a cost and a budget, `logic/build.ts`), loss and redundancy, moving links (a change of path at a step), **zones** (a flow can have to pass a node, the firewall, `Flow.via`), everything. `Level.rules` says which options a level offers.
+- **Chapters** (13, six levels each): capacity, sharing, splitting, latency, priorities, **queues**, failures and backup paths, **building** (optional cables with a cost and a budget, `logic/build.ts`), loss and redundancy, moving links (a change of path at a step), **zones** (a flow can have to pass a node, the firewall, `Flow.via`), **an attack** (a flood, `logic/flood.ts`), everything. `Level.rules` says which options a level offers.
+- **Queues** (`logic/queues.ts`, from chapter 6 on): every link has a buffer per queue class. What does not go through a link in a step waits in the buffer of its class and goes on in a later step; what does not fit into the buffer is dropped. A unit of backlog adds `QUEUE_DELAY` units of delay for every step the link needs to work it off, and traffic waits behind the classes that are served before it. Without the rule every buffer is empty, which is the model of the first chapters. The buffers are a property of the links (some have none, some a small one, some a big one), not a choice of the player. The solver relies on the same property as before: extra traffic only makes the backlog bigger.
+- **A flood** (`logic/flood.ts`): useless traffic from one node to another, along the fastest whole path, in the middle queue class; the first firewall on its way stops it. The player cannot route it, only keep their own traffic out of its way.
+- **Hints** (`logic/hint.ts`): three steps, the cable that is overfull, who uses it, and what to try (the first difference from the best plan; this step gives the answer away, so a run after it earns no stars).
 - **Random levels** (`logic/random-level.ts`): five tiers, made in background threads (`components/generate.worker.ts`), only shown after the best plan was proven and the level passed the same checks as the campaign. The address (`?level=random&tier=3&seed=...`) makes the same level again.
 - Unlimited tries, nothing is saved.
 
@@ -25,7 +28,7 @@ Status: **built and live in this branch** (set to `live` in the registry; it is 
 - **Levels come from a generator and are admitted by the solver.** `logic/generate.ts` makes a well formed level from a spec and a seed (a planar network of one of four families, flows of the given profiles, situations). `data/campaign-plan.ts` is the plan of the campaign (chapters, level titles and stories, the spec, and which options the best plan has to use so that the new rule of a chapter matters). `pnpm levels-backbone` searches a seed for every level, proves the best plan and writes `data/levels.json`.
 - **Drawing:** the map is an SVG for the cables, the paths and the packets, with real buttons on top for the nodes (focus, keyboard, touch target of 44 pixels). The load of a cable is a color, a dashed line when it is over capacity, and always a number. The packets are moved by the component frame by frame; with reduced motion the stress test is still frames.
 - **Layout never moves:** a skeleton with the same boxes is rendered on the server (`BackboneSkeleton.tsx`), the panel on the right has a fixed height and scrolls inside.
-- **Data:** the level pool (`data/levels.json`) is fetched after the page has been painted (`data/load.ts`), like the data of Word Radar.
+- **Data:** the level pool (`data/levels.json`) is fetched when a level of the campaign is opened, after the page has been painted (`data/load.ts`), like the data of Word Radar.
 
 ## Data (sources and licenses)
 

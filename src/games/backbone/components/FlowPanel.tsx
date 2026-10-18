@@ -19,6 +19,8 @@ import { Svg } from './Svg';
 
 interface FlowListProps {
   state: PlayState;
+  /** Flows a hint points at */
+  hinted: ReadonlySet<string>;
   onSelect: (id: string) => void;
 }
 
@@ -44,7 +46,7 @@ export function wantsOf(flow: Flow): string {
   return parts.join(', ') || 'anything goes';
 }
 
-export function FlowList({ state, onSelect }: FlowListProps) {
+export function FlowList({ state, hinted, onSelect }: FlowListProps) {
   const { level } = state.index;
   const names = new Map(level.nodes.map((node) => [node.id, node.name]));
   return (
@@ -60,6 +62,7 @@ export function FlowList({ state, onSelect }: FlowListProps) {
               className="bb-flow"
               data-profile={flow.profile}
               data-selected={selected}
+              data-hint={hinted.has(flow.id)}
               data-routed={plan !== undefined}
               aria-pressed={selected}
               onClick={() => {

@@ -5,6 +5,7 @@ import { generateChecked, type LevelSpec } from './generate';
 import { placeNames } from './labels';
 import { solveDesign } from './solver';
 import { isAdmissible, strategyScores } from './stars';
+import { type Job, type Tier, tiers } from './tiers';
 import type { Rules } from './types';
 
 /**
@@ -14,29 +15,13 @@ import type { Rules } from './types';
  * nothing is lost by itself). The same seed gives the same level, so a level can be shared.
  */
 
-export type Tier = 1 | 2 | 3 | 4 | 5;
-
-export const tiers: readonly { tier: Tier; name: string; about: string }[] = [
-  { tier: 1, name: 'Warm-up', about: 'Capacity only: a small network and a few flows.' },
-  { tier: 2, name: 'Easy', about: 'Bigger networks, and flows that can be split.' },
-  { tier: 3, name: 'Medium', about: 'Voice that must be fast and bulk traffic to hold back.' },
-  { tier: 4, name: 'Hard', about: 'A cable will be cut, and some links lose packets.' },
-  { tier: 5, name: 'Expert', about: 'Everything at once, in the biggest networks.' },
-];
-
-export interface Job {
-  tier: Tier;
-  seed: string;
-  /** Try only this exact seed (a shared link): it is known to work */
-  exact?: boolean;
-}
-
 const none: Rules = {
   split: false,
   backup: false,
   redundancy: false,
   throttle: false,
   stages: false,
+  queues: false,
 };
 
 interface TierPlan {
@@ -96,7 +81,14 @@ const PLANS: Readonly<Record<Tier, TierPlan>> = {
       ['voice', 'web', 'transaction'],
       ['control', 'video', 'transaction'],
     ],
-    rules: { split: true, throttle: true, backup: true, redundancy: true, stages: false },
+    rules: {
+      split: true,
+      throttle: true,
+      backup: true,
+      redundancy: true,
+      stages: false,
+      queues: true,
+    },
     situations: ['calm', 'cut', 'rush'],
     pressure: 1.1,
     lossyLinks: 1,
@@ -109,7 +101,14 @@ const PLANS: Readonly<Record<Tier, TierPlan>> = {
       ['voice', 'video', 'web', 'transaction'],
       ['control', 'video', 'web', 'bulk'],
     ],
-    rules: { split: true, throttle: true, backup: true, redundancy: true, stages: true },
+    rules: {
+      split: true,
+      throttle: true,
+      backup: true,
+      redundancy: true,
+      stages: true,
+      queues: true,
+    },
     situations: ['calm', 'cut', 'lossy'],
     pressure: 1.1,
     lossyLinks: 1,
@@ -214,18 +213,4 @@ export function runJob(job: Job, proofMs = 3000): LevelRecord {
     }
   }
   throw new Error('No level could be made. Try again.');
-}
-
-/** The seed of a made level, as it is in a shared link. */
-export function seedOf(record: LevelRecord): string {
-  return record.id.replace(/^random-\d+-/, '');
-}
-
-export function tierOf(record: LevelRecord): Tier {
-  const tier = Number(/^random-(\d)-/.exec(record.id)?.[1] ?? 1);
-  return (tier >= 1 && tier <= 5 ? tier : 1) as Tier;
-}
-
-export function isRandom(id: string): boolean {
-  return id.startsWith('random-');
 }

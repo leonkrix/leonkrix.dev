@@ -1,5 +1,7 @@
+import { floodLoads } from './flood';
 import { indexLevel, type LevelIndex, linksOfPath, shortestPath } from './graph';
 import { profiles } from './profiles';
+import { bufferSize, QUEUE_DELAY } from './queues';
 import type {
   Evaluation,
   Flow,
@@ -61,7 +63,12 @@ function linkStates(index: LevelIndex, situation: Situation): Map<string, LinkSt
       let keep = 1 - link.loss;
       let down = false;
       for (const event of situation.events) {
-        if (event.kind === 'burst' || !covers(event, step) || event.link !== link.id) {
+        if (
+          event.kind === 'burst' ||
+          event.kind === 'flood' ||
+          !covers(event, step) ||
+          event.link !== link.id
+        ) {
           continue;
         }
         if (event.kind === 'down') {
@@ -155,6 +162,8 @@ function resolve(
 function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation): SituationResult {
   const states = linkStates(index, situation);
   const steps: StepResult[] = [];
+  // What waits in the buffers of every link (per queue class), carried from step to step
+  const backlog = new Map<string, number[]>(index.level.links.map((link) => [link.id, [0, 0, 0]]));
   let earned = 0;
   let possible = 0;
 
@@ -164,10 +173,12 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
       continue;
     }
     const resolved = new Map<string, ResolvedPath[]>();
+    const attack = floodLoads(index, situation.events, step, (link) => isUp(states, step, link));
     const demands = new Map<string, number>();
     const offered = new Map<string, number[]>();
     for (const link of index.level.links) {
-      offered.set(link.id, [0, 0, 0]);
+      // A flood fills the middle queue class
+      offered.set(link.id, [0, attack.get(link.id) ?? 0, 0]);
     }
 
     for (const flow of index.level.flows) {
@@ -203,24 +214,42 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
       resolved.set(flow.id, paths);
     }
 
-    // Serve the queues of every link in order of priority.
+    // Serve the queues of every link in order of priority. What does not go through waits in the
+    // buffer of its class, what does not fit into the buffer is dropped.
     const satisfied = new Map<string, number[]>();
+    const waiting = new Map<string, number[]>();
     const linkResults: Record<string, LinkStepResult> = {};
     for (const link of index.level.links) {
       const queues = offered.get(link.id) ?? [0, 0, 0];
-      let remaining = state.get(link.id)?.capacity ?? 0;
-      const shares = queues.map((want) => {
-        if (want <= 0) {
-          return 1;
-        }
-        const give = Math.min(want, remaining);
-        remaining -= give;
-        return give / want;
+      const held = backlog.get(link.id) ?? [0, 0, 0];
+      const capacity = state.get(link.id)?.capacity ?? 0;
+      const buffer = bufferSize(index.level, link);
+      let remaining = capacity;
+      const shares: number[] = [];
+      const behind: number[] = [];
+      let queued = 0;
+      queues.forEach((want, queue) => {
+        const content = (held[queue] ?? 0) + want;
+        const served = Math.min(content, remaining);
+        remaining -= served;
+        const left = content - served;
+        const keep = Math.min(left, buffer);
+        held[queue] = keep;
+        queued += keep;
+        behind.push(queued);
+        shares.push(want > 0 ? Math.max(0, 1 - (left - keep) / want) : 1);
       });
       satisfied.set(link.id, shares);
+      waiting.set(
+        link.id,
+        behind.map((value) => (value / Math.max(capacity, 1)) * QUEUE_DELAY),
+      );
       linkResults[link.id] = {
         offered: queues.reduce((sum, value) => sum + value, 0),
-        capacity: state.get(link.id)?.capacity ?? 0,
+        attack: attack.get(link.id) ?? 0,
+        queued,
+        buffer,
+        capacity,
         down: state.get(link.id)?.down ?? false,
       };
     }
@@ -251,7 +280,7 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
           passes *= 1 - linkState.loss;
           const total = linkResults[id]?.offered ?? 0;
           const load = linkState.capacity > 0 ? Math.min(1, total / linkState.capacity) : 1;
-          latency += link.delay * (1 + load * load);
+          latency += link.delay * (1 + load * load) + (waiting.get(id)?.[path.queue] ?? 0);
         }
         const residual = Math.max(0, 1 - passes - (flowPlan?.redundancy ?? 0));
         const delivered = path.share * kept * (1 - residual);

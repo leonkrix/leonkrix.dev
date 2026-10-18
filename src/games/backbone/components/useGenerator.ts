@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { freshSeed } from '../../shared/random';
 import { type LevelRecord } from '../data/pool';
-import { type Job, type Tier } from '../logic/random-level';
+import { type Job, type Tier } from '../logic/tiers';
 import { type WorkerReply } from './generate.worker';
 
 const MOST_WORKERS = 3;

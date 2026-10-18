@@ -1,5 +1,6 @@
 import { type LevelRecord } from '../data/pool';
-import { type Job, runJob } from '../logic/random-level';
+import { runJob } from '../logic/random-level';
+import { type Job } from '../logic/tiers';
 
 /**
  * Makes one level in the background, so that the page stays responsive while the generator works

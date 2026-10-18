@@ -22,7 +22,13 @@ import { format, resolveConfig } from 'prettier';
 import { describe, it } from 'vitest';
 
 import { LEVEL_PLAN, specOf } from '../src/games/backbone/data/campaign-plan';
-import { featuresUsed, type LevelRecord, toCatalogEntry } from '../src/games/backbone/data/pool';
+import {
+  featuresUsed,
+  type LevelRecord,
+  QUEUE_GAIN,
+  queueGain,
+  toCatalogEntry,
+} from '../src/games/backbone/data/pool';
 import { dress } from '../src/games/backbone/data/settings';
 import { generateChecked } from '../src/games/backbone/logic/generate';
 import { placeNames } from '../src/games/backbone/logic/labels';
@@ -87,11 +93,17 @@ function makeRecord(plan: (typeof LEVEL_PLAN)[number], number: number): LevelRec
   if (plan.optional > 0 && solution.built.length === 0) {
     return undefined;
   }
-  const used = featuresUsed(solution.plan);
-  if (plan.requires.some((rule) => !used[rule])) {
+  // Every situation after the quiet day has to have something going on
+  if (
+    level.situations.some((situation) => situation.id !== 'calm' && situation.events.length === 0)
+  ) {
     return undefined;
   }
-  return {
+  const used = featuresUsed(solution.plan);
+  if (plan.requires.some((rule) => rule !== 'queues' && !used[rule])) {
+    return undefined;
+  }
+  const record: LevelRecord = {
     id: plan.id,
     chapter: plan.chapter,
     setting: plan.setting,
@@ -102,6 +114,11 @@ function makeRecord(plan: (typeof LEVEL_PLAN)[number], number: number): LevelRec
     balanced: baselines.balanced,
     proof: { milliseconds: Math.round(solution.milliseconds), explored: solution.explored },
   };
+  // In the chapter about queues the buffers have to change the result
+  if (plan.requires.includes('queues') && queueGain(record) < QUEUE_GAIN) {
+    return undefined;
+  }
+  return record;
 }
 
 function gapOf(record: LevelRecord): number {
