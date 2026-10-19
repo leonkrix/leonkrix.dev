@@ -18,6 +18,13 @@ export interface OptionLimits {
 
 export const defaultLimits: OptionLimits = { pathLimit: 5 };
 
+/**
+ * How much of its traffic a flow that can be held back may send: the steps of the slider of the
+ * player, 100 down to 10 percent in tens. The player and the solver choose from the same values,
+ * so the best plan is the best plan that can be set.
+ */
+export const THROTTLE_STEPS: readonly number[] = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1];
+
 const SPLITS: readonly (readonly number[])[] = [
   [0.5, 0.5],
   [0.75, 0.25],
@@ -87,7 +94,7 @@ export function flowOptions(
   const paths = routesOf(index, flow, limits.pathLimit);
   const options: FlowPlan[] = [];
   const redundancies: Redundancy[] = rules.redundancy ? [0, 0.25, 0.5] : [0];
-  const throttles = rules.throttle && profiles[flow.profile].throttlable ? [1, 0.5, 0.25] : [1];
+  const throttles = rules.throttle && profiles[flow.profile].throttlable ? THROTTLE_STEPS : [1];
 
   const stageSets: FlowPlan['stages'][] = stageChoices(paths, rules.split).map((choice) => [
     { from: 0, paths: choice },

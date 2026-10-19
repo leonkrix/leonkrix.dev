@@ -22,7 +22,7 @@ The other games on this site check a rule: a guess is right or wrong, a group is
 <Stats
   items={[
     { value: '78', label: 'levels, 13 chapters' },
-    { value: '607 ms', label: 'median proof' },
+    { value: '434 ms', label: 'median proof' },
     { value: '780+', label: 'unit tests' },
     { value: '0', label: 'overlapping maps' },
   ]}
@@ -42,11 +42,11 @@ The first version multiplied the shares of every cable on a path, so one bottlen
 
 For a score to mean something, the game needs the best plan, and "the best I found" is not good enough, because a player could beat it. So every level is solved exactly: a branch and bound search places the flows one after the other and runs the stress test on the partial plan. That works because of one property of the model, which a test checks on 150 random levels: **adding traffic to a plan never helps a flow that is already in it.** What the placed flows earn can only go down as more flows are added, so it is an upper bound, and a branch that cannot beat the best plan found so far is cut off without losing the optimum.
 
-There is one honest exception. The search holds a flow back in a few steps (all, half, a quarter), while the slider of the player moves in steps of five percent, so on a level with bulk traffic a player can beat the best plan by a little. The stars are set from the best plan and a score above it is simply three stars, so nothing breaks, and the result panel says so under "Best plan".
+The throttle needed a decision. The slider of the player moves in steps of ten percent, and the search tries exactly those ten steps for every bulk flow, so the best plan is the best plan the player can reach, not only the best one the search happened to look at. An earlier version searched only "all, half, a quarter" while the slider moved in steps of five percent, and a player could beat the "proven best plan" by a hair. That is not acceptable for a number that is called proven, so the grid of the slider and the grid of the search are now one list (`THROTTLE_STEPS`), and a test checks that they are the same.
 
 A second copy of the stress test, written for speed on arrays instead of readable records, runs inside the search (more than four times faster). A test compares it with the readable one on 120 random plans, so they cannot drift apart. The solver itself is compared with trying every combination on 12 small levels, with three different sets of rules.
 
-The numbers, measured on the 78 levels of the campaign: the median proof takes 607 milliseconds, about a fifth of them take three seconds or more, and the slowest takes 20 seconds. The slow ones are the levels where several flows can be split and bulk traffic can be held back at the same time, because every flow then has hundreds of ways to be planned. Those are proven once, by a script, and stored. Random levels are proven in the browser, in background threads, with a time limit: a level whose proof takes too long is thrown away and another is made.
+The numbers, measured on the 78 levels of the campaign: the median proof takes 434 milliseconds, about a fifth of them take three seconds or more, and the slowest takes 17 seconds. The slow ones are the levels where several flows can be split and bulk traffic can be held back at the same time, because every flow then has hundreds of ways to be planned. Those are proven once, by a script, and stored. Random levels are proven in the browser, in background threads, with a time limit: a level whose proof takes too long is thrown away and another is made.
 
 ## Stars that mean something
 

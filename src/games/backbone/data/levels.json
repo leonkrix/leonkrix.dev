@@ -2666,20 +2666,28 @@
     },
     "best": {
       "plan": {
-        "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n6", "n0"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
         "f1": {
           "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n6", "n2"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
-        "f2": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n0", "n6", "n2"], "share": 1 }] }],
+        "f0": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n6", "n0"], "share": 1 }] }],
           "redundancy": 0,
-          "throttle": 0.5
+          "throttle": 1
+        },
+        "f2": {
+          "stages": [
+            {
+              "from": 0,
+              "paths": [
+                { "nodes": ["n0", "n6", "n2"], "share": 0.75 },
+                { "nodes": ["n0", "n5", "n3", "n6", "n2"], "share": 0.25 }
+              ]
+            }
+          ],
+          "redundancy": 0,
+          "throttle": 0.7
         }
       },
       "score": 0.8333333333333334,
@@ -2687,7 +2695,7 @@
     },
     "shortest": 0.6833333333333333,
     "balanced": 0.6833333333333333,
-    "proof": { "milliseconds": 607, "explored": 10486 }
+    "proof": { "milliseconds": 419, "explored": 28899 }
   },
   {
     "id": "c5-2",
@@ -2786,7 +2794,7 @@
     },
     "shortest": 0.5411751316165662,
     "balanced": 0.7142857142857143,
-    "proof": { "milliseconds": 240, "explored": 15859 }
+    "proof": { "milliseconds": 1002, "explored": 50260 }
   },
   {
     "id": "c5-3",
@@ -2913,7 +2921,7 @@
             }
           ],
           "redundancy": 0,
-          "throttle": 0.5
+          "throttle": 0.6
         },
         "f0": {
           "stages": [
@@ -2923,12 +2931,12 @@
           "throttle": 1
         }
       },
-      "score": 0.8244734143286895,
+      "score": 0.8257381415746293,
       "built": []
     },
     "shortest": 0.6712049435975165,
     "balanced": 0.6910279146141215,
-    "proof": { "milliseconds": 3331, "explored": 24496 }
+    "proof": { "milliseconds": 7934, "explored": 251099 }
   },
   {
     "id": "c5-4",
@@ -3027,7 +3035,7 @@
         "f3": {
           "stages": [{ "from": 0, "paths": [{ "nodes": ["n4", "n6", "n5", "n2"], "share": 1 }] }],
           "redundancy": 0,
-          "throttle": 0.5
+          "throttle": 0.4
         },
         "f1": {
           "stages": [
@@ -3056,44 +3064,44 @@
           "throttle": 1
         }
       },
-      "score": 0.72970087328939,
+      "score": 0.7346340206373979,
       "built": []
     },
     "shortest": 0.5610801375892397,
     "balanced": 0.5578587977675099,
-    "proof": { "milliseconds": 6032, "explored": 81810 }
+    "proof": { "milliseconds": 11114, "explored": 226290 }
   },
   {
     "id": "c5-5",
     "chapter": 5,
     "setting": "festival",
-    "seed": 2676366480,
+    "seed": 127104973,
     "level": {
       "id": "c5-5",
       "title": "Upload rush",
       "story": "Everybody uploads photos while the crew needs the radio.",
       "nodes": [
-        { "id": "n0", "name": "Control tent", "kind": "router", "x": 50, "y": 50 },
-        { "id": "n1", "name": "North field", "kind": "router", "x": 50, "y": 14 },
-        { "id": "n2", "name": "South field", "kind": "router", "x": 50, "y": 86 },
-        { "id": "n3", "name": "Camp", "kind": "router", "x": 10, "y": 50 },
-        { "id": "n4", "name": "Tent A", "kind": "switch", "x": 90, "y": 50 },
-        { "id": "n5", "name": "Ticket server", "kind": "server", "x": 90, "y": 86 },
-        { "id": "n6", "name": "Gate", "kind": "router", "x": 90, "y": 14 },
-        { "id": "n7", "name": "Stage hub", "kind": "router", "x": 10, "y": 14 }
+        { "id": "n0", "name": "Tent A", "kind": "switch", "x": 50, "y": 50 },
+        { "id": "n1", "name": "Tent B", "kind": "switch", "x": 50, "y": 86 },
+        { "id": "n2", "name": "Tent C", "kind": "switch", "x": 50, "y": 14 },
+        { "id": "n3", "name": "Control tent", "kind": "router", "x": 90, "y": 50 },
+        { "id": "n4", "name": "Tent D", "kind": "switch", "x": 10, "y": 50 },
+        { "id": "n5", "name": "Ticket server", "kind": "server", "x": 90, "y": 14 },
+        { "id": "n6", "name": "North field", "kind": "router", "x": 10, "y": 86 },
+        { "id": "n7", "name": "South field", "kind": "router", "x": 10, "y": 14 }
       ],
       "links": [
-        { "id": "l0", "a": "n0", "b": "n2", "capacity": 7, "delay": 2, "loss": 0 },
-        { "id": "l1", "a": "n4", "b": "n5", "capacity": 5, "delay": 2, "loss": 0 },
-        { "id": "l2", "a": "n0", "b": "n1", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l3", "a": "n3", "b": "n7", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l4", "a": "n4", "b": "n6", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l5", "a": "n0", "b": "n3", "capacity": 10, "delay": 3, "loss": 0 },
-        { "id": "l6", "a": "n0", "b": "n4", "capacity": 13, "delay": 3, "loss": 0 },
+        { "id": "l0", "a": "n0", "b": "n1", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l1", "a": "n4", "b": "n6", "capacity": 6, "delay": 2, "loss": 0 },
+        { "id": "l2", "a": "n0", "b": "n2", "capacity": 13, "delay": 2, "loss": 0 },
+        { "id": "l3", "a": "n3", "b": "n5", "capacity": 7, "delay": 2, "loss": 0 },
+        { "id": "l4", "a": "n4", "b": "n7", "capacity": 7, "delay": 2, "loss": 0 },
+        { "id": "l5", "a": "n0", "b": "n3", "capacity": 11, "delay": 3, "loss": 0 },
+        { "id": "l6", "a": "n0", "b": "n4", "capacity": 9, "delay": 3, "loss": 0 },
         { "id": "l7", "a": "n1", "b": "n6", "capacity": 9, "delay": 3, "loss": 0 },
-        { "id": "l8", "a": "n1", "b": "n7", "capacity": 7, "delay": 3, "loss": 0 },
-        { "id": "l9", "a": "n2", "b": "n5", "capacity": 6, "delay": 3, "loss": 0 },
-        { "id": "l10", "a": "n1", "b": "n3", "capacity": 12, "delay": 3, "loss": 0 }
+        { "id": "l8", "a": "n2", "b": "n5", "capacity": 7, "delay": 3, "loss": 0 },
+        { "id": "l9", "a": "n2", "b": "n7", "capacity": 9, "delay": 3, "loss": 0 },
+        { "id": "l10", "a": "n1", "b": "n3", "capacity": 13, "delay": 3, "loss": 0 }
       ],
       "flows": [
         {
@@ -3106,27 +3114,27 @@
         },
         {
           "id": "f1",
-          "name": "Photo uploads",
-          "source": "n7",
+          "name": "Festival app",
+          "source": "n0",
           "target": "n5",
-          "profile": "bulk",
-          "demand": 7
+          "profile": "web",
+          "demand": 4
         },
         {
           "id": "f2",
-          "name": "Recording archive",
-          "source": "n4",
-          "target": "n1",
+          "name": "Photo uploads",
+          "source": "n6",
+          "target": "n5",
           "profile": "bulk",
-          "demand": 5
+          "demand": 10
         },
         {
           "id": "f3",
-          "name": "Sales report",
-          "source": "n4",
-          "target": "n5",
+          "name": "Recording archive",
+          "source": "n1",
+          "target": "n6",
           "profile": "bulk",
-          "demand": 7
+          "demand": 4
         }
       ],
       "situations": [
@@ -3136,7 +3144,7 @@
           "name": "Rush hour",
           "steps": 8,
           "events": [
-            { "kind": "burst", "flow": "f2", "from": 3, "to": 6, "factor": 2 },
+            { "kind": "burst", "flow": "f3", "from": 3, "to": 6, "factor": 2 },
             { "kind": "burst", "flow": "f1", "from": 3, "to": 6, "factor": 2 }
           ]
         }
@@ -3152,30 +3160,45 @@
     },
     "best": {
       "plan": {
-        "f1": {
-          "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n7", "n1", "n0", "n2", "n5"], "share": 1 }] }
-          ],
-          "redundancy": 0,
-          "throttle": 1
-        },
-        "f3": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n4", "n5"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 0.25
-        },
-        "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n0", "n4", "n5"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
         "f2": {
           "stages": [
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n4", "n6", "n1"], "share": 0.75 },
-                { "nodes": ["n4", "n0", "n3", "n1"], "share": 0.25 }
+                { "nodes": ["n6", "n1", "n3", "n5"], "share": 0.5 },
+                { "nodes": ["n6", "n1", "n0", "n2", "n5"], "share": 0.25 },
+                { "nodes": ["n6", "n4", "n0", "n2", "n5"], "share": 0.25 }
+              ]
+            }
+          ],
+          "redundancy": 0,
+          "throttle": 0.8
+        },
+        "f1": {
+          "stages": [
+            {
+              "from": 0,
+              "paths": [
+                { "nodes": ["n0", "n2", "n5"], "share": 0.75 },
+                { "nodes": ["n0", "n1", "n3", "n5"], "share": 0.25 }
+              ]
+            }
+          ],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f0": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n0", "n3", "n5"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f3": {
+          "stages": [
+            {
+              "from": 0,
+              "paths": [
+                { "nodes": ["n1", "n6"], "share": 0.5 },
+                { "nodes": ["n1", "n0", "n4", "n6"], "share": 0.5 }
               ]
             }
           ],
@@ -3183,12 +3206,12 @@
           "throttle": 1
         }
       },
-      "score": 0.6970724475980342,
+      "score": 0.847869857415312,
       "built": []
     },
-    "shortest": 0.5369491525423729,
-    "balanced": 0.5454237288135594,
-    "proof": { "milliseconds": 3908, "explored": 117600 }
+    "shortest": 0.6568980860176498,
+    "balanced": 0.7371178662374299,
+    "proof": { "milliseconds": 2005, "explored": 56113 }
   },
   {
     "id": "c5-6",
@@ -3305,6 +3328,19 @@
           "redundancy": 0,
           "throttle": 1
         },
+        "f3": {
+          "stages": [
+            {
+              "from": 0,
+              "paths": [
+                { "nodes": ["n5", "n6", "n0"], "share": 0.75 },
+                { "nodes": ["n5", "n6", "n7", "n0"], "share": 0.25 }
+              ]
+            }
+          ],
+          "redundancy": 0,
+          "throttle": 0.4
+        },
         "f2": {
           "stages": [
             {
@@ -3317,27 +3353,14 @@
           ],
           "redundancy": 0,
           "throttle": 1
-        },
-        "f3": {
-          "stages": [
-            {
-              "from": 0,
-              "paths": [
-                { "nodes": ["n5", "n6", "n0"], "share": 0.75 },
-                { "nodes": ["n5", "n6", "n7", "n0"], "share": 0.25 }
-              ]
-            }
-          ],
-          "redundancy": 0,
-          "throttle": 0.5
         }
       },
-      "score": 0.6520593242977603,
+      "score": 0.6541448542886901,
       "built": []
     },
     "shortest": 0.4730213181870329,
     "balanced": 0.4730213181870329,
-    "proof": { "milliseconds": 2556, "explored": 43258 }
+    "proof": { "milliseconds": 8349, "explored": 220962 }
   },
   {
     "id": "c6-1",
@@ -3460,7 +3483,7 @@
     },
     "shortest": 0.7473733092714173,
     "balanced": 0.8117916386782819,
-    "proof": { "milliseconds": 382, "explored": 1283 }
+    "proof": { "milliseconds": 117, "explored": 2201 }
   },
   {
     "id": "c6-2",
@@ -3705,7 +3728,7 @@
     },
     "shortest": 0.7910753497097601,
     "balanced": 0.7277862417786035,
-    "proof": { "milliseconds": 626, "explored": 4129 }
+    "proof": { "milliseconds": 414, "explored": 10045 }
   },
   {
     "id": "c6-4",
@@ -3959,7 +3982,7 @@
     },
     "shortest": 0.8898588645572724,
     "balanced": 0.8497457800247603,
-    "proof": { "milliseconds": 83, "explored": 0 }
+    "proof": { "milliseconds": 51, "explored": 0 }
   },
   {
     "id": "c6-6",
@@ -4104,7 +4127,7 @@
     },
     "shortest": 0.7190786370679253,
     "balanced": 0.7923882124510402,
-    "proof": { "milliseconds": 1758, "explored": 11491 }
+    "proof": { "milliseconds": 782, "explored": 15190 }
   },
   {
     "id": "c7-1",
@@ -4581,7 +4604,7 @@
     },
     "shortest": 0.766393775090652,
     "balanced": 0.8141849916003885,
-    "proof": { "milliseconds": 475, "explored": 0 }
+    "proof": { "milliseconds": 292, "explored": 0 }
   },
   {
     "id": "c7-5",
@@ -4844,7 +4867,7 @@
     },
     "shortest": 0.7577763648233626,
     "balanced": 0.6287016548166664,
-    "proof": { "milliseconds": 401, "explored": 0 }
+    "proof": { "milliseconds": 222, "explored": 0 }
   },
   {
     "id": "c8-1",
@@ -5469,7 +5492,7 @@
     },
     "shortest": 0.5989819607325527,
     "balanced": 0.6179723353319343,
-    "proof": { "milliseconds": 1121, "explored": 2397 }
+    "proof": { "milliseconds": 734, "explored": 5819 }
   },
   {
     "id": "c8-5",
@@ -5624,7 +5647,7 @@
     },
     "shortest": 0.6533333333333333,
     "balanced": 0.6533333333333333,
-    "proof": { "milliseconds": 37, "explored": 183 }
+    "proof": { "milliseconds": 22, "explored": 363 }
   },
   {
     "id": "c8-6",
@@ -5807,7 +5830,7 @@
     },
     "shortest": 0.8765922619047619,
     "balanced": 0.7913331220061989,
-    "proof": { "milliseconds": 1746, "explored": 5266 }
+    "proof": { "milliseconds": 1205, "explored": 11727 }
   },
   {
     "id": "c9-1",
@@ -6227,7 +6250,7 @@
     },
     "shortest": 0.8535773194401356,
     "balanced": 0.8535773194401356,
-    "proof": { "milliseconds": 586, "explored": 0 }
+    "proof": { "milliseconds": 445, "explored": 0 }
   },
   {
     "id": "c9-5",
@@ -6488,7 +6511,7 @@
     },
     "shortest": 0.5809688474434666,
     "balanced": 0.7759463917912927,
-    "proof": { "milliseconds": 490, "explored": 0 }
+    "proof": { "milliseconds": 434, "explored": 0 }
   },
   {
     "id": "c10-1",
@@ -8442,7 +8465,7 @@
     },
     "shortest": 0.6804700659724162,
     "balanced": 0.6804700659724162,
-    "proof": { "milliseconds": 19972, "explored": 146613 }
+    "proof": { "milliseconds": 14288, "explored": 300945 }
   },
   {
     "id": "c12-3",
@@ -9134,7 +9157,7 @@
     },
     "shortest": 0.807264406160964,
     "balanced": 0.8399849943962582,
-    "proof": { "milliseconds": 1114, "explored": 0 }
+    "proof": { "milliseconds": 1574, "explored": 0 }
   },
   {
     "id": "c13-2",
@@ -9319,7 +9342,7 @@
     },
     "shortest": 0.7014220164127446,
     "balanced": 0.7014220164127446,
-    "proof": { "milliseconds": 3987, "explored": 72938 }
+    "proof": { "milliseconds": 7510, "explored": 81650 }
   },
   {
     "id": "c13-3",
@@ -9465,7 +9488,7 @@
     },
     "shortest": 0.6173769057505888,
     "balanced": 0.7787772416603678,
-    "proof": { "milliseconds": 778, "explored": 0 }
+    "proof": { "milliseconds": 1731, "explored": 0 }
   },
   {
     "id": "c13-4",

@@ -10,6 +10,9 @@
  *                          gap between the best plan and the simple strategies is kept)
  *   LEVELS_PROOF_MS=20000  the longest a proof may take, a seed that needs more is dropped
  *   LEVELS_JOIN=a.json,b.json  merge files made in parallel into the pool
+ *   LEVELS_RESOLVE=1       keep the levels, prove their best plan again (after the model or the
+ *                          options of the solver changed); a level that then fails a check is
+ *                          listed and has to be made again
  *
  * For every level the script tries seeds "<id>-1", "<id>-2", ... until the generator makes a
  * level that is well formed, whose best plan is proven in time, that leaves room for the stars
@@ -43,6 +46,7 @@ const force = process.env.LEVELS_FORCE === '1';
 const candidateCount = Number(process.env.LEVELS_CANDIDATES ?? '4');
 const proofMs = Number(process.env.LEVELS_PROOF_MS ?? '20000');
 const join = process.env.LEVELS_JOIN?.split(',').filter((file) => file !== '');
+const resolveOnly = process.env.LEVELS_RESOLVE === '1';
 const MAX_SEEDS = 600;
 
 function load(file: string): LevelRecord[] {
@@ -80,6 +84,15 @@ function makeRecord(plan: (typeof LEVEL_PLAN)[number], number: number): LevelRec
   if (placement.conflicts > 0 || tagConflicts(level, placement) > 0) {
     return undefined;
   }
+  return proveRecord(plan, level, seed);
+}
+
+/** Proves the best plan of a dressed level and applies the checks of the chapter */
+function proveRecord(
+  plan: (typeof LEVEL_PLAN)[number],
+  level: ReturnType<typeof dress>,
+  seed: number,
+): LevelRecord | undefined {
   const solution = solveDesign(level, {
     timeLimitMs: proofMs,
     limits: { pathLimit: plan.chapter >= 5 ? 4 : 5 },
@@ -128,6 +141,26 @@ function gapOf(record: LevelRecord): number {
 
 describe('make the Backbone pool', () => {
   it('fills levels.json', async () => {
+    if (resolveOnly) {
+      const records = load(out);
+      for (const plan of LEVEL_PLAN) {
+        const old = records.find((record) => record.id === plan.id);
+        if (old === undefined || (only !== undefined && !only.includes(plan.id))) {
+          continue;
+        }
+        const next = proveRecord(plan, old.level, old.seed);
+        if (next === undefined) {
+          console.warn(`${plan.id}: fails a check with the new best plan, make it again`);
+          continue;
+        }
+        console.warn(
+          `${plan.id}: best ${old.best.score.toFixed(3)} -> ${next.best.score.toFixed(3)} (${String(next.proof.milliseconds)} ms)`,
+        );
+        records.splice(records.indexOf(old), 1, next);
+        await save(records);
+      }
+      return;
+    }
     if (join !== undefined) {
       const merged = new Map(load(out).map((record) => [record.id, record]));
       for (const file of join) {

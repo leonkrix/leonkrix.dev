@@ -240,7 +240,7 @@ test.describe('Backbone', () => {
     await expect(page.getByText(/is not built any more/)).toBeVisible();
   });
 
-  test('holds a flow back with a slider in steps of five percent', async ({ page }) => {
+  test('holds a flow back with a slider in steps of ten percent', async ({ page }) => {
     const record = levels.find(
       (entry) => entry.chapter === 5 && entry.level.flows.some((flow) => flow.profile === 'bulk'),
     );
@@ -252,12 +252,12 @@ test.describe('Backbone', () => {
       .getByRole('button', { name: new RegExp('^Flow ' + String(bulk + 1) + ': ') })
       .click();
     const slider = page.getByRole('slider', { name: 'Send at most' });
-    await expect(slider).toHaveAttribute('step', '5');
+    await expect(slider).toHaveAttribute('step', '10');
     await slider.focus();
     await page.keyboard.press('ArrowLeft');
     await page.keyboard.press('Tab');
     await expect(
-      page.getByRole('status').filter({ hasText: /sends 95 % of its traffic/ }),
+      page.getByRole('status').filter({ hasText: /sends 90 % of its traffic/ }),
     ).toBeVisible();
   });
 

@@ -2,7 +2,8 @@
 // The tile of the game on the Playground section: a plan, judged twice. Two flows leave the
 // computer on the left for the server on the right. At first both take the fast way over the top,
 // that cable turns red and a packet is dropped in the middle of it. Then the second flow moves to
-// the lower road, the cable turns green and both packets arrive. It plays when the tile appears,
+// the lower road, the cable turns green and both packets arrive; in a second round they stop in
+// the middle of their last cable, which is the final picture. It plays when the tile appears,
 // and again whenever it is pointed at or focused. Pure CSS, no script. The final picture (both
 // roads in use, nothing red) is also the normal look, so the tile is right without any motion.
 // The pictures of the nodes are the ones of the game (`data/icons.ts`), the colours the ones of
@@ -57,9 +58,11 @@ function way(points: readonly Point[]): string {
 }
 
 const topWay = way([point('a'), point('b'), point('d')]);
+const lowWay = way([point('a'), point('c'), point('d')]);
 // The packet that is dropped runs to the middle of the full cable and stops there
 const droppedWay = way([point('a'), point('b'), along('b', 'd', 0.5)]);
-// The packets of the good plan stop in the middle of their last cable, where the picture ends
+// The good plan runs a round to the server first; in the second round its packets stop in the
+// middle of their last cable, where the picture ends
 const topStop = way([point('a'), point('b'), along('b', 'd', 0.45)]);
 const lowStop = way([point('a'), point('c'), along('c', 'd', 0.45)]);
 
@@ -143,12 +146,21 @@ const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
     />
     <use
       href="#pv-box"
-      class="pv-packet pv-a pv-travel pv-stay"
+      class="pv-packet pv-a pv-travel"
       x="-5.5"
       y="-5.5"
       width="11"
       height="11"
-      style={`--c:${blue};--end:${blue};--dur:2200ms;--delay:3.2s;${topStop}`}
+      style={`--c:${blue};--end:${blue};--dur:1300ms;--delay:3.2s;${topWay}`}
+    />
+    <use
+      href="#pv-box"
+      class="pv-packet pv-a pv-travel"
+      x="-5.5"
+      y="-5.5"
+      width="11"
+      height="11"
+      style={`--c:${amber};--end:${amber};--dur:1300ms;--delay:3.3s;${lowWay}`}
     />
     <use
       href="#pv-box"
@@ -157,7 +169,16 @@ const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
       y="-5.5"
       width="11"
       height="11"
-      style={`--c:${amber};--end:${amber};--dur:2200ms;--delay:3.3s;${lowStop}`}
+      style={`--c:${blue};--end:${blue};--dur:1800ms;--delay:4.6s;${topStop}`}
+    />
+    <use
+      href="#pv-box"
+      class="pv-packet pv-a pv-travel pv-stay"
+      x="-5.5"
+      y="-5.5"
+      width="11"
+      height="11"
+      style={`--c:${amber};--end:${amber};--dur:1800ms;--delay:4.7s;${lowStop}`}
     />
   </svg>
 </div>

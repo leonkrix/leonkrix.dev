@@ -456,7 +456,7 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
       'Everybody uploads photos while the crew needs the radio.',
       8,
       'hub',
-      'OBBB',
+      'OWBB',
       'calm rush',
       { pressure: 1.5, minBest: 0.65 },
     ],

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { THROTTLE_STEPS } from '../logic/options';
 import {
   addBackup,
   addLane,
@@ -193,7 +194,8 @@ function percent(value: number): string {
 }
 
 /**
- * How much of its traffic a flow may send, from 5 to 100 % in steps of 5. The value follows the
+ * How much of its traffic a flow may send, from 10 to 100 % in steps of 10 (the values the solver
+ * of the best plan chooses from, `THROTTLE_STEPS`). The value follows the
  * slider while it is moved and is set in the plan when it is let go (one step to undo, not twenty).
  */
 function ThrottleSlider({ value, onCommit }: { value: number; onCommit: (value: number) => void }) {
@@ -216,9 +218,9 @@ function ThrottleSlider({ value, onCommit }: { value: number; onCommit: (value: 
         <input
           id="bb-throttle"
           type="range"
-          min={5}
+          min={Math.round(Math.min(...THROTTLE_STEPS) * 100)}
           max={100}
-          step={5}
+          step={Math.round((THROTTLE_STEPS[0] ?? 1) * 100 - (THROTTLE_STEPS[1] ?? 0.9) * 100)}
           value={shown}
           aria-valuetext={`${String(shown)} percent of its traffic`}
           onChange={(event) => {

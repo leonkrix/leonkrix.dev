@@ -110,7 +110,7 @@ describe('the solver', () => {
       );
       expect(solve(index).score, `seed ${String(seed)}`).toBeGreaterThanOrEqual(best - 1e-12);
     }
-  });
+  }, 30_000);
 
   it('agrees with trying every combination', () => {
     const rulesets = [

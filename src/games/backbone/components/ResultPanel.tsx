@@ -249,9 +249,8 @@ export function ResultPanel({
           </dd>
           <dt>Best plan</dt>
           <dd>
-            The best plan a search proved before you saw the level.
-            {index.level.rules.throttle &&
-              ' It holds traffic back only in a few steps, so a finer setting of the slider can beat it a little.'}
+            The best plan a search proved before you saw the level. It is the best plan there is:
+            the search tries every setting of the slider too.
           </dd>
         </dl>
       </section>

@@ -553,7 +553,7 @@ export function setThrottle(state: PlayState, throttle: number): PlayState {
     state,
     flow.id,
     { ...flowPlan, throttle },
-    `${flow.name} sends ${String(throttle * 100)} % of its traffic.`,
+    `${flow.name} sends ${String(Math.round(throttle * 100))} % of its traffic.`,
   );
 }
 

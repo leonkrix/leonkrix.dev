@@ -112,7 +112,7 @@ function difference(state: PlayState, guide: Guide): { text: string; flow: strin
     if (best.throttle !== (mine?.throttle ?? 1)) {
       return {
         flow: flow.id,
-        text: `Let ${flow.name} send only ${String(best.throttle * 100)} % of its traffic.`,
+        text: `Let ${flow.name} send only ${String(Math.round(best.throttle * 100))} % of its traffic.`,
       };
     }
   }
