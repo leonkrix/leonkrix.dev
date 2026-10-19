@@ -40,7 +40,7 @@ export const chapters: readonly Chapter[] = [
   {
     number: 6,
     title: 'Queues',
-    rule: 'Links have buffers. A burst that does not fit waits in the buffer and goes on a moment later, at the price of waiting time. A full buffer drops what comes next. Under the load of a cable, a small q2/4 says that 2 are waiting in its buffer, which holds 4 (per kind of traffic); it shows only while something waits. New traffic: video is big and steady and does not like loss.',
+    rule: 'Links have buffers. A burst that does not fit waits in the buffer and goes on a moment later, at the price of waiting time. A full buffer drops what comes next. Every cable has buffers, one for each class of traffic (voice and control, then web and video, then bulk), and sends them in that order. Under the load of a cable, three little bars show how full these buffers are, from the one served first to the one served last: a full bar drops what comes next. New traffic: video is big and steady and does not like loss.',
   },
   {
     number: 7,
@@ -55,7 +55,7 @@ export const chapters: readonly Chapter[] = [
   {
     number: 9,
     title: 'Loss',
-    rule: 'Some links lose packets. Redundancy sends extra coded packets to recover them, but they use capacity too. New traffic: payments (transactions) must not lose a single packet.',
+    rule: 'Some links lose packets: a small label above the cable says how many ("10 % lost" all the time, "20 % at times" in some situations). Redundancy sends extra coded packets to recover them, but they use capacity too. New traffic: payments (transactions) must not lose a single packet.',
   },
   {
     number: 10,

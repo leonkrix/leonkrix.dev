@@ -191,9 +191,11 @@ export interface LinkStepResult {
   attack: number;
   /** Traffic waiting in the buffers of the link at the end of the step, and what they can hold */
   queued: number;
-  /** The most waiting in one queue class: what the chip "q2/4" shows, next to the room of one buffer */
-  fullest: number;
+  /** What waits in each queue class (served first, middle, last), each of them room for `buffer` */
+  queuedBy: readonly number[];
   buffer: number;
+  /** The share of the traffic this cable loses in this step (its own loss and an event), 0 to 1 */
+  loss: number;
   /** Capacity of the link in this step (0 when it is down) */
   capacity: number;
   down: boolean;

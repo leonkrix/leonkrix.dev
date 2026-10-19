@@ -373,6 +373,8 @@ describe('queues: buffers that hold back a burst', () => {
     const steps = evaluate(burst(6), { f1: singlePath(fast) }).situations[0]?.steps ?? [];
     // Step 2 wants 16 on a cable of 10: 10 go through, 6 wait in the buffer
     expect(steps[2]?.links.AB?.queued).toBeCloseTo(6, 9);
+    // The backlog sits in the buffer of the class of the flow (web: the middle one)
+    expect(steps[2]?.links.AB?.queuedBy).toEqual([0, 6, 0]);
     expect(steps[2]?.flows.f1?.delivered).toBeCloseTo(1, 9);
     // Step 3 wants 16 again: the buffer is full, 6 of the new traffic is dropped
     expect(steps[3]?.flows.f1?.delivered).toBeLessThan(1);

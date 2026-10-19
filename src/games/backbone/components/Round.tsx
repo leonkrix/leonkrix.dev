@@ -348,6 +348,8 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
             source={run === undefined ? selectedFlow?.source : undefined}
             target={run === undefined ? selectedFlow?.target : undefined}
             mustPass={mustPass}
+            hovered={hover}
+            running={run !== undefined}
             nameSides={placement.names}
             lifted={placement.lifted}
             badgesLeft={placement.badgesLeft}

@@ -242,7 +242,7 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
       const shares: number[] = [];
       const behind: number[] = [];
       let queued = 0;
-      let fullest = 0;
+      const queuedBy: number[] = [];
       queues.forEach((want, queue) => {
         const content = (held[queue] ?? 0) + want;
         const served = Math.min(content, remaining);
@@ -251,7 +251,7 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
         const keep = Math.min(left, buffer);
         held[queue] = keep;
         queued += keep;
-        fullest = Math.max(fullest, keep);
+        queuedBy.push(keep);
         behind.push(queued);
         shares.push(want > 0 ? Math.max(0, 1 - (left - keep) / want) : 1);
       });
@@ -264,8 +264,9 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
         offered: queues.reduce((sum, value) => sum + value, 0),
         attack: attack.get(link.id) ?? 0,
         queued,
-        fullest,
+        queuedBy,
         buffer,
+        loss: state.get(link.id)?.loss ?? 0,
         capacity,
         down: state.get(link.id)?.down ?? false,
         absent: state.get(link.id)?.absent ?? false,

@@ -1,7 +1,8 @@
 import { type LevelIndex } from '../logic/graph';
+import { showsDelay } from '../logic/latency';
 import { type Baselines, pointsOf, starsFor, type Thresholds } from '../logic/stars';
 import { describeBusiest, type LateFlow, type RunSummary, summarize } from '../logic/text';
-import type { Evaluation, Plan } from '../logic/types';
+import type { Evaluation, Level, Plan } from '../logic/types';
 import { MiniMap } from './MiniMap';
 import { Star } from './Svg';
 
@@ -59,11 +60,32 @@ function lateOf(summary: RunSummary, flow: string): LateFlow | undefined {
   return summary.flows.find((entry) => entry.flow === flow)?.late;
 }
 
-/** Why a flow lost value to delay, in numbers the map shows. */
-function lateText(late: LateFlow | undefined): string {
-  return late === undefined
-    ? ''
-    : `It was too slow: its route needed up to ${String(late.ms)} ms, it loses value after ${String(late.budgetMs)} ms and is worth nothing after ${String(late.zeroMs)} ms.`;
+/** What the load balanced plan does not know, said only for what the level has taught so far. */
+function ignorance(level: Level): string {
+  const unknown = [
+    level.rules.throttle ? 'priorities' : undefined,
+    showsDelay(level) ? 'delay' : undefined,
+    level.rules.redundancy ? 'loss' : undefined,
+    level.rules.backup ? 'a cut cable' : undefined,
+  ].filter((word): word is string => word !== undefined);
+  if (unknown.length === 0) {
+    return '';
+  }
+  const last = unknown.pop();
+  return ` and knows nothing about ${unknown.length > 0 ? `${unknown.join(', ')} or ` : ''}${last ?? ''}`;
+}
+
+/**
+ * Why a flow lost value to delay. The numbers (milliseconds) come only once the game has taught
+ * delay (the cables show theirs); before that the text says it took too long and what helps.
+ */
+function lateText(late: LateFlow | undefined, knowsDelay: boolean): string {
+  if (late === undefined) {
+    return '';
+  }
+  return knowsDelay
+    ? `It was too slow: its route needed up to ${String(late.ms)} ms, it loses value after ${String(late.budgetMs)} ms and is worth nothing after ${String(late.zeroMs)} ms.`
+    : 'Part of it arrived late. A shorter path, or one with less traffic on it, is quicker.';
 }
 
 export function ResultPanel({
@@ -173,7 +195,7 @@ export function ResultPanel({
                   ? `earns ${String(Math.round((1 - worst.lost) * 100))} % of what it could. The best plan does not do better.`
                   : `lost ${String(Math.round(worst.lost * 100))} % of what it could have earned.`}
               {lateOf(summary, worst.flow) !== undefined &&
-                ` ${lateText(lateOf(summary, worst.flow))}`}
+                ` ${lateText(lateOf(summary, worst.flow), showsDelay(index.level))}`}
             </li>
           )}
           {worst === undefined && <li data-problem="false">Every flow got what it needed.</li>}
@@ -212,7 +234,11 @@ export function ResultPanel({
                   </span>
                   {Math.round(entry.earned * 100)} %
                   {entry.late !== undefined && (
-                    <small className="bb-late"> · too slow: {entry.late.ms} ms</small>
+                    <small className="bb-late">
+                      {showsDelay(index.level)
+                        ? ` · too slow: ${String(entry.late.ms)} ms`
+                        : ' · late'}
+                    </small>
                   )}
                 </td>
               </tr>
@@ -261,8 +287,7 @@ export function ResultPanel({
           <dt>Load balanced</dt>
           <dd>
             The heaviest flows first, each on the one path where the fullest cable ends up the least
-            full. It never splits a flow and knows nothing about priorities, delay, loss or a cut
-            cable.
+            full. It never splits a flow{ignorance(index.level)}.
           </dd>
           <dt>Best plan</dt>
           <dd>

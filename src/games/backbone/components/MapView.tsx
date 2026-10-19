@@ -1,4 +1,5 @@
 import {
+  type CSSProperties,
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   useEffect,
@@ -9,8 +10,9 @@ import {
 import { type LevelIndex } from '../logic/graph';
 import type { Side } from '../logic/labels';
 import { delayMs, showsDelay } from '../logic/latency';
+import { bufferSize } from '../logic/queues';
 import type { RiskKind } from '../logic/text';
-import type { LinkStepResult, NetLink, NodePath } from '../logic/types';
+import type { Level, LinkStepResult, NetLink, NodePath } from '../logic/types';
 import {
   type Direction,
   loadClass,
@@ -54,6 +56,10 @@ interface MapViewProps {
   /** The side of the node where its name, and the "from" and "to" marks, are written */
   /** Nodes the selected flow has to pass and its route does not pass yet (a firewall): they glow */
   mustPass: ReadonlySet<string>;
+  /** The node the pointer or the keyboard is on: a cable to build that the drawing would take next is marked */
+  hovered: string | undefined;
+  /** The stress test is running (the numbers on the cables are what happens now, not a plan) */
+  running: boolean;
   nameSides: ReadonlyMap<string, Side>;
   /** The names that sit a little higher, because the numbers of flows are at the node */
   lifted: ReadonlySet<string>;
@@ -149,11 +155,56 @@ function effectiveDelay(delay: number, result: LinkStepResult | undefined): numb
   return delay * (1 + load * load);
 }
 
-/** What waits in the buffer of a cable ("q2"), or nothing while nothing waits. */
-function queueLabel(result: LinkStepResult | undefined): string {
-  return result !== undefined && result.queued > 0.05
-    ? `q${trim(result.fullest)}/${trim(result.buffer)}`
-    : '';
+/** The loss of a cable in words: what it loses now (while the test runs), or what it loses all the time and at times. */
+function lossText(
+  link: NetLink,
+  level: Level,
+  result: LinkStepResult | undefined,
+  running: boolean,
+): string {
+  const percent = (share: number): string => `${String(Math.round(share * 100))} %`;
+  if (running) {
+    return result !== undefined && result.loss > 0.005 ? `${percent(result.loss)} lost` : '';
+  }
+  const atTimes = Math.max(
+    0,
+    ...level.situations.flatMap((situation) =>
+      situation.events.flatMap((event) =>
+        event.kind === 'lossy' && event.link === link.id ? [event.loss] : [],
+      ),
+    ),
+  );
+  if (link.loss > 0) {
+    return `${percent(link.loss)} lost`;
+  }
+  return atTimes > 0 ? `${percent(atTimes)} at times` : '';
+}
+
+/** The three buffers of a cable (served first, middle, last): little bars that fill while traffic waits. */
+function Buffers({ result, buffer }: { result: LinkStepResult | undefined; buffer: number }) {
+  const size = result?.buffer ?? buffer;
+  const names = ['voice and control', 'web, video and payments', 'bulk'];
+  return (
+    <span
+      className="bb-link-queue"
+      role="img"
+      aria-label={`Buffers: ${names
+        .map((name, at) => `${name} ${trim(result?.queuedBy[at] ?? 0)} of ${trim(size)}`)
+        .join(', ')}`}
+    >
+      {names.map((name, at) => {
+        const waiting = result?.queuedBy[at] ?? 0;
+        const share = Math.min(1, waiting / Math.max(size, 1e-9));
+        return (
+          <i
+            key={name}
+            data-fill={share >= 0.999 ? 'full' : waiting > 0.05 ? 'some' : 'empty'}
+            style={{ '--fill': String(share) } as CSSProperties}
+          />
+        );
+      })}
+    </span>
+  );
 }
 
 export function MapView({
@@ -167,6 +218,8 @@ export function MapView({
   source,
   target,
   mustPass,
+  hovered,
+  running,
   nameSides,
   lifted,
   badgesLeft,
@@ -260,6 +313,17 @@ export function MapView({
         ].filter((node) => draft?.includes(node) !== true),
   );
 
+  // The cable to build that the drawing would build if the player clicked the node the pointer is on
+  const lastDrawn = draft?.[draft.length - 1];
+  const hot =
+    hovered === undefined || lastDrawn === undefined
+      ? undefined
+      : unbuilt.find(
+          (link) =>
+            (link.a === lastDrawn && link.b === hovered) ||
+            (link.b === lastDrawn && link.a === hovered),
+        );
+
   return (
     <div
       ref={mapRef}
@@ -309,6 +373,9 @@ export function MapView({
             <line
               key={link.id}
               className="bb-link-ghost"
+              data-hot={
+                link.id === hot?.id ? ((hot.cost ?? 0) <= budgetLeft ? 'yes' : 'no') : undefined
+              }
               x1={from.x}
               y1={from.y}
               x2={to.x}
@@ -505,6 +572,9 @@ export function MapView({
             key={link.id}
             type="button"
             className="bb-build-label"
+            data-hot={
+              link.id === hot?.id ? ((hot.cost ?? 0) <= budgetLeft ? 'yes' : 'no') : undefined
+            }
             disabled={!editable || cost > budgetLeft}
             title={`Build this cable: capacity ${String(link.capacity)}, cost ${String(cost)}`}
             aria-label={`Build a cable with capacity ${String(link.capacity)} for ${String(cost)}`}
@@ -557,8 +627,11 @@ export function MapView({
                 {delayMs(effectiveDelay(link.delay, result))} ms
               </small>
             )}
-            {result?.down !== true && queueLabel(result) !== '' && (
-              <small className="bb-link-queue">{queueLabel(result)}</small>
+            {result?.down !== true && (result?.buffer ?? bufferSize(level, link)) > 0 && (
+              <Buffers result={result} buffer={bufferSize(level, link)} />
+            )}
+            {result?.down !== true && lossText(link, level, result, running) !== '' && (
+              <small className="bb-link-loss">{lossText(link, level, result, running)}</small>
             )}
           </span>
         );

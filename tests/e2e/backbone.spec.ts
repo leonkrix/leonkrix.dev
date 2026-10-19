@@ -339,6 +339,20 @@ test.describe('Backbone', () => {
     expect(buffers.some((value) => Number(value) > 0)).toBe(true);
   });
 
+  test('draws the buffers of every cable as three bars from the chapter about queues on, and not before', async ({
+    page,
+  }) => {
+    await open(page, 'c5-1');
+    await expect(page.locator('.bb-link-queue')).toHaveCount(0);
+    await page.getByRole('link', { name: 'All levels' }).click();
+    await page.locator('a[href="?level=c6-1"]').click();
+    await expect(page.locator('.bb-node').first()).toBeVisible({ timeout: 15_000 });
+    const bars = page.locator('.bb-link-queue');
+    expect(await bars.count()).toBeGreaterThan(0);
+    await expect(bars.first().locator('i')).toHaveCount(3);
+    await expect(bars.first()).toHaveAttribute('aria-label', /Buffers: voice and control/);
+  });
+
   test('makes a random level in the background', async ({ page }) => {
     test.setTimeout(120_000);
     await page.goto(PATH);
@@ -538,5 +552,53 @@ test.describe('Backbone: what the player is told about delay, building, firewall
       'is in range',
     );
     await expect(page.locator('[data-risk="range"]').first()).toBeAttached();
+  });
+});
+
+test.describe('Backbone: only what has been taught is said', () => {
+  test('does not talk about milliseconds or buffers in the first level result', async ({
+    page,
+  }) => {
+    await open(page, 'c1-1');
+    await page.getByRole('button', { name: 'Auto: shortest' }).click();
+    await page.getByRole('button', { name: 'Run' }).click();
+    await expect(page.getByRole('heading', { name: 'Your result' })).toBeVisible({
+      timeout: 90_000,
+    });
+    const text = (await page.locator('.bb-result').textContent()) ?? '';
+    expect(text).not.toMatch(/ ms|latency|delay|buffer/i);
+    await expect(page.locator('.bb-link-delay, .bb-link-queue, .bb-link-loss')).toHaveCount(0);
+  });
+
+  test('shows what a cable loses as a label, from the chapter about loss on', async ({ page }) => {
+    await open(page, 'c9-1');
+    await expect(page.locator('.bb-link-loss').first()).toContainText(/[0-9]+ % (lost|at times)/);
+    expect(await page.locator('.bb-link-loss').count()).toBeGreaterThan(1);
+  });
+
+  test('lights the cable that the next click would build, while the route is drawn', async ({
+    page,
+  }) => {
+    await open(page, 'c8-1');
+    const record = levelOf('c8-1');
+    const optional = record.level.links.find((link) => link.optional === true);
+    expect(optional).toBeDefined();
+    const flow = record.level.flows.find(
+      (entry) => entry.source === optional?.a || entry.source === optional?.b,
+    );
+    // Start a route at one end of a cable to build and point at its other end
+    const from = optional?.a ?? '';
+    const to = optional?.b ?? '';
+    const starter = record.level.flows.find(
+      (entry) => entry.source === from || entry.source === to,
+    );
+    if (flow === undefined || starter === undefined) {
+      test.skip(true, 'no flow starts at a cable to build in this level');
+      return;
+    }
+    await page.getByRole('button', { name: new RegExp(`^Flow [0-9]+: ${starter.name}`) }).click();
+    await node(page, starter.source).click();
+    await node(page, starter.source === from ? to : from).hover();
+    await expect(page.locator('.bb-build-label[data-hot]')).toHaveCount(1);
   });
 });

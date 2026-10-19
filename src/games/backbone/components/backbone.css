@@ -1924,17 +1924,54 @@
   text-align: right;
 }
 
-/* What waits in the buffer of a cable: a small "q2" under its load, only while something waits */
+/* The buffers of a cable under its load: three little bars (served first, middle, last) that fill
+   while traffic waits, always there from the chapter about queues on */
 .bb-link-queue {
   position: absolute;
-  top: calc(100% - 0.1em);
+  top: calc(100% + 0.1em);
+  left: 50%;
+  display: flex;
+  gap: 0.2em;
+  padding: 0.15em 0.3em;
+  border-radius: 0.5em;
+  background-color: color-mix(in srgb, var(--color-bg) 88%, transparent);
+  transform: translateX(-50%);
+}
+
+.bb-link-queue i {
+  position: relative;
+  display: block;
+  width: 0.45em;
+  height: 1.1em;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-muted) 70%, transparent);
+  border-radius: 0.15em;
+}
+
+.bb-link-queue i::after {
+  position: absolute;
+  inset: auto 0 0;
+  height: calc(var(--fill, 0) * 100%);
+  background-color: var(--bb-busy);
+  content: '';
+}
+
+.bb-link-queue i[data-fill='full']::after {
+  background-color: var(--bb-over);
+}
+
+/* What a cable loses: a small chip above its load, in the colour of loss */
+.bb-link-loss {
+  position: absolute;
+  bottom: calc(100% + 0.1em);
   left: 50%;
   padding: 0 0.4em;
   border-radius: 0.7em;
   background-color: color-mix(in srgb, var(--color-bg) 88%, transparent);
-  color: var(--bb-busy);
+  color: var(--color-accent-2);
   font-size: 0.85em;
   line-height: 1.4;
+  white-space: nowrap;
   transform: translateX(-50%);
 }
 
@@ -2108,4 +2145,28 @@
     padding: 0.4rem 0.25rem;
     font-size: 0.66rem;
   }
+}
+
+/* While a route is drawn, the cable to build that the next click would build (the pointer is on its
+   far end) is lit: the line turns solid and the price gets a ring */
+.bb-link-ghost[data-hot='yes'] {
+  stroke: var(--color-contrast);
+  stroke-dasharray: none;
+  stroke-opacity: 0.85;
+}
+
+.bb-link-ghost[data-hot='no'] {
+  stroke: var(--bb-over);
+}
+
+.bb-game button.bb-build-label[data-hot='yes'] {
+  border-style: solid;
+  border-color: var(--color-contrast);
+  background-color: color-mix(in srgb, var(--color-contrast) 22%, var(--color-bg));
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--color-contrast) 28%, transparent);
+}
+
+.bb-game button.bb-build-label[data-hot='no'] {
+  border-color: var(--bb-over);
+  color: var(--bb-over);
 }
