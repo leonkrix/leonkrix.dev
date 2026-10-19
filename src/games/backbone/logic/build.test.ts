@@ -11,7 +11,7 @@ import {
 import { diamond } from './fixtures';
 import { indexLevel } from './graph';
 import { singlePath } from './plan';
-import { loadDesign, startState, toggleBuild, undo } from './play';
+import { loadDesign, resetPlan, startState, toggleBuild, undo } from './play';
 import { evaluate } from './simulate';
 import { solveDesign } from './solver';
 import { strategyScores } from './stars';
@@ -107,6 +107,16 @@ describe('building in the game', () => {
     expect(state.built).toEqual([]);
     state = undo(state);
     expect(state.built).toEqual(['AB']);
+  });
+
+  it('takes the built cables back when the level is cleared, and undoes that', () => {
+    let state = toggleBuild(startState(level), 'AB');
+    expect(resetPlan(startState(level))).toEqual(startState(level));
+    state = resetPlan(state);
+    expect(state.built).toEqual([]);
+    expect(state.index.level.links).toHaveLength(2);
+    expect(state.message).toContain('gone');
+    expect(undo(state).built).toEqual(['AB']);
   });
 
   it('loses the flows that used the cable that is taken away', () => {

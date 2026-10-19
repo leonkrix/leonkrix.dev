@@ -245,6 +245,14 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
       }
     }
   }
+  // The nodes (a firewall) that the selected flow still has to pass: they glow until its route does
+  const mustPass = new Set(
+    run === undefined &&
+      selectedFlow !== undefined &&
+      (play.plan[selectedFlow.id] === undefined || play.draft !== undefined)
+      ? (selectedFlow.via ?? []).filter((node) => play.draft?.nodes.includes(node) !== true)
+      : [],
+  );
   const stressSituation = level.situations[clock.situation];
   // The way a flood runs over the cables in this minute of the stress test
   const attackFrom =
@@ -339,6 +347,7 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
             packets={packets}
             source={run === undefined ? selectedFlow?.source : undefined}
             target={run === undefined ? selectedFlow?.target : undefined}
+            mustPass={mustPass}
             nameSides={placement.names}
             lifted={placement.lifted}
             badgesLeft={placement.badgesLeft}
@@ -404,7 +413,7 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
                 </button>
                 <button
                   type="button"
-                  disabled={Object.keys(play.plan).length === 0}
+                  disabled={Object.keys(play.plan).length === 0 && play.built.length === 0}
                   onClick={() => {
                     setPlay(resetPlan(play));
                   }}

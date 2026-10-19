@@ -1,5 +1,7 @@
 import { floodLinks, floodRoute } from './flood';
 import { indexLevel, type LevelIndex } from './graph';
+import { delayMs } from './latency';
+import { profiles } from './profiles';
 import type { Evaluation, Situation } from './types';
 import { loadRatio } from './view';
 
@@ -36,6 +38,8 @@ function sentenceOf(index: LevelIndex, event: NetEvent): string {
       return `${flowName(event.flow)} sends ${String(event.factor)} times as much`;
     case 'down':
       return `${linkName(index, event.link)} is cut`;
+    case 'range':
+      return `${linkName(index, event.link)} is in range`;
     case 'lossy':
       return `${linkName(index, event.link)} loses ${String(Math.round(event.loss * 100))} % of its packets`;
     case 'flood':
@@ -54,6 +58,8 @@ function endOf(index: LevelIndex, event: NetEvent): string {
       return `${flowName(event.flow)} is back to normal`;
     case 'down':
       return `${linkName(index, event.link)} is back`;
+    case 'range':
+      return `${linkName(index, event.link)} is out of range`;
     case 'lossy':
       return `${linkName(index, event.link)} is clean again`;
     case 'flood':
@@ -79,7 +85,11 @@ export function describeSwitch(index: LevelIndex, step: number): string {
   for (const situation of index.level.situations) {
     for (const event of situation.events) {
       if (event.from === step) {
-        parts.add(sentenceOf(index, event));
+        parts.add(
+          event.kind === 'range'
+            ? `${linkName(index, event.link)} comes into range`
+            : sentenceOf(index, event),
+        );
       } else if (event.to === step) {
         parts.add(endOf(index, event));
       }
@@ -89,7 +99,7 @@ export function describeSwitch(index: LevelIndex, step: number): string {
 }
 
 /** What can happen to a cable: it is cut, loses packets, runs slow or carries a flood. */
-export type RiskKind = 'down' | 'lossy' | 'slow' | 'flood';
+export type RiskKind = 'down' | 'range' | 'lossy' | 'slow' | 'flood';
 
 export interface Forecast {
   id: string;
@@ -136,7 +146,12 @@ export function forecastOf(index: LevelIndex): Forecast[] {
         .map((event) => ({
           kind: event.kind,
           minutes: minutesOf(event),
-          text: event.kind === 'flood' ? floodText(index, event) : sentenceOf(index, event),
+          text:
+            event.kind === 'flood'
+              ? floodText(index, event)
+              : event.kind === 'range'
+                ? `${sentenceOf(index, event)} (it is not there at other times)`
+                : sentenceOf(index, event),
         })),
     })),
   ];
@@ -144,7 +159,7 @@ export function forecastOf(index: LevelIndex): Forecast[] {
 
 /** The cables that something happens to in some situation (a cut wins over loss, loss over slowness). */
 export function riskyLinks(level: LevelIndex['level']): Map<string, RiskKind> {
-  const rank = { slow: 1, lossy: 2, flood: 3, down: 4 } as const;
+  const rank = { slow: 1, lossy: 2, flood: 3, range: 4, down: 5 } as const;
   const risks = new Map<string, RiskKind>();
   const add = (link: string, kind: keyof typeof rank): void => {
     const known = risks.get(link);
@@ -160,7 +175,12 @@ export function riskyLinks(level: LevelIndex['level']): Map<string, RiskKind> {
   }
   for (const situation of level.situations) {
     for (const event of situation.events) {
-      if (event.kind === 'down' || event.kind === 'lossy' || event.kind === 'slow') {
+      if (
+        event.kind === 'down' ||
+        event.kind === 'range' ||
+        event.kind === 'lossy' ||
+        event.kind === 'slow'
+      ) {
         add(event.link, event.kind);
       } else if (event.kind === 'flood') {
         for (const link of floodLinks(index, event, () => true)) {
@@ -172,13 +192,25 @@ export function riskyLinks(level: LevelIndex['level']): Map<string, RiskKind> {
   return risks;
 }
 
+/** A flow that was too slow: how long it took at the worst, what it can take, and the share of its value that delay cost. */
+export interface LateFlow {
+  /** The longest the traffic needed in a step where something arrived, in milliseconds */
+  ms: number;
+  /** Up to this the flow loses nothing, in milliseconds */
+  budgetMs: number;
+  /** From this on the flow is worth nothing, in milliseconds */
+  zeroMs: number;
+  /** The share of the possible value that was lost to delay (0 to 1) */
+  lost: number;
+}
+
 export interface RunSummary {
   /** The busiest link of the whole run, how full it got (1 is exactly full) and in which situation */
   busiest: { link: string; ratio: number; situation: string } | undefined;
   /** The flow that lost the most, and the share of its value it lost (0 to 1) */
   worstFlow: { flow: string; lost: number } | undefined;
-  /** For every flow: the share of its possible value that it earned over the whole run */
-  flows: { flow: string; earned: number }[];
+  /** For every flow: the share of its possible value that it earned over the whole run, and what delay cost it */
+  flows: { flow: string; earned: number; late: LateFlow | undefined }[];
   /** For every situation: its score (0 to 1), the share of the possible value it earned */
   situations: { id: string; name: string; score: number }[];
 }
@@ -187,6 +219,8 @@ export function summarize(index: LevelIndex, evaluation: Evaluation): RunSummary
   let busiest: RunSummary['busiest'];
   const earned = new Map<string, number>();
   const possible = new Map<string, number>();
+  const slowest = new Map<string, number>();
+  const lateLoss = new Map<string, number>();
   const situations: RunSummary['situations'] = [];
   for (const [at, situation] of evaluation.situations.entries()) {
     let got = 0;
@@ -199,6 +233,14 @@ export function summarize(index: LevelIndex, evaluation: Evaluation): RunSummary
         }
       }
       for (const [id, result] of Object.entries(step.flows)) {
+        const flow = index.level.flows.find((entry) => entry.id === id);
+        const profile = flow === undefined ? undefined : profiles[flow.profile];
+        if (profile?.latencyBudget !== undefined && result.delivered > 0) {
+          slowest.set(id, Math.max(slowest.get(id) ?? 0, result.latency));
+          // What the flow would have earned if it had been on time, minus what it earned
+          const onTime = result.maxValue * result.delivered ** profile.lossExponent;
+          lateLoss.set(id, (lateLoss.get(id) ?? 0) + Math.max(0, onTime - result.value));
+        }
         earned.set(id, (earned.get(id) ?? 0) + result.value);
         possible.set(id, (possible.get(id) ?? 0) + result.maxValue);
         got += result.value;
@@ -211,13 +253,25 @@ export function summarize(index: LevelIndex, evaluation: Evaluation): RunSummary
       score: could > 0 ? got / could : 1,
     });
   }
-  const flows = index.level.flows.map((flow) => ({
-    flow: flow.id,
-    earned:
-      (possible.get(flow.id) ?? 0) > 0
-        ? (earned.get(flow.id) ?? 0) / (possible.get(flow.id) ?? 1)
-        : 1,
-  }));
+  const flows = index.level.flows.map((flow) => {
+    const profile = profiles[flow.profile];
+    const total = possible.get(flow.id) ?? 0;
+    const lost = total > 0 ? (lateLoss.get(flow.id) ?? 0) / total : 0;
+    const budget = profile.latencyBudget;
+    return {
+      flow: flow.id,
+      earned: total > 0 ? (earned.get(flow.id) ?? 0) / total : 1,
+      late:
+        budget === undefined || lost < 0.02
+          ? undefined
+          : {
+              ms: delayMs(slowest.get(flow.id) ?? 0),
+              budgetMs: delayMs(budget),
+              zeroMs: delayMs(budget * (1 + 1 / Math.max(profile.steepness, 1e-9))),
+              lost,
+            },
+    };
+  });
   const worst = [...flows].sort((a, b) => a.earned - b.earned)[0];
   return {
     busiest,

@@ -178,6 +178,15 @@ export function editedPath(state: PlayState): NodePath | undefined {
 }
 
 function replaceEditedPath(state: PlayState, flow: Flow, path: NodePath): PlayState {
+  // A route that skips a node the flow has to pass (a firewall) is not a route: nothing is set
+  const skipped = (flow.via ?? []).filter((node) => !path.includes(node));
+  if (skipped.length > 0) {
+    return {
+      ...state,
+      draft: undefined,
+      message: `${flow.name} has to pass ${skipped.map((node) => nameOf(state, node)).join(', ')}. That route skips it, so it was not set: draw it again.`,
+    };
+  }
   const flowPlan = state.plan[flow.id] ?? singlePath(path);
   if (state.target === 'backup') {
     return withFlowPlan(
@@ -644,10 +653,22 @@ export function redo(state: PlayState): PlayState {
   };
 }
 
+/** Clears the plan and takes back the cables that were built: the level as it was at the start. */
 export function resetPlan(state: PlayState): PlayState {
-  return Object.keys(state.plan).length === 0
-    ? state
-    : { ...commit(state, {}, 'The plan is empty again.'), assisted: false };
+  if (Object.keys(state.plan).length === 0 && state.built.length === 0) {
+    return state;
+  }
+  return {
+    ...commit(
+      state,
+      {},
+      state.built.length > 0
+        ? 'The plan is empty again and the cables you built are gone.'
+        : 'The plan is empty again.',
+      [],
+    ),
+    assisted: false,
+  };
 }
 
 /** A helper fills in the whole plan. The run is marked as assisted and earns no stars. */

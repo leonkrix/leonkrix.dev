@@ -213,3 +213,27 @@ describe('zones', () => {
     expect(withPolicy).toBeGreaterThan(10);
   });
 });
+
+describe('the situation "on the move"', () => {
+  it('lets radio links come into range and go out of it, and the network always connects', () => {
+    for (let seed = 1; seed <= 12; seed += 1) {
+      for (const nodes of [6, 9]) {
+        const { level, problems } = generateChecked(
+          spec(seed, { nodes, situations: ['calm', 'moving'], lossyLinks: 0 }),
+        );
+        expect(problems, `seed ${String(seed)}, ${String(nodes)} nodes`).toEqual([]);
+        const moving = level.situations.find((situation) => situation.id === 'moving');
+        const events = moving?.events ?? [];
+        expect(events.length).toBeGreaterThan(0);
+        expect(events.every((event) => event.kind === 'range')).toBe(true);
+        // One change takes a flow from the links that were there to those that come: the windows
+        // meet in the middle of the situation
+        const middle = Math.floor((moving?.steps ?? 0) / 2);
+        expect(events.every((event) => event.from === middle || event.to === middle)).toBe(true);
+        expect(
+          new Set(events.map((event) => (event.kind === 'range' ? event.link : ''))).size,
+        ).toBe(events.length);
+      }
+    }
+  });
+});

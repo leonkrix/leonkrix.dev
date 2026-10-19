@@ -8,6 +8,7 @@ import {
 
 import { type LevelIndex } from '../logic/graph';
 import type { Side } from '../logic/labels';
+import { delayMs, showsDelay } from '../logic/latency';
 import type { RiskKind } from '../logic/text';
 import type { LinkStepResult, NetLink, NodePath } from '../logic/types';
 import {
@@ -51,6 +52,8 @@ interface MapViewProps {
   source: string | undefined;
   target: string | undefined;
   /** The side of the node where its name, and the "from" and "to" marks, are written */
+  /** Nodes the selected flow has to pass and its route does not pass yet (a firewall): they glow */
+  mustPass: ReadonlySet<string>;
   nameSides: ReadonlyMap<string, Side>;
   /** The names that sit a little higher, because the numbers of flows are at the node */
   lifted: ReadonlySet<string>;
@@ -140,9 +143,17 @@ function loadLabel(result: LinkStepResult | undefined): string {
   return result === undefined ? '' : `${trim(result.offered)}/${String(result.capacity)}`;
 }
 
+/** The delay of a cable in units, longer while it is full (like the stress test counts it). */
+function effectiveDelay(delay: number, result: LinkStepResult | undefined): number {
+  const load = Math.min(1, loadRatio(result));
+  return delay * (1 + load * load);
+}
+
 /** What waits in the buffer of a cable ("q2"), or nothing while nothing waits. */
 function queueLabel(result: LinkStepResult | undefined): string {
-  return result !== undefined && result.queued > 0.05 ? `q${trim(result.queued)}` : '';
+  return result !== undefined && result.queued > 0.05
+    ? `q${trim(result.fullest)}/${trim(result.buffer)}`
+    : '';
 }
 
 export function MapView({
@@ -155,6 +166,7 @@ export function MapView({
   packets,
   source,
   target,
+  mustPass,
   nameSides,
   lifted,
   badgesLeft,
@@ -174,6 +186,7 @@ export function MapView({
   onBuild,
 }: MapViewProps) {
   const { level } = index;
+  const withDelay = showsDelay(level);
   const flowOrder = new Map(level.flows.map((flow, at) => [flow.id, at]));
   const lanes = Math.max(1, level.flows.length);
   const handledRef = useRef(false);
@@ -181,6 +194,24 @@ export function MapView({
   const buttonsRef = useRef(new Map<string, HTMLButtonElement>());
   const mapRef = useRef<HTMLDivElement>(null);
   const [pointer, setPointer] = useState<Point | undefined>();
+  // Cables that were just built (by a click or by drawing a route over them): their price flashes
+  const [bought, setBought] = useState<readonly NetLink[]>([]);
+  const unbuiltRef = useRef<readonly NetLink[]>(unbuilt);
+  useEffect(() => {
+    const now = new Set(unbuilt.map((link) => link.id));
+    const gone = unbuiltRef.current.filter((link) => !now.has(link.id));
+    unbuiltRef.current = unbuilt;
+    if (gone.length === 0) {
+      return undefined;
+    }
+    setBought((list) => [...list, ...gone]);
+    const timer = window.setTimeout(() => {
+      setBought((list) => list.filter((link) => !gone.includes(link)));
+    }, 1600);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [unbuilt]);
 
   // A drag ends wherever the button is released
   useEffect(() => {
@@ -302,6 +333,7 @@ export function MapView({
             <g
               key={link.id}
               data-down={down}
+              data-absent={result?.absent === true}
               data-load={loadClass(ratio)}
               data-lossy={link.loss > 0}
               data-hint={hinted.has(link.id)}
@@ -423,6 +455,7 @@ export function MapView({
               className="bb-packet"
               data-profile={profile}
               data-dropped={packet.dropped}
+              data-coded={packet.coded}
               x={packet.point.x - 1.4 * packet.scale}
               y={packet.point.y - 1.4 * packet.scale}
               width={2.8 * packet.scale}
@@ -434,6 +467,29 @@ export function MapView({
           );
         })}
       </svg>
+
+      {bought.map((link) => {
+        const a = level.nodes.find((node) => node.id === link.a);
+        const b = level.nodes.find((node) => node.id === link.b);
+        if (a === undefined || b === undefined) {
+          return null;
+        }
+        const from = pointOf(a);
+        const to = pointOf(b);
+        return (
+          <span
+            key={link.id}
+            className="bb-bought"
+            aria-hidden="true"
+            style={{
+              left: `${String((lerp(from.x, to.x, loadAt.get(link.id)) / MAP_WIDTH) * 100)}%`,
+              top: `${String((lerp(from.y, to.y, loadAt.get(link.id)) / MAP_HEIGHT) * 100)}%`,
+            }}
+          >
+            built −{link.cost ?? 0}
+          </span>
+        );
+      })}
 
       {unbuilt.map((link) => {
         const a = level.nodes.find((node) => node.id === link.a);
@@ -484,13 +540,23 @@ export function MapView({
             data-load={loadClass(loadRatio(result))}
             data-down={result?.down === true}
             data-forecast={projected !== undefined}
+            data-delay={withDelay || undefined}
             aria-hidden="true"
             style={{
               left: `${String((lerp(from.x, to.x, loadAt.get(link.id)) / MAP_WIDTH) * 100)}%`,
               top: `${String((lerp(from.y, to.y, loadAt.get(link.id)) / MAP_HEIGHT) * 100)}%`,
             }}
           >
-            {result?.down === true ? 'cut' : label || String(link.capacity)}
+            {result?.down === true
+              ? result.absent
+                ? 'away'
+                : 'cut'
+              : label || String(link.capacity)}
+            {result?.down !== true && withDelay && (
+              <small className="bb-link-delay">
+                {delayMs(effectiveDelay(link.delay, result))} ms
+              </small>
+            )}
             {result?.down !== true && queueLabel(result) !== '' && (
               <small className="bb-link-queue">{queueLabel(result)}</small>
             )}
@@ -521,10 +587,11 @@ export function MapView({
             data-target={isTarget}
             data-draft={onDraft}
             data-next={nextNodes.has(node.id)}
+            data-must={mustPass.has(node.id) || undefined}
             data-zone={node.zone}
             tabIndex={node.id === focused ? 0 : -1}
             disabled={!editable}
-            aria-label={`${node.name}, ${node.kind}${isSource ? ', start of the selected flow' : ''}${isTarget ? ', end of the selected flow' : ''}${endsHere(level, node.id)}`}
+            aria-label={`${node.name}, ${node.kind}${isSource ? ', start of the selected flow' : ''}${isTarget ? ', end of the selected flow' : ''}${mustPass.has(node.id) ? ', the selected flow has to pass here' : ''}${endsHere(level, node.id)}`}
             style={{
               left: `${String((point.x / MAP_WIDTH) * 100)}%`,
               top: `${String((point.y / MAP_HEIGHT) * 100)}%`,

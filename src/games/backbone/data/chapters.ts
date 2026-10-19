@@ -30,17 +30,17 @@ export const chapters: readonly Chapter[] = [
   {
     number: 4,
     title: 'Latency',
-    rule: 'Voice must arrive fast. The shortest path on the map is not always the fastest one when it is full.',
+    rule: 'Voice must arrive fast. Every cable shows its delay in milliseconds under its load, and a full cable is slower. Add up the cables of your route: a call is fine up to 30 ms, loses value after that and is worth nothing after 50 ms. The shortest path on the map is not always the fastest one.',
   },
   {
     number: 5,
     title: 'Priorities',
-    rule: 'On a full link, voice goes first and bulk goes last. Hold bulk traffic (backups, uploads: it can wait) back to make room for what matters.',
+    rule: 'On a full link, voice goes first and bulk goes last: what does not fit is dropped from the back. But a full cable is slow for everybody, and bulk that is dropped further on has still used the cables before that. Hold bulk traffic (backups, uploads: it can wait) back to keep the cables free for what matters; what you hold back earns nothing, so look for the most you can send.',
   },
   {
     number: 6,
     title: 'Queues',
-    rule: 'Links have buffers. A burst that does not fit waits in the buffer and goes on a moment later, at the price of waiting time. A full buffer drops what comes next. Under the load of a cable, a small q2 says that 2 are waiting in its buffer; it shows only while something waits. New traffic: video is big and steady and does not like loss.',
+    rule: 'Links have buffers. A burst that does not fit waits in the buffer and goes on a moment later, at the price of waiting time. A full buffer drops what comes next. Under the load of a cable, a small q2/4 says that 2 are waiting in its buffer, which holds 4 (per kind of traffic); it shows only while something waits. New traffic: video is big and steady and does not like loss.',
   },
   {
     number: 7,
@@ -60,7 +60,7 @@ export const chapters: readonly Chapter[] = [
   {
     number: 10,
     title: 'On the move',
-    rule: 'Links come and go. Plan a change of path for the moment a link appears or disappears.',
+    rule: 'Radio links come into range and go out of it. A cable that is out of range is drawn dashed in amber and carries nothing. Backup paths are not offered here, because the links around you change: plan a change of path for the moment a link appears or disappears.',
   },
   {
     number: 11,

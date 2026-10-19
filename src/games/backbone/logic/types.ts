@@ -76,6 +76,8 @@ export interface Flow {
 export type NetEvent =
   | { kind: 'burst'; flow: string; from: number; to: number; factor: number }
   | { kind: 'down'; link: string; from: number; to: number }
+  /** The cable is in range only from `from` to `to` (a radio link): outside that it is not there */
+  | { kind: 'range'; link: string; from: number; to: number }
   | { kind: 'lossy'; link: string; from: number; to: number; loss: number }
   | { kind: 'slow'; link: string; from: number; to: number; factor: number }
   | { kind: 'flood'; source: string; target: string; from: number; to: number; rate: number };
@@ -161,11 +163,15 @@ export type Plan = Readonly<Record<string, FlowPlan>>;
 export interface UsedPath {
   links: readonly string[];
   share: number;
+  /** The share of the traffic on this path that the cables let through (1: none was dropped for lack of room) */
+  kept: number;
 }
 
 export interface FlowStepResult {
   /** Units the flow wanted to send in this step (burst and throttle applied) */
   sent: number;
+  /** The extra coded packets that were sent as well: 0, 0.25 or 0.5 of the traffic */
+  redundancy: number;
   /** The share of the original demand that arrived, 0 to 1 */
   delivered: number;
   /** The time the traffic needed, 0 when nothing arrived */
@@ -185,10 +191,14 @@ export interface LinkStepResult {
   attack: number;
   /** Traffic waiting in the buffers of the link at the end of the step, and what they can hold */
   queued: number;
+  /** The most waiting in one queue class: what the chip "q2/4" shows, next to the room of one buffer */
+  fullest: number;
   buffer: number;
   /** Capacity of the link in this step (0 when it is down) */
   capacity: number;
   down: boolean;
+  /** The cable is out of range in this step (a radio link that is not there yet or any more): it counts as down */
+  absent: boolean;
 }
 
 export interface StepResult {

@@ -72,7 +72,8 @@ export const chapterRules: Readonly<Record<number, Rules>> = {
   7: { ...none, split: true, throttle: true, queues: true, backup: true },
   8: { ...none, split: true, throttle: true, queues: true, backup: true },
   9: { ...none, split: true, throttle: true, queues: true, backup: true, redundancy: true },
-  10: all,
+  // On the move there is no backup path: the links around you change, so you plan the changes
+  10: { ...all, backup: false },
   11: all,
   12: all,
   13: all,

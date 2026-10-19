@@ -326,3 +326,43 @@ describe('drawing over a cable that is not built yet', () => {
     expect(dragged.plan).toEqual({});
   });
 });
+
+describe('a flow that has to pass a node', () => {
+  const guarded = (): PlayState =>
+    startState(
+      diamond({
+        flows: [
+          {
+            id: 'f1',
+            name: 'Guests',
+            source: 'A',
+            target: 'D',
+            profile: 'web',
+            demand: 4,
+            via: ['C'],
+          },
+        ],
+      }),
+    );
+
+  it('does not accept a route that skips the node, and takes the drawing back', () => {
+    let state = guarded();
+    for (const node of ['A', 'B', 'D']) {
+      state = clickNode(state, node);
+    }
+    expect(state.plan).toEqual({});
+    expect(state.draft).toBeUndefined();
+    expect(state.message).toContain('has to pass C');
+    expect(unrouted(state)).toHaveLength(1);
+    const dragged = drawPath(guarded(), ['A', 'B', 'D']);
+    expect(dragged.plan).toEqual({});
+    expect(readyToRun(dragged)).toBe(false);
+  });
+
+  it('accepts a route over the node, and keeps the old route when a new one skips it', () => {
+    let state = drawPath(guarded(), ['A', 'C', 'D']);
+    expect(Object.keys(state.plan)).toEqual(['f1']);
+    state = drawPath(state, ['A', 'B', 'D']);
+    expect(editedPath(state)).toEqual(['A', 'C', 'D']);
+  });
+});

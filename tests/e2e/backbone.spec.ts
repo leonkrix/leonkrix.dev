@@ -408,3 +408,135 @@ test.describe('Backbone, opened from a shared link', () => {
     expect(await page.locator('.bb-node').count()).toBe(nodes);
   });
 });
+
+/** A route over the cables from one node to another that does not pass a node (a breadth-first search). */
+function routeAvoiding(
+  record: LevelRecord | undefined,
+  from: string,
+  to: string,
+  avoid: string,
+): string[] | undefined {
+  const links = (record?.level.links ?? []).filter((link) => link.optional !== true);
+  const came = new Map<string, string>([[from, '']]);
+  const queue = [from];
+  for (const current of queue) {
+    for (const link of links) {
+      const other = link.a === current ? link.b : link.b === current ? link.a : undefined;
+      if (other !== undefined && other !== avoid && !came.has(other)) {
+        came.set(other, current);
+        queue.push(other);
+      }
+    }
+  }
+  if (!came.has(to)) {
+    return undefined;
+  }
+  const path = [to];
+  while (path[0] !== from) {
+    path.unshift(came.get(path[0] ?? '') ?? from);
+  }
+  return path;
+}
+
+test.describe('Backbone: what the player is told about delay, building, firewalls and radio links', () => {
+  test('shows the delay of every cable from the chapter about latency, and of the route being drawn', async ({
+    page,
+  }) => {
+    const record = levelOf('c4-1');
+    await open(page, 'c4-1');
+    const labels = page.locator('.bb-link-delay');
+    await expect(labels).toHaveCount(record.level.links.length);
+    await expect(labels.first()).toHaveText(/^[0-9]+ ms$/);
+    const flow = record.level.flows[0];
+    const path = record.best.plan[flow?.id ?? '']?.stages[0]?.paths[0]?.nodes ?? [];
+    await drawByClicks(page, flow?.name ?? '', path);
+    // The game goes on to the next flow that has no route: come back to the first one
+    await page.getByRole('button', { name: new RegExp(`^Flow 1: `) }).click();
+    await expect(page.locator('.bb-route-delay')).toContainText(
+      /Delay [0-9]+ ms\. .* (is fine up to|does not mind)/,
+    );
+  });
+
+  test('has no delay on the cables before there is traffic that must be fast', async ({ page }) => {
+    await open(page, 'c1-1');
+    await expect(page.locator('.bb-link-delay')).toHaveCount(0);
+  });
+
+  test('says why a split cannot give another quarter, and takes built cables back with Clear', async ({
+    page,
+  }) => {
+    await open(page, 'c3-1');
+    await page.getByRole('button', { name: 'Auto: shortest' }).click();
+    await page.getByRole('button', { name: 'Add path' }).click();
+    await page.getByRole('button', { name: 'Give path 1 a quarter more' }).click();
+    const none = page.getByRole('button', {
+      name: /Give path 1 a quarter more \(every path keeps/,
+    });
+    await expect(none).toBeDisabled();
+    await expect(page.locator('.bb-hint-wrap[title*="at least a quarter"]').first()).toBeVisible();
+
+    await page.getByRole('link', { name: 'All levels' }).click();
+    await page.locator('a[href="?level=c8-1"]').click();
+    const budget = page.locator('.bb-budget-label');
+    await expect(budget).toBeVisible({ timeout: 15_000 });
+    const before = await budget.textContent();
+    await page.getByRole('button', { name: 'Build', exact: true }).first().click();
+    await expect(budget).not.toHaveText(before ?? '');
+    await page.getByRole('button', { name: /Clear/ }).click();
+    await expect(budget).toHaveText(before ?? '');
+    await expect(page.getByText(/the cables you built are gone/)).toBeVisible();
+  });
+
+  test('flashes the price of a cable that is built by drawing a route over it', async ({
+    page,
+  }) => {
+    await open(page, 'c8-1');
+    await page.getByRole('button', { name: 'Build', exact: true }).first().click();
+    await expect(page.locator('.bb-bought')).toBeVisible();
+    await expect(page.locator('.bb-bought')).toBeHidden({ timeout: 5000 });
+  });
+
+  test('lets a firewall glow until the route passes it, and does not accept a route that skips it', async ({
+    page,
+  }) => {
+    const record = levels.find((entry) =>
+      entry.level.flows.some((flow) => (flow.via ?? []).length > 0),
+    );
+    expect(record).toBeDefined();
+    const flow = record?.level.flows.find((entry) => (entry.via ?? []).length > 0);
+    const via = flow?.via?.[0] ?? '';
+    await open(page, record?.id ?? 'c11-1');
+    await page
+      .getByRole('button', { name: new RegExp(`^Flow [0-9]+: ${flow?.name ?? ''}`) })
+      .click();
+    await expect(node(page, via)).toHaveAttribute('data-must', 'true');
+    // A route around the node is not accepted: nothing is set and the flow still has no route
+    const around = routeAvoiding(record, flow?.source ?? '', flow?.target ?? '', via);
+    if (around !== undefined) {
+      for (const id of around) {
+        await node(page, id).click();
+      }
+      await expect(page.getByRole('status').filter({ hasText: /has to pass/ })).toBeVisible();
+      await expect(node(page, via)).toHaveAttribute('data-must', 'true');
+    }
+    // The best plan passes the node: once it is drawn the glow is gone
+    const path = record?.best.plan[flow?.id ?? '']?.stages[0]?.paths[0]?.nodes ?? [];
+    for (const id of path) {
+      await node(page, id).click();
+    }
+    await page
+      .getByRole('button', { name: new RegExp(`^Flow [0-9]+: ${flow?.name ?? ''}`) })
+      .click();
+    await expect(node(page, via)).not.toHaveAttribute('data-must', 'true');
+  });
+
+  test('shows radio links of the chapter on the move in the forecast and on the map', async ({
+    page,
+  }) => {
+    await open(page, 'c10-1');
+    await expect(page.locator('.bb-forecast li[data-kind="range"]').first()).toContainText(
+      'is in range',
+    );
+    await expect(page.locator('[data-risk="range"]').first()).toBeAttached();
+  });
+});

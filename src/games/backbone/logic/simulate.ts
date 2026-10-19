@@ -38,6 +38,7 @@ export const REPAIR_DELAY = 2;
 interface LinkState {
   capacity: number;
   down: boolean;
+  absent: boolean;
   loss: number;
 }
 
@@ -53,6 +54,16 @@ function covers(event: { from: number; to: number }, step: number): boolean {
   return step >= event.from && step < event.to;
 }
 
+/** Whether a cable that has a range in the situation is out of it in `step` (a cable without a range never is). */
+export function outOfRange(
+  situation: Pick<Situation, 'events'>,
+  link: string,
+  step: number,
+): boolean {
+  const windows = situation.events.filter((event) => event.kind === 'range' && event.link === link);
+  return windows.length > 0 && !windows.some((window) => covers(window, step));
+}
+
 /** The state of every link in every step of a situation. */
 function linkStates(index: LevelIndex, situation: Situation): Map<string, LinkState>[] {
   const states: Map<string, LinkState>[] = [];
@@ -66,6 +77,7 @@ function linkStates(index: LevelIndex, situation: Situation): Map<string, LinkSt
         if (
           event.kind === 'burst' ||
           event.kind === 'flood' ||
+          event.kind === 'range' ||
           !covers(event, step) ||
           event.link !== link.id
         ) {
@@ -79,7 +91,9 @@ function linkStates(index: LevelIndex, situation: Situation): Map<string, LinkSt
           capacity = Math.floor(capacity * event.factor);
         }
       }
-      state.set(link.id, { capacity: down ? 0 : capacity, down, loss: 1 - keep });
+      const absent = outOfRange(situation, link.id, step);
+      down = down || absent;
+      state.set(link.id, { capacity: down ? 0 : capacity, down, absent, loss: 1 - keep });
     }
     states.push(state);
   }
@@ -228,6 +242,7 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
       const shares: number[] = [];
       const behind: number[] = [];
       let queued = 0;
+      let fullest = 0;
       queues.forEach((want, queue) => {
         const content = (held[queue] ?? 0) + want;
         const served = Math.min(content, remaining);
@@ -236,6 +251,7 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
         const keep = Math.min(left, buffer);
         held[queue] = keep;
         queued += keep;
+        fullest = Math.max(fullest, keep);
         behind.push(queued);
         shares.push(want > 0 ? Math.max(0, 1 - (left - keep) / want) : 1);
       });
@@ -248,9 +264,11 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
         offered: queues.reduce((sum, value) => sum + value, 0),
         attack: attack.get(link.id) ?? 0,
         queued,
+        fullest,
         buffer,
         capacity,
         down: state.get(link.id)?.down ?? false,
+        absent: state.get(link.id)?.absent ?? false,
       };
     }
 
@@ -263,6 +281,7 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
       let arrived = 0;
       let timelyArrived = 0;
       let latencySum = 0;
+      const keptOf = new Map<ResolvedPath, number>();
       for (const path of paths) {
         if (path.amount <= 0) {
           continue;
@@ -282,6 +301,7 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
           const load = linkState.capacity > 0 ? Math.min(1, total / linkState.capacity) : 1;
           latency += link.delay * (1 + load * load) + (waiting.get(id)?.[path.queue] ?? 0);
         }
+        keptOf.set(path, kept);
         const residual = Math.max(0, 1 - passes - (flowPlan?.redundancy ?? 0));
         const delivered = path.share * kept * (1 - residual);
         const budget = profile.latencyBudget;
@@ -301,11 +321,16 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
       possible += maxValue;
       flowResults[flow.id] = {
         sent: demand * (flowPlan?.throttle ?? 0),
+        redundancy: flowPlan?.redundancy ?? 0,
         delivered: share,
         latency: arrived > 0 ? latencySum / arrived : 0,
         paths: paths
           .filter((path) => path.amount > 0)
-          .map((path) => ({ links: path.links, share: path.share })),
+          .map((path) => ({
+            links: path.links,
+            share: path.share,
+            kept: keptOf.get(path) ?? 1,
+          })),
         value,
         maxValue,
       };

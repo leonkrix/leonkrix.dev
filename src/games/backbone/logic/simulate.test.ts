@@ -465,3 +465,86 @@ describe('a flood', () => {
     expect(steps[2]?.flows.f1?.delivered).toBeCloseTo(1, 9);
   });
 });
+
+describe('radio links that come into range and go out of it', () => {
+  // The cable over the top (A to B) is in range in the first three minutes only, the lower way
+  // (A to C) comes into range in minute 4
+  const level = diamond({
+    situations: [
+      {
+        id: 'moving',
+        name: 'On the move',
+        steps: 6,
+        events: [
+          { kind: 'range', link: 'AB', from: 0, to: 3 },
+          { kind: 'range', link: 'AC', from: 3, to: 6 },
+        ],
+      },
+    ],
+  });
+  const steps = (plan: Plan) => evaluate(level, plan).situations[0]?.steps ?? [];
+
+  it('marks a cable as away outside its range, and as down', () => {
+    const run = steps({ f1: singlePath(fast) });
+    expect(run.map((step) => step.links.AB?.absent)).toEqual([
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+    ]);
+    expect(run.map((step) => step.links.AC?.absent)).toEqual([
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+    ]);
+    expect(run[4]?.links.AB?.down).toBe(true);
+    expect(run[4]?.links.AB?.capacity).toBe(0);
+    // A cable without a range is always there
+    expect(run.every((step) => step.links.BD?.absent === false)).toBe(true);
+  });
+
+  it('carries nothing over a cable that is not there, until the network repairs the route', () => {
+    const delivered = steps({ f1: singlePath(fast) }).map((step) => step.flows.f1?.delivered ?? 0);
+    expect(delivered.slice(0, 3)).toEqual([1, 1, 1]);
+    expect(delivered[3]).toBe(0);
+    expect(delivered[3 + REPAIR_DELAY]).toBeCloseTo(1, 9);
+  });
+
+  it('is served in full by a change of path at the moment the cable arrives', () => {
+    const plan: Plan = {
+      f1: {
+        ...singlePath(fast),
+        stages: [
+          { from: 0, paths: [{ nodes: fast, share: 1 }] },
+          { from: 3, paths: [{ nodes: slow, share: 1 }] },
+        ],
+      },
+    };
+    expect(steps(plan).every((step) => (step.flows.f1?.delivered ?? 0) > 0.99)).toBe(true);
+    expect(evaluate(level, plan).score).toBeCloseTo(1, 9);
+  });
+
+  it('is earned the same by the fast stress test', async () => {
+    const { FastEvaluator } = await import('./fast');
+    const { indexLevel } = await import('./graph');
+    const index = indexLevel(level);
+    for (let seed = 1; seed <= 30; seed += 1) {
+      const plan = randomPlan(level, seed, ['f1']);
+      const evaluator = new FastEvaluator(index);
+      const flowPlan = plan.f1;
+      const earned = evaluator.earned([
+        flowPlan === undefined ? undefined : evaluator.compile('f1', flowPlan),
+      ]);
+      const expected = (evaluate(index, plan).situations[0]?.steps ?? []).reduce(
+        (sum, step) => sum + (step.flows.f1?.value ?? 0),
+        0,
+      );
+      expect(earned[0], `seed ${String(seed)}`).toBeCloseTo(expected, 9);
+    }
+  });
+});

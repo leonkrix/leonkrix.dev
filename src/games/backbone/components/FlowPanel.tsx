@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { budgetMs, delayMs, routeDelay, showsDelay } from '../logic/latency';
 import { THROTTLE_STEPS } from '../logic/options';
 import {
   addBackup,
@@ -174,10 +175,42 @@ function RouteChips({
           </li>
         )}
       </ol>
+      {showsDelay(state.index.level) && <RouteDelay state={state} flow={flow} nodes={shown} />}
       {drawing !== undefined && (
         <p className="bb-hint">Now click the next node, up to {names.get(flow.target)}.</p>
       )}
     </>
+  );
+}
+
+/**
+ * The delay of the route being drawn against what this kind of traffic can take, in milliseconds
+ * (on an empty network: a full cable is slower, which the map shows while the test runs).
+ */
+function RouteDelay({
+  state,
+  flow,
+  nodes,
+}: {
+  state: PlayState;
+  flow: Flow;
+  nodes: readonly string[];
+}) {
+  const budget = budgetMs(flow.profile);
+  const ms = delayMs(routeDelay(state.index, nodes));
+  if (budget === undefined) {
+    return (
+      <p className="bb-route-delay">
+        Delay {ms} ms. {flow.name} does not mind delay.
+      </p>
+    );
+  }
+  const over = ms > budget;
+  return (
+    <p className="bb-route-delay" data-over={over}>
+      Delay {ms} ms. {flow.name} is fine up to {budget} ms
+      {over ? ': this route is too slow.' : '.'}
+    </p>
   );
 }
 
@@ -331,19 +364,30 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
                     <span className="bb-path-share">{percent(entry.share)}</span>
                   </button>
                   <span className="bb-path-actions">
-                    <button
-                      type="button"
-                      className="bb-small"
-                      disabled={donor === undefined}
-                      aria-label={`Give path ${String(at + 1)} a quarter more`}
-                      onClick={() => {
-                        if (donor !== undefined) {
-                          onChange(moveShare(state, donor, at));
-                        }
-                      }}
+                    <span
+                      className="bb-hint-wrap"
+                      title={
+                        donor === undefined
+                          ? 'Every path keeps at least a quarter, so no other path has a quarter to give.'
+                          : undefined
+                      }
                     >
-                      +25 %
-                    </button>
+                      <button
+                        type="button"
+                        className="bb-small"
+                        disabled={donor === undefined}
+                        aria-label={`Give path ${String(at + 1)} a quarter more${
+                          donor === undefined ? ' (every path keeps at least a quarter)' : ''
+                        }`}
+                        onClick={() => {
+                          if (donor !== undefined) {
+                            onChange(moveShare(state, donor, at));
+                          }
+                        }}
+                      >
+                        +25 %
+                      </button>
+                    </span>
                     <button
                       type="button"
                       className="bb-small"

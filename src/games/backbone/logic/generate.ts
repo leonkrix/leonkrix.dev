@@ -509,21 +509,39 @@ function eventsFor(
       return [{ ...probe, from: 2, to: Math.min(steps, 7), rate }];
     }
     case 'moving': {
-      const safe = order.filter((id) => keepsConnected(id));
-      const [away, later] = [safe[0], safe[1]];
-      const events: NetEvent[] = [];
-      if (away !== undefined) {
-        events.push({ kind: 'down', link: away, from: Math.floor(steps / 2), to: steps });
+      // Radio links come into range and go out of it. Half way through, some that were there are
+      // gone and some that were not there come: one change of route takes a flow from one set to
+      // the other. The network must connect every flow in both halves.
+      const half = Math.floor(steps / 2);
+      const pairs = level.nodes.length >= 8 ? 2 : 1;
+      const connectedWithout = (cut: readonly string[]): boolean =>
+        level.flows.every(
+          (flow) =>
+            shortestPath(index, flow.source, flow.target, (id) => !cut.includes(id)) !== undefined,
+        );
+      const away: string[] = [];
+      const arrive: string[] = [];
+      for (const id of order) {
+        if (taken.has(id) || (away.length >= pairs && arrive.length >= pairs)) {
+          continue;
+        }
+        const toArrive = arrive.length < away.length || away.length >= pairs;
+        const list = toArrive ? arrive : away;
+        if (list.length >= pairs) {
+          continue;
+        }
+        // The first half has no link that arrives, the second none that was there at first
+        const keeps = toArrive
+          ? connectedWithout([...arrive, id]) && connectedWithout([...away])
+          : connectedWithout([...arrive]) && connectedWithout([...away, id]);
+        if (keeps) {
+          list.push(id);
+        }
       }
-      if (later !== undefined && keepsConnected(later)) {
-        events.push({
-          kind: 'down',
-          link: later,
-          from: 0,
-          to: Math.max(1, Math.floor(steps / 2) - 1),
-        });
-      }
-      return events;
+      return [
+        ...away.map((link) => ({ kind: 'range' as const, link, from: 0, to: half })),
+        ...arrive.map((link) => ({ kind: 'range' as const, link, from: half, to: steps })),
+      ];
     }
   }
 }
@@ -659,7 +677,13 @@ export function generateLevel(spec: LevelSpec): Level {
     const used = taken.get(kind) ?? new Set<string>();
     const events = eventsFor(kind, scaled, steps, random, used);
     for (const event of events) {
-      used.add(event.kind === 'down' ? event.link : event.kind === 'flood' ? event.source : '');
+      used.add(
+        event.kind === 'down' || event.kind === 'range'
+          ? event.link
+          : event.kind === 'flood'
+            ? event.source
+            : '',
+      );
     }
     taken.set(kind, used);
     return {

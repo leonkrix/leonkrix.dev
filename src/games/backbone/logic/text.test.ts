@@ -149,3 +149,36 @@ describe('what a cable loses all the time and where a flood goes', () => {
     expect(at).toBe(flood.target);
   });
 });
+
+describe('radio links in words', () => {
+  const level = diamond({
+    situations: [
+      {
+        id: 'moving',
+        name: 'On the move',
+        steps: 8,
+        events: [
+          { kind: 'range', link: 'AB', from: 0, to: 4 },
+          { kind: 'range', link: 'AC', from: 4, to: 8 },
+        ],
+      },
+    ],
+  });
+  const index = indexLevel(level);
+
+  it('says when a link is in range in the forecast', () => {
+    const items = forecastOf(index)[0]?.items ?? [];
+    expect(items.map((item) => item.minutes)).toEqual(['Minutes 1–4', 'Minutes 5–8']);
+    expect(items[0]?.text).toBe('A – B is in range (it is not there at other times)');
+    expect(items[0]?.kind).toBe('range');
+  });
+
+  it('names the change of route: one link comes into range, one goes out of it', () => {
+    expect(describeSwitch(index, 4)).toBe('A – B is out of range, A – C comes into range');
+  });
+
+  it('marks the cables that come and go as a risk', () => {
+    expect(riskyLinks(level).get('AB')).toBe('range');
+    expect(riskyLinks(level).get('AC')).toBe('range');
+  });
+});

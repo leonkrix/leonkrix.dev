@@ -339,6 +339,11 @@ const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
       opacity: 1;
       color: var(--end);
     }
+    94% {
+      opacity: 1;
+      color: var(--end);
+      transform: translate(var(--x2), var(--y2));
+    }
     100% {
       opacity: var(--keep, 0);
       color: var(--end);
@@ -360,6 +365,11 @@ const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
     86% {
       opacity: 1;
       color: var(--end);
+    }
+    94% {
+      opacity: 1;
+      color: var(--end);
+      transform: translate(var(--x2), var(--y2));
     }
     100% {
       opacity: var(--keep, 0);

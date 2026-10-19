@@ -3,7 +3,7 @@ import type { LevelIndex } from './graph';
 import { linksOfPath, shortestPath } from './graph';
 import { profiles } from './profiles';
 import { bufferSize, QUEUE_DELAY } from './queues';
-import { obeysPolicy, REPAIR_DELAY } from './simulate';
+import { obeysPolicy, outOfRange, REPAIR_DELAY } from './simulate';
 import type { FlowPlan } from './types';
 
 /**
@@ -95,6 +95,7 @@ export class FastEvaluator {
             if (
               event.kind === 'burst' ||
               event.kind === 'flood' ||
+              event.kind === 'range' ||
               step < event.from ||
               step >= event.to ||
               event.link !== link.id
@@ -109,6 +110,7 @@ export class FastEvaluator {
               capacity = Math.floor(capacity * event.factor);
             }
           }
+          down = down || outOfRange(situation, link.id, step);
           const at = step * this.linkCount + position;
           table.capacity[at] = down ? 0 : capacity;
           table.loss[at] = 1 - keep;

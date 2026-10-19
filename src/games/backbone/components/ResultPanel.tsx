@@ -1,6 +1,6 @@
 import { type LevelIndex } from '../logic/graph';
 import { type Baselines, pointsOf, starsFor, type Thresholds } from '../logic/stars';
-import { describeBusiest, summarize } from '../logic/text';
+import { describeBusiest, type LateFlow, type RunSummary, summarize } from '../logic/text';
 import type { Evaluation, Plan } from '../logic/types';
 import { MiniMap } from './MiniMap';
 import { Star } from './Svg';
@@ -52,6 +52,18 @@ function verdictOf(stars: number, you: number, baselines: Baselines): string {
     return 'Better than the shortest path. The load balanced strategy is still ahead or level.';
   }
   return 'Not yet as good as everybody taking the shortest path.';
+}
+
+/** The late flow of the run, if the flow was too slow. */
+function lateOf(summary: RunSummary, flow: string): LateFlow | undefined {
+  return summary.flows.find((entry) => entry.flow === flow)?.late;
+}
+
+/** Why a flow lost value to delay, in numbers the map shows. */
+function lateText(late: LateFlow | undefined): string {
+  return late === undefined
+    ? ''
+    : `It was too slow: its route needed up to ${String(late.ms)} ms, it loses value after ${String(late.budgetMs)} ms and is worth nothing after ${String(late.zeroMs)} ms.`;
 }
 
 export function ResultPanel({
@@ -160,6 +172,8 @@ export function ResultPanel({
                 : bestAlready
                   ? `earns ${String(Math.round((1 - worst.lost) * 100))} % of what it could. The best plan does not do better.`
                   : `lost ${String(Math.round(worst.lost * 100))} % of what it could have earned.`}
+              {lateOf(summary, worst.flow) !== undefined &&
+                ` ${lateText(lateOf(summary, worst.flow))}`}
             </li>
           )}
           {worst === undefined && <li data-problem="false">Every flow got what it needed.</li>}
@@ -197,6 +211,9 @@ export function ResultPanel({
                     <span style={{ width: `${String(Math.round(entry.earned * 100))}%` }} />
                   </span>
                   {Math.round(entry.earned * 100)} %
+                  {entry.late !== undefined && (
+                    <small className="bb-late"> · too slow: {entry.late.ms} ms</small>
+                  )}
                 </td>
               </tr>
             ))}

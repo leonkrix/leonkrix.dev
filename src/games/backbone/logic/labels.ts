@@ -1,4 +1,5 @@
 import { distanceToSegment, MAP_HEIGHT, MAP_WIDTH, mapPoint, type Point } from './geometry';
+import { showsDelay } from './latency';
 import type { Level } from './types';
 
 /**
@@ -44,7 +45,7 @@ export const BASE_UNIT = 5.9;
  * small map: the same label is more units wide. `unit` is the number of pixels of one unit
  * (the width of the map divided by 100).
  */
-function sizesFor(unit: number) {
+function sizesFor(unit: number, withDelay = false) {
   const base = (units: number): number => (units * BASE_UNIT) / unit;
   return {
     // A node is 2.75 rem wide, 2.5 rem on a map narrower than 30 rem (the names are mostly hidden there)
@@ -56,7 +57,8 @@ function sizesFor(unit: number) {
     tagWidth: base(5.25),
     tagHeight: base(2.55),
     tagGap: base(1.36),
-    linkLabel: { width: base(7.4), height: base(2.5) },
+    // With the delay of the cable under the load the label has two lines
+    linkLabel: { width: base(7.4), height: base(withDelay ? 4.2 : 2.5) },
     /** The numbers of the flows sit on a corner of the node (CSS: `.bb-node-badges`) */
     badge: { width: base(3), height: base(2.7), left: base(2.5), top: base(-5.2) },
     /** A name above a node is lifted by this much when it would touch the numbers */
@@ -184,7 +186,7 @@ interface Scene {
 }
 
 function sceneOf(level: Level, unit: number, loads?: ReadonlyMap<string, number>): Scene {
-  const sizes = sizesFor(unit);
+  const sizes = sizesFor(unit, showsDelay(level));
   const nodes = new Map(level.nodes.map((node) => [node.id, mapPoint(node)]));
   const segments = level.links.flatMap((link) => {
     const from = nodes.get(link.a);

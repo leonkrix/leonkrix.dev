@@ -1,6 +1,7 @@
 import { geometryProblems } from './geometry';
 import { indexLevel, routesOf, shortestPath } from './graph';
 import { profiles } from './profiles';
+import { outOfRange } from './simulate';
 import type { Level } from './types';
 
 /**
@@ -147,6 +148,11 @@ export function problemsOfLevel(level: Level): string[] {
           event.kind === 'down' && step >= event.from && step < event.to ? [event.link] : [],
         ),
       );
+      for (const link of level.links) {
+        if (outOfRange(situation, link.id, step)) {
+          down.add(link.id);
+        }
+      }
       for (const flow of level.flows) {
         if (flow.via?.some((node) => !nodeIds.has(node)) === true) {
           problems.push(`${flow.id} has to pass a node that does not exist`);

@@ -107,10 +107,19 @@ export interface Packet {
   /** 1 while it travels; a lost packet swells a little as it fades */
   scale: number;
   dropped: boolean;
+  /** An extra packet that redundancy sends (it can replace a lost one) */
+  coded: boolean;
 }
 
-const PACKET_UNIT = 2;
-const MOST_PACKETS = 6;
+/** One packet is sent for every unit of traffic of a path in a minute (at least one, at most the cap). */
+const PACKET_UNIT = 1;
+const MOST_PACKETS = 12;
+/** The minutes a packet needs for one unit of delay of a cable (a cable of delay 2 takes 0.3). */
+export const MINUTES_PER_DELAY = 0.15;
+/** The minutes a lost packet stays where it was lost, fading (about half a second of the stress test) */
+const LOST_MINUTES = 0.45;
+/** How many minutes back the packets that are still on their way can have left */
+const MOST_BACK = 8;
 
 /** How much of its traffic a cable loses in a step of a situation (0 to 1): its own loss and an event. */
 function lossOf(index: LevelIndex, situation: Situation, step: number, link: string): number {
@@ -123,23 +132,60 @@ function lossOf(index: LevelIndex, situation: Situation, step: number, link: str
   return 1 - keep;
 }
 
-/** One packet that was sent in a step: when it left (in steps), the way it takes and where it is lost. */
+/** The minutes a packet needs for a cable: its delay, longer while the cable is full (like the stress test). */
+export function crossingMinutes(index: LevelIndex, result: StepResult, id: string): number {
+  const delay = index.linkById.get(id)?.delay ?? 1;
+  const load = Math.min(1, loadRatio(result.links[id]));
+  return delay * (1 + load * load) * MINUTES_PER_DELAY;
+}
+
+/** The packet number `at` of `count` is dropped when the running count of a share steps up (an even spread). */
+function dropsAt(at: number, share: number): boolean {
+  return Math.floor((at + 1) * share + 1e-9) > Math.floor(at * share + 1e-9);
+}
+
+/** One packet that was sent in a step: when it left (in minutes), how long it needs and where it is lost. */
 interface Sent {
   key: string;
   flow: string;
   leaves: number;
+  duration: number;
   points: readonly Point[];
-  /** Where it is lost, as a share of its way (1: it arrives) */
+  /** The moment each node of the way is reached, as a share of the whole time */
+  reached: readonly number[];
+  /** Where it is lost, as a share of its time (1: it arrives) */
   endsAt: number;
+  coded: boolean;
 }
 
-/** The packets that a step sends: a few for every path, spread over the step. */
+/** The point of a packet at a share of its time: it crosses every cable in the time that cable takes. */
+function pointAt(points: readonly Point[], reached: readonly number[], progress: number): Point {
+  for (let at = 1; at < points.length; at += 1) {
+    const to = reached[at] ?? 1;
+    if (progress <= to || at === points.length - 1) {
+      const from = reached[at - 1] ?? 0;
+      const a = points[at - 1] ?? { x: 0, y: 0 };
+      const b = points[at] ?? a;
+      const share = to === from ? 1 : Math.min(1, Math.max(0, (progress - from) / (to - from)));
+      return { x: a.x + (b.x - a.x) * share, y: a.y + (b.y - a.y) * share };
+    }
+  }
+  return points[0] ?? { x: 0, y: 0 };
+}
+
+/**
+ * The packets that a step sent and that are on their way at `now`: for every path an even rhythm
+ * of packets, as many as its traffic says (the extra coded ones of redundancy included). A packet
+ * crosses every cable in the time the cable takes, so on a long route more packets are under way
+ * at once, and the gaps between them are the same.
+ */
 function sentIn(
   index: LevelIndex,
   situation: Situation,
   steps: readonly StepResult[],
   step: number,
   at: number,
+  now: number,
 ): Sent[] {
   const result = steps[step];
   if (result === undefined) {
@@ -154,39 +200,57 @@ function sentIn(
     flowResult.paths.forEach((path, pathAt) => {
       const nodes = nodesOfLinks(index, flow.source, path.links);
       const points = polyline(index, nodes);
-      const total = Math.max(length(points), 1e-9);
-      const count = Math.max(
+      const times = path.links.map((id) => crossingMinutes(index, result, id));
+      const duration = Math.max(
+        times.reduce((sum, value) => sum + value, 0),
+        1e-9,
+      );
+      const reached = [0];
+      for (const time of times) {
+        reached.push((reached[reached.length - 1] ?? 0) + time / duration);
+      }
+      const total = Math.max(
         1,
-        Math.min(MOST_PACKETS, Math.round((flowResult.sent * path.share) / PACKET_UNIT)),
+        Math.min(
+          MOST_PACKETS,
+          Math.round((flowResult.sent * path.share * (1 + flowResult.redundancy)) / PACKET_UNIT),
+        ),
       );
-      const keep = Math.round(
-        count *
-          Math.min(1, flowResult.delivered / Math.max(path.share, 1e-9)) *
-          (path.share > 0 ? 1 : 0),
-      );
+      const plain = Math.round(total / (1 + flowResult.redundancy));
       // Why packets are lost: a cable that loses some of them, or a cable that is over full
       const survives = path.links.reduce(
         (share, id) => share * (1 - lossOf(index, situation, step, id)),
         1,
       );
       const lossy = path.links.findIndex((id) => lossOf(index, situation, step, id) > 0);
-      const lostToLoss = lossy < 0 ? 0 : Math.min(count - keep, Math.round(count * (1 - survives)));
+      const lossAt = lossy < 0 ? 1 : ((reached[lossy] ?? 0) + (reached[lossy + 1] ?? 1)) / 2;
       const bad = path.links.findIndex((id) => loadRatio(result.links[id]) > 1 + 1e-9);
-      const overAt = bad >= 0 ? length(polyline(index, nodes.slice(0, bad + 2))) / total : 0.6;
-      const lossAt =
-        lossy >= 0
-          ? (length(polyline(index, nodes.slice(0, lossy + 1))) +
-              length(polyline(index, nodes.slice(lossy, lossy + 2))) / 2) /
-            total
-          : overAt;
-      for (let packet = 0; packet < count; packet += 1) {
-        const dropped = packet >= keep;
+      const overAt = bad >= 0 ? (reached[bad + 1] ?? 0.6) : 0.6;
+      for (let packet = 0; packet < total; packet += 1) {
+        const leaves = at + packet / total;
+        const progress = (now - leaves) / duration;
+        const number = Math.round(at * total) + packet;
+        const lostToLoss = lossy >= 0 && dropsAt(number, 1 - survives);
+        const lostToLoad = dropsAt(number + 3, 1 - path.kept);
+        const endsAt = lostToLoss
+          ? Math.min(lossAt, lostToLoad ? overAt : 1)
+          : lostToLoad
+            ? overAt
+            : 1;
+        // A packet that is lost stays where it was lost for a moment, fading
+        const visibleUntil = endsAt < 1 ? endsAt + LOST_MINUTES / duration : 1;
+        if (progress < 0 || progress >= visibleUntil) {
+          continue;
+        }
         sent.push({
           key: `${flow.id}:${String(pathAt)}:${String(at)}:${String(packet)}`,
           flow: flow.id,
-          leaves: at + packet / count,
+          leaves,
+          duration,
           points,
-          endsAt: !dropped ? 1 : packet - keep < lostToLoss ? lossAt : overAt,
+          reached,
+          endsAt,
+          coded: packet >= plain,
         });
       }
     });
@@ -195,11 +259,12 @@ function sentIn(
 }
 
 /**
- * The packets on the map at a moment `time` (0 to 1) inside a step. A step sends its packets one
- * after the other, and every packet needs one step for its way. So when a burst is over the
- * packets it sent are still on their way and arrive: nothing vanishes at the end of a step. The
- * packets of the step before the first are those of the first (a network at work, not one that
- * starts empty). A packet that is lost fades where it is lost, a little bigger.
+ * The packets on the map at a moment `time` (0 to 1) inside a step. Every step sends its packets
+ * one after the other, and a packet needs as long as the delay of its route says (a long route
+ * takes more than a minute), so the packets of several minutes can be under way at once and when
+ * a burst is over its packets still arrive: nothing vanishes at the end of a step. The packets
+ * before the first step are those of the first (a network at work, not one that starts empty). A
+ * packet that is lost fades where it is lost, a little bigger.
  */
 export function packetsAt(
   index: LevelIndex,
@@ -210,28 +275,23 @@ export function packetsAt(
 ): Packet[] {
   const now = step + time;
   const packets: Packet[] = [];
-  const sent = [
-    ...sentIn(index, situation, steps, Math.max(0, step - 1), step - 1),
-    ...sentIn(index, situation, steps, step, step),
-  ];
-  for (const one of sent) {
-    const progress = now - one.leaves;
-    if (progress < 0 || progress >= 1) {
-      continue;
+  for (let back = 0; back <= MOST_BACK; back += 1) {
+    const at = step - back;
+    for (const one of sentIn(index, situation, steps, Math.max(0, at), at, now)) {
+      const progress = (now - one.leaves) / one.duration;
+      // Minutes since the packet was lost (0 while it is still on its way)
+      const after = one.endsAt < 1 ? Math.max(0, (progress - one.endsAt) * one.duration) : 0;
+      const fade = Math.min(1, after / LOST_MINUTES);
+      packets.push({
+        key: one.key,
+        flow: one.flow,
+        point: pointAt(one.points, one.reached, Math.min(progress, one.endsAt)),
+        opacity: 1 - fade,
+        scale: 1 + fade * 0.9,
+        dropped: after > 0,
+        coded: one.coded,
+      });
     }
-    const dropped = one.endsAt < 1;
-    if (dropped && progress > one.endsAt) {
-      continue;
-    }
-    const fade = dropped ? Math.max(0, progress - (one.endsAt - 0.12)) / 0.12 : 0;
-    packets.push({
-      key: one.key,
-      flow: one.flow,
-      point: along(one.points, progress),
-      opacity: 1 - fade,
-      scale: 1 + fade * 0.7,
-      dropped,
-    });
   }
   return packets;
 }
