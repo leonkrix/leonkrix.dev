@@ -22,7 +22,6 @@ interface ResultPanelProps {
   situation: number;
   /** The level has been solved (one star or more) in this visit, so the best plan may be shown */
   solved: boolean;
-  next: { label: string; onClick: () => void } | undefined;
   /** The flow whose routes the map shows (the table lets the player pick one) */
   focus: string | undefined;
   onFocus: (flow: string | undefined) => void;
@@ -47,7 +46,6 @@ export function ResultPanel({
   assisted,
   situation,
   solved,
-  next,
   focus,
   onFocus,
   onEdit,
@@ -208,11 +206,6 @@ export function ResultPanel({
         {solved && (
           <button type="button" onClick={onLoadBest}>
             Load the best plan
-          </button>
-        )}
-        {next !== undefined && (
-          <button type="button" data-primary onClick={next.onClick}>
-            {next.label}
           </button>
         )}
       </div>

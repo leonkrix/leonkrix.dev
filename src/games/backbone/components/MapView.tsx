@@ -53,6 +53,10 @@ interface MapViewProps {
   nameSides: ReadonlyMap<string, Side>;
   /** The names that sit a little higher, because the numbers of flows are at the node */
   lifted: ReadonlySet<string>;
+  /** The nodes whose numbers sit on the top left corner (the right one is too near the border) */
+  badgesLeft: ReadonlySet<string>;
+  /** Where along every cable its load (and the button that builds it) sits, 0 to 1 */
+  loadAt: ReadonlyMap<string, number>;
   sourceSide: Side;
   targetSide: Side;
   /** The path being drawn */
@@ -114,6 +118,11 @@ function endsHere(level: LevelIndex['level'], node: string): string {
   return `${starts.length > 0 ? `, starts ${starts.join(', ')}` : ''}${ends.length > 0 ? `, ends ${ends.join(', ')}` : ''}`;
 }
 
+/** A point between two values (`at` is 0.5, the middle, unless a placement says otherwise). */
+function lerp(from: number, to: number, at = 0.5): number {
+  return from + (to - from) * at;
+}
+
 function trim(value: number): string {
   return String(Math.round(value * 10) / 10);
 }
@@ -139,6 +148,8 @@ export function MapView({
   target,
   nameSides,
   lifted,
+  badgesLeft,
+  loadAt,
   sourceSide,
   targetSide,
   draft,
@@ -366,14 +377,16 @@ export function MapView({
         {packets.map((packet) => {
           const profile = level.flows.find((flow) => flow.id === packet.flow)?.profile ?? 'web';
           return (
-            <circle
+            <rect
               key={packet.key}
               className="bb-packet"
               data-profile={profile}
               data-dropped={packet.dropped}
-              cx={packet.point.x}
-              cy={packet.point.y}
-              r={0.95}
+              x={packet.point.x - 0.95}
+              y={packet.point.y - 0.95}
+              width={1.9}
+              height={1.9}
+              rx={0.5}
               opacity={
                 packet.opacity * (emphasis === undefined || packet.flow === emphasis ? 1 : 0.18)
               }
@@ -400,8 +413,8 @@ export function MapView({
             title={`Build this cable: capacity ${String(link.capacity)}, cost ${String(cost)}`}
             aria-label={`Build a cable with capacity ${String(link.capacity)} for ${String(cost)}`}
             style={{
-              left: `${String(((from.x + to.x) / 2 / MAP_WIDTH) * 100)}%`,
-              top: `${String(((from.y + to.y) / 2 / MAP_HEIGHT) * 100)}%`,
+              left: `${String((lerp(from.x, to.x, loadAt.get(link.id)) / MAP_WIDTH) * 100)}%`,
+              top: `${String((lerp(from.y, to.y, loadAt.get(link.id)) / MAP_HEIGHT) * 100)}%`,
             }}
             onClick={() => {
               onBuild(link.id);
@@ -427,13 +440,14 @@ export function MapView({
           <span
             key={link.id}
             className="bb-link-label"
+            data-link={link.id}
             data-load={loadClass(loadRatio(result))}
             data-down={result?.down === true}
             data-forecast={projected !== undefined}
             aria-hidden="true"
             style={{
-              left: `${String(((from.x + to.x) / 2 / MAP_WIDTH) * 100)}%`,
-              top: `${String(((from.y + to.y) / 2 / MAP_HEIGHT) * 100)}%`,
+              left: `${String((lerp(from.x, to.x, loadAt.get(link.id)) / MAP_WIDTH) * 100)}%`,
+              top: `${String((lerp(from.y, to.y, loadAt.get(link.id)) / MAP_HEIGHT) * 100)}%`,
             }}
           >
             {result?.down === true ? 'cut' : label || String(link.capacity)}
@@ -515,7 +529,11 @@ export function MapView({
             }}
           >
             <Svg set="node" name={node.kind} className="bb-node-icon" />
-            <span className="bb-node-badges" aria-hidden="true">
+            <span
+              className="bb-node-badges"
+              data-left={badgesLeft.has(node.id) || undefined}
+              aria-hidden="true"
+            >
               {badgesOf(level, node.id).map((badge) => (
                 <span
                   key={`${badge.flow}-${String(badge.end)}`}

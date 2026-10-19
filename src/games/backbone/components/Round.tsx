@@ -109,7 +109,8 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
     [index, play.plan],
   );
 
-  const placement = useMemo(() => placeNames(level), [level]);
+  // The names scale with the map (see `.bb-map > *` in the style), so one placement holds for every width
+  const placement = useMemo(() => placeNames(record.level), [record.level]);
 
   // The loads of the quiet day without the selected flow: what a new path for it adds to
   const withoutSelected = useMemo(() => {
@@ -314,11 +315,17 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
             target={run === undefined ? selectedFlow?.target : undefined}
             nameSides={placement.names}
             lifted={placement.lifted}
+            badgesLeft={placement.badgesLeft}
+            loadAt={placement.loads}
             sourceSide={
-              selectedFlow === undefined ? 'above' : placeTag(level, placement, selectedFlow.source)
+              selectedFlow === undefined
+                ? 'above'
+                : placeTag(record.level, placement, selectedFlow.source)
             }
             targetSide={
-              selectedFlow === undefined ? 'above' : placeTag(level, placement, selectedFlow.target)
+              selectedFlow === undefined
+                ? 'above'
+                : placeTag(record.level, placement, selectedFlow.target)
             }
             draft={play.draft?.nodes}
             focused={focused}
@@ -424,70 +431,79 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
           </div>
         </div>
 
-        <aside
-          className="bb-panel"
-          aria-label={run === undefined ? 'Plan' : 'Result'}
-          data-layout-fluid
-        >
-          {run === undefined ? (
-            <>
-              <div className="bb-brief">
-                <h2>{level.title}</h2>
-                <p>{level.story}</p>
-                {level.zones !== undefined && (
-                  <ul className="bb-zones" aria-label="Zones">
-                    {level.zones.map((zone) => (
-                      <li key={zone.id} data-zone={zone.id}>
-                        {zone.name}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {chapterRule !== undefined && (
-                  <p className="bb-rule">
-                    <strong>New:</strong> {chapterRule}
-                  </p>
-                )}
-              </div>
-              <BuildPanel state={play} onChange={setPlay} />
-              <FlowList
-                state={play}
-                hinted={new Set(hint?.flows ?? [])}
-                onSelect={(id) => {
-                  setPlay(selectFlow(play, id));
+        <div className="bb-right">
+          <aside
+            className="bb-panel"
+            aria-label={run === undefined ? 'Plan' : 'Result'}
+            data-layout-fluid
+          >
+            {run === undefined ? (
+              <>
+                <div className="bb-brief">
+                  <h2>{level.title}</h2>
+                  <p>{level.story}</p>
+                  {level.zones !== undefined && (
+                    <ul className="bb-zones" aria-label="Zones">
+                      {level.zones.map((zone) => (
+                        <li key={zone.id} data-zone={zone.id}>
+                          {zone.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {chapterRule !== undefined && (
+                    <p className="bb-rule">
+                      <strong>New:</strong> {chapterRule}
+                    </p>
+                  )}
+                </div>
+                <BuildPanel state={play} onChange={setPlay} />
+                <FlowList
+                  state={play}
+                  hinted={new Set(hint?.flows ?? [])}
+                  onSelect={(id) => {
+                    setPlay(selectFlow(play, id));
+                  }}
+                />
+                <FlowOptions state={play} onChange={setPlay} />
+              </>
+            ) : (
+              <ResultPanel
+                index={index}
+                you={run.evaluation}
+                simpleIndex={designs.simpleIndex}
+                bestIndex={designs.bestIndex}
+                shortest={designs.shortest}
+                balanced={designs.balanced}
+                best={designs.best}
+                baselines={{
+                  shortest: record.shortest,
+                  balanced: record.balanced,
+                  best: record.best.score,
+                }}
+                thresholds={thresholds}
+                assisted={run.assisted}
+                situation={clock.situation}
+                solved={solved || justSolved}
+                onEdit={onEdit}
+                focus={focusFlow}
+                onFocus={setFocusFlow}
+                onLoadBest={() => {
+                  setPlay(loadDesign(play, record.best.plan, record.best.built));
+                  onEdit();
                 }}
               />
-              <FlowOptions state={play} onChange={setPlay} />
-            </>
-          ) : (
-            <ResultPanel
-              index={index}
-              you={run.evaluation}
-              simpleIndex={designs.simpleIndex}
-              bestIndex={designs.bestIndex}
-              shortest={designs.shortest}
-              balanced={designs.balanced}
-              best={designs.best}
-              baselines={{
-                shortest: record.shortest,
-                balanced: record.balanced,
-                best: record.best.score,
-              }}
-              thresholds={thresholds}
-              assisted={run.assisted}
-              situation={clock.situation}
-              solved={solved || justSolved}
-              onEdit={onEdit}
-              next={next}
-              focus={focusFlow}
-              onFocus={setFocusFlow}
-              onLoadBest={() => {
-                setPlay(loadDesign(play, record.best.plan, record.best.built));
-                onEdit();
-              }}
-            />
-          )}
-        </aside>
+            )}
+          </aside>
+          {/* Under the panel, on the height of the play bar: the way on, once the level is run */}
+          <div className="bb-next-row">
+            {run !== undefined && next !== undefined && (
+              <button type="button" data-primary onClick={next.onClick}>
+                {next.label}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <details className="bb-text">

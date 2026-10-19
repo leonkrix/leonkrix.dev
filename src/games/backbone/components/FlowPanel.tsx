@@ -15,6 +15,7 @@ import {
   suggestPath,
 } from '../logic/play';
 import { profiles } from '../logic/profiles';
+import { describeSwitch } from '../logic/text';
 import type { Flow, Redundancy } from '../logic/types';
 import { Svg } from './Svg';
 
@@ -379,7 +380,11 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
 
       {rules.stages && plan !== undefined && steps.length > 0 && (
         <div className="bb-option">
-          <p className="bb-option-label">Change the path at a step</p>
+          <p className="bb-option-label">Another route during the stress test</p>
+          <p className="bb-hint">
+            The stress test runs in steps. From a step on, this flow can take another route, for
+            example when a cable is cut. Pick a step below, then draw the new route on the map.
+          </p>
           <div className="bb-row" role="group" aria-label="Stages">
             {plan.stages.map((entry, at) => (
               <button
@@ -391,7 +396,7 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
                   onChange(selectEdit(state, at, 0, 'path'));
                 }}
               >
-                {at === 0 ? 'From the start' : `From step ${String(entry.from)}`}
+                {at === 0 ? 'Normal route' : `From step ${String(entry.from)}`}
               </button>
             ))}
           </div>
@@ -406,7 +411,9 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
                     onChange(addStage(state, step));
                   }}
                 >
-                  New path from step {step}
+                  Reroute from step {step}
+                  {describeSwitch(state.index, step) !== '' &&
+                    ` (${describeSwitch(state.index, step)})`}
                 </button>
               ))}
             {state.stage > 0 && (
@@ -416,7 +423,7 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
                   onChange(removeStage(state));
                 }}
               >
-                Remove this change
+                Remove the change
               </button>
             )}
           </div>

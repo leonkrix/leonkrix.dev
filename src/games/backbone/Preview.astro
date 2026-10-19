@@ -116,32 +116,50 @@ const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
       </>
     ))}
 
-    <circle
+    <rect
       class="pv-packet pv-a pv-travel"
-      r="3.6"
+      x="-3.6"
+      y="-3.6"
+      width="7.2"
+      height="7.2"
+      rx="1.8"
       style={`--c:${blue};--end:${blue};--dur:1300ms;--n:2;${topWay}`}
     />
-    <circle
+    <rect
       class="pv-packet pv-a pv-travel"
-      r="3.6"
+      x="-3.6"
+      y="-3.6"
+      width="7.2"
+      height="7.2"
+      rx="1.8"
       style={`--c:${amber};--end:var(--color-danger);--dur:1300ms;--n:2;--delay:0.3s;${droppedWay}`}
     />
-    <circle
+    <rect
       class="pv-packet pv-a pv-travel"
-      r="3.6"
+      x="-3.6"
+      y="-3.6"
+      width="7.2"
+      height="7.2"
+      rx="1.8"
       style={`--c:${blue};--end:${blue};--dur:1200ms;--n:2;--delay:3.2s;${topWay}`}
     />
-    <circle
+    <rect
       class="pv-packet pv-a pv-travel"
-      r="3.6"
+      x="-3.6"
+      y="-3.6"
+      width="7.2"
+      height="7.2"
+      rx="1.8"
       style={`--c:${amber};--end:${amber};--dur:1200ms;--n:2;--delay:3.2s;${lowWay}`}
     />
     {resting.map((dot) => (
-      <circle
+      <rect
         class="pv-packet pv-a pv-in pv-rest"
-        r="3.6"
-        cx={dot.at[0]}
-        cy={dot.at[1]}
+        x={dot.at[0] - 3.6}
+        y={dot.at[1] - 3.6}
+        width="7.2"
+        height="7.2"
+        rx="1.8"
         style={`--c:${dot.color}`}
       />
     ))}

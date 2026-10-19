@@ -64,7 +64,10 @@ export default function BackboneSkeleton({
                 </div>
               </div>
             </div>
-            <aside className="bb-panel" aria-hidden="true" data-layout-fluid />
+            <div className="bb-right">
+              <aside className="bb-panel" aria-hidden="true" data-layout-fluid />
+              <div className="bb-next-row" />
+            </div>
           </div>
 
           <details className="bb-text">

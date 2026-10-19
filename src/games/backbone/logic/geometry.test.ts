@@ -82,6 +82,44 @@ describe('the placement of labels', () => {
     expect(worst).toBeLessThan(1000);
   });
 
+  it('puts the numbers of the flows on the left corner of a node near the right border', () => {
+    const base = diamond();
+    const flows = ['f1', 'f2', 'f3'].map((id) => ({
+      id,
+      name: id,
+      source: 'D',
+      target: 'A',
+      profile: 'web' as const,
+      demand: 2,
+    }));
+    const level = { ...base, flows };
+    const placement = placeNames(level);
+    // D is at the right border (x 90) and carries the start of three flows: the numbers go left
+    expect(placement.badgesLeft.has('D')).toBe(true);
+    // A is at the left and has the three ends: they fit on its right corner
+    expect(placement.badgesLeft.has('A')).toBe(false);
+  });
+
+  it('shows the load of a cable a little aside where the middle is taken', () => {
+    const level = generateLevel({
+      seed: 9,
+      nodes: 10,
+      family: 'mesh',
+      extraLinks: 0.6,
+      profiles: ['web', 'video', 'bulk', 'voice'],
+      rules: allRules,
+      situations: ['calm'],
+      pressure: 1.2,
+      lossyLinks: 0,
+    });
+    const placement = placeNames(level);
+    expect(placement.loads.size).toBe(level.links.length);
+    for (const at of placement.loads.values()) {
+      expect(at).toBeGreaterThanOrEqual(0.26);
+      expect(at).toBeLessThanOrEqual(0.74);
+    }
+  });
+
   it('puts a mark on a side that is not the side of the name', () => {
     const level = diamond();
     const placement = placeNames(level);

@@ -22,29 +22,69 @@ export function eventsAt(index: LevelIndex, situation: Situation, step: number):
   return eventTexts(index, situation, step).map((event) => event.text);
 }
 
-/** The same sentences with the kind of event, so the screen can colour them. */
-export function eventTexts(index: LevelIndex, situation: Situation, step: number): EventText[] {
+type NetEvent = Situation['events'][number];
+
+/** One event as a sentence: "Core – Hub A is cut". */
+function sentenceOf(index: LevelIndex, event: NetEvent): string {
   const nodeName = (id: string): string =>
     index.level.nodes.find((node) => node.id === id)?.name ?? id;
   const flowName = (id: string): string =>
     index.level.flows.find((flow) => flow.id === id)?.name ?? id;
-  const sentence = (event: Situation['events'][number]): string => {
-    switch (event.kind) {
-      case 'burst':
-        return `${flowName(event.flow)} sends ${String(event.factor)} times as much`;
-      case 'down':
-        return `${linkName(index, event.link)} is cut`;
-      case 'lossy':
-        return `${linkName(index, event.link)} loses ${String(Math.round(event.loss * 100))} % of its packets`;
-      case 'flood':
-        return `${nodeName(event.source)} floods ${nodeName(event.target)} with ${String(event.rate)} per step`;
-      case 'slow':
-        return `${linkName(index, event.link)} runs at ${String(Math.round(event.factor * 100))} % speed`;
-    }
-  };
+  switch (event.kind) {
+    case 'burst':
+      return `${flowName(event.flow)} sends ${String(event.factor)} times as much`;
+    case 'down':
+      return `${linkName(index, event.link)} is cut`;
+    case 'lossy':
+      return `${linkName(index, event.link)} loses ${String(Math.round(event.loss * 100))} % of its packets`;
+    case 'flood':
+      return `${nodeName(event.source)} floods ${nodeName(event.target)} with ${String(event.rate)} per step`;
+    case 'slow':
+      return `${linkName(index, event.link)} runs at ${String(Math.round(event.factor * 100))} % speed`;
+  }
+}
+
+/** The end of an event as a sentence: "Core – Hub A is back". */
+function endOf(index: LevelIndex, event: NetEvent): string {
+  const flowName = (id: string): string =>
+    index.level.flows.find((flow) => flow.id === id)?.name ?? id;
+  switch (event.kind) {
+    case 'burst':
+      return `${flowName(event.flow)} is back to normal`;
+    case 'down':
+      return `${linkName(index, event.link)} is back`;
+    case 'lossy':
+      return `${linkName(index, event.link)} is clean again`;
+    case 'flood':
+      return 'the flood stops';
+    case 'slow':
+      return `${linkName(index, event.link)} is at full speed again`;
+  }
+}
+
+/** The same sentences with the kind of event, so the screen can colour them. */
+export function eventTexts(index: LevelIndex, situation: Situation, step: number): EventText[] {
   return situation.events
     .filter((event) => step >= event.from && step < event.to)
-    .map((event) => ({ kind: event.kind, text: sentence(event) }));
+    .map((event) => ({ kind: event.kind, text: sentenceOf(index, event) }));
+}
+
+/**
+ * What changes in the stress test at a step, for the player who plans a change of path from there:
+ * "Core – Hub A is cut", "Core – Hub A is back".
+ */
+export function describeSwitch(index: LevelIndex, step: number): string {
+  const parts = new Set<string>();
+  for (const situation of index.level.situations) {
+    for (const event of situation.events) {
+      if (event.from === step) {
+        parts.add(sentenceOf(index, event));
+      } else if (event.to === step) {
+        parts.add(endOf(index, event));
+      }
+    }
+  }
+  return [...parts].slice(0, 2).join(', ');
 }
 
 export interface RunSummary {

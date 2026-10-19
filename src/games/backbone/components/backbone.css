@@ -183,9 +183,59 @@
   align-items: start;
 }
 
+.bb-right {
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.bb-next-row {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 2.4rem;
+}
+
+/* Two columns: the map, its status and the buttons on the left; on the right the panel as high as
+   map and status together, and under it, on the height of the buttons, the way to the next level */
 @container (min-width: 52rem) {
   .bb-stage {
     grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    gap: 0.6rem 1rem;
+  }
+
+  .bb-stage > .bb-left,
+  .bb-stage > .bb-right {
+    display: contents;
+  }
+
+  .bb-map {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .bb-status-row {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .bb-under {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .bb-stage .bb-panel {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    height: auto;
+    /* The panel takes the height of the rows and scrolls inside; its content never sets it */
+    align-self: stretch;
+    contain: size;
+  }
+
+  .bb-next-row {
+    grid-column: 2;
+    grid-row: 3;
+    align-self: start;
   }
 }
 
@@ -208,6 +258,14 @@
     ),
     color-mix(in srgb, var(--color-surface) 55%, transparent);
   container-type: inline-size;
+}
+
+/* Everything on the map (the names, the marks, the numbers, the loads, the nodes) is as big as the
+   map allows: 1 em is a 54th of its width (10.9 px on the 590 px the labels were laid out for),
+   never less than 8.8 px. So a name is as big in comparison with the map on every width, and the
+   places that logic/labels.ts finds for them hold on every width. */
+.bb-map > * {
+  font-size: clamp(8.8px, 1.85cqw, 10.9px);
 }
 
 .bb-map-svg {
@@ -261,13 +319,12 @@
 .bb-link-label {
   position: absolute;
   z-index: 1;
-  padding: 0 0.3rem;
-  border-radius: 0.6rem;
+  padding: 0 0.44em;
+  border-radius: 0.88em;
   background-color: color-mix(in srgb, var(--color-bg) 82%, transparent);
   color: var(--color-muted);
   font-family: var(--font-mono), monospace;
-  font-size: 0.68rem;
-  line-height: 1.15rem;
+  line-height: 1.69em;
   pointer-events: none;
   transform: translate(-50%, -50%);
 }
@@ -324,8 +381,8 @@
   z-index: 2;
   display: grid;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: clamp(2.5rem, 4.04em, 2.75rem);
+  height: clamp(2.5rem, 4.04em, 2.75rem);
   padding: 0;
   border: 1px solid color-mix(in srgb, var(--color-fg) 28%, transparent);
   border-radius: 0.8rem;
@@ -354,8 +411,8 @@
 }
 
 .bb-node-icon {
-  width: 1.3rem;
-  height: 1.3rem;
+  width: 1.9em;
+  height: 1.9em;
 }
 
 /* The name and the from/to mark of a node sit on the side where nothing else is (placed by
@@ -368,7 +425,7 @@
 
 .bb-node-name {
   color: var(--color-muted);
-  font-size: 0.68rem;
+  font-size: 1em;
   line-height: 1;
   text-shadow:
     0 0 3px var(--color-bg),
@@ -376,13 +433,13 @@
 }
 
 .bb-node-tag {
-  padding: 0 0.35rem;
-  border-radius: 0.5rem;
+  padding: 0 0.52em;
+  border-radius: 0.86em;
   background-color: var(--color-accent-2);
   color: var(--color-bg);
-  font-size: 0.62rem;
+  font-size: 0.85em;
   font-weight: 600;
-  line-height: 1.1rem;
+  line-height: 1.64em;
 }
 
 .bb-node[data-target='true'] .bb-node-tag {
@@ -390,102 +447,102 @@
 }
 
 .bb-node-name[data-side='below'] {
-  top: calc(100% + 0.35rem);
+  top: calc(100% + 0.51em);
   left: 50%;
   transform: translateX(-50%);
 }
 
 .bb-node-name[data-side='above'] {
-  bottom: calc(100% + 0.35rem);
+  bottom: calc(100% + 0.51em);
   left: 50%;
   transform: translateX(-50%);
 }
 
 .bb-node-name[data-side='right'] {
   top: 50%;
-  left: calc(100% + 0.45rem);
+  left: calc(100% + 0.66em);
   transform: translateY(-50%);
 }
 
 .bb-node-name[data-side='left'] {
   top: 50%;
-  right: calc(100% + 0.45rem);
+  right: calc(100% + 0.66em);
   transform: translateY(-50%);
 }
 
 .bb-node-tag[data-side='below'] {
-  top: calc(100% + 0.5rem);
+  top: calc(100% + 0.86em);
   left: 50%;
   transform: translateX(-50%);
 }
 
 .bb-node-tag[data-side='above'] {
-  bottom: calc(100% + 0.5rem);
+  bottom: calc(100% + 0.86em);
   left: 50%;
   transform: translateX(-50%);
 }
 
 .bb-node-tag[data-side='right'] {
   top: 50%;
-  left: calc(100% + 0.5rem);
+  left: calc(100% + 0.86em);
   transform: translateY(-50%);
 }
 
 .bb-node-tag[data-side='left'] {
   top: 50%;
-  right: calc(100% + 0.5rem);
+  right: calc(100% + 0.86em);
   transform: translateY(-50%);
 }
 
 /* Corners: next to a node that has cables on all four sides */
 .bb-node-name[data-side='below-right'] {
-  top: calc(100% + 0.22rem);
-  left: calc(50% + 0.8rem);
+  top: calc(100% + 0.32em);
+  left: calc(50% + 1.17em);
 }
 
 .bb-node-name[data-side='below-left'] {
-  top: calc(100% + 0.22rem);
-  right: calc(50% + 0.8rem);
+  top: calc(100% + 0.32em);
+  right: calc(50% + 1.17em);
 }
 
 .bb-node-name[data-side='above-right'] {
-  bottom: calc(100% + 0.22rem);
-  left: calc(50% + 0.8rem);
+  bottom: calc(100% + 0.32em);
+  left: calc(50% + 1.17em);
 }
 
 .bb-node-name[data-side='above-left'] {
-  bottom: calc(100% + 0.22rem);
-  right: calc(50% + 0.8rem);
+  bottom: calc(100% + 0.32em);
+  right: calc(50% + 1.17em);
 }
 
 .bb-node-tag[data-side='below-right'] {
-  top: calc(100% + 0.22rem);
-  left: calc(50% + 0.8rem);
+  top: calc(100% + 0.38em);
+  left: calc(50% + 1.38em);
 }
 
 .bb-node-tag[data-side='below-left'] {
-  top: calc(100% + 0.22rem);
-  right: calc(50% + 0.8rem);
+  top: calc(100% + 0.38em);
+  right: calc(50% + 1.38em);
 }
 
 .bb-node-tag[data-side='above-right'] {
-  bottom: calc(100% + 0.22rem);
-  left: calc(50% + 0.8rem);
+  bottom: calc(100% + 0.38em);
+  left: calc(50% + 1.38em);
 }
 
 .bb-node-tag[data-side='above-left'] {
-  bottom: calc(100% + 0.22rem);
-  right: calc(50% + 0.8rem);
+  bottom: calc(100% + 0.38em);
+  right: calc(50% + 1.38em);
 }
 
 /* A name above a node whose flow numbers would be under it: one badge higher */
 .bb-node-name[data-side='above'][data-lift] {
-  bottom: calc(100% + 0.35rem + 0.4rem);
+  bottom: calc(100% + 0.51em + 0.59em);
 }
 
 .bb-node-name[data-side='above-right'][data-lift],
 .bb-node-name[data-side='above-left'][data-lift] {
-  bottom: calc(100% + 0.22rem + 0.4rem);
+  bottom: calc(100% + 0.32em + 0.59em);
 }
 
 /* While a path is drawn, the nodes it can go to next are marked */
@@ -647,8 +704,8 @@
 }
 
 .bb-step-count {
-  display: inline-flex;
-  align-items: center;
+  /* Not a flex box: the spaces around the number would be dropped ("Step6 of 6") */
+  line-height: 1.7rem;
   min-height: 1.7rem;
   font-family: var(--font-mono), monospace;
   font-size: 0.78rem;
@@ -1490,24 +1547,29 @@
 
 .bb-node-badges {
   position: absolute;
-  bottom: calc(100% - 0.55rem);
-  left: calc(100% - 0.55rem);
+  bottom: calc(100% - 0.81em);
+  left: calc(100% - 0.81em);
   display: flex;
   gap: 2px;
   pointer-events: none;
 }
 
+.bb-node-badges[data-left] {
+  right: calc(100% - 0.81em);
+  left: auto;
+}
+
 .bb-badge {
   display: grid;
   place-items: center;
-  min-width: 1rem;
-  height: 1rem;
+  min-width: 1.67em;
+  height: 1.67em;
   border: 1.5px solid var(--bb-color);
   border-radius: 999px;
   background-color: var(--bb-color);
   color: var(--color-bg);
   font-family: var(--font-mono), monospace;
-  font-size: 0.6rem;
+  font-size: 0.88em;
   font-weight: 700;
   line-height: 1;
   transition: opacity 160ms ease;

@@ -4,7 +4,7 @@ import { shortestPathPlan } from './baselines';
 import { diamond, randomLevel } from './fixtures';
 import { indexLevel } from './graph';
 import { evaluate } from './simulate';
-import { describeBusiest, eventsAt, eventTexts, summarize } from './text';
+import { describeBusiest, describeSwitch, eventsAt, eventTexts, summarize } from './text';
 
 describe('the sentences of a step', () => {
   it('say what happens, with the kind of event next to it', () => {
@@ -47,5 +47,18 @@ describe('the busiest cable in words', () => {
     const index = indexLevel(level);
     const summary = summarize(index, evaluate(index, shortestPathPlan(index)));
     expect(describeBusiest(index, summary)).toBe('No cable was overloaded.');
+  });
+});
+
+describe('what changes at a step', () => {
+  it('names the event that starts and the one that ends, for a change of path', () => {
+    const index = indexLevel(randomLevel(5));
+    // The random level cuts a cable from step 2 to 6 and bursts a flow from 3 to 5
+    expect(describeSwitch(index, 2)).toMatch(/ is cut$/);
+    expect(describeSwitch(index, 3)).toMatch(/ sends 2 times as much$/);
+    expect(describeSwitch(index, 5)).toMatch(/ is back to normal$/);
+    expect(describeSwitch(index, 6)).toBe('N5 – N1 is back, the flood stops');
+    // Nothing starts or ends at step 4
+    expect(describeSwitch(index, 4)).toBe('');
   });
 });

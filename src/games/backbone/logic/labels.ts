@@ -28,9 +28,6 @@ const SIDES: readonly Side[] = [
   'above-left',
 ];
 
-/** How far a label in a corner starts from the middle of its node, sideways */
-const CORNER_OFFSET = 2.2;
-
 interface Box {
   x: number;
   y: number;
@@ -38,27 +35,59 @@ interface Box {
   height: number;
 }
 
-const NODE_SIZE = 8;
-const GAP = 0.9;
-const LABEL_HEIGHT = 2.3;
-const CHARACTER_WIDTH = 0.88;
-const TAG_WIDTH = 4.6;
-const LINK_LABEL: Readonly<{ width: number; height: number }> = { width: 7.4, height: 2.5 };
-/** The numbers of the flows that start or end at a node sit on its top right corner (CSS: `.bb-node-badges`) */
-const BADGE = { width: 3, height: 2.7, left: 2.5, top: -5.2 };
-/** A name above a node is lifted by this much when it would touch the numbers (they reach 0.45 rem above the node) */
-const LIFT = 1.1;
-/** Nothing is placed closer than this to the border of the map (sideways, and up and down) */
-const BORDER_X = 2.5;
-const BORDER_Y = 2;
+/** The pixels of a map unit at the width the labels were first drawn for (a map 590 pixels wide). */
+export const BASE_UNIT = 5.9;
+
+/**
+ * The sizes of everything that is drawn around the nodes, in units of the map. The page draws them
+ * in rem, so their size in pixels does not change with the map, and a unit is fewer pixels on a
+ * small map: the same label is more units wide. `unit` is the number of pixels of one unit
+ * (the width of the map divided by 100).
+ */
+function sizesFor(unit: number) {
+  const base = (units: number): number => (units * BASE_UNIT) / unit;
+  return {
+    // A node is 2.75 rem wide, 2.5 rem on a map narrower than 30 rem (the names are mostly hidden there)
+    node: unit * 100 < 480 ? 40 / unit : base(8),
+    gap: base(0.9),
+    labelHeight: base(2.3),
+    characterWidth: base(0.88),
+    // The "from" mark is about 31 pixels wide and 15 high, and 0.5 rem away from the node
+    tagWidth: base(5.25),
+    tagHeight: base(2.55),
+    tagGap: base(1.36),
+    linkLabel: { width: base(7.4), height: base(2.5) },
+    /** The numbers of the flows sit on a corner of the node (CSS: `.bb-node-badges`) */
+    badge: { width: base(3), height: base(2.7), left: base(2.5), top: base(-5.2) },
+    /** A name above a node is lifted by this much when it would touch the numbers */
+    lift: base(1.1),
+    /** Nothing is placed closer than this to the border of the map */
+    borderX: base(2.5),
+    borderY: base(2),
+    /** How far a label in a corner starts from the middle of its node, sideways */
+    corner: base(2.2),
+    cornerGap: base(0.6),
+  };
+}
+
+type Sizes = ReturnType<typeof sizesFor>;
 
 function boxAt(center: Point, width: number, height: number): Box {
   return { x: center.x - width / 2, y: center.y - height / 2, width, height };
 }
 
 /** The box of a label of the given size on one side of a node. */
-function labelBox(node: Point, side: Side, width: number, height: number): Box {
-  const reach = NODE_SIZE / 2 + GAP;
+function labelBox(
+  sizes: Sizes,
+  node: Point,
+  side: Side,
+  width: number,
+  height: number,
+  gap = sizes.gap,
+): Box {
+  const reach = sizes.node / 2 + gap;
+  const { corner, cornerGap } = sizes;
+  const half = sizes.node / 2;
   switch (side) {
     case 'below':
       return boxAt({ x: node.x, y: node.y + reach + height / 2 }, width, height);
@@ -70,25 +99,25 @@ function labelBox(node: Point, side: Side, width: number, height: number): Box {
       return boxAt({ x: node.x - reach - width / 2, y: node.y }, width, height);
     case 'below-right':
       return boxAt(
-        { x: node.x + CORNER_OFFSET + width / 2, y: node.y + NODE_SIZE / 2 + 0.6 + height / 2 },
+        { x: node.x + corner + width / 2, y: node.y + half + cornerGap + height / 2 },
         width,
         height,
       );
     case 'below-left':
       return boxAt(
-        { x: node.x - CORNER_OFFSET - width / 2, y: node.y + NODE_SIZE / 2 + 0.6 + height / 2 },
+        { x: node.x - corner - width / 2, y: node.y + half + cornerGap + height / 2 },
         width,
         height,
       );
     case 'above-right':
       return boxAt(
-        { x: node.x + CORNER_OFFSET + width / 2, y: node.y - NODE_SIZE / 2 - 0.6 - height / 2 },
+        { x: node.x + corner + width / 2, y: node.y - half - cornerGap - height / 2 },
         width,
         height,
       );
     case 'above-left':
       return boxAt(
-        { x: node.x - CORNER_OFFSET - width / 2, y: node.y - NODE_SIZE / 2 - 0.6 - height / 2 },
+        { x: node.x - corner - width / 2, y: node.y - half - cornerGap - height / 2 },
         width,
         height,
       );
@@ -127,15 +156,35 @@ function segmentHitsBox(from: Point, to: Point, box: Box, margin = 0.5): boolean
   return false;
 }
 
+/** Where along its cable (0 is the first node, 1 the second) the load of a cable is shown. */
+const LOAD_POSITIONS = [0.5, 0.44, 0.56, 0.38, 0.62, 0.32, 0.68, 0.26, 0.74];
+
+function loadBox(sizes: Sizes, segment: { from: Point; to: Point }, at: number): Box {
+  return boxAt(
+    {
+      x: segment.from.x + (segment.to.x - segment.from.x) * at,
+      y: segment.from.y + (segment.to.y - segment.from.y) * at,
+    },
+    sizes.linkLabel.width,
+    sizes.linkLabel.height,
+  );
+}
+
 interface Scene {
   nodes: Map<string, Point>;
   segments: { id: string; from: Point; to: Point }[];
   linkLabels: Box[];
   /** The rows of flow numbers on the corners of the nodes, nothing may lie on them */
   badges: Box[];
+  /** The nodes whose numbers sit on the top left corner, because the right one is too near the border */
+  badgesLeft: Set<string>;
+  sizes: Sizes;
+  /** Pixels of one unit of the map */
+  unit: number;
 }
 
-function sceneOf(level: Level): Scene {
+function sceneOf(level: Level, unit: number, loads?: ReadonlyMap<string, number>): Scene {
+  const sizes = sizesFor(unit);
   const nodes = new Map(level.nodes.map((node) => [node.id, mapPoint(node)]));
   const segments = level.links.flatMap((link) => {
     const from = nodes.get(link.a);
@@ -143,29 +192,34 @@ function sceneOf(level: Level): Scene {
     return from === undefined || to === undefined ? [] : [{ id: link.id, from, to }];
   });
   const linkLabels = segments.map((segment) =>
-    boxAt(
-      { x: (segment.from.x + segment.to.x) / 2, y: (segment.from.y + segment.to.y) / 2 },
-      LINK_LABEL.width,
-      LINK_LABEL.height,
-    ),
+    loadBox(sizes, segment, loads?.get(segment.id) ?? 0.5),
   );
+  const badgesLeft = new Set<string>();
   const badges = level.nodes.flatMap((node) => {
     const count = level.flows.filter(
       (flow) => flow.source === node.id || flow.target === node.id,
     ).length;
     const point = nodes.get(node.id);
-    return count === 0 || point === undefined
-      ? []
-      : [
-          {
-            x: point.x + BADGE.left,
-            y: point.y + BADGE.top,
-            width: BADGE.width * count,
-            height: BADGE.height,
-          },
-        ];
+    if (count === 0 || point === undefined) {
+      return [];
+    }
+    const { badge } = sizes;
+    const width = badge.width * count;
+    // The numbers sit on the top right corner, and on the top left one when they would reach the border
+    const left = point.x + badge.left + width > MAP_WIDTH - sizes.borderX;
+    if (left) {
+      badgesLeft.add(node.id);
+    }
+    return [
+      {
+        x: left ? point.x - badge.left - width : point.x + badge.left,
+        y: point.y + badge.top,
+        width,
+        height: badge.height,
+      },
+    ];
   });
-  return { nodes, segments, linkLabels, badges };
+  return { nodes, segments, linkLabels, badges, badgesLeft, sizes, unit };
 }
 
 /** How badly a label box collides with the rest of the drawing (0 is perfect). */
@@ -178,15 +232,15 @@ function cost(
 ): number {
   let total = 0;
   if (
-    box.x < BORDER_X ||
-    box.y < BORDER_Y ||
-    box.x + box.width > MAP_WIDTH - BORDER_X ||
-    box.y + box.height > MAP_HEIGHT - BORDER_Y
+    box.x < scene.sizes.borderX ||
+    box.y < scene.sizes.borderY ||
+    box.x + box.width > MAP_WIDTH - scene.sizes.borderX ||
+    box.y + box.height > MAP_HEIGHT - scene.sizes.borderY
   ) {
     total += 200;
   }
   for (const [id, point] of scene.nodes) {
-    if (id !== owner && boxesOverlap(box, boxAt(point, NODE_SIZE, NODE_SIZE), 0.4)) {
+    if (id !== owner && boxesOverlap(box, boxAt(point, scene.sizes.node, scene.sizes.node), 0.4)) {
       total += 100;
     }
   }
@@ -220,6 +274,12 @@ export interface Placement {
   names: ReadonlyMap<string, Side>;
   /** The names that sit one badge higher than usual because the numbers of the flows are there */
   lifted: ReadonlySet<string>;
+  /** The nodes whose numbers of flows sit on the top left corner instead of the top right one */
+  badgesLeft: ReadonlySet<string>;
+  /** For every cable: where along it the load is shown (0 to 1, usually the middle) */
+  loads: ReadonlyMap<string, number>;
+  /** The pixels of a unit of the map that the placement was made for */
+  unit: number;
   /** What is still colliding, summed over all labels (0 means nothing is) */
   conflicts: number;
 }
@@ -227,9 +287,13 @@ export interface Placement {
 function nameBox(scene: Scene, level: Level, id: string, side: Side, lifted = false): Box {
   const node = level.nodes.find((entry) => entry.id === id);
   const point = scene.nodes.get(id) ?? { x: 0, y: 0 };
-  const width = Math.max(4, (node?.name.length ?? 4) * CHARACTER_WIDTH + 1.2);
-  const box = labelBox(point, side, width, LABEL_HEIGHT);
-  return lifted ? { ...box, y: box.y - LIFT } : box;
+  const { sizes } = scene;
+  const width = Math.max(
+    (4 * BASE_UNIT) / scene.unit,
+    (node?.name.length ?? 4) * sizes.characterWidth + (1.2 * BASE_UNIT) / scene.unit,
+  );
+  const box = labelBox(sizes, point, side, width, sizes.labelHeight);
+  return lifted ? { ...box, y: box.y - sizes.lift } : box;
 }
 
 /** Only names above a node can lie on its numbers (they are on the top right corner). */
@@ -240,8 +304,8 @@ const isAbove = (side: Side): boolean => side.startsWith('above');
  * Where the name would lie on the numbers of the flows it is lifted a little instead of moving
  * to another side; only when that does not help it takes the side that is free.
  */
-export function placeNames(level: Level): Placement {
-  const scene = sceneOf(level);
+export function placeNames(level: Level, unit = BASE_UNIT): Placement {
+  const scene = sceneOf(level, unit);
   const chosen = new Map<string, Side>();
   const lifted = new Set<string>();
   const order = [...level.nodes].sort((a, b) => a.id.localeCompare(b.id));
@@ -300,7 +364,35 @@ export function placeNames(level: Level): Placement {
       lifted.add(node.id);
     }
   }
+  // The loads of the cables sit in the middle of them, a little to the side where something is there
+  const loads = new Map<string, number>();
+  const obstacles: Box[] = [
+    ...scene.badges,
+    ...level.nodes.map((node) =>
+      boxAt(scene.nodes.get(node.id) ?? { x: 0, y: 0 }, scene.sizes.node, scene.sizes.node),
+    ),
+    ...level.nodes.map((node) =>
+      nameBox(scene, level, node.id, chosen.get(node.id) ?? 'below', lifted.has(node.id)),
+    ),
+  ];
+  const settled: Box[] = [];
   let conflicts = 0;
+  for (const segment of scene.segments) {
+    let best = { at: 0.5, value: Infinity, box: loadBox(scene.sizes, segment, 0.5) };
+    for (const at of LOAD_POSITIONS) {
+      const box = loadBox(scene.sizes, segment, at);
+      const value =
+        [...obstacles, ...settled].filter((other) => boxesOverlap(box, other, 0.3)).length * 100 +
+        Math.abs(at - 0.5);
+      if (value < best.value) {
+        best = { at, value, box };
+      }
+    }
+    loads.set(segment.id, best.at);
+    settled.push(best.box);
+    conflicts += Math.floor(best.value / 100) * 100;
+  }
+  scene.linkLabels = settled;
   for (const node of level.nodes) {
     conflicts += cost(
       scene,
@@ -310,12 +402,12 @@ export function placeNames(level: Level): Placement {
       true,
     );
   }
-  return { names: chosen, lifted, conflicts };
+  return { names: chosen, lifted, badgesLeft: scene.badgesLeft, loads, unit, conflicts };
 }
 
 /** The best side for the "from" or "to" mark of a node and how badly it still collides (0 is fine). */
 function bestTag(level: Level, placement: Placement, id: string): { side: Side; cost: number } {
-  const scene = sceneOf(level);
+  const scene = sceneOf(level, placement.unit, placement.loads);
   const point = scene.nodes.get(id) ?? { x: 0, y: 0 };
   const nameSide = placement.names.get(id);
   const names = [...placement.names]
@@ -332,7 +424,14 @@ function bestTag(level: Level, placement: Placement, id: string): { side: Side; 
     const value = cost(
       scene,
       id,
-      labelBox(point, side, TAG_WIDTH, LABEL_HEIGHT),
+      labelBox(
+        scene.sizes,
+        point,
+        side,
+        scene.sizes.tagWidth,
+        scene.sizes.tagHeight,
+        scene.sizes.tagGap,
+      ),
       [...names, ...own],
       true,
     );

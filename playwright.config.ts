@@ -1,6 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// A different port than `astro dev` (4321), so both can run at the same time
+// The ports: `astro dev` is 4321 (WebStorm or Claude, only one of them at a time), the browser tests
+// start their own `astro preview` on 4322, Lighthouse uses 4323. A server that already stands on
+// 4322 is never reused (with `astro dev` there the tests ran against the dev server, with its
+// toolbar in front of every click and no CSP): the run stops with "port already used" instead.
 const port = 4322;
 const isCI = Boolean(process.env.CI);
 
@@ -36,7 +39,7 @@ export default defineConfig({
   webServer: {
     command: `node node_modules/astro/bin/astro.mjs preview --port ${String(port)}`,
     url: `http://localhost:${String(port)}`,
-    reuseExistingServer: !isCI,
+    reuseExistingServer: false,
     timeout: 120_000,
     gracefulShutdown: { signal: 'SIGTERM', timeout: 5_000 },
   },
