@@ -59,7 +59,10 @@ describe('the level pool', () => {
       expect(record.level.story).toBe(plan?.story);
       expect(record.level.nodes).toHaveLength(plan?.nodes ?? -1);
       expect(record.level.flows.map((flow) => flow.profile)).toEqual(plan?.profiles);
-      expect(record.level.situations.map((situation) => situation.id)).toEqual(plan?.situations);
+      // A second situation of a kind is "cut-2": the kinds are what the plan lists
+      expect(
+        record.level.situations.map((situation) => situation.id.replace(/-[0-9]+$/, '')),
+      ).toEqual(plan?.situations);
     });
 
     it('has flows that send different amounts', () => {

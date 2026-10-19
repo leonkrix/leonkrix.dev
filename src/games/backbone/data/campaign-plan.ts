@@ -551,11 +551,11 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     [
       'provider',
       'Storm',
-      'Wind takes down a metro link. Customers should hardly notice.',
+      'Wind takes down a metro link. Customers should hardly notice. The storm can cut either of two cables.',
       8,
       'ring',
       'OVWW',
-      'calm cut',
+      'calm cut cut',
     ],
     [
       'datacentre',
@@ -569,11 +569,11 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     [
       'campus',
       'Construction site',
-      'The digger is back, and this time it is the main trench.',
+      'The digger is back, and this time it is the main trench. The digger may cut either of two cables.',
       8,
       'mesh',
       'OVW',
-      'calm cut',
+      'calm cut cut',
     ],
     [
       'festival',
@@ -640,11 +640,11 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     [
       'datacentre',
       'Second hall',
-      'A second hall, a limited budget and a lot of traffic between the two.',
+      'A second hall, a limited budget and a lot of traffic between the two. Either of two cables may be cut.',
       9,
       'grid',
       'VWBT',
-      'calm',
+      'calm cut cut',
       { optional: 5 },
     ],
   ]),
@@ -681,11 +681,11 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     [
       'hospital',
       'Telemetry',
-      'Ventilator data and imaging cross a noisy wing. Protect the right one.',
+      'Ventilator data and imaging cross a noisy wing. Protect the right one. Either of two cables may fail.',
       9,
       'grid',
       'CTVB',
-      'calm lossy cut',
+      'calm cut cut',
     ],
     [
       'festival',
@@ -788,11 +788,11 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     [
       'campus',
       'The open lab',
-      'Students bring their own devices. Research data stays behind the firewall, and the firewall has only so much capacity.',
+      'Students bring their own devices. Research data stays behind the firewall, and the firewall has only so much capacity. Either of two cables may fail.',
       10,
       'grid',
       'OVWT',
-      'calm rush cut',
+      'calm cut cut',
     ],
     [
       'datacentre',
@@ -846,11 +846,11 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     [
       'provider',
       'Botnet',
-      'Thousands of hijacked cameras send traffic at one customer.',
+      'Thousands of hijacked cameras send traffic at one customer. The flood can come from either of two places.',
       9,
       'ring',
       'OVWT',
-      'calm flood',
+      'calm flood flood',
     ],
     [
       'campus',
@@ -865,11 +865,11 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     [
       'hospital',
       'Ransom note',
-      'The attackers want money, and send a flood to prove it.',
+      'The attackers want money, and send a flood to prove it. The flood can come from either of two places.',
       9,
       'mesh',
       'CWVT',
-      'calm flood',
+      'calm flood flood',
     ],
     [
       'festival',
@@ -886,11 +886,11 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     [
       'campus',
       'The big day',
-      'Enrolment, an open day and a storm in the same week.',
+      'Enrolment, an open day and a storm in the same week. Either of two cables may be cut.',
       10,
       'mesh',
       'OVWTB',
-      'calm rush cut',
+      'calm cut cut',
     ],
     [
       'provider',

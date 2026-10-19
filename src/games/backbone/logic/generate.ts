@@ -414,7 +414,18 @@ function narrowShortcuts(level: Level, trap: number): Level {
   };
 }
 
-function eventsFor(kind: SituationKind, level: Level, steps: number, random: Random): NetEvent[] {
+/**
+ * The events of one situation. `taken` holds the cables (a cut) or the attackers (a flood) of the
+ * situations of the same kind before it: a level can have two possible cuts or two possible
+ * attacks, and they must not be the same.
+ */
+function eventsFor(
+  kind: SituationKind,
+  level: Level,
+  steps: number,
+  random: Random,
+  taken: ReadonlySet<string> = new Set(),
+): NetEvent[] {
   const index = indexLevel(level);
   const onShortestPaths = [
     ...new Set(
@@ -454,7 +465,10 @@ function eventsFor(kind: SituationKind, level: Level, steps: number, random: Ran
       }));
     }
     case 'cut': {
-      const link = order.find((id) => keepsConnected(id)) ?? order[0];
+      const link =
+        taken.size > 0
+          ? order.find((id) => !taken.has(id) && keepsConnected(id))
+          : (order.find((id) => keepsConnected(id)) ?? order[0]);
       return link === undefined ? [] : [{ kind: 'down', link, from: 2, to: steps - 2 }];
     }
     case 'lossy': {
@@ -473,6 +487,7 @@ function eventsFor(kind: SituationKind, level: Level, steps: number, random: Ran
       const attackers = level.nodes.filter(
         (node) =>
           node.id !== target.id &&
+          !taken.has(node.id) &&
           node.kind !== 'firewall' &&
           (shortestPath(index, node.id, target.id)?.length ?? 0) >= 3,
       );
@@ -634,13 +649,24 @@ export function generateLevel(spec: LevelSpec): Level {
     spec.optional ?? 0,
     random,
   );
-  const situations: Situation[] = spec.situations.map((kind) => {
+  // A kind can come twice ("a cable is cut" in two possible places): the situations are told apart
+  // by a letter, and the second one cannot take the cable or the attacker of the first
+  const taken = new Map<SituationKind, Set<string>>();
+  const situations: Situation[] = spec.situations.map((kind, at) => {
     const steps = kind === 'calm' ? 6 : 8;
+    const twins = spec.situations.filter((other) => other === kind).length;
+    const nth = spec.situations.slice(0, at).filter((other) => other === kind).length;
+    const used = taken.get(kind) ?? new Set<string>();
+    const events = eventsFor(kind, scaled, steps, random, used);
+    for (const event of events) {
+      used.add(event.kind === 'down' ? event.link : event.kind === 'flood' ? event.source : '');
+    }
+    taken.set(kind, used);
     return {
-      id: kind,
-      name: SITUATION_NAMES[kind],
+      id: nth === 0 ? kind : `${kind}-${String(nth + 1)}`,
+      name: twins > 1 ? `${SITUATION_NAMES[kind]} ${'AB'.charAt(nth)}` : SITUATION_NAMES[kind],
       steps,
-      events: eventsFor(kind, scaled, steps, random),
+      events,
     };
   });
   return { ...scaled, situations };

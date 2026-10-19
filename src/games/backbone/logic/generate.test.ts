@@ -96,6 +96,28 @@ describe('the level generator', () => {
     }
   });
 
+  it('makes two possible cuts or two possible attacks that differ', () => {
+    for (let seed = 1; seed <= 10; seed += 1) {
+      const cuts = generateLevel(spec(seed, { situations: ['calm', 'cut', 'cut'] }));
+      expect(cuts.situations.map((situation) => situation.id)).toEqual(['calm', 'cut', 'cut-2']);
+      expect(cuts.situations.map((situation) => situation.name)).toEqual([
+        'Quiet day',
+        'Cable cut A',
+        'Cable cut B',
+      ]);
+      const links = cuts.situations.flatMap((situation) =>
+        situation.events.map((event) => (event.kind === 'down' ? event.link : '')),
+      );
+      expect(new Set(links).size, `seed ${String(seed)}`).toBe(links.length);
+      const floods = generateLevel(spec(seed, { situations: ['calm', 'flood', 'flood'] }));
+      const sources = floods.situations.flatMap((situation) =>
+        situation.events.map((event) => (event.kind === 'flood' ? event.source : '')),
+      );
+      expect(new Set(sources).size, `seed ${String(seed)}`).toBe(sources.length);
+      expect(problemsOfLevel(cuts)).toEqual([]);
+    }
+  });
+
   it('makes every kind of situation', () => {
     const level = generateLevel(spec(2, { situations: ['calm', 'rush', 'cut'], lossyLinks: 0 }));
     expect(level.situations.map((situation) => situation.id)).toEqual(['calm', 'rush', 'cut']);

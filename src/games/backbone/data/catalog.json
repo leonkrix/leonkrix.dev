@@ -348,7 +348,7 @@
     "title": "Storm",
     "nodes": 8,
     "flows": 4,
-    "situations": 2
+    "situations": 3
   },
   {
     "id": "c7-4",
@@ -366,7 +366,7 @@
     "title": "Construction site",
     "nodes": 8,
     "flows": 3,
-    "situations": 2
+    "situations": 3
   },
   {
     "id": "c7-6",
@@ -429,7 +429,7 @@
     "title": "Second hall",
     "nodes": 9,
     "flows": 4,
-    "situations": 1
+    "situations": 3
   },
   {
     "id": "c9-1",
@@ -618,7 +618,7 @@
     "title": "Botnet",
     "nodes": 9,
     "flows": 4,
-    "situations": 2
+    "situations": 3
   },
   {
     "id": "c12-4",
@@ -636,7 +636,7 @@
     "title": "Ransom note",
     "nodes": 9,
     "flows": 4,
-    "situations": 2
+    "situations": 3
   },
   {
     "id": "c12-6",
