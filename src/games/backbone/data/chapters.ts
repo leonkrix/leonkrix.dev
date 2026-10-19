@@ -40,7 +40,7 @@ export const chapters: readonly Chapter[] = [
   {
     number: 6,
     title: 'Queues',
-    rule: 'Links have buffers. A burst that does not fit waits in the buffer and goes on a moment later, at the price of waiting time. A full buffer drops what comes next. Every cable has buffers, one for each class of traffic (voice and control, then web and video, then bulk), and sends them in that order. Under the load of a cable, three little bars show how full these buffers are, from the one served first to the one served last: a full bar drops what comes next. New traffic: video is big and steady and does not like loss.',
+    rule: 'Every cable has a queue, as big as the cable is: it holds what the cable carries in one minute. A burst that does not fit waits in the queue and goes on a moment later, at the price of waiting time. The queue is served by priority, voice and control first, then web, video and payments, then bulk, and when it is full, the least important traffic is dropped first. Under the load of every cable a small bar and a number show how full it is: Q 3/5 means 3 wait, 5 fit. New traffic: video is big and steady and does not like loss.',
   },
   {
     number: 7,

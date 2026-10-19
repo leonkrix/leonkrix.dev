@@ -331,15 +331,16 @@ test.describe('Backbone', () => {
     expect(record.level.flows.length).toBeGreaterThan(0);
   });
 
-  test('shows the buffers of the links from the chapter about queues on', async ({ page }) => {
+  test('shows the queue of every link from the chapter about queues on', async ({ page }) => {
     await open(page, 'c6-1');
     await page.getByText('Text version of the network').click();
-    await expect(page.getByRole('columnheader', { name: 'Buffer' })).toBeVisible();
-    const buffers = await page.locator('.bb-text tbody tr td:nth-child(4)').allTextContents();
-    expect(buffers.some((value) => Number(value) > 0)).toBe(true);
+    await expect(page.getByRole('columnheader', { name: 'Queue' })).toBeVisible();
+    const sizes = await page.locator('.bb-text tbody tr td:nth-child(4)').allTextContents();
+    // Every cable has a queue as big as it is: none has an empty one
+    expect(sizes.every((value) => Number(value) > 0)).toBe(true);
   });
 
-  test('draws the buffers of every cable as three bars from the chapter about queues on, and not before', async ({
+  test('draws the queue of every cable as a bar and a number from the chapter about queues on, and not before', async ({
     page,
   }) => {
     await open(page, 'c5-1');
@@ -347,10 +348,14 @@ test.describe('Backbone', () => {
     await page.getByRole('link', { name: 'All levels' }).click();
     await page.locator('a[href="?level=c6-1"]').click();
     await expect(page.locator('.bb-node').first()).toBeVisible({ timeout: 15_000 });
-    const bars = page.locator('.bb-link-queue');
-    expect(await bars.count()).toBeGreaterThan(0);
-    await expect(bars.first().locator('i')).toHaveCount(3);
-    await expect(bars.first()).toHaveAttribute('aria-label', /Buffers: voice and control/);
+    const queues = page.locator('.bb-link-queue');
+    // One on every cable, none is missing
+    await expect(queues).toHaveCount(levelOf('c6-1').level.links.length);
+    await expect(queues.first()).toHaveText(/^Q 0\/[0-9]+$/);
+    await expect(queues.first()).toHaveAttribute(
+      'aria-label',
+      /^Queue 0 of [0-9]+: voice and control/,
+    );
   });
 
   test('makes a random level in the background', async ({ page }) => {
@@ -566,7 +571,7 @@ test.describe('Backbone: only what has been taught is said', () => {
       timeout: 90_000,
     });
     const text = (await page.locator('.bb-result').textContent()) ?? '';
-    expect(text).not.toMatch(/ ms|latency|delay|buffer/i);
+    expect(text).not.toMatch(/ ms|latency|delay|buffer|queue/i);
     await expect(page.locator('.bb-link-delay, .bb-link-queue, .bb-link-loss')).toHaveCount(0);
   });
 

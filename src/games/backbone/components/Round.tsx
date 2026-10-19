@@ -24,6 +24,7 @@ import {
   undo,
   unrouted,
 } from '../logic/play';
+import { bufferSize } from '../logic/queues';
 import { evaluate } from '../logic/simulate';
 import { starsFor, starThresholds } from '../logic/stars';
 import { linkName, type RiskKind, riskyLinks } from '../logic/text';
@@ -569,7 +570,7 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
               <th scope="col">Cable</th>
               <th scope="col">Capacity</th>
               <th scope="col">Delay</th>
-              <th scope="col">Buffer</th>
+              <th scope="col">Queue</th>
               <th scope="col">Traffic</th>
               <th scope="col">Loss</th>
             </tr>
@@ -580,7 +581,7 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
                 <th scope="row">{linkName(index, link.id)}</th>
                 <td>{link.capacity}</td>
                 <td>{link.delay}</td>
-                <td>{index.level.rules.queues ? (link.buffer ?? 0) : 0}</td>
+                <td>{bufferSize(index.level, link)}</td>
                 <td>{Math.round((loads?.[link.id]?.offered ?? 0) * 10) / 10}</td>
                 <td>{link.loss > 0 ? `${String(Math.round(link.loss * 100))} %` : 'none'}</td>
               </tr>

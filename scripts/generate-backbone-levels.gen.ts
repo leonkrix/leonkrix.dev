@@ -10,6 +10,7 @@
  *                          gap between the best plan and the simple strategies is kept)
  *   LEVELS_PROOF_MS=20000  the longest a proof may take, a seed that needs more is dropped
  *   LEVELS_JOIN=a.json,b.json  merge files made in parallel into the pool
+ *   LEVELS_LOG=file.txt    also write what happened to every level into this file
  *   LEVELS_RESOLVE=1       keep the levels, prove their best plan again (after the model or the
  *                          options of the solver changed); a level that then fails a check is
  *                          listed and has to be made again
@@ -18,7 +19,7 @@
  * level that is well formed, whose best plan is proven in time, that leaves room for the stars
  * (`isAdmissible`) and whose best plan uses the rules the chapter teaches (`requires`).
  */
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { format, resolveConfig } from 'prettier';
@@ -48,6 +49,18 @@ const proofMs = Number(process.env.LEVELS_PROOF_MS ?? '20000');
 const join = process.env.LEVELS_JOIN?.split(',').filter((file) => file !== '');
 const resolveOnly = process.env.LEVELS_RESOLVE === '1';
 const MAX_SEEDS = 600;
+
+/** Says what happened to a level: on the console, and in the file LEVELS_LOG names (vitest hides the console of a long run) */
+function report(line: string): void {
+  console.warn(line);
+  if (process.env.LEVELS_LOG !== undefined) {
+    appendFileSync(
+      process.env.LEVELS_LOG,
+      `${line}
+`,
+    );
+  }
+}
 
 function load(file: string): LevelRecord[] {
   return existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')) as LevelRecord[]) : [];
@@ -150,10 +163,10 @@ describe('make the Backbone pool', () => {
         }
         const next = proveRecord(plan, old.level, old.seed);
         if (next === undefined) {
-          console.warn(`${plan.id}: fails a check with the new best plan, make it again`);
+          report(`${plan.id}: fails a check with the new best plan, make it again`);
           continue;
         }
-        console.warn(
+        report(
           `${plan.id}: best ${old.best.score.toFixed(3)} -> ${next.best.score.toFixed(3)} (${String(next.proof.milliseconds)} ms)`,
         );
         records.splice(records.indexOf(old), 1, next);
@@ -188,7 +201,7 @@ describe('make the Backbone pool', () => {
       }
       const best = found.sort((a, b) => gapOf(b) - gapOf(a))[0];
       if (best === undefined) {
-        console.warn(`${plan.id}: no level passed in ${String(MAX_SEEDS)} seeds`);
+        report(`${plan.id}: no level passed in ${String(MAX_SEEDS)} seeds`);
         continue;
       }
       const at = records.findIndex((record) => record.id === plan.id);
@@ -196,7 +209,7 @@ describe('make the Backbone pool', () => {
         records.splice(at, 1);
       }
       records.push(best);
-      console.warn(
+      report(
         `${plan.id}: ${String(found.length)} candidates, kept gap ${gapOf(best).toFixed(3)} (${String(best.proof.milliseconds)} ms)`,
       );
       await save(records);

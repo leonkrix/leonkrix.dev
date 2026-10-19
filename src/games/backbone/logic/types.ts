@@ -36,8 +36,6 @@ export interface NetLink {
   cost?: number;
   /** The link does not exist until the player builds it (chapter 8) */
   optional?: boolean;
-  /** How much traffic of each queue class the link can hold back when it is full (chapter 6) */
-  buffer?: number;
 }
 
 export type ProfileId = 'voice' | 'control' | 'transaction' | 'video' | 'web' | 'bulk';
@@ -104,7 +102,7 @@ export interface Rules {
   throttle: boolean;
   /** Change the path at a planned step */
   stages: boolean;
-  /** Links have buffers: a burst that does not fit waits in a queue (and makes traffic late) */
+  /** Links have a queue: a burst that does not fit waits in it (and makes traffic late) */
   queues: boolean;
 }
 
@@ -189,9 +187,9 @@ export interface LinkStepResult {
   offered: number;
   /** Attack traffic that flooded the link in this step (it is part of `offered`) */
   attack: number;
-  /** Traffic waiting in the buffers of the link at the end of the step, and what they can hold */
+  /** Traffic waiting in the queue of the link at the end of the step, and what the queue holds */
   queued: number;
-  /** What waits in each queue class (served first, middle, last), each of them room for `buffer` */
+  /** The same split by class of traffic (served first, middle, last): it adds up to `queued` */
   queuedBy: readonly number[];
   buffer: number;
   /** The share of the traffic this cable loses in this step (its own loss and an event), 0 to 1 */

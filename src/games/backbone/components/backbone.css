@@ -1924,40 +1924,49 @@
   text-align: right;
 }
 
-/* The buffers of a cable under its load: three little bars (served first, middle, last) that fill
-   while traffic waits, always there from the chapter about queues on */
+/* The queue of a cable under its load: a small bar and "Q 3/5" (what waits, out of what it holds),
+   always there from the chapter about queues on */
 .bb-link-queue {
   position: absolute;
   top: calc(100% + 0.1em);
   left: 50%;
   display: flex;
-  gap: 0.2em;
-  padding: 0.15em 0.3em;
-  border-radius: 0.5em;
+  gap: 0.35em;
+  align-items: center;
+  padding: 0 0.4em;
+  border-radius: 0.7em;
   background-color: color-mix(in srgb, var(--color-bg) 88%, transparent);
+  color: var(--color-muted);
+  font-size: 0.85em;
+  line-height: 1.4;
+  white-space: nowrap;
   transform: translateX(-50%);
+}
+
+.bb-link-queue[data-fill='some'] {
+  color: var(--bb-busy);
+}
+
+.bb-link-queue[data-fill='full'] {
+  color: var(--bb-over);
 }
 
 .bb-link-queue i {
   position: relative;
   display: block;
-  width: 0.45em;
-  height: 1.1em;
+  width: 1.9em;
+  height: 0.55em;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--color-muted) 70%, transparent);
-  border-radius: 0.15em;
+  border: 1px solid color-mix(in srgb, currentcolor 70%, transparent);
+  border-radius: 0.3em;
 }
 
 .bb-link-queue i::after {
   position: absolute;
-  inset: auto 0 0;
-  height: calc(var(--fill, 0) * 100%);
-  background-color: var(--bb-busy);
+  inset: 0 auto 0 0;
+  width: calc(var(--fill, 0) * 100%);
+  background-color: currentcolor;
   content: '';
-}
-
-.bb-link-queue i[data-fill='full']::after {
-  background-color: var(--bb-over);
 }
 
 /* What a cable loses: a small chip above its load, in the colour of loss */

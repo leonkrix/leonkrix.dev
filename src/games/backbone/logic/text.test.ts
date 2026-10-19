@@ -66,7 +66,7 @@ describe('what changes at a step', () => {
     expect(describeSwitch(index, 2)).toMatch(/ is cut$/);
     expect(describeSwitch(index, 3)).toMatch(/ sends 2 times as much$/);
     expect(describeSwitch(index, 5)).toMatch(/ is back to normal$/);
-    expect(describeSwitch(index, 6)).toBe('N5 – N1 is back, the flood stops');
+    expect(describeSwitch(index, 6)).toMatch(/ is back, the flood stops$/);
     // Nothing starts or ends at step 4
     expect(describeSwitch(index, 4)).toBe('');
   });

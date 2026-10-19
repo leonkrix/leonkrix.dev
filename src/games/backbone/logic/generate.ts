@@ -279,8 +279,6 @@ function buildNetwork(spec: LevelSpec, random: Random): { nodes: NetNode[]; link
       capacity,
       delay: Math.min(4, Math.max(1, Math.round(length / 16))),
       loss: lossyPicks.has(position) ? (random.next() < 0.5 ? 0.1 : 0.2) : 0,
-      // With queues some links have no buffer, some a small one and some a big one
-      ...(spec.rules.queues ? { buffer: Math.ceil(capacity * random.pick([0, 0.4, 0.8])) } : {}),
     };
   });
   return { nodes, links };

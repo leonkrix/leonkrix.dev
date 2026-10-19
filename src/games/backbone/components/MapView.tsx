@@ -180,29 +180,19 @@ function lossText(
   return atTimes > 0 ? `${percent(atTimes)} at times` : '';
 }
 
-/** The three buffers of a cable (served first, middle, last): little bars that fill while traffic waits. */
-function Buffers({ result, buffer }: { result: LinkStepResult | undefined; buffer: number }) {
-  const size = result?.buffer ?? buffer;
-  const names = ['voice and control', 'web, video and payments', 'bulk'];
+/** The queue of a cable: a small bar and "Q 3/5" (what waits, out of what the queue holds), always there from the chapter about queues on. */
+function Queue({ result, size }: { result: LinkStepResult | undefined; size: number }) {
+  const waiting = result?.queued ?? 0;
+  const share = Math.min(1, waiting / Math.max(size, 1e-9));
+  const by = result?.queuedBy ?? [0, 0, 0];
   return (
     <span
       className="bb-link-queue"
+      data-fill={share >= 0.999 ? 'full' : waiting > 0.05 ? 'some' : 'empty'}
       role="img"
-      aria-label={`Buffers: ${names
-        .map((name, at) => `${name} ${trim(result?.queuedBy[at] ?? 0)} of ${trim(size)}`)
-        .join(', ')}`}
+      aria-label={`Queue ${trim(waiting)} of ${trim(size)}: voice and control ${trim(by[0] ?? 0)}, web, video and payments ${trim(by[1] ?? 0)}, bulk ${trim(by[2] ?? 0)}`}
     >
-      {names.map((name, at) => {
-        const waiting = result?.queuedBy[at] ?? 0;
-        const share = Math.min(1, waiting / Math.max(size, 1e-9));
-        return (
-          <i
-            key={name}
-            data-fill={share >= 0.999 ? 'full' : waiting > 0.05 ? 'some' : 'empty'}
-            style={{ '--fill': String(share) } as CSSProperties}
-          />
-        );
-      })}
+      <i style={{ '--fill': String(share) } as CSSProperties} />Q {trim(waiting)}/{trim(size)}
     </span>
   );
 }
@@ -627,8 +617,8 @@ export function MapView({
                 {delayMs(effectiveDelay(link.delay, result))} ms
               </small>
             )}
-            {result?.down !== true && (result?.buffer ?? bufferSize(level, link)) > 0 && (
-              <Buffers result={result} buffer={bufferSize(level, link)} />
+            {result?.down !== true && bufferSize(level, link) > 0 && (
+              <Queue result={result} size={bufferSize(level, link)} />
             )}
             {result?.down !== true && lossText(link, level, result, running) !== '' && (
               <small className="bb-link-loss">{lossText(link, level, result, running)}</small>

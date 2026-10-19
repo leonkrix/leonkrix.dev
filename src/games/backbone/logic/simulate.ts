@@ -239,6 +239,8 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
       const capacity = state.get(link.id)?.capacity ?? 0;
       const buffer = bufferSize(index.level, link);
       let remaining = capacity;
+      // One queue for all classes: what the classes served first keep takes room from the later ones
+      let room = buffer;
       const shares: number[] = [];
       const behind: number[] = [];
       let queued = 0;
@@ -248,7 +250,8 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
         const served = Math.min(content, remaining);
         remaining -= served;
         const left = content - served;
-        const keep = Math.min(left, buffer);
+        const keep = Math.min(left, room);
+        room -= keep;
         held[queue] = keep;
         queued += keep;
         queuedBy.push(keep);

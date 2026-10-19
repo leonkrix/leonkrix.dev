@@ -353,12 +353,12 @@ describe('policy: a flow that has to pass a node', () => {
   });
 });
 
-describe('queues: buffers that hold back a burst', () => {
-  const burst = (buffer: number, queues = true, profile: Flow['profile'] = 'web') =>
+describe('queues: one queue per cable that holds back a burst', () => {
+  // The queue of a cable holds as much as the cable carries in a step (10 here)
+  const burst = (queues = true, profile: Flow['profile'] = 'web') =>
     diamond({
       rules: { ...allRulesForQueues, queues },
       flows: [{ id: 'f1', name: 'Flow', source: 'A', target: 'D', profile, demand: 8 }],
-      links: diamond().links.map((link) => ({ ...link, buffer })),
       situations: [
         {
           id: 'rush',
@@ -370,34 +370,35 @@ describe('queues: buffers that hold back a burst', () => {
     });
 
   it('absorbs a burst that does not fit, and works it off afterwards', () => {
-    const steps = evaluate(burst(6), { f1: singlePath(fast) }).situations[0]?.steps ?? [];
-    // Step 2 wants 16 on a cable of 10: 10 go through, 6 wait in the buffer
+    const steps = evaluate(burst(), { f1: singlePath(fast) }).situations[0]?.steps ?? [];
+    // Step 2 wants 16 on a cable of 10: 10 go through, 6 wait in the queue (room for 10)
     expect(steps[2]?.links.AB?.queued).toBeCloseTo(6, 9);
-    // The backlog sits in the buffer of the class of the flow (web: the middle one)
+    expect(steps[2]?.links.AB?.buffer).toBe(10);
+    // The backlog sits in the class of the flow (web: the middle one)
     expect(steps[2]?.links.AB?.queuedBy).toEqual([0, 6, 0]);
     expect(steps[2]?.flows.f1?.delivered).toBeCloseTo(1, 9);
-    // Step 3 wants 16 again: the buffer is full, 6 of the new traffic is dropped
+    // Step 3 wants 16 again with 6 waiting: 10 go through, 12 are left, the queue holds 10, 2 are dropped
+    expect(steps[3]?.links.AB?.queued).toBeCloseTo(10, 9);
     expect(steps[3]?.flows.f1?.delivered).toBeLessThan(1);
-    // Afterwards the backlog is worked off: 8 new and 6 waiting, 10 through, 4 wait, then 2, then none
-    expect(steps[4]?.links.AB?.queued).toBeCloseTo(4, 9);
-    expect(steps[5]?.links.AB?.queued).toBeCloseTo(2, 9);
-    expect(steps[6]?.links.AB?.queued).toBe(0);
+    // Afterwards the backlog is worked off: 8 new and 10 waiting, 10 through, 8 wait, then 6, 4, 2, none
+    expect(steps[4]?.links.AB?.queued).toBeCloseTo(8, 9);
+    expect(steps[5]?.links.AB?.queued).toBeCloseTo(6, 9);
+    expect(steps[7]?.links.AB?.queued).toBeCloseTo(2, 9);
   });
 
   it('is better than dropping at once, and slower', () => {
-    const none = evaluate(burst(0), { f1: singlePath(fast) });
-    const some = evaluate(burst(6), { f1: singlePath(fast) });
+    const none = evaluate(burst(false), { f1: singlePath(fast) });
+    const some = evaluate(burst(), { f1: singlePath(fast) });
     expect(some.score).toBeGreaterThan(none.score);
     const latency = (evaluation: typeof some, step: number): number =>
       evaluation.situations[0]?.steps[step]?.flows.f1?.latency ?? 0;
     expect(latency(some, 3)).toBeGreaterThan(latency(none, 3));
   });
 
-  it('changes nothing in a level without the rule', () => {
-    const without = evaluate(burst(6, false), { f1: singlePath(fast) });
-    const none = evaluate(burst(0, true), { f1: singlePath(fast) });
-    expect(without.score).toBeCloseTo(none.score, 9);
+  it('has no queue at all in a level without the rule', () => {
+    const without = evaluate(burst(false), { f1: singlePath(fast) });
     expect(without.situations[0]?.steps[2]?.links.AB?.queued).toBe(0);
+    expect(without.situations[0]?.steps[2]?.links.AB?.buffer).toBe(0);
   });
 
   it('makes traffic wait behind the classes that are served before it', () => {
@@ -407,7 +408,6 @@ describe('queues: buffers that hold back a burst', () => {
         { id: 'voice', name: 'Voice', source: 'A', target: 'D', profile: 'voice', demand: 4 },
         { id: 'bulk', name: 'Bulk', source: 'A', target: 'D', profile: 'bulk', demand: 14 },
       ],
-      links: diamond().links.map((link) => ({ ...link, buffer: 8 })),
     });
     const step = evaluate(level, { voice: singlePath(fast), bulk: singlePath(fast) }).situations[0]
       ?.steps[1];
@@ -415,6 +415,33 @@ describe('queues: buffers that hold back a burst', () => {
     expect(step?.flows.voice?.delivered).toBeCloseTo(1, 9);
     expect(step?.flows.voice?.latency).toBeCloseTo(2 * (1 + 1), 6);
     expect(step?.links.AB?.queued).toBeGreaterThan(0);
+  });
+
+  it('drops the traffic that comes last in the order of priority when the queue is full', () => {
+    // 4 voice and 14 bulk on a cable of 10, every step: 6 voice+bulk wait... the queue fills up with
+    // bulk, and a burst of web traffic (served before bulk) pushes bulk out of it
+    const level = diamond({
+      rules: { ...allRulesForQueues, queues: true },
+      flows: [
+        { id: 'web', name: 'Web', source: 'A', target: 'D', profile: 'web', demand: 8 },
+        { id: 'bulk', name: 'Bulk', source: 'A', target: 'D', profile: 'bulk', demand: 16 },
+      ],
+      situations: [{ id: 'calm', name: 'Calm', steps: 6, events: [] }],
+    });
+    const steps =
+      evaluate(level, { web: singlePath(fast), bulk: singlePath(fast) }).situations[0]?.steps ?? [];
+    for (const step of steps) {
+      const link = step.links.AB;
+      // Never more waits than the queue holds, all classes together
+      expect(link?.queued).toBeLessThanOrEqual((link?.buffer ?? 0) + 1e-9);
+      expect(link?.queuedBy.reduce((sum, value) => sum + value, 0)).toBeCloseTo(
+        link?.queued ?? 0,
+        9,
+      );
+    }
+    // Web goes through first and loses nothing, bulk loses the rest
+    expect(steps[5]?.flows.web?.delivered).toBeCloseTo(1, 9);
+    expect(steps[5]?.flows.bulk?.delivered).toBeLessThan(0.5);
   });
 });
 

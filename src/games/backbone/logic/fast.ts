@@ -290,6 +290,7 @@ export class FastEvaluator {
           const capacity = table.capacity[step * linkCount + link] ?? 0;
           const buffer = this.buffer[link] ?? 0;
           let remaining = capacity;
+          let room = buffer;
           let sum = 0;
           let queued = 0;
           for (let queue = 0; queue < 3; queue += 1) {
@@ -299,7 +300,8 @@ export class FastEvaluator {
             const served = Math.min(content, remaining);
             remaining -= served;
             const left = content - served;
-            const keep = Math.min(left, buffer);
+            const keep = Math.min(left, room);
+            room -= keep;
             this.backlog[link * 3 + queue] = keep;
             queued += keep;
             waiting[link * 3 + queue] = (queued / Math.max(capacity, 1)) * QUEUE_DELAY;

@@ -40,7 +40,8 @@ export function diamond(overrides: Partial<Level> = {}): Level {
     links,
     flows,
     situations: [{ id: 'calm', name: 'Calm', steps: 6, events: [] }],
-    rules: allRules,
+    // Without queues: what does not fit is dropped (a test that needs a queue switches it on)
+    rules: { ...allRules, queues: false },
     ...overrides,
   };
 }
@@ -66,7 +67,6 @@ export function randomLevel(seed: number, nodeCount = 7, flowCount = 4): Level {
       capacity: 4 + random.int(7),
       delay: 1 + random.int(3),
       loss: random.next() < 0.25 ? 0.1 : 0,
-      buffer: random.int(6),
     });
   };
   for (let position = 0; position < nodeCount; position += 1) {
