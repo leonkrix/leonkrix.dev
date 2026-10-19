@@ -500,7 +500,7 @@ export function addStage(state: PlayState, from: number): PlayState {
     return say(state, 'This level has no planned changes of path yet.');
   }
   if (flowPlan.stages.some((stage) => stage.from === from) || from <= 0) {
-    return say(state, `There is already a change at step ${String(from)}.`);
+    return say(state, `There is already a change in minute ${String(from + 1)}.`);
   }
   const before =
     [...flowPlan.stages].filter((stage) => stage.from < from).pop() ?? flowPlan.stages[0];
@@ -513,7 +513,7 @@ export function addStage(state: PlayState, from: number): PlayState {
       state,
       flow.id,
       { ...flowPlan, stages },
-      `${flow.name} changes its path at step ${String(from)}.`,
+      `${flow.name} changes its path in minute ${String(from + 1)}. Draw its new route on the map.`,
     ),
     stage: at,
     lane: 0,

@@ -86,7 +86,7 @@ export function FlowList({ state, hinted, onSelect }: FlowListProps) {
                   {names.get(flow.source)} → {names.get(flow.target)}
                 </span>
                 <span className="bb-flow-meta">
-                  {profiles[flow.profile].name} · sends {flow.demand} per step · {wantsOf(flow)}
+                  {profiles[flow.profile].name} · sends {flow.demand} per minute · {wantsOf(flow)}
                 </span>
                 {(flow.via ?? []).length > 0 && (
                   <span className="bb-flow-meta bb-flow-policy">
@@ -382,8 +382,9 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
         <div className="bb-option">
           <p className="bb-option-label">Another route during the stress test</p>
           <p className="bb-hint">
-            The stress test runs in steps. From a step on, this flow can take another route, for
-            example when a cable is cut. Pick a step below, then draw the new route on the map.
+            The stress test runs minute by minute (the bar under the map). From a minute on, this
+            flow can take another route, for example when a cable is cut. Pick a minute below: what
+            happens in that minute is written in brackets. Then draw the new route on the map.
           </p>
           <div className="bb-row" role="group" aria-label="Stages">
             {plan.stages.map((entry, at) => (
@@ -396,7 +397,7 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
                   onChange(selectEdit(state, at, 0, 'path'));
                 }}
               >
-                {at === 0 ? 'Normal route' : `From step ${String(entry.from)}`}
+                {at === 0 ? 'Normal route' : `From minute ${String(entry.from + 1)}`}
               </button>
             ))}
           </div>
@@ -411,7 +412,7 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
                     onChange(addStage(state, step));
                   }}
                 >
-                  Reroute from step {step}
+                  Reroute from minute {step + 1}
                   {describeSwitch(state.index, step) !== '' &&
                     ` (${describeSwitch(state.index, step)})`}
                 </button>

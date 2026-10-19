@@ -4,7 +4,15 @@ import { shortestPathPlan } from './baselines';
 import { diamond, randomLevel } from './fixtures';
 import { indexLevel } from './graph';
 import { evaluate } from './simulate';
-import { describeBusiest, describeSwitch, eventsAt, eventTexts, summarize } from './text';
+import {
+  describeBusiest,
+  describeSwitch,
+  eventsAt,
+  eventTexts,
+  forecastOf,
+  riskyLinks,
+  summarize,
+} from './text';
 
 describe('the sentences of a step', () => {
   it('say what happens, with the kind of event next to it', () => {
@@ -60,5 +68,28 @@ describe('what changes at a step', () => {
     expect(describeSwitch(index, 6)).toBe('N5 – N1 is back, the flood stops');
     // Nothing starts or ends at step 4
     expect(describeSwitch(index, 4)).toBe('');
+  });
+});
+
+describe('the forecast', () => {
+  it('writes out every situation with the minutes of its events, counted from 1', () => {
+    const index = indexLevel(randomLevel(5));
+    const forecast = forecastOf(index);
+    expect(forecast.map((situation) => situation.name)).toEqual(['Calm', 'Rush', 'Attack']);
+    expect(forecast[0]?.items).toEqual([]);
+    // The cable is cut from index 2 to 6 (minutes 3 to 6), the burst from 3 to 5 (minutes 4 and 5)
+    expect(forecast[1]?.items.map((item) => [item.kind, item.minutes])).toEqual([
+      ['down', 'Minutes 3–6'],
+      ['burst', 'Minutes 4–5'],
+    ]);
+    expect(forecast[2]?.items[0]?.text).toMatch(/ floods .* with 4 per minute$/);
+  });
+
+  it('marks the cables that something happens to, a cut before loss before slowness', () => {
+    const level = randomLevel(5);
+    const risks = riskyLinks(level);
+    const cut = level.situations[1]?.events.find((event) => event.kind === 'down');
+    expect(cut?.kind === 'down' ? risks.get(cut.link) : undefined).toBe('down');
+    expect(risks.size).toBe(1);
   });
 });

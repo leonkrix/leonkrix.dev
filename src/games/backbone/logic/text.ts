@@ -38,7 +38,7 @@ function sentenceOf(index: LevelIndex, event: NetEvent): string {
     case 'lossy':
       return `${linkName(index, event.link)} loses ${String(Math.round(event.loss * 100))} % of its packets`;
     case 'flood':
-      return `${nodeName(event.source)} floods ${nodeName(event.target)} with ${String(event.rate)} per step`;
+      return `${nodeName(event.source)} floods ${nodeName(event.target)} with ${String(event.rate)} per minute`;
     case 'slow':
       return `${linkName(index, event.link)} runs at ${String(Math.round(event.factor * 100))} % speed`;
   }
@@ -85,6 +85,54 @@ export function describeSwitch(index: LevelIndex, step: number): string {
     }
   }
   return [...parts].slice(0, 2).join(', ');
+}
+
+export interface Forecast {
+  id: string;
+  name: string;
+  items: { kind: EventText['kind']; minutes: string; text: string }[];
+}
+
+/** The minutes of an event for a sentence: "Minute 3" or "Minutes 3–5" (the stress test counts from 1). */
+function minutesOf(event: NetEvent): string {
+  return event.to - event.from <= 1
+    ? `Minute ${String(event.from + 1)}`
+    : `Minutes ${String(event.from + 1)}–${String(event.to)}`;
+}
+
+/**
+ * What will happen in every situation of the stress test, written out before the player plans:
+ * the level hides nothing, a plan is judged on the situations the player can read here.
+ */
+export function forecastOf(index: LevelIndex): Forecast[] {
+  return index.level.situations.map((situation) => ({
+    id: situation.id,
+    name: situation.name,
+    items: [...situation.events]
+      .sort((a, b) => a.from - b.from)
+      .map((event) => ({
+        kind: event.kind,
+        minutes: minutesOf(event),
+        text: sentenceOf(index, event),
+      })),
+  }));
+}
+
+/** The cables that something happens to in some situation (a cut wins over loss, loss over slowness). */
+export function riskyLinks(level: LevelIndex['level']): Map<string, 'down' | 'lossy' | 'slow'> {
+  const rank = { slow: 1, lossy: 2, down: 3 } as const;
+  const risks = new Map<string, 'down' | 'lossy' | 'slow'>();
+  for (const situation of level.situations) {
+    for (const event of situation.events) {
+      if (event.kind === 'down' || event.kind === 'lossy' || event.kind === 'slow') {
+        const known = risks.get(event.link);
+        if (known === undefined || rank[event.kind] > rank[known]) {
+          risks.set(event.link, event.kind);
+        }
+      }
+    }
+  }
+  return risks;
 }
 
 export interface RunSummary {

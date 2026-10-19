@@ -71,6 +71,16 @@ const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
 
 <div class="pv" aria-hidden="true">
   <svg viewBox="0 0 200 140" focusable="false">
+    <defs>
+      {/* A data packet: a little box (the shape of the Lucide icon "box", ISC license) */}
+      <symbol id="pv-box" viewBox="0 0 24 24">
+        <path
+          class="pv-box-body"
+          d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"
+        ></path>
+        <path class="pv-box-edge" d="m3.3 7 8.7 5 8.7-5M12 22V12"></path>
+      </symbol>
+    </defs>
     {cables.map(([from, to]) => (
       <line
         class="pv-cable"
@@ -116,50 +126,50 @@ const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
       </>
     ))}
 
-    <rect
+    <use
+      href="#pv-box"
       class="pv-packet pv-a pv-travel"
-      x="-3.6"
-      y="-3.6"
-      width="7.2"
-      height="7.2"
-      rx="1.8"
+      x="-5.5"
+      y="-5.5"
+      width="11"
+      height="11"
       style={`--c:${blue};--end:${blue};--dur:1300ms;--n:2;${topWay}`}
     />
-    <rect
+    <use
+      href="#pv-box"
       class="pv-packet pv-a pv-travel"
-      x="-3.6"
-      y="-3.6"
-      width="7.2"
-      height="7.2"
-      rx="1.8"
+      x="-5.5"
+      y="-5.5"
+      width="11"
+      height="11"
       style={`--c:${amber};--end:var(--color-danger);--dur:1300ms;--n:2;--delay:0.3s;${droppedWay}`}
     />
-    <rect
+    <use
+      href="#pv-box"
       class="pv-packet pv-a pv-travel"
-      x="-3.6"
-      y="-3.6"
-      width="7.2"
-      height="7.2"
-      rx="1.8"
+      x="-5.5"
+      y="-5.5"
+      width="11"
+      height="11"
       style={`--c:${blue};--end:${blue};--dur:1200ms;--n:2;--delay:3.2s;${topWay}`}
     />
-    <rect
+    <use
+      href="#pv-box"
       class="pv-packet pv-a pv-travel"
-      x="-3.6"
-      y="-3.6"
-      width="7.2"
-      height="7.2"
-      rx="1.8"
+      x="-5.5"
+      y="-5.5"
+      width="11"
+      height="11"
       style={`--c:${amber};--end:${amber};--dur:1200ms;--n:2;--delay:3.2s;${lowWay}`}
     />
     {resting.map((dot) => (
-      <rect
+      <use
+        href="#pv-box"
         class="pv-packet pv-a pv-in pv-rest"
-        x={dot.at[0] - 3.6}
-        y={dot.at[1] - 3.6}
-        width="7.2"
-        height="7.2"
-        rx="1.8"
+        x={dot.at[0] - 5.5}
+        y={dot.at[1] - 5.5}
+        width="11"
+        height="11"
         style={`--c:${dot.color}`}
       />
     ))}
@@ -213,9 +223,23 @@ const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
   }
 
   .pv-packet {
-    fill: var(--c);
-    stroke: var(--color-bg);
-    stroke-width: 1.2;
+    color: var(--c);
+  }
+
+  .pv-box-body {
+    fill: currentcolor;
+    fill-opacity: 0.4;
+    stroke: currentcolor;
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+
+  .pv-box-edge {
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   /* What is only there while the wrong plan runs is not there in the final picture */
@@ -251,9 +275,9 @@ const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
     opacity: 0;
   }
 
-  /* The resting packets appear late: the same fade as the lower road, started two seconds later */
+  /* The resting packets appear late: the same fade as the lower road, started so that they show up when the last packet has arrived (5.6 s) */
   .pv-rest {
-    --delay: 2s;
+    --delay: 3s;
   }
 
   /* A tile that is waiting to be revealed has not started yet: it begins when it appears */
@@ -304,11 +328,11 @@ const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
     }
     86% {
       opacity: 1;
-      fill: var(--end);
+      color: var(--end);
     }
     100% {
       opacity: 0;
-      fill: var(--end);
+      color: var(--end);
       transform: translate(var(--x2), var(--y2));
     }
   }
@@ -326,11 +350,11 @@ const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
     }
     86% {
       opacity: 1;
-      fill: var(--end);
+      color: var(--end);
     }
     100% {
       opacity: 0;
-      fill: var(--end);
+      color: var(--end);
       transform: translate(var(--x2), var(--y2));
     }
   }

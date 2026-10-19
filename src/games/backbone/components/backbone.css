@@ -366,13 +366,27 @@
 }
 
 .bb-packet {
-  fill: var(--bb-color);
-  stroke: var(--color-bg);
-  stroke-width: 0.25;
+  color: var(--bb-color);
 }
 
 .bb-packet[data-dropped='true'] {
-  fill: var(--bb-over);
+  color: var(--bb-over);
+}
+
+.bb-packet-body {
+  fill: currentcolor;
+  fill-opacity: 0.4;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.bb-packet-edge {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* Nodes */
@@ -1674,4 +1688,85 @@
   height: 0.9rem;
   flex: none;
   color: var(--bb-color);
+}
+
+/* ---- The forecast: what will happen in the stress test ---- */
+
+.bb-forecast {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.bb-forecast h3 {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.bb-forecast ul {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.bb-forecast > ul > li {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.bb-forecast ul ul li {
+  padding-left: 0.6rem;
+  border-left: 2px solid var(--bb-event, var(--color-border));
+  color: var(--color-fg);
+}
+
+.bb-forecast li[data-kind='down'],
+.bb-forecast li[data-kind='flood'] {
+  --bb-event: var(--bb-over);
+}
+
+.bb-forecast li[data-kind='lossy'],
+.bb-forecast li[data-kind='slow'] {
+  --bb-event: var(--bb-busy);
+}
+
+.bb-forecast li[data-kind='burst'] {
+  --bb-event: var(--color-accent-2);
+}
+
+.bb-forecast-when {
+  color: var(--color-muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.74rem;
+}
+
+.bb-forecast-quiet {
+  color: var(--color-muted);
+}
+
+/* A cable that something happens to in the stress test: a dashed halo in the colour of the event */
+.bb-link-risk {
+  stroke: var(--bb-event, var(--color-border));
+  stroke-dasharray: 1 1.3;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+
+[data-risk='down'] {
+  --bb-event: var(--bb-over);
+}
+
+[data-risk='lossy'] {
+  --bb-event: var(--color-accent-2);
+}
+
+[data-risk='slow'] {
+  --bb-event: var(--bb-busy);
 }

@@ -140,10 +140,10 @@ test.describe('Backbone', () => {
     await page.getByRole('button', { name: 'Run' }).click();
     await expect(page.getByRole('button', { name: /Pause|Play/ })).toBeVisible();
     await page.getByRole('button', { name: /Pause|Play/ }).click();
-    await page.getByRole('button', { name: 'Next step' }).click();
-    await expect(page.getByRole('status').filter({ hasText: /Step 2 of/ })).toBeVisible();
-    await page.getByRole('slider', { name: 'Step' }).fill('0');
-    await expect(page.getByRole('status').filter({ hasText: /Step 1 of/ })).toBeVisible();
+    await page.getByRole('button', { name: 'Next minute' }).click();
+    await expect(page.getByRole('status').filter({ hasText: /Minute 2 of/ })).toBeVisible();
+    await page.getByRole('slider', { name: 'Minute' }).fill('0');
+    await expect(page.getByRole('status').filter({ hasText: /Minute 1 of/ })).toBeVisible();
     // Another situation
     const situations = page.getByRole('group', { name: 'Situation' }).getByRole('button');
     if ((await situations.count()) > 1) {
@@ -168,15 +168,15 @@ test.describe('Backbone', () => {
     await page.getByRole('button', { name: /Pause|Play/ }).click();
     await page.getByRole('group', { name: 'Situation' }).getByRole('button').nth(at).click();
     await page.getByRole('button', { name: /Pause|Play/ }).click();
-    await page.getByRole('slider', { name: 'Step' }).fill(String(event?.from ?? 0));
+    await page.getByRole('slider', { name: 'Minute' }).fill(String(event?.from ?? 0));
     const status = page.locator('.bb-step-text');
     await expect(status.locator('.bb-step-count')).toContainText(
-      `Step ${String((event?.from ?? 0) + 1)} of`,
+      `Minute ${String((event?.from ?? 0) + 1)} of`,
     );
-    await expect(status.getByRole('list', { name: 'What happens in this step' })).toBeVisible();
+    await expect(status.getByRole('list', { name: 'What happens in this minute' })).toBeVisible();
     expect(await status.locator('.bb-step-events li').count()).toBeGreaterThanOrEqual(1);
     // A step without an event says so
-    await page.getByRole('slider', { name: 'Step' }).fill('0');
+    await page.getByRole('slider', { name: 'Minute' }).fill('0');
     const quiet = situation?.events.every((entry) => entry.from > 0) ?? false;
     if (quiet) {
       await expect(status.locator('.bb-step-quiet')).toHaveText('All quiet');
@@ -360,7 +360,7 @@ test.describe('Backbone', () => {
     await page.getByRole('button', { name: 'Run' }).click();
     // Nothing plays by itself: the button offers to play
     await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
-    await expect(page.getByRole('status').filter({ hasText: /Step 1 of/ })).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: /Minute 1 of/ })).toBeVisible();
   });
 });
 

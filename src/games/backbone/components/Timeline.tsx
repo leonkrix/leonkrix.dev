@@ -58,7 +58,7 @@ export function Timeline({
         <button
           type="button"
           className="bb-icon-button"
-          aria-label="Previous step"
+          aria-label="Previous minute"
           disabled={step <= 0}
           onClick={() => {
             onStep(step - 1);
@@ -71,8 +71,8 @@ export function Timeline({
           min={0}
           max={steps - 1}
           value={step}
-          aria-label="Step"
-          aria-valuetext={`Step ${String(step + 1)} of ${String(steps)}`}
+          aria-label="Minute"
+          aria-valuetext={`Minute ${String(step + 1)} of ${String(steps)}`}
           onChange={(event) => {
             onStep(Number(event.target.value));
           }}
@@ -80,7 +80,7 @@ export function Timeline({
         <button
           type="button"
           className="bb-icon-button"
-          aria-label="Next step"
+          aria-label="Next minute"
           disabled={step >= steps - 1}
           onClick={() => {
             onStep(step + 1);
@@ -91,10 +91,10 @@ export function Timeline({
       </div>
       <div className="bb-step-text" role="status">
         <span className="bb-step-count">
-          Step <strong>{step + 1}</strong> of {steps}
+          Minute <strong>{step + 1}</strong> of {steps}
         </span>
         {events.length > 0 ? (
-          <ul className="bb-step-events" aria-label="What happens in this step">
+          <ul className="bb-step-events" aria-label="What happens in this minute">
             {events.slice(0, MOST_TAGS).map((event) => (
               <li key={`${event.kind}-${event.text}`} data-kind={event.kind}>
                 {event.text}

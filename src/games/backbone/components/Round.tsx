@@ -25,11 +25,12 @@ import {
 } from '../logic/play';
 import { evaluate } from '../logic/simulate';
 import { starsFor, starThresholds } from '../logic/stars';
-import { linkName } from '../logic/text';
+import { linkName, riskyLinks } from '../logic/text';
 import type { Evaluation, LinkStepResult } from '../logic/types';
 import { advanceClock, type Clock, linkBetween, nodesOfLinks, packetsAt } from '../logic/view';
 import { BuildPanel } from './BuildPanel';
 import { FlowList, FlowOptions } from './FlowPanel';
+import { Forecast } from './Forecast';
 import { type DrawnRoute, MapView } from './MapView';
 import { ResultPanel } from './ResultPanel';
 import { Svg } from './Svg';
@@ -39,6 +40,9 @@ import { Timeline } from './Timeline';
 const STEP_MS = 1100;
 /** Where the packets stand in a still frame (reduced motion) */
 const STILL_TIME = 0.3;
+
+/** No cable is marked while the stress test runs: the map shows what happens */
+const noRisks: ReadonlyMap<string, 'down' | 'lossy' | 'slow'> = new Map();
 
 interface RoundProps {
   record: LevelRecord;
@@ -108,6 +112,9 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
     () => evaluate(index, play.plan).situations[0]?.steps[0],
     [index, play.plan],
   );
+
+  // The cables something happens to in some situation are marked while the player plans
+  const risks = useMemo(() => riskyLinks(record.level), [record.level]);
 
   // The names scale with the map (see `.bb-map > *` in the style), so one placement holds for every width
   const placement = useMemo(() => placeNames(record.level), [record.level]);
@@ -316,6 +323,7 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
             nameSides={placement.names}
             lifted={placement.lifted}
             badgesLeft={placement.badgesLeft}
+            risks={run === undefined ? risks : noRisks}
             loadAt={placement.loads}
             sourceSide={
               selectedFlow === undefined
@@ -457,6 +465,7 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
                     </p>
                   )}
                 </div>
+                <Forecast index={index} />
                 <BuildPanel state={play} onChange={setPlay} />
                 <FlowList
                   state={play}
@@ -542,7 +551,7 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
               nodes.map((node) => names.get(node) ?? node).join(', ');
             return (
               <li key={flow.id}>
-                {flow.name} ({flow.profile}, {flow.demand} per step) from {names.get(flow.source)}{' '}
+                {flow.name} ({flow.profile}, {flow.demand} per minute) from {names.get(flow.source)}{' '}
                 to {names.get(flow.target)}:{' '}
                 {flowPlan === undefined
                   ? 'no path yet'

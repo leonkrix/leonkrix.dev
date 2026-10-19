@@ -91,7 +91,7 @@ function difference(state: PlayState, guide: Guide): { text: string; flow: strin
       const from = best.stages[1]?.from ?? 0;
       return {
         flow: flow.id,
-        text: `${flow.name} should change its path at step ${String(from)}.`,
+        text: `${flow.name} should change its path in minute ${String(from + 1)}.`,
       };
     }
     if (JSON.stringify(mine?.stages) !== JSON.stringify(best.stages)) {

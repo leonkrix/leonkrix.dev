@@ -51,8 +51,13 @@ const { game } = Astro.props;
         must not lose a packet, a backup does not care. The list says what each flow wants.
       </li>
       <li>
+        <strong>Forecast:</strong> the plan tells what will happen, minute by minute, in every
+        situation (a cable is cut, a flow sends more, a flood starts), and the cables it happens to
+        are marked on the map. Nothing is hidden: you plan for what you can read there.
+      </li>
+      <li>
         <strong>Run:</strong> the stress test plays one to three situations (a quiet day, a rush, a
-        cut cable). Your score is the mean, and the worst situation counts twice.
+        cut cable), minute by minute. Your score is the mean, and the worst situation counts twice.
       </li>
       <li>
         <strong>Stars:</strong> one star for beating the shortest path, two for beating the load

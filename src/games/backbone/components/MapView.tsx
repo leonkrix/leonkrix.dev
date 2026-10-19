@@ -55,6 +55,8 @@ interface MapViewProps {
   lifted: ReadonlySet<string>;
   /** The nodes whose numbers sit on the top left corner (the right one is too near the border) */
   badgesLeft: ReadonlySet<string>;
+  /** Cables something happens to in a situation of the stress test (marked while planning) */
+  risks: ReadonlyMap<string, 'down' | 'lossy' | 'slow'>;
   /** Where along every cable its load (and the button that builds it) sits, 0 to 1 */
   loadAt: ReadonlyMap<string, number>;
   sourceSide: Side;
@@ -149,6 +151,7 @@ export function MapView({
   nameSides,
   lifted,
   badgesLeft,
+  risks,
   loadAt,
   sourceSide,
   targetSide,
@@ -239,6 +242,16 @@ export function MapView({
         aria-hidden="true"
         focusable="false"
       >
+        <defs>
+          {/* A data packet: a little box (the shape of the Lucide icon "box", ISC license) */}
+          <symbol id="bb-packet-shape" viewBox="0 0 24 24">
+            <path
+              className="bb-packet-body"
+              d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"
+            />
+            <path className="bb-packet-edge" d="m3.3 7 8.7 5 8.7-5M12 22V12" />
+          </symbol>
+        </defs>
         {unbuilt.map((link) => {
           const a = level.nodes.find((node) => node.id === link.a);
           const b = level.nodes.find((node) => node.id === link.b);
@@ -278,7 +291,18 @@ export function MapView({
               data-load={loadClass(ratio)}
               data-lossy={link.loss > 0}
               data-hint={hinted.has(link.id)}
+              data-risk={risks.get(link.id)}
             >
+              {risks.has(link.id) && (
+                <line
+                  className="bb-link-risk"
+                  x1={from.x}
+                  y1={from.y}
+                  x2={to.x}
+                  y2={to.y}
+                  strokeWidth={width + 1.1}
+                />
+              )}
               <line
                 className="bb-link"
                 x1={from.x}
@@ -377,16 +401,16 @@ export function MapView({
         {packets.map((packet) => {
           const profile = level.flows.find((flow) => flow.id === packet.flow)?.profile ?? 'web';
           return (
-            <rect
+            <use
               key={packet.key}
+              href="#bb-packet-shape"
               className="bb-packet"
               data-profile={profile}
               data-dropped={packet.dropped}
-              x={packet.point.x - 0.95}
-              y={packet.point.y - 0.95}
-              width={1.9}
-              height={1.9}
-              rx={0.5}
+              x={packet.point.x - 1.4}
+              y={packet.point.y - 1.4}
+              width={2.8}
+              height={2.8}
               opacity={
                 packet.opacity * (emphasis === undefined || packet.flow === emphasis ? 1 : 0.18)
               }

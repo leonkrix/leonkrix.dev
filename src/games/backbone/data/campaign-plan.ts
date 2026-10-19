@@ -690,11 +690,12 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     [
       'festival',
       'Fog',
-      'Wet air over the field, and the point-of-sale links lose packets.',
+      'Wet air over the field, and the point-of-sale links lose packets. A few cables could still be built, within a budget.',
       8,
       'hub',
       'TVW',
       'calm lossy',
+      { optional: 3 },
     ],
     [
       'datacentre',
@@ -747,11 +748,12 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     [
       'provider',
       'Ferry crossing',
-      'The ferry is in range of one shore, then of the other.',
+      'The ferry is in range of one shore, then of the other. A few cables could still be built, within a budget.',
       7,
       'ring',
       'OVW',
       'calm moving',
+      { optional: 3 },
     ],
     [
       'drones',
@@ -795,11 +797,12 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     [
       'datacentre',
       'Tenants',
-      'Two customers share a hall. Their traffic meets only at the firewall.',
+      'Two customers share a hall. Their traffic meets only at the firewall. A few cables could still be built, within a budget.',
       8,
       'grid',
       'WVT',
       'calm',
+      { optional: 3 },
     ],
     [
       'festival',
@@ -852,11 +855,12 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     [
       'campus',
       'Exam hack',
-      'Somebody floods the exam server minutes before the deadline.',
+      'Somebody floods the exam server minutes before the deadline. A few cables could still be built, within a budget.',
       8,
       'mesh',
       'OWT',
       'calm flood',
+      { optional: 3 },
     ],
     [
       'hospital',
@@ -891,11 +895,12 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     [
       'provider',
       'Black Friday',
-      'Payments, streams and a storm that cuts the coast road.',
+      'Payments, streams and a storm that cuts the coast road. A few cables could still be built, within a budget.',
       10,
       'ring',
       'OVWTB',
       'calm rush cut',
+      { optional: 4 },
     ],
     [
       'drones',
@@ -909,11 +914,12 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     [
       'hospital',
       'Heatwave',
-      'The cooling fails in one wing, a cable melts, and somebody picks the day to attack.',
+      'The cooling fails in one wing, a cable melts, and somebody picks the day to attack. A few cables could still be built, within a budget.',
       10,
       'grid',
       'COVT',
       'calm flood cut',
+      { optional: 4 },
     ],
     [
       'datacentre',
@@ -927,11 +933,12 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
     [
       'festival',
       'Headline act',
-      'The biggest stream of the year, a crowd that uploads and bots that attack.',
+      'The biggest stream of the year, a crowd that uploads and bots that attack. A few cables could still be built, within a budget.',
       9,
       'hub',
       'OVWT',
       'calm rush flood',
+      { optional: 4 },
     ],
   ]),
 ];
