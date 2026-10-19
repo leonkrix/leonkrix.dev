@@ -1,4 +1,5 @@
-import type { LevelIndex } from './graph';
+import { floodLinks, floodRoute } from './flood';
+import { indexLevel, type LevelIndex } from './graph';
 import type { Evaluation, Situation } from './types';
 import { loadRatio } from './view';
 
@@ -87,10 +88,22 @@ export function describeSwitch(index: LevelIndex, step: number): string {
   return [...parts].slice(0, 2).join(', ');
 }
 
+/** What can happen to a cable: it is cut, loses packets, runs slow or carries a flood. */
+export type RiskKind = 'down' | 'lossy' | 'slow' | 'flood';
+
 export interface Forecast {
   id: string;
   name: string;
   items: { kind: EventText['kind']; minutes: string; text: string }[];
+}
+
+/** A flood in the forecast: who floods whom, and over which nodes the flood goes. */
+function floodText(index: LevelIndex, event: Extract<NetEvent, { kind: 'flood' }>): string {
+  const route = floodRoute(index, event, () => true);
+  const names = route.nodes.map(
+    (node) => index.level.nodes.find((entry) => entry.id === node)?.name ?? node,
+  );
+  return `${sentenceOf(index, event)}. It goes the fastest way: ${names.join(' → ')}${route.stopped ? ', where a firewall stops it' : ''}`;
 }
 
 /** The minutes of an event for a sentence: "Minute 3" or "Minutes 3–5" (the stress test counts from 1). */
@@ -105,29 +118,53 @@ function minutesOf(event: NetEvent): string {
  * the level hides nothing, a plan is judged on the situations the player can read here.
  */
 export function forecastOf(index: LevelIndex): Forecast[] {
-  return index.level.situations.map((situation) => ({
-    id: situation.id,
-    name: situation.name,
-    items: [...situation.events]
-      .sort((a, b) => a.from - b.from)
-      .map((event) => ({
-        kind: event.kind,
-        minutes: minutesOf(event),
-        text: sentenceOf(index, event),
-      })),
-  }));
+  // A cable that loses packets all the time is part of the forecast too
+  const always = index.level.links
+    .filter((link) => link.loss > 0)
+    .map((link) => ({
+      kind: 'lossy' as const,
+      minutes: 'Always',
+      text: `${linkName(index, link.id)} loses ${String(Math.round(link.loss * 100))} % of its packets`,
+    }));
+  return [
+    ...(always.length > 0 ? [{ id: 'always', name: 'On every day', items: always }] : []),
+    ...index.level.situations.map((situation) => ({
+      id: situation.id,
+      name: situation.name,
+      items: [...situation.events]
+        .sort((a, b) => a.from - b.from)
+        .map((event) => ({
+          kind: event.kind,
+          minutes: minutesOf(event),
+          text: event.kind === 'flood' ? floodText(index, event) : sentenceOf(index, event),
+        })),
+    })),
+  ];
 }
 
 /** The cables that something happens to in some situation (a cut wins over loss, loss over slowness). */
-export function riskyLinks(level: LevelIndex['level']): Map<string, 'down' | 'lossy' | 'slow'> {
-  const rank = { slow: 1, lossy: 2, down: 3 } as const;
-  const risks = new Map<string, 'down' | 'lossy' | 'slow'>();
+export function riskyLinks(level: LevelIndex['level']): Map<string, RiskKind> {
+  const rank = { slow: 1, lossy: 2, flood: 3, down: 4 } as const;
+  const risks = new Map<string, RiskKind>();
+  const add = (link: string, kind: keyof typeof rank): void => {
+    const known = risks.get(link);
+    if (known === undefined || rank[kind] > rank[known]) {
+      risks.set(link, kind);
+    }
+  };
+  const index = indexLevel(level);
+  for (const link of level.links) {
+    if (link.loss > 0) {
+      add(link.id, 'lossy');
+    }
+  }
   for (const situation of level.situations) {
     for (const event of situation.events) {
       if (event.kind === 'down' || event.kind === 'lossy' || event.kind === 'slow') {
-        const known = risks.get(event.link);
-        if (known === undefined || rank[event.kind] > rank[known]) {
-          risks.set(event.link, event.kind);
+        add(event.link, event.kind);
+      } else if (event.kind === 'flood') {
+        for (const link of floodLinks(index, event, () => true)) {
+          add(link, 'flood');
         }
       }
     }
@@ -142,13 +179,18 @@ export interface RunSummary {
   worstFlow: { flow: string; lost: number } | undefined;
   /** For every flow: the share of its possible value that it earned over the whole run */
   flows: { flow: string; earned: number }[];
+  /** For every situation: its score (0 to 1), the share of the possible value it earned */
+  situations: { id: string; name: string; score: number }[];
 }
 
 export function summarize(index: LevelIndex, evaluation: Evaluation): RunSummary {
   let busiest: RunSummary['busiest'];
   const earned = new Map<string, number>();
   const possible = new Map<string, number>();
+  const situations: RunSummary['situations'] = [];
   for (const [at, situation] of evaluation.situations.entries()) {
+    let got = 0;
+    let could = 0;
     for (const step of situation.steps) {
       for (const [id, result] of Object.entries(step.links)) {
         const ratio = loadRatio(result);
@@ -159,8 +201,15 @@ export function summarize(index: LevelIndex, evaluation: Evaluation): RunSummary
       for (const [id, result] of Object.entries(step.flows)) {
         earned.set(id, (earned.get(id) ?? 0) + result.value);
         possible.set(id, (possible.get(id) ?? 0) + result.maxValue);
+        got += result.value;
+        could += result.maxValue;
       }
     }
+    situations.push({
+      id: index.level.situations[at]?.id ?? String(at),
+      name: index.level.situations[at]?.name ?? '',
+      score: could > 0 ? got / could : 1,
+    });
   }
   const flows = index.level.flows.map((flow) => ({
     flow: flow.id,
@@ -177,6 +226,7 @@ export function summarize(index: LevelIndex, evaluation: Evaluation): RunSummary
         ? undefined
         : { flow: worst.flow, lost: 1 - worst.earned },
     flows,
+    situations,
   };
 }
 
@@ -184,12 +234,22 @@ export function summarize(index: LevelIndex, evaluation: Evaluation): RunSummary
  * The busiest link in words, as a fault of the plan: "Your plan sends more through Core –
  * Gateway than it can carry: 150 % of its capacity".
  */
-export function describeBusiest(index: LevelIndex, summary: RunSummary): string {
+export function describeBusiest(
+  index: LevelIndex,
+  summary: RunSummary,
+  /** The plan is as good as the best one: say what happens, not that it is a fault */
+  neutral = false,
+): string {
   if (summary.busiest === undefined || summary.busiest.ratio <= 1 + 1e-9) {
     return 'No cable was overloaded.';
   }
   const where = summary.busiest.situation === '' ? '' : ` (in "${summary.busiest.situation}")`;
   const link = linkName(index, summary.busiest.link);
+  if (neutral) {
+    return Number.isFinite(summary.busiest.ratio)
+      ? `${link} gets ${String(Math.round(summary.busiest.ratio * 100))} % of its capacity${where}. The best plan scores no better.`
+      : `${link} is cut${where} and a flow still uses it. The best plan scores no better.`;
+  }
   return Number.isFinite(summary.busiest.ratio)
     ? `Your plan sends more through ${link} than it can carry: ${String(Math.round(summary.busiest.ratio * 100))} % of its capacity${where}.`
     : `Your plan still sends traffic over ${link} while it is cut${where}.`;

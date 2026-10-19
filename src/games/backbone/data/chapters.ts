@@ -35,12 +35,12 @@ export const chapters: readonly Chapter[] = [
   {
     number: 5,
     title: 'Priorities',
-    rule: 'On a full link, voice goes first and bulk goes last. Hold bulk traffic back to make room for what matters.',
+    rule: 'On a full link, voice goes first and bulk goes last. Hold bulk traffic (backups, uploads: it can wait) back to make room for what matters.',
   },
   {
     number: 6,
     title: 'Queues',
-    rule: 'Links have buffers. A burst that does not fit waits in the buffer and goes on a moment later, at the price of waiting time. A full buffer drops what comes next. Look at the number after the q on a cable.',
+    rule: 'Links have buffers. A burst that does not fit waits in the buffer and goes on a moment later, at the price of waiting time. A full buffer drops what comes next. Under the load of a cable, a small q2 says that 2 are waiting in its buffer; it shows only while something waits. New traffic: video is big and steady and does not like loss.',
   },
   {
     number: 7,
@@ -55,7 +55,7 @@ export const chapters: readonly Chapter[] = [
   {
     number: 9,
     title: 'Loss',
-    rule: 'Some links lose packets. Redundancy sends extra coded packets to recover them, but they use capacity too.',
+    rule: 'Some links lose packets. Redundancy sends extra coded packets to recover them, but they use capacity too. New traffic: payments (transactions) must not lose a single packet.',
   },
   {
     number: 10,
@@ -70,7 +70,7 @@ export const chapters: readonly Chapter[] = [
   {
     number: 12,
     title: 'Under attack',
-    rule: 'A flood of useless traffic hits a server. It fills the cables on its way and the queues behind them, until a firewall stops it. Keep your own traffic out of its way, or send it in a class that is served first.',
+    rule: 'A flood of useless traffic hits a server. It fills the cables on its way and the queues behind them, until a firewall stops it. Keep your own traffic out of its way, or send it in a class that is served first. New traffic: control (alarms, door locks) is small but must always get through.',
   },
   {
     number: 13,

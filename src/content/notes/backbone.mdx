@@ -6,7 +6,7 @@ game: backbone
 code: src/games/backbone
 group: games
 order: 5
-updated: '2026-10-19'
+updated: '2026-10-20'
 ---
 
 import BackboneFigure from '@/components/notes/BackboneFigure.astro';
@@ -41,6 +41,8 @@ The first version multiplied the shares of every cable on a path, so one bottlen
 ## Proving the best plan
 
 For a score to mean something, the game needs the best plan, and "the best I found" is not good enough, because a player could beat it. So every level is solved exactly: a branch and bound search places the flows one after the other and runs the stress test on the partial plan. That works because of one property of the model, which a test checks on 150 random levels: **adding traffic to a plan never helps a flow that is already in it.** What the placed flows earn can only go down as more flows are added, so it is an upper bound, and a branch that cannot beat the best plan found so far is cut off without losing the optimum.
+
+There is one honest exception. The search holds a flow back in a few steps (all, half, a quarter), while the slider of the player moves in steps of five percent, so on a level with bulk traffic a player can beat the best plan by a little. The stars are set from the best plan and a score above it is simply three stars, so nothing breaks, and the result panel says so under "Best plan".
 
 A second copy of the stress test, written for speed on arrays instead of readable records, runs inside the search (more than four times faster). A test compares it with the readable one on 120 random plans, so they cannot drift apart. The solver itself is compared with trying every combination on 12 small levels, with three different sets of rules.
 

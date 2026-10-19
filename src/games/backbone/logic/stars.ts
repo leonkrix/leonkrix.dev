@@ -26,9 +26,6 @@ export interface Thresholds {
   three: number;
 }
 
-/** A tiny tolerance so that a plan equal to a threshold counts as reaching it. */
-const EPSILON = 1e-9;
-
 export function starThresholds({ shortest, balanced, best }: Baselines): Thresholds {
   const gap = best - shortest;
   const better = Math.max(shortest, balanced);
@@ -39,15 +36,24 @@ export function starThresholds({ shortest, balanced, best }: Baselines): Thresho
   };
 }
 
-/** How many stars a score earns, 0 to 3. */
+/** A score as the points the screen shows (0 to 100). */
+export function pointsOf(score: number): number {
+  return Math.round(score * 100 + 1e-9);
+}
+
+/**
+ * How many stars a score earns, 0 to 3. The star is decided on the points that are shown, so that
+ * a score of 76 next to a threshold of 76 is a star (not 75.6 against 75.9 behind the scenes).
+ */
 export function starsFor(score: number, thresholds: Thresholds): 0 | 1 | 2 | 3 {
-  if (score >= thresholds.three - EPSILON) {
+  const points = pointsOf(score);
+  if (points >= pointsOf(thresholds.three)) {
     return 3;
   }
-  if (score >= thresholds.two - EPSILON) {
+  if (points >= pointsOf(thresholds.two)) {
     return 2;
   }
-  if (score >= thresholds.one - EPSILON) {
+  if (points >= pointsOf(thresholds.one)) {
     return 1;
   }
   return 0;

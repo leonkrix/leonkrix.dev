@@ -1,6 +1,6 @@
 import { mapPoint, type Point } from './geometry';
 import type { LevelIndex } from './graph';
-import type { Level, LinkStepResult, NetNode, StepResult } from './types';
+import type { Level, LinkStepResult, NetNode, Situation, StepResult } from './types';
 
 /**
  * What the drawing needs, worked out from the level and the results: where things are, how full a
@@ -102,55 +102,135 @@ export interface Packet {
   key: string;
   flow: string;
   point: Point;
-  /** 1 while it travels; falls to 0 as a dropped packet reaches the link that drops it */
+  /** 1 while it travels; falls to 0 as a dropped packet reaches the place where it is lost */
   opacity: number;
+  /** 1 while it travels; a lost packet swells a little as it fades */
+  scale: number;
   dropped: boolean;
 }
 
 const PACKET_UNIT = 2;
 const MOST_PACKETS = 6;
 
-/**
- * The packets of one step at a moment `time` (0 to 1) inside it. A path carries a few packets per
- * unit of traffic; the share that does not arrive is dropped where the first overfull link ends.
- */
-export function packetsAt(index: LevelIndex, step: StepResult, time: number): Packet[] {
-  const packets: Packet[] = [];
+/** How much of its traffic a cable loses in a step of a situation (0 to 1): its own loss and an event. */
+function lossOf(index: LevelIndex, situation: Situation, step: number, link: string): number {
+  let keep = 1 - (index.linkById.get(link)?.loss ?? 0);
+  for (const event of situation.events) {
+    if (event.kind === 'lossy' && event.link === link && step >= event.from && step < event.to) {
+      keep *= 1 - event.loss;
+    }
+  }
+  return 1 - keep;
+}
+
+/** One packet that was sent in a step: when it left (in steps), the way it takes and where it is lost. */
+interface Sent {
+  key: string;
+  flow: string;
+  leaves: number;
+  points: readonly Point[];
+  /** Where it is lost, as a share of its way (1: it arrives) */
+  endsAt: number;
+}
+
+/** The packets that a step sends: a few for every path, spread over the step. */
+function sentIn(
+  index: LevelIndex,
+  situation: Situation,
+  steps: readonly StepResult[],
+  step: number,
+  at: number,
+): Sent[] {
+  const result = steps[step];
+  if (result === undefined) {
+    return [];
+  }
+  const sent: Sent[] = [];
   for (const flow of index.level.flows) {
-    const result = step.flows[flow.id];
-    if (result === undefined) {
+    const flowResult = result.flows[flow.id];
+    if (flowResult === undefined) {
       continue;
     }
-    result.paths.forEach((path, pathAt) => {
+    flowResult.paths.forEach((path, pathAt) => {
       const nodes = nodesOfLinks(index, flow.source, path.links);
       const points = polyline(index, nodes);
+      const total = Math.max(length(points), 1e-9);
       const count = Math.max(
         1,
-        Math.min(MOST_PACKETS, Math.round((result.sent * path.share) / PACKET_UNIT)),
+        Math.min(MOST_PACKETS, Math.round((flowResult.sent * path.share) / PACKET_UNIT)),
       );
       const keep = Math.round(
         count *
-          Math.min(1, result.delivered / Math.max(path.share, 1e-9)) *
+          Math.min(1, flowResult.delivered / Math.max(path.share, 1e-9)) *
           (path.share > 0 ? 1 : 0),
       );
-      const bad = path.links.findIndex((id) => loadRatio(step.links[id]) > 1 + 1e-9);
-      const dropAt = bad >= 0 ? polyline(index, nodes.slice(0, bad + 2)) : [];
-      const dropFraction = bad >= 0 ? length(dropAt) / Math.max(length(points), 1e-9) : 0.6;
+      // Why packets are lost: a cable that loses some of them, or a cable that is over full
+      const survives = path.links.reduce(
+        (share, id) => share * (1 - lossOf(index, situation, step, id)),
+        1,
+      );
+      const lossy = path.links.findIndex((id) => lossOf(index, situation, step, id) > 0);
+      const lostToLoss = lossy < 0 ? 0 : Math.min(count - keep, Math.round(count * (1 - survives)));
+      const bad = path.links.findIndex((id) => loadRatio(result.links[id]) > 1 + 1e-9);
+      const overAt = bad >= 0 ? length(polyline(index, nodes.slice(0, bad + 2))) / total : 0.6;
+      const lossAt =
+        lossy >= 0
+          ? (length(polyline(index, nodes.slice(0, lossy + 1))) +
+              length(polyline(index, nodes.slice(lossy, lossy + 2))) / 2) /
+            total
+          : overAt;
       for (let packet = 0; packet < count; packet += 1) {
-        const progress = (time + packet / count) % 1;
         const dropped = packet >= keep;
-        const visible = dropped ? progress <= dropFraction : true;
-        if (!visible) {
-          continue;
-        }
-        packets.push({
-          key: `${flow.id}:${String(pathAt)}:${String(packet)}`,
+        sent.push({
+          key: `${flow.id}:${String(pathAt)}:${String(at)}:${String(packet)}`,
           flow: flow.id,
-          point: along(points, progress),
-          opacity: dropped ? 1 - Math.max(0, progress - (dropFraction - 0.12)) / 0.12 : 1,
-          dropped,
+          leaves: at + packet / count,
+          points,
+          endsAt: !dropped ? 1 : packet - keep < lostToLoss ? lossAt : overAt,
         });
       }
+    });
+  }
+  return sent;
+}
+
+/**
+ * The packets on the map at a moment `time` (0 to 1) inside a step. A step sends its packets one
+ * after the other, and every packet needs one step for its way. So when a burst is over the
+ * packets it sent are still on their way and arrive: nothing vanishes at the end of a step. The
+ * packets of the step before the first are those of the first (a network at work, not one that
+ * starts empty). A packet that is lost fades where it is lost, a little bigger.
+ */
+export function packetsAt(
+  index: LevelIndex,
+  situation: Situation,
+  steps: readonly StepResult[],
+  step: number,
+  time: number,
+): Packet[] {
+  const now = step + time;
+  const packets: Packet[] = [];
+  const sent = [
+    ...sentIn(index, situation, steps, Math.max(0, step - 1), step - 1),
+    ...sentIn(index, situation, steps, step, step),
+  ];
+  for (const one of sent) {
+    const progress = now - one.leaves;
+    if (progress < 0 || progress >= 1) {
+      continue;
+    }
+    const dropped = one.endsAt < 1;
+    if (dropped && progress > one.endsAt) {
+      continue;
+    }
+    const fade = dropped ? Math.max(0, progress - (one.endsAt - 0.12)) / 0.12 : 0;
+    packets.push({
+      key: one.key,
+      flow: one.flow,
+      point: along(one.points, progress),
+      opacity: 1 - fade,
+      scale: 1 + fade * 0.7,
+      dropped,
     });
   }
   return packets;

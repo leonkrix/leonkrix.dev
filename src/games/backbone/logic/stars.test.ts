@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isAdmissible, starsFor, starThresholds } from './stars';
+import { isAdmissible, pointsOf, starsFor, starThresholds } from './stars';
 
 describe('stars', () => {
   const baselines = { shortest: 0.5, balanced: 0.6, best: 0.9 };
@@ -32,5 +32,18 @@ describe('stars', () => {
     expect(isAdmissible({ shortest: 0.5, balanced: 0.6, best: 0.62 })).toBe(false);
     expect(isAdmissible({ shortest: 0.9, balanced: 0.5, best: 0.93 })).toBe(false);
     expect(isAdmissible({ shortest: 0.5, balanced: 0.5, best: 0.5 })).toBe(false);
+  });
+});
+
+describe('the stars follow the points that are shown', () => {
+  const thresholds = { one: 0.754, two: 0.86, three: 0.99 };
+
+  it('rounds like the screen: 76 points against a threshold shown as 75 is a star', () => {
+    expect(pointsOf(0.7551)).toBe(76);
+    expect(pointsOf(0.754)).toBe(75);
+    expect(starsFor(0.7551, thresholds)).toBe(1);
+    // 75.6 is shown as 76, the threshold 75.9 is shown as 76 too: it is a star
+    expect(starsFor(0.756, { ...thresholds, one: 0.759 })).toBe(1);
+    expect(starsFor(0.744, thresholds)).toBe(0);
   });
 });

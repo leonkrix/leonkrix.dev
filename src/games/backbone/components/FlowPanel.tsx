@@ -1,7 +1,10 @@
+import { useState } from 'react';
+
 import {
   addBackup,
   addLane,
   addStage,
+  donorOf,
   moveShare,
   type PlayState,
   removeBackup,
@@ -16,7 +19,7 @@ import {
 } from '../logic/play';
 import { profiles } from '../logic/profiles';
 import { describeSwitch } from '../logic/text';
-import type { Flow, Redundancy } from '../logic/types';
+import type { Flow, Level, Redundancy } from '../logic/types';
 import { Svg } from './Svg';
 
 interface FlowListProps {
@@ -26,26 +29,37 @@ interface FlowListProps {
   onSelect: (id: string) => void;
 }
 
-/** What a flow wants, in a few words, written from its profile. */
-export function wantsOf(flow: Flow): string {
+/**
+ * What a flow wants, in a few words, written from its profile. Only what the player has been
+ * taught is named: speed when the level has traffic that must be fast (from the chapter about
+ * latency), loss from the chapter about loss, and who goes first from the chapter about
+ * priorities. An empty text means there is nothing special to say.
+ */
+export function wantsOf(flow: Flow, level: Level): string {
   const profile = profiles[flow.profile];
   const parts: string[] = [];
-  if (profile.latencyBudget !== undefined && profile.latencyBudget <= 8) {
-    parts.push('fast');
-  } else if (profile.latencyBudget !== undefined) {
-    parts.push('steady');
+  const hasFast = level.flows.some((entry) => {
+    const budget = profiles[entry.profile].latencyBudget;
+    return budget !== undefined && budget <= 8;
+  });
+  if (hasFast && profile.latencyBudget !== undefined) {
+    parts.push(profile.latencyBudget <= 8 ? 'fast' : 'steady');
   }
-  if (profile.lossExponent >= 3) {
-    parts.push('no loss');
-  } else if (profile.lossExponent > 1.2) {
-    parts.push('little loss');
+  if (level.rules.redundancy) {
+    if (profile.lossExponent >= 3) {
+      parts.push('no loss');
+    } else if (profile.lossExponent > 1.2) {
+      parts.push('little loss');
+    }
   }
-  if (profile.queue === 0) {
-    parts.push('goes first');
-  } else if (profile.queue === 2) {
-    parts.push('goes last');
+  if (level.rules.throttle) {
+    if (profile.queue === 0) {
+      parts.push('goes first');
+    } else if (profile.queue === 2) {
+      parts.push('goes last');
+    }
   }
-  return parts.join(', ') || 'anything goes';
+  return parts.join(', ');
 }
 
 export function FlowList({ state, hinted, onSelect }: FlowListProps) {
@@ -86,7 +100,8 @@ export function FlowList({ state, hinted, onSelect }: FlowListProps) {
                   {names.get(flow.source)} → {names.get(flow.target)}
                 </span>
                 <span className="bb-flow-meta">
-                  {profiles[flow.profile].name} · sends {flow.demand} per minute · {wantsOf(flow)}
+                  {profiles[flow.profile].name} · sends {flow.demand} per minute
+                  {wantsOf(flow, level) !== '' && ` · ${wantsOf(flow, level)}`}
                 </span>
                 {(flow.via ?? []).length > 0 && (
                   <span className="bb-flow-meta bb-flow-policy">
@@ -172,10 +187,51 @@ interface OptionsProps {
 }
 
 const REDUNDANCIES: readonly Redundancy[] = [0, 0.25, 0.5];
-const THROTTLES: readonly number[] = [1, 0.5, 0.25];
 
 function percent(value: number): string {
   return `${String(Math.round(value * 100))} %`;
+}
+
+/**
+ * How much of its traffic a flow may send, from 5 to 100 % in steps of 5. The value follows the
+ * slider while it is moved and is set in the plan when it is let go (one step to undo, not twenty).
+ */
+function ThrottleSlider({ value, onCommit }: { value: number; onCommit: (value: number) => void }) {
+  const [moving, setMoving] = useState<number | undefined>();
+  const shown = moving ?? Math.round(value * 100);
+  const commit = (): void => {
+    if (moving !== undefined) {
+      setMoving(undefined);
+      if (moving !== Math.round(value * 100)) {
+        onCommit(moving / 100);
+      }
+    }
+  };
+  return (
+    <div className="bb-option">
+      <label className="bb-option-label" htmlFor="bb-throttle">
+        Send at most
+      </label>
+      <div className="bb-slider">
+        <input
+          id="bb-throttle"
+          type="range"
+          min={5}
+          max={100}
+          step={5}
+          value={shown}
+          aria-valuetext={`${String(shown)} percent of its traffic`}
+          onChange={(event) => {
+            setMoving(Number(event.target.value));
+          }}
+          onPointerUp={commit}
+          onKeyUp={commit}
+          onBlur={commit}
+        />
+        <output htmlFor="bb-throttle">{shown} %</output>
+      </div>
+    </div>
+  );
 }
 
 export function FlowOptions({ state, onChange }: OptionsProps) {
@@ -208,12 +264,25 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
             <span className="bb-sr">Flow {state.index.level.flows.indexOf(flow) + 1}: </span>
             {flow.name}
           </h3>
-          <p className="bb-options-meta">Needs: {wantsOf(flow)}</p>
+          {wantsOf(flow, state.index.level) !== '' && (
+            <p className="bb-options-meta">Needs: {wantsOf(flow, state.index.level)}</p>
+          )}
         </div>
       </div>
 
       <div className="bb-option">
-        <p className="bb-option-label">{state.target === 'backup' ? 'Backup route' : 'Route'}</p>
+        <p className="bb-option-label">
+          Route
+          {plan !== undefined && state.target === 'backup' && ' (backup)'}
+          {plan !== undefined &&
+            state.target === 'path' &&
+            (stage?.paths.length ?? 1) > 1 &&
+            ` (path ${String(state.lane + 1)})`}
+          {plan !== undefined &&
+            state.target === 'path' &&
+            state.stage > 0 &&
+            ` (from minute ${String((stage?.from ?? 0) + 1)})`}
+        </p>
         <RouteChips state={state} flow={flow} path={editing} />
         <div className="bb-row">
           <button
@@ -239,53 +308,66 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
 
       {rules.split && plan !== undefined && stage !== undefined && (
         <div className="bb-option">
-          <p className="bb-option-label">Split</p>
-          <div className="bb-row" role="group" aria-label="Paths of the flow">
-            {stage.paths.map((entry, at) => (
-              <button
+          <p className="bb-option-label">Paths</p>
+          <ul className="bb-paths" aria-label="Paths of the flow">
+            {stage.paths.map((entry, at) => {
+              const donor = donorOf(state, at);
+              const selected = state.target === 'path' && state.lane === at;
+              return (
                 // The paths of a split have no identity of their own, only a position
                 // eslint-disable-next-line @eslint-react/no-array-index-key
-                key={at}
-                type="button"
-                className="bb-chip"
-                aria-pressed={state.target === 'path' && state.lane === at}
-                onClick={() => {
-                  onChange(selectEdit(state, state.stage, at, 'path'));
-                }}
-              >
-                Path {at + 1} · {percent(entry.share)}
-              </button>
-            ))}
-            {stage.paths.length < 3 && (
-              <button
-                type="button"
-                onClick={() => {
-                  onChange(addLane(state));
-                }}
-              >
-                Add path
-              </button>
-            )}
-          </div>
-          {stage.paths.length > 1 && (
-            <div className="bb-row">
-              <button
-                type="button"
-                onClick={() => {
-                  onChange(moveShare(state, (state.lane + 1) % stage.paths.length, state.lane));
-                }}
-              >
-                +25 % to path {state.lane + 1}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  onChange(removeLane(state));
-                }}
-              >
-                Remove path {state.lane + 1}
-              </button>
-            </div>
+                <li key={at} data-selected={selected}>
+                  <button
+                    type="button"
+                    className="bb-path-pick"
+                    aria-pressed={selected}
+                    onClick={() => {
+                      onChange(selectEdit(state, state.stage, at, 'path'));
+                    }}
+                  >
+                    <span className="bb-path-name">Path {at + 1}</span>
+                    <span className="bb-path-share">{percent(entry.share)}</span>
+                  </button>
+                  <span className="bb-path-actions">
+                    <button
+                      type="button"
+                      className="bb-small"
+                      disabled={donor === undefined}
+                      aria-label={`Give path ${String(at + 1)} a quarter more`}
+                      onClick={() => {
+                        if (donor !== undefined) {
+                          onChange(moveShare(state, donor, at));
+                        }
+                      }}
+                    >
+                      +25 %
+                    </button>
+                    <button
+                      type="button"
+                      className="bb-small"
+                      disabled={stage.paths.length < 2}
+                      aria-label={`Remove path ${String(at + 1)}`}
+                      onClick={() => {
+                        onChange(removeLane(selectEdit(state, state.stage, at, 'path')));
+                      }}
+                    >
+                      <Svg set="ui" name="trash" />
+                    </button>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          {stage.paths.length < 3 && (
+            <button
+              type="button"
+              className="bb-add"
+              onClick={() => {
+                onChange(addLane(state));
+              }}
+            >
+              <Svg set="ui" name="plus" /> Add path
+            </button>
           )}
         </div>
       )}
@@ -293,21 +375,22 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
       {rules.backup && plan !== undefined && (
         <div className="bb-option">
           <p className="bb-option-label">Backup</p>
-          <div className="bb-row">
-            {plan.backup === undefined ? (
-              <button
-                type="button"
-                onClick={() => {
-                  onChange(addBackup(state));
-                }}
-              >
-                Add a backup path
-              </button>
-            ) : (
-              <>
+          {plan.backup === undefined ? (
+            <button
+              type="button"
+              className="bb-add"
+              onClick={() => {
+                onChange(addBackup(state));
+              }}
+            >
+              <Svg set="ui" name="plus" /> Add a backup path
+            </button>
+          ) : (
+            <ul className="bb-paths" aria-label="Backup of the flow">
+              <li data-selected={state.target === 'backup'}>
                 <button
                   type="button"
-                  className="bb-chip"
+                  className="bb-path-pick"
                   aria-pressed={state.target === 'backup'}
                   onClick={() => {
                     onChange(
@@ -320,19 +403,24 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
                     );
                   }}
                 >
-                  Edit the backup
+                  <span className="bb-path-name">Backup path</span>
+                  <span className="bb-path-share">takes over when a cable is cut</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChange(removeBackup(state));
-                  }}
-                >
-                  Remove it
-                </button>
-              </>
-            )}
-          </div>
+                <span className="bb-path-actions">
+                  <button
+                    type="button"
+                    className="bb-small"
+                    aria-label="Remove the backup path"
+                    onClick={() => {
+                      onChange(removeBackup(state));
+                    }}
+                  >
+                    <Svg set="ui" name="trash" />
+                  </button>
+                </span>
+              </li>
+            </ul>
+          )}
         </div>
       )}
 
@@ -358,24 +446,13 @@ export function FlowOptions({ state, onChange }: OptionsProps) {
       )}
 
       {rules.throttle && plan !== undefined && profiles[flow.profile].throttlable && (
-        <div className="bb-option">
-          <p className="bb-option-label">Send at most</p>
-          <div className="bb-row" role="group" aria-label="Throttle">
-            {THROTTLES.map((value) => (
-              <button
-                key={value}
-                type="button"
-                className="bb-chip"
-                aria-pressed={plan.throttle === value}
-                onClick={() => {
-                  onChange(setThrottle(state, value));
-                }}
-              >
-                {percent(value)}
-              </button>
-            ))}
-          </div>
-        </div>
+        <ThrottleSlider
+          key={flow.id}
+          value={plan.throttle}
+          onCommit={(value) => {
+            onChange(setThrottle(state, value));
+          }}
+        />
       )}
 
       {rules.stages && plan !== undefined && steps.length > 0 && (

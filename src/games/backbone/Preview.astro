@@ -57,14 +57,11 @@ function way(points: readonly Point[]): string {
 }
 
 const topWay = way([point('a'), point('b'), point('d')]);
-const lowWay = way([point('a'), point('c'), point('d')]);
 // The packet that is dropped runs to the middle of the full cable and stops there
 const droppedWay = way([point('a'), point('b'), along('b', 'd', 0.5)]);
-
-const resting = [
-  { color: blue, at: along('b', 'd', 0.42) },
-  { color: amber, at: along('c', 'd', 0.42) },
-];
+// The packets of the good plan stop in the middle of their last cable, where the picture ends
+const topStop = way([point('a'), point('b'), along('b', 'd', 0.45)]);
+const lowStop = way([point('a'), point('c'), along('c', 'd', 0.45)]);
 
 const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
 ---
@@ -146,33 +143,22 @@ const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
     />
     <use
       href="#pv-box"
-      class="pv-packet pv-a pv-travel"
+      class="pv-packet pv-a pv-travel pv-stay"
       x="-5.5"
       y="-5.5"
       width="11"
       height="11"
-      style={`--c:${blue};--end:${blue};--dur:1200ms;--n:2;--delay:3.2s;${topWay}`}
+      style={`--c:${blue};--end:${blue};--dur:2200ms;--delay:3.2s;${topStop}`}
     />
     <use
       href="#pv-box"
-      class="pv-packet pv-a pv-travel"
+      class="pv-packet pv-a pv-travel pv-stay"
       x="-5.5"
       y="-5.5"
       width="11"
       height="11"
-      style={`--c:${amber};--end:${amber};--dur:1200ms;--n:2;--delay:3.2s;${lowWay}`}
+      style={`--c:${amber};--end:${amber};--dur:2200ms;--delay:3.3s;${lowStop}`}
     />
-    {resting.map((dot) => (
-      <use
-        href="#pv-box"
-        class="pv-packet pv-a pv-in pv-rest"
-        x={dot.at[0] - 5.5}
-        y={dot.at[1] - 5.5}
-        width="11"
-        height="11"
-        style={`--c:${dot.color}`}
-      />
-    ))}
   </svg>
 </div>
 
@@ -275,9 +261,11 @@ const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
     opacity: 0;
   }
 
-  /* The resting packets appear late: the same fade as the lower road, started so that they show up when the last packet has arrived (5.6 s) */
-  .pv-rest {
-    --delay: 3s;
+  /* The packets of the good plan stay where their way ends: that is the picture without motion */
+  .pv-stay {
+    --keep: 1;
+    opacity: 1;
+    transform: translate(var(--x2), var(--y2));
   }
 
   /* A tile that is waiting to be revealed has not started yet: it begins when it appears */
@@ -331,7 +319,7 @@ const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
       color: var(--end);
     }
     100% {
-      opacity: 0;
+      opacity: var(--keep, 0);
       color: var(--end);
       transform: translate(var(--x2), var(--y2));
     }
@@ -353,7 +341,7 @@ const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
       color: var(--end);
     }
     100% {
-      opacity: 0;
+      opacity: var(--keep, 0);
       color: var(--end);
       transform: translate(var(--x2), var(--y2));
     }

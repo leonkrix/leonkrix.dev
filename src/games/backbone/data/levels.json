@@ -484,7 +484,7 @@
         },
         {
           "id": "f3",
-          "name": "web 4",
+          "name": "Line-up page",
           "source": "n5",
           "target": "n6",
           "profile": "web",
@@ -537,56 +537,56 @@
     "id": "c2-1",
     "chapter": 2,
     "setting": "hospital",
-    "seed": 815048301,
+    "seed": 1459603515,
     "level": {
       "id": "c2-1",
       "title": "Morning rounds",
       "story": "Records and lab results want the same corridor. Keep both moving.",
       "nodes": [
-        { "id": "n0", "name": "Ward A", "kind": "switch", "x": 10, "y": 50 },
-        { "id": "n1", "name": "Ward B", "kind": "switch", "x": 63.333333333333336, "y": 14 },
-        { "id": "n2", "name": "Core", "kind": "router", "x": 36.66666666666667, "y": 86 },
-        { "id": "n3", "name": "Ward hub", "kind": "router", "x": 90, "y": 50 },
-        { "id": "n4", "name": "Records", "kind": "server", "x": 90, "y": 14 },
-        { "id": "n5", "name": "Theatre hub", "kind": "router", "x": 10, "y": 14 },
-        { "id": "n6", "name": "North wing", "kind": "router", "x": 10, "y": 86 }
+        { "id": "n0", "name": "Ward A", "kind": "switch", "x": 70, "y": 14 },
+        { "id": "n1", "name": "Ward B", "kind": "switch", "x": 50, "y": 14 },
+        { "id": "n2", "name": "Records", "kind": "server", "x": 90, "y": 86 },
+        { "id": "n3", "name": "Core", "kind": "router", "x": 90, "y": 14 },
+        { "id": "n4", "name": "Ward C", "kind": "switch", "x": 10, "y": 50 },
+        { "id": "n5", "name": "Ward hub", "kind": "router", "x": 10, "y": 14 },
+        { "id": "n6", "name": "Theatre hub", "kind": "router", "x": 90, "y": 50 }
       ],
       "links": [
-        { "id": "l0", "a": "n1", "b": "n4", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l1", "a": "n2", "b": "n6", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l2", "a": "n0", "b": "n6", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l3", "a": "n0", "b": "n5", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l4", "a": "n3", "b": "n4", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l5", "a": "n1", "b": "n5", "capacity": 8, "delay": 3, "loss": 0 },
-        { "id": "l6", "a": "n0", "b": "n2", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l7", "a": "n1", "b": "n3", "capacity": 12, "delay": 2, "loss": 0 },
-        { "id": "l8", "a": "n2", "b": "n3", "capacity": 13, "delay": 4, "loss": 0 },
-        { "id": "l9", "a": "n0", "b": "n1", "capacity": 7, "delay": 4, "loss": 0 }
+        { "id": "l0", "a": "n0", "b": "n1", "capacity": 8, "delay": 1, "loss": 0 },
+        { "id": "l1", "a": "n0", "b": "n3", "capacity": 6, "delay": 1, "loss": 0 },
+        { "id": "l2", "a": "n2", "b": "n6", "capacity": 7, "delay": 2, "loss": 0 },
+        { "id": "l3", "a": "n3", "b": "n6", "capacity": 7, "delay": 2, "loss": 0 },
+        { "id": "l4", "a": "n4", "b": "n5", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l5", "a": "n1", "b": "n5", "capacity": 9, "delay": 3, "loss": 0 },
+        { "id": "l6", "a": "n0", "b": "n6", "capacity": 6, "delay": 2, "loss": 0 },
+        { "id": "l7", "a": "n1", "b": "n4", "capacity": 9, "delay": 3, "loss": 0 },
+        { "id": "l8", "a": "n1", "b": "n2", "capacity": 10, "delay": 4, "loss": 0 },
+        { "id": "l9", "a": "n2", "b": "n4", "capacity": 11, "delay": 4, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
           "name": "Staff intranet",
-          "source": "n6",
-          "target": "n4",
+          "source": "n0",
+          "target": "n6",
           "profile": "web",
           "demand": 4
         },
         {
           "id": "f1",
-          "name": "Remote consultation",
-          "source": "n0",
-          "target": "n1",
-          "profile": "video",
-          "demand": 7
-        },
-        {
-          "id": "f2",
           "name": "Lab results",
-          "source": "n5",
+          "source": "n3",
           "target": "n2",
           "profile": "web",
           "demand": 6
+        },
+        {
+          "id": "f2",
+          "name": "Appointments",
+          "source": "n6",
+          "target": "n2",
+          "profile": "web",
+          "demand": 5
         }
       ],
       "situations": [{ "id": "calm", "name": "Quiet day", "steps": 6, "events": [] }],
@@ -602,19 +602,17 @@
     "best": {
       "plan": {
         "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n0", "n1"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n0", "n1", "n2"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
         "f2": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n5", "n0", "n2"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n6", "n2"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
         "f0": {
-          "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n6", "n2", "n3", "n1", "n4"], "share": 1 }] }
-          ],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n0", "n6"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         }
@@ -622,72 +620,74 @@
       "score": 1,
       "built": []
     },
-    "shortest": 0.6987614600934408,
-    "balanced": 0.7707098016053257,
-    "proof": { "milliseconds": 4, "explored": 0 }
+    "shortest": 0.6929985885302934,
+    "balanced": 0.7678699603775908,
+    "proof": { "milliseconds": 3, "explored": 25 }
   },
   {
     "id": "c2-2",
     "chapter": 2,
     "setting": "campus",
-    "seed": 1247838101,
+    "seed": 2199656559,
     "level": {
       "id": "c2-2",
       "title": "Lecture night",
       "story": "A live lecture, a downloaded course and a hundred students on the web.",
       "nodes": [
         { "id": "n0", "name": "Course portal", "kind": "server", "x": 10, "y": 14 },
-        { "id": "n1", "name": "Core", "kind": "router", "x": 30, "y": 14 },
-        { "id": "n2", "name": "Library", "kind": "router", "x": 50, "y": 14 },
-        { "id": "n3", "name": "Science", "kind": "router", "x": 70, "y": 14 },
-        { "id": "n4", "name": "Dorm 1", "kind": "client", "x": 90, "y": 14 },
-        { "id": "n5", "name": "Arts", "kind": "router", "x": 30, "y": 86 },
-        { "id": "n6", "name": "Hall A", "kind": "switch", "x": 50, "y": 86 },
-        { "id": "n7", "name": "Gate", "kind": "router", "x": 70, "y": 86 }
+        { "id": "n1", "name": "Hall A", "kind": "switch", "x": 36.66666666666667, "y": 14 },
+        { "id": "n2", "name": "Core", "kind": "router", "x": 63.333333333333336, "y": 14 },
+        { "id": "n3", "name": "Library", "kind": "router", "x": 90, "y": 14 },
+        { "id": "n4", "name": "Science", "kind": "router", "x": 10, "y": 86 },
+        { "id": "n5", "name": "Arts", "kind": "router", "x": 36.66666666666667, "y": 86 },
+        { "id": "n6", "name": "Gate", "kind": "router", "x": 63.333333333333336, "y": 86 },
+        { "id": "n7", "name": "Annex", "kind": "router", "x": 90, "y": 86 }
       ],
       "links": [
-        { "id": "l0", "a": "n0", "b": "n1", "capacity": 7, "delay": 1, "loss": 0 },
-        { "id": "l1", "a": "n1", "b": "n2", "capacity": 8, "delay": 1, "loss": 0 },
-        { "id": "l2", "a": "n2", "b": "n3", "capacity": 9, "delay": 1, "loss": 0 },
-        { "id": "l3", "a": "n3", "b": "n4", "capacity": 8, "delay": 1, "loss": 0 },
-        { "id": "l4", "a": "n5", "b": "n6", "capacity": 8, "delay": 1, "loss": 0 },
-        { "id": "l5", "a": "n6", "b": "n7", "capacity": 9, "delay": 1, "loss": 0 },
-        { "id": "l6", "a": "n1", "b": "n5", "capacity": 4, "delay": 4, "loss": 0 },
-        { "id": "l7", "a": "n2", "b": "n6", "capacity": 7, "delay": 4, "loss": 0 },
-        { "id": "l8", "a": "n3", "b": "n7", "capacity": 6, "delay": 4, "loss": 0 }
+        { "id": "l0", "a": "n1", "b": "n2", "capacity": 6, "delay": 2, "loss": 0 },
+        { "id": "l1", "a": "n2", "b": "n3", "capacity": 5, "delay": 2, "loss": 0 },
+        { "id": "l2", "a": "n5", "b": "n6", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l3", "a": "n6", "b": "n7", "capacity": 10, "delay": 2, "loss": 0 },
+        { "id": "l4", "a": "n0", "b": "n1", "capacity": 7, "delay": 2, "loss": 0 },
+        { "id": "l5", "a": "n4", "b": "n5", "capacity": 5, "delay": 2, "loss": 0 },
+        { "id": "l6", "a": "n0", "b": "n4", "capacity": 6, "delay": 4, "loss": 0 },
+        { "id": "l7", "a": "n1", "b": "n5", "capacity": 11, "delay": 4, "loss": 0 },
+        { "id": "l8", "a": "n2", "b": "n6", "capacity": 8, "delay": 4, "loss": 0 },
+        { "id": "l9", "a": "n3", "b": "n7", "capacity": 6, "delay": 4, "loss": 0 },
+        { "id": "l10", "a": "n0", "b": "n5", "capacity": 6, "delay": 4, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
-          "name": "Lecture stream",
-          "source": "n6",
-          "target": "n0",
-          "profile": "video",
-          "demand": 3
-        },
-        {
-          "id": "f1",
           "name": "Course portal",
           "source": "n6",
           "target": "n0",
           "profile": "web",
-          "demand": 3
+          "demand": 5
         },
         {
-          "id": "f2",
+          "id": "f1",
           "name": "Library search",
           "source": "n3",
-          "target": "n6",
+          "target": "n0",
           "profile": "web",
           "demand": 4
         },
         {
+          "id": "f2",
+          "name": "Student mail",
+          "source": "n2",
+          "target": "n0",
+          "profile": "web",
+          "demand": 6
+        },
+        {
           "id": "f3",
-          "name": "Seminar call",
-          "source": "n6",
+          "name": "Timetable",
+          "source": "n7",
           "target": "n3",
-          "profile": "video",
-          "demand": 5
+          "profile": "web",
+          "demand": 4
         }
       ],
       "situations": [{ "id": "calm", "name": "Quiet day", "steps": 6, "events": [] }],
@@ -702,23 +702,25 @@
     },
     "best": {
       "plan": {
-        "f3": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n6", "n7", "n3"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
         "f2": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n2", "n6"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n1", "n0"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
         "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n6", "n2", "n1", "n0"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n6", "n5", "n4", "n0"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
         "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n6", "n5", "n1", "n0"], "share": 1 }] }],
+          "stages": [
+            { "from": 0, "paths": [{ "nodes": ["n3", "n2", "n6", "n5", "n0"], "share": 1 }] }
+          ],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f3": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n7", "n3"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         }
@@ -726,74 +728,74 @@
       "score": 1,
       "built": []
     },
-    "shortest": 0.8318139323212607,
-    "balanced": 0.9098841077265877,
-    "proof": { "milliseconds": 3, "explored": 18 }
+    "shortest": 0.7588043530886636,
+    "balanced": 0.5546513889459951,
+    "proof": { "milliseconds": 4, "explored": 14 }
   },
   {
     "id": "c2-3",
     "chapter": 2,
     "setting": "festival",
-    "seed": 1456266690,
+    "seed": 232435672,
     "level": {
       "id": "c2-3",
       "title": "Main gate",
       "story": "Ticket scans and a live stream share the same few cables.",
       "nodes": [
         { "id": "n0", "name": "Control tent", "kind": "router", "x": 50, "y": 50 },
-        { "id": "n1", "name": "Tent A", "kind": "switch", "x": 50, "y": 14 },
-        { "id": "n2", "name": "North field", "kind": "router", "x": 50, "y": 86 },
-        { "id": "n3", "name": "Tent B", "kind": "switch", "x": 10, "y": 50 },
-        { "id": "n4", "name": "South field", "kind": "router", "x": 90, "y": 50 },
-        { "id": "n5", "name": "Ticket server", "kind": "server", "x": 90, "y": 86 },
-        { "id": "n6", "name": "Camp", "kind": "router", "x": 90, "y": 14 },
-        { "id": "n7", "name": "Gate", "kind": "router", "x": 10, "y": 14 }
+        { "id": "n1", "name": "North field", "kind": "router", "x": 50, "y": 86 },
+        { "id": "n2", "name": "South field", "kind": "router", "x": 50, "y": 14 },
+        { "id": "n3", "name": "Camp", "kind": "router", "x": 90, "y": 50 },
+        { "id": "n4", "name": "Gate", "kind": "router", "x": 10, "y": 50 },
+        { "id": "n5", "name": "Stage hub", "kind": "router", "x": 10, "y": 86 },
+        { "id": "n6", "name": "Ticket server", "kind": "server", "x": 10, "y": 14 },
+        { "id": "n7", "name": "Edge", "kind": "router", "x": 90, "y": 86 }
       ],
       "links": [
-        { "id": "l0", "a": "n0", "b": "n2", "capacity": 3, "delay": 2, "loss": 0 },
-        { "id": "l1", "a": "n4", "b": "n5", "capacity": 5, "delay": 2, "loss": 0 },
-        { "id": "l2", "a": "n0", "b": "n1", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l3", "a": "n3", "b": "n7", "capacity": 3, "delay": 2, "loss": 0 },
-        { "id": "l4", "a": "n4", "b": "n6", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l5", "a": "n0", "b": "n3", "capacity": 9, "delay": 3, "loss": 0 },
-        { "id": "l6", "a": "n0", "b": "n4", "capacity": 11, "delay": 3, "loss": 0 },
-        { "id": "l7", "a": "n1", "b": "n6", "capacity": 8, "delay": 3, "loss": 0 },
-        { "id": "l8", "a": "n1", "b": "n7", "capacity": 4, "delay": 3, "loss": 0 },
-        { "id": "l9", "a": "n2", "b": "n5", "capacity": 5, "delay": 3, "loss": 0 },
-        { "id": "l10", "a": "n1", "b": "n3", "capacity": 8, "delay": 3, "loss": 0 }
+        { "id": "l0", "a": "n0", "b": "n1", "capacity": 13, "delay": 2, "loss": 0 },
+        { "id": "l1", "a": "n3", "b": "n7", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l2", "a": "n4", "b": "n5", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l3", "a": "n0", "b": "n2", "capacity": 3, "delay": 2, "loss": 0 },
+        { "id": "l4", "a": "n4", "b": "n6", "capacity": 3, "delay": 2, "loss": 0 },
+        { "id": "l5", "a": "n0", "b": "n3", "capacity": 10, "delay": 3, "loss": 0 },
+        { "id": "l6", "a": "n0", "b": "n4", "capacity": 6, "delay": 3, "loss": 0 },
+        { "id": "l7", "a": "n1", "b": "n5", "capacity": 6, "delay": 3, "loss": 0 },
+        { "id": "l8", "a": "n1", "b": "n7", "capacity": 5, "delay": 3, "loss": 0 },
+        { "id": "l9", "a": "n2", "b": "n6", "capacity": 4, "delay": 3, "loss": 0 },
+        { "id": "l10", "a": "n1", "b": "n3", "capacity": 12, "delay": 3, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
           "name": "Festival app",
           "source": "n0",
-          "target": "n5",
+          "target": "n4",
           "profile": "web",
-          "demand": 1
+          "demand": 2
         },
         {
           "id": "f1",
-          "name": "Live stream",
-          "source": "n6",
-          "target": "n7",
-          "profile": "video",
-          "demand": 2
+          "name": "Social wall",
+          "source": "n3",
+          "target": "n6",
+          "profile": "web",
+          "demand": 3
         },
         {
           "id": "f2",
-          "name": "Social wall",
-          "source": "n7",
-          "target": "n5",
+          "name": "Schedule page",
+          "source": "n2",
+          "target": "n6",
           "profile": "web",
-          "demand": 2
+          "demand": 3
         },
         {
           "id": "f3",
-          "name": "Big screen feed",
-          "source": "n7",
-          "target": "n3",
-          "profile": "video",
-          "demand": 3
+          "name": "Line-up page",
+          "source": "n4",
+          "target": "n6",
+          "profile": "web",
+          "demand": 1
         }
       ],
       "situations": [{ "id": "calm", "name": "Quiet day", "steps": 6, "events": [] }],
@@ -808,25 +810,23 @@
     },
     "best": {
       "plan": {
-        "f3": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n7", "n3"], "share": 1 }] }],
+        "f0": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n0", "n4"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
         "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n6", "n1", "n7"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n0", "n4", "n6"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
         "f2": {
-          "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n7", "n1", "n0", "n2", "n5"], "share": 1 }] }
-          ],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n6"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
-        "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n0", "n2", "n5"], "share": 1 }] }],
+        "f3": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n4", "n0", "n2", "n6"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         }
@@ -834,77 +834,77 @@
       "score": 1,
       "built": []
     },
-    "shortest": 0.684716318296449,
-    "balanced": 0.8345986572579823,
-    "proof": { "milliseconds": 4, "explored": 4 }
+    "shortest": 0.7431590717696568,
+    "balanced": 0.7431590717696568,
+    "proof": { "milliseconds": 3, "explored": 0 }
   },
   {
     "id": "c2-4",
     "chapter": 2,
     "setting": "provider",
-    "seed": 2385126117,
+    "seed": 2017983793,
     "level": {
       "id": "c2-4",
       "title": "Prime time",
       "story": "Everybody streams at eight. The metro ring is where it hurts.",
       "nodes": [
         { "id": "n0", "name": "Peering point", "kind": "server", "x": 10, "y": 14 },
-        { "id": "n1", "name": "Core 1", "kind": "router", "x": 36.66666666666667, "y": 14 },
-        { "id": "n2", "name": "Core 2", "kind": "router", "x": 63.333333333333336, "y": 14 },
-        { "id": "n3", "name": "Metro N", "kind": "router", "x": 90, "y": 14 },
-        { "id": "n4", "name": "Agg A", "kind": "switch", "x": 90, "y": 50 },
-        { "id": "n5", "name": "Content cache", "kind": "server", "x": 90, "y": 86 },
-        { "id": "n6", "name": "Agg B", "kind": "switch", "x": 63.333333333333336, "y": 86 },
-        { "id": "n7", "name": "Metro S", "kind": "router", "x": 36.66666666666667, "y": 86 },
-        { "id": "n8", "name": "Metro E", "kind": "router", "x": 10, "y": 86 }
+        { "id": "n1", "name": "Core 1", "kind": "router", "x": 50, "y": 14 },
+        { "id": "n2", "name": "Core 2", "kind": "router", "x": 90, "y": 14 },
+        { "id": "n3", "name": "Metro N", "kind": "router", "x": 90, "y": 38 },
+        { "id": "n4", "name": "Content cache", "kind": "server", "x": 90, "y": 86 },
+        { "id": "n5", "name": "Agg A", "kind": "switch", "x": 50, "y": 86 },
+        { "id": "n6", "name": "Metro S", "kind": "router", "x": 10, "y": 86 },
+        { "id": "n7", "name": "Agg B", "kind": "switch", "x": 10, "y": 62 },
+        { "id": "n8", "name": "Metro E", "kind": "router", "x": 10, "y": 38 }
       ],
       "links": [
-        { "id": "l0", "a": "n1", "b": "n2", "capacity": 7, "delay": 2, "loss": 0 },
-        { "id": "l1", "a": "n2", "b": "n3", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l2", "a": "n5", "b": "n6", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l3", "a": "n6", "b": "n7", "capacity": 11, "delay": 2, "loss": 0 },
-        { "id": "l4", "a": "n0", "b": "n1", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l5", "a": "n7", "b": "n8", "capacity": 7, "delay": 2, "loss": 0 },
-        { "id": "l6", "a": "n4", "b": "n5", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l7", "a": "n3", "b": "n4", "capacity": 5, "delay": 2, "loss": 0 },
-        { "id": "l8", "a": "n4", "b": "n6", "capacity": 11, "delay": 2, "loss": 0 },
-        { "id": "l9", "a": "n2", "b": "n4", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l10", "a": "n0", "b": "n8", "capacity": 9, "delay": 4, "loss": 0 },
-        { "id": "l11", "a": "n1", "b": "n7", "capacity": 6, "delay": 4, "loss": 0 },
-        { "id": "l12", "a": "n2", "b": "n6", "capacity": 12, "delay": 4, "loss": 0 }
+        { "id": "l0", "a": "n6", "b": "n7", "capacity": 6, "delay": 1, "loss": 0 },
+        { "id": "l1", "a": "n0", "b": "n8", "capacity": 9, "delay": 1, "loss": 0 },
+        { "id": "l2", "a": "n2", "b": "n3", "capacity": 8, "delay": 1, "loss": 0 },
+        { "id": "l3", "a": "n7", "b": "n8", "capacity": 6, "delay": 1, "loss": 0 },
+        { "id": "l4", "a": "n3", "b": "n4", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l5", "a": "n0", "b": "n1", "capacity": 6, "delay": 3, "loss": 0 },
+        { "id": "l6", "a": "n1", "b": "n2", "capacity": 5, "delay": 3, "loss": 0 },
+        { "id": "l7", "a": "n4", "b": "n5", "capacity": 6, "delay": 3, "loss": 0 },
+        { "id": "l8", "a": "n5", "b": "n6", "capacity": 9, "delay": 3, "loss": 0 },
+        { "id": "l9", "a": "n1", "b": "n3", "capacity": 7, "delay": 3, "loss": 0 },
+        { "id": "l10", "a": "n1", "b": "n8", "capacity": 10, "delay": 3, "loss": 0 },
+        { "id": "l11", "a": "n5", "b": "n7", "capacity": 4, "delay": 3, "loss": 0 },
+        { "id": "l12", "a": "n3", "b": "n5", "capacity": 8, "delay": 3, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
-          "name": "TV service",
-          "source": "n6",
-          "target": "n3",
-          "profile": "video",
+          "name": "Home internet",
+          "source": "n3",
+          "target": "n7",
+          "profile": "web",
           "demand": 5
         },
         {
           "id": "f1",
-          "name": "Video on demand",
-          "source": "n8",
-          "target": "n1",
-          "profile": "video",
-          "demand": 6
+          "name": "Cloud access",
+          "source": "n6",
+          "target": "n0",
+          "profile": "web",
+          "demand": 4
         },
         {
           "id": "f2",
-          "name": "Home internet",
-          "source": "n1",
-          "target": "n5",
+          "name": "Mail service",
+          "source": "n5",
+          "target": "n1",
           "profile": "web",
-          "demand": 6
+          "demand": 3
         },
         {
           "id": "f3",
-          "name": "Cloud access",
-          "source": "n4",
-          "target": "n0",
+          "name": "Customer portal",
+          "source": "n5",
+          "target": "n1",
           "profile": "web",
-          "demand": 3
+          "demand": 4
         }
       ],
       "situations": [{ "id": "calm", "name": "Quiet day", "steps": 6, "events": [] }],
@@ -919,25 +919,25 @@
     },
     "best": {
       "plan": {
-        "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n8", "n0", "n1"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
-        "f2": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n2", "n4", "n5"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
         "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n6", "n4", "n3"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n5", "n6", "n7"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f1": {
+          "stages": [
+            { "from": 0, "paths": [{ "nodes": ["n6", "n5", "n7", "n8", "n0"], "share": 1 }] }
+          ],
           "redundancy": 0,
           "throttle": 1
         },
         "f3": {
-          "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n4", "n6", "n7", "n8", "n0"], "share": 1 }] }
-          ],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n5", "n4", "n3", "n1"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f2": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n5", "n3", "n1"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         }
@@ -945,15 +945,15 @@
       "score": 1,
       "built": []
     },
-    "shortest": 0.8266323734445182,
-    "balanced": 0.8115764157121067,
-    "proof": { "milliseconds": 5, "explored": 8 }
+    "shortest": 0.7110539557408638,
+    "balanced": 0.7885857542236195,
+    "proof": { "milliseconds": 4, "explored": 18 }
   },
   {
     "id": "c2-5",
     "chapter": 2,
     "setting": "datacentre",
-    "seed": 3621601206,
+    "seed": 1107438151,
     "level": {
       "id": "c2-5",
       "title": "Two tiers",
@@ -961,58 +961,177 @@
       "nodes": [
         { "id": "n0", "name": "Database", "kind": "server", "x": 10, "y": 14 },
         { "id": "n1", "name": "Spine 1", "kind": "router", "x": 36.66666666666667, "y": 14 },
-        { "id": "n2", "name": "Spine 2", "kind": "router", "x": 63.333333333333336, "y": 14 },
-        { "id": "n3", "name": "Leaf 1", "kind": "router", "x": 90, "y": 14 },
-        { "id": "n4", "name": "Leaf 2", "kind": "router", "x": 10, "y": 86 },
-        { "id": "n5", "name": "Leaf 3", "kind": "router", "x": 36.66666666666667, "y": 86 },
-        { "id": "n6", "name": "Border", "kind": "router", "x": 63.333333333333336, "y": 86 },
-        { "id": "n7", "name": "Edge", "kind": "router", "x": 90, "y": 86 }
+        { "id": "n2", "name": "Rack A", "kind": "switch", "x": 63.333333333333336, "y": 14 },
+        { "id": "n3", "name": "Spine 2", "kind": "router", "x": 90, "y": 14 },
+        { "id": "n4", "name": "Leaf 1", "kind": "router", "x": 10, "y": 86 },
+        { "id": "n5", "name": "Leaf 2", "kind": "router", "x": 36.66666666666667, "y": 86 },
+        { "id": "n6", "name": "Leaf 3", "kind": "router", "x": 63.333333333333336, "y": 86 },
+        { "id": "n7", "name": "Border", "kind": "router", "x": 90, "y": 86 }
       ],
       "links": [
-        { "id": "l0", "a": "n1", "b": "n2", "capacity": 7, "delay": 2, "loss": 0 },
-        { "id": "l1", "a": "n2", "b": "n3", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l2", "a": "n5", "b": "n6", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l3", "a": "n6", "b": "n7", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l4", "a": "n0", "b": "n1", "capacity": 11, "delay": 2, "loss": 0 },
-        { "id": "l5", "a": "n4", "b": "n5", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l6", "a": "n0", "b": "n4", "capacity": 10, "delay": 4, "loss": 0 },
-        { "id": "l7", "a": "n1", "b": "n5", "capacity": 12, "delay": 4, "loss": 0 },
-        { "id": "l8", "a": "n2", "b": "n6", "capacity": 13, "delay": 4, "loss": 0 },
-        { "id": "l9", "a": "n3", "b": "n7", "capacity": 10, "delay": 4, "loss": 0 },
-        { "id": "l10", "a": "n0", "b": "n5", "capacity": 7, "delay": 4, "loss": 0 }
+        { "id": "l0", "a": "n1", "b": "n2", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l1", "a": "n2", "b": "n3", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l2", "a": "n5", "b": "n6", "capacity": 5, "delay": 2, "loss": 0 },
+        { "id": "l3", "a": "n6", "b": "n7", "capacity": 7, "delay": 2, "loss": 0 },
+        { "id": "l4", "a": "n0", "b": "n1", "capacity": 6, "delay": 2, "loss": 0 },
+        { "id": "l5", "a": "n4", "b": "n5", "capacity": 5, "delay": 2, "loss": 0 },
+        { "id": "l6", "a": "n0", "b": "n4", "capacity": 9, "delay": 4, "loss": 0 },
+        { "id": "l7", "a": "n1", "b": "n5", "capacity": 11, "delay": 4, "loss": 0 },
+        { "id": "l8", "a": "n2", "b": "n6", "capacity": 6, "delay": 4, "loss": 0 },
+        { "id": "l9", "a": "n3", "b": "n7", "capacity": 7, "delay": 4, "loss": 0 },
+        { "id": "l10", "a": "n0", "b": "n5", "capacity": 6, "delay": 4, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
           "name": "Web requests",
+          "source": "n7",
+          "target": "n4",
+          "profile": "web",
+          "demand": 4
+        },
+        {
+          "id": "f1",
+          "name": "API calls",
           "source": "n3",
-          "target": "n1",
+          "target": "n6",
+          "profile": "web",
+          "demand": 5
+        },
+        {
+          "id": "f2",
+          "name": "Search",
+          "source": "n2",
+          "target": "n0",
+          "profile": "web",
+          "demand": 3
+        },
+        {
+          "id": "f3",
+          "name": "Dashboard",
+          "source": "n6",
+          "target": "n0",
+          "profile": "web",
+          "demand": 3
+        }
+      ],
+      "situations": [{ "id": "calm", "name": "Quiet day", "steps": 6, "events": [] }],
+      "rules": {
+        "split": false,
+        "backup": false,
+        "redundancy": false,
+        "throttle": false,
+        "stages": false,
+        "queues": false
+      }
+    },
+    "best": {
+      "plan": {
+        "f1": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n2", "n6"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f0": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n7", "n6", "n5", "n4"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f2": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n1", "n0"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f3": {
+          "stages": [
+            { "from": 0, "paths": [{ "nodes": ["n6", "n7", "n3", "n2", "n1", "n0"], "share": 1 }] }
+          ],
+          "redundancy": 0,
+          "throttle": 1
+        }
+      },
+      "score": 1,
+      "built": []
+    },
+    "shortest": 0.84497329204949,
+    "balanced": 0.8437903833046085,
+    "proof": { "milliseconds": 5, "explored": 8 }
+  },
+  {
+    "id": "c2-6",
+    "chapter": 2,
+    "setting": "office",
+    "seed": 44736787,
+    "level": {
+      "id": "c2-6",
+      "title": "Town hall",
+      "story": "The whole company watches the same talk while mail and files go on as usual.",
+      "nodes": [
+        { "id": "n0", "name": "Gateway", "kind": "router", "x": 70, "y": 86 },
+        { "id": "n1", "name": "Core", "kind": "router", "x": 30, "y": 14 },
+        { "id": "n2", "name": "Floor 1", "kind": "router", "x": 90, "y": 14 },
+        { "id": "n3", "name": "File server", "kind": "server", "x": 10, "y": 14 },
+        { "id": "n4", "name": "Floor 2", "kind": "router", "x": 10, "y": 50 },
+        { "id": "n5", "name": "Annex", "kind": "router", "x": 70, "y": 14 },
+        { "id": "n6", "name": "Hub", "kind": "router", "x": 70, "y": 50 },
+        { "id": "n7", "name": "Mail server", "kind": "server", "x": 90, "y": 86 },
+        { "id": "n8", "name": "Switch A", "kind": "switch", "x": 50, "y": 50 }
+      ],
+      "links": [
+        { "id": "l0", "a": "n0", "b": "n7", "capacity": 7, "delay": 1, "loss": 0 },
+        { "id": "l1", "a": "n1", "b": "n3", "capacity": 5, "delay": 1, "loss": 0 },
+        { "id": "l2", "a": "n2", "b": "n5", "capacity": 5, "delay": 1, "loss": 0 },
+        { "id": "l3", "a": "n6", "b": "n8", "capacity": 10, "delay": 1, "loss": 0 },
+        { "id": "l4", "a": "n0", "b": "n6", "capacity": 4, "delay": 2, "loss": 0 },
+        { "id": "l5", "a": "n3", "b": "n4", "capacity": 7, "delay": 2, "loss": 0 },
+        { "id": "l6", "a": "n5", "b": "n6", "capacity": 12, "delay": 2, "loss": 0 },
+        { "id": "l7", "a": "n1", "b": "n8", "capacity": 6, "delay": 2, "loss": 0 },
+        { "id": "l8", "a": "n0", "b": "n8", "capacity": 7, "delay": 2, "loss": 0 },
+        { "id": "l9", "a": "n1", "b": "n4", "capacity": 5, "delay": 2, "loss": 0 },
+        { "id": "l10", "a": "n2", "b": "n6", "capacity": 6, "delay": 2, "loss": 0 },
+        { "id": "l11", "a": "n5", "b": "n8", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l12", "a": "n1", "b": "n5", "capacity": 10, "delay": 3, "loss": 0 }
+      ],
+      "flows": [
+        {
+          "id": "f0",
+          "name": "Web browsing",
+          "source": "n6",
+          "target": "n3",
           "profile": "web",
           "demand": 3
         },
         {
           "id": "f1",
-          "name": "API calls",
-          "source": "n1",
+          "name": "Cloud documents",
+          "source": "n4",
           "target": "n7",
           "profile": "web",
           "demand": 2
         },
         {
           "id": "f2",
-          "name": "Streaming service",
-          "source": "n6",
-          "target": "n0",
-          "profile": "video",
-          "demand": 5
+          "name": "Mail",
+          "source": "n5",
+          "target": "n7",
+          "profile": "web",
+          "demand": 3
         },
         {
           "id": "f3",
-          "name": "Video encode",
-          "source": "n6",
-          "target": "n0",
-          "profile": "video",
-          "demand": 5
+          "name": "Wiki",
+          "source": "n0",
+          "target": "n3",
+          "profile": "web",
+          "demand": 4
+        },
+        {
+          "id": "f4",
+          "name": "Calendar",
+          "source": "n4",
+          "target": "n7",
+          "profile": "web",
+          "demand": 1
         }
       ],
       "situations": [{ "id": "calm", "name": "Quiet day", "steps": 6, "events": [] }],
@@ -1027,148 +1146,35 @@
     },
     "best": {
       "plan": {
-        "f2": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n6", "n5", "n4", "n0"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
         "f3": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n6", "n2", "n1", "n0"], "share": 1 }] }],
+          "stages": [
+            { "from": 0, "paths": [{ "nodes": ["n0", "n8", "n5", "n1", "n3"], "share": 1 }] }
+          ],
           "redundancy": 0,
           "throttle": 1
         },
         "f0": {
           "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n3", "n2", "n6", "n5", "n1"], "share": 1 }] }
+            { "from": 0, "paths": [{ "nodes": ["n6", "n8", "n1", "n4", "n3"], "share": 1 }] }
           ],
           "redundancy": 0,
           "throttle": 1
         },
-        "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n2", "n3", "n7"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        }
-      },
-      "score": 1,
-      "built": []
-    },
-    "shortest": 0.7237746790492353,
-    "balanced": 0.8554618675208224,
-    "proof": { "milliseconds": 2, "explored": 0 }
-  },
-  {
-    "id": "c2-6",
-    "chapter": 2,
-    "setting": "office",
-    "seed": 459348806,
-    "level": {
-      "id": "c2-6",
-      "title": "Town hall",
-      "story": "The whole company watches the same talk while mail and files go on as usual.",
-      "nodes": [
-        { "id": "n0", "name": "Gateway", "kind": "router", "x": 70, "y": 14 },
-        { "id": "n1", "name": "Core", "kind": "router", "x": 70, "y": 38 },
-        { "id": "n2", "name": "File server", "kind": "server", "x": 90, "y": 86 },
-        { "id": "n3", "name": "Switch A", "kind": "switch", "x": 50, "y": 62 },
-        { "id": "n4", "name": "Floor 1", "kind": "router", "x": 10, "y": 62 },
-        { "id": "n5", "name": "Floor 2", "kind": "router", "x": 10, "y": 38 },
-        { "id": "n6", "name": "Mail server", "kind": "server", "x": 10, "y": 14 },
-        { "id": "n7", "name": "Annex", "kind": "router", "x": 10, "y": 86 },
-        { "id": "n8", "name": "Switch B", "kind": "switch", "x": 90, "y": 38 }
-      ],
-      "links": [
-        { "id": "l0", "a": "n4", "b": "n7", "capacity": 7, "delay": 1, "loss": 0 },
-        { "id": "l1", "a": "n0", "b": "n1", "capacity": 9, "delay": 1, "loss": 0 },
-        { "id": "l2", "a": "n5", "b": "n6", "capacity": 8, "delay": 1, "loss": 0 },
-        { "id": "l3", "a": "n4", "b": "n5", "capacity": 6, "delay": 1, "loss": 0 },
-        { "id": "l4", "a": "n1", "b": "n8", "capacity": 10, "delay": 1, "loss": 0 },
-        { "id": "l5", "a": "n1", "b": "n3", "capacity": 12, "delay": 2, "loss": 0 },
-        { "id": "l6", "a": "n2", "b": "n8", "capacity": 11, "delay": 2, "loss": 0 },
-        { "id": "l7", "a": "n3", "b": "n4", "capacity": 7, "delay": 3, "loss": 0 },
-        { "id": "l8", "a": "n0", "b": "n8", "capacity": 13, "delay": 2, "loss": 0 },
-        { "id": "l9", "a": "n1", "b": "n2", "capacity": 12, "delay": 3, "loss": 0 },
-        { "id": "l10", "a": "n2", "b": "n3", "capacity": 4, "delay": 3, "loss": 0 },
-        { "id": "l11", "a": "n3", "b": "n7", "capacity": 7, "delay": 3, "loss": 0 },
-        { "id": "l12", "a": "n0", "b": "n6", "capacity": 5, "delay": 4, "loss": 0 }
-      ],
-      "flows": [
-        {
-          "id": "f0",
-          "name": "Video meeting",
-          "source": "n1",
-          "target": "n6",
-          "profile": "video",
-          "demand": 5
-        },
-        {
-          "id": "f1",
-          "name": "Web browsing",
-          "source": "n7",
-          "target": "n6",
-          "profile": "web",
-          "demand": 3
-        },
-        {
-          "id": "f2",
-          "name": "Cloud documents",
-          "source": "n1",
-          "target": "n4",
-          "profile": "web",
-          "demand": 4
-        },
-        {
-          "id": "f3",
-          "name": "Training video",
-          "source": "n1",
-          "target": "n6",
-          "profile": "video",
-          "demand": 3
-        },
-        {
-          "id": "f4",
-          "name": "Mail",
-          "source": "n7",
-          "target": "n2",
-          "profile": "web",
-          "demand": 4
-        }
-      ],
-      "situations": [{ "id": "calm", "name": "Quiet day", "steps": 6, "events": [] }],
-      "rules": {
-        "split": false,
-        "backup": false,
-        "redundancy": false,
-        "throttle": false,
-        "stages": false,
-        "queues": false
-      }
-    },
-    "best": {
-      "plan": {
-        "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n0", "n6"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
         "f2": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n3", "n4"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n5", "n6", "n0", "n7"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f1": {
+          "stages": [
+            { "from": 0, "paths": [{ "nodes": ["n4", "n1", "n5", "n8", "n0", "n7"], "share": 1 }] }
+          ],
           "redundancy": 0,
           "throttle": 1
         },
         "f4": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n7", "n3", "n2"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
-        "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n7", "n4", "n5", "n6"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
-        "f3": {
           "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n1", "n3", "n4", "n5", "n6"], "share": 1 }] }
+            { "from": 0, "paths": [{ "nodes": ["n4", "n3", "n1", "n8", "n0", "n7"], "share": 1 }] }
           ],
           "redundancy": 0,
           "throttle": 1
@@ -1177,15 +1183,15 @@
       "score": 1,
       "built": []
     },
-    "shortest": 0.786991951326867,
-    "balanced": 0.8183368168456909,
-    "proof": { "milliseconds": 11, "explored": 7 }
+    "shortest": 0.6474832852834315,
+    "balanced": 0.8573418024877568,
+    "proof": { "milliseconds": 4, "explored": 0 }
   },
   {
     "id": "c3-1",
     "chapter": 3,
     "setting": "datacentre",
-    "seed": 592042880,
+    "seed": 3578854987,
     "level": {
       "id": "c3-1",
       "title": "Two roads",
@@ -1193,37 +1199,36 @@
       "nodes": [
         { "id": "n0", "name": "Database", "kind": "server", "x": 10, "y": 14 },
         { "id": "n1", "name": "Spine 1", "kind": "router", "x": 90, "y": 14 },
-        { "id": "n2", "name": "Spine 2", "kind": "router", "x": 90, "y": 86 },
-        { "id": "n3", "name": "Rack A", "kind": "switch", "x": 50, "y": 86 },
-        { "id": "n4", "name": "Leaf 1", "kind": "router", "x": 10, "y": 86 },
-        { "id": "n5", "name": "Rack B", "kind": "switch", "x": 10, "y": 50 }
+        { "id": "n2", "name": "Spine 2", "kind": "router", "x": 90, "y": 50 },
+        { "id": "n3", "name": "Leaf 1", "kind": "router", "x": 90, "y": 86 },
+        { "id": "n4", "name": "Leaf 2", "kind": "router", "x": 10, "y": 86 },
+        { "id": "n5", "name": "Rack A", "kind": "switch", "x": 10, "y": 50 }
       ],
       "links": [
-        { "id": "l0", "a": "n4", "b": "n5", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l1", "a": "n0", "b": "n5", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l2", "a": "n2", "b": "n3", "capacity": 4, "delay": 3, "loss": 0 },
-        { "id": "l3", "a": "n3", "b": "n4", "capacity": 7, "delay": 3, "loss": 0 },
-        { "id": "l4", "a": "n1", "b": "n2", "capacity": 8, "delay": 4, "loss": 0 },
-        { "id": "l5", "a": "n3", "b": "n5", "capacity": 12, "delay": 3, "loss": 0 },
-        { "id": "l6", "a": "n1", "b": "n3", "capacity": 13, "delay": 4, "loss": 0 },
-        { "id": "l7", "a": "n0", "b": "n1", "capacity": 5, "delay": 4, "loss": 0 }
+        { "id": "l0", "a": "n2", "b": "n3", "capacity": 6, "delay": 2, "loss": 0 },
+        { "id": "l1", "a": "n4", "b": "n5", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l2", "a": "n0", "b": "n5", "capacity": 4, "delay": 2, "loss": 0 },
+        { "id": "l3", "a": "n1", "b": "n2", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l4", "a": "n0", "b": "n1", "capacity": 6, "delay": 4, "loss": 0 },
+        { "id": "l5", "a": "n2", "b": "n5", "capacity": 10, "delay": 4, "loss": 0 },
+        { "id": "l6", "a": "n3", "b": "n4", "capacity": 5, "delay": 4, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
-          "name": "Streaming service",
-          "source": "n2",
-          "target": "n0",
-          "profile": "video",
-          "demand": 7
+          "name": "Web requests",
+          "source": "n1",
+          "target": "n3",
+          "profile": "web",
+          "demand": 4
         },
         {
           "id": "f1",
-          "name": "Web requests",
-          "source": "n4",
-          "target": "n2",
+          "name": "API calls",
+          "source": "n5",
+          "target": "n0",
           "profile": "web",
-          "demand": 4
+          "demand": 6
         }
       ],
       "situations": [{ "id": "calm", "name": "Quiet day", "steps": 6, "events": [] }],
@@ -1239,20 +1244,20 @@
     "best": {
       "plan": {
         "f0": {
-          "stages": [
-            {
-              "from": 0,
-              "paths": [
-                { "nodes": ["n2", "n1", "n0"], "share": 0.5 },
-                { "nodes": ["n2", "n3", "n5", "n0"], "share": 0.5 }
-              ]
-            }
-          ],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n2", "n3"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
         "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n4", "n3", "n1", "n2"], "share": 1 }] }],
+          "stages": [
+            {
+              "from": 0,
+              "paths": [
+                { "nodes": ["n5", "n0"], "share": 0.5 },
+                { "nodes": ["n5", "n2", "n1", "n0"], "share": 0.5 }
+              ]
+            }
+          ],
           "redundancy": 0,
           "throttle": 1
         }
@@ -1260,64 +1265,64 @@
       "score": 1,
       "built": []
     },
-    "shortest": 0.7273888340663927,
-    "balanced": 0.7109932082242392,
-    "proof": { "milliseconds": 53, "explored": 4 }
+    "shortest": 0.7688431645926912,
+    "balanced": 0.7650819998320296,
+    "proof": { "milliseconds": 6, "explored": 0 }
   },
   {
     "id": "c3-2",
     "chapter": 3,
     "setting": "festival",
-    "seed": 2675170099,
+    "seed": 2910350955,
     "level": {
       "id": "c3-2",
       "title": "Main stage",
       "story": "The live stream is bigger than any single cable on the field.",
       "nodes": [
-        { "id": "n0", "name": "Tent A", "kind": "switch", "x": 50, "y": 50 },
-        { "id": "n1", "name": "Control tent", "kind": "router", "x": 50, "y": 14 },
-        { "id": "n2", "name": "North field", "kind": "router", "x": 50, "y": 86 },
-        { "id": "n3", "name": "South field", "kind": "router", "x": 90, "y": 50 },
-        { "id": "n4", "name": "Ticket server", "kind": "server", "x": 10, "y": 50 },
-        { "id": "n5", "name": "Camp", "kind": "router", "x": 90, "y": 86 },
-        { "id": "n6", "name": "Gate", "kind": "router", "x": 90, "y": 14 }
+        { "id": "n0", "name": "Control tent", "kind": "router", "x": 50, "y": 50 },
+        { "id": "n1", "name": "Tent A", "kind": "switch", "x": 50, "y": 86 },
+        { "id": "n2", "name": "North field", "kind": "router", "x": 50, "y": 14 },
+        { "id": "n3", "name": "South field", "kind": "router", "x": 10, "y": 50 },
+        { "id": "n4", "name": "Camp", "kind": "router", "x": 90, "y": 50 },
+        { "id": "n5", "name": "Ticket server", "kind": "server", "x": 90, "y": 14 },
+        { "id": "n6", "name": "Gate", "kind": "router", "x": 10, "y": 86 }
       ],
       "links": [
-        { "id": "l0", "a": "n0", "b": "n2", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l1", "a": "n3", "b": "n5", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l2", "a": "n0", "b": "n1", "capacity": 13, "delay": 2, "loss": 0 },
-        { "id": "l3", "a": "n3", "b": "n6", "capacity": 5, "delay": 2, "loss": 0 },
-        { "id": "l4", "a": "n0", "b": "n3", "capacity": 11, "delay": 3, "loss": 0 },
-        { "id": "l5", "a": "n0", "b": "n4", "capacity": 6, "delay": 3, "loss": 0 },
-        { "id": "l6", "a": "n1", "b": "n6", "capacity": 6, "delay": 3, "loss": 0 },
-        { "id": "l7", "a": "n2", "b": "n5", "capacity": 9, "delay": 3, "loss": 0 },
+        { "id": "l0", "a": "n0", "b": "n1", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l1", "a": "n3", "b": "n6", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l2", "a": "n0", "b": "n2", "capacity": 7, "delay": 2, "loss": 0 },
+        { "id": "l3", "a": "n4", "b": "n5", "capacity": 4, "delay": 2, "loss": 0 },
+        { "id": "l4", "a": "n0", "b": "n3", "capacity": 12, "delay": 3, "loss": 0 },
+        { "id": "l5", "a": "n0", "b": "n4", "capacity": 8, "delay": 3, "loss": 0 },
+        { "id": "l6", "a": "n1", "b": "n6", "capacity": 9, "delay": 3, "loss": 0 },
+        { "id": "l7", "a": "n2", "b": "n5", "capacity": 5, "delay": 3, "loss": 0 },
         { "id": "l8", "a": "n1", "b": "n3", "capacity": 12, "delay": 3, "loss": 0 },
-        { "id": "l9", "a": "n1", "b": "n4", "capacity": 7, "delay": 3, "loss": 0 }
+        { "id": "l9", "a": "n1", "b": "n4", "capacity": 13, "delay": 3, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
-          "name": "Live stream",
-          "source": "n1",
-          "target": "n4",
-          "profile": "video",
-          "demand": 7
+          "name": "Festival app",
+          "source": "n3",
+          "target": "n5",
+          "profile": "web",
+          "demand": 3
         },
         {
           "id": "f1",
-          "name": "Festival app",
+          "name": "Social wall",
           "source": "n3",
-          "target": "n4",
+          "target": "n5",
           "profile": "web",
-          "demand": 6
+          "demand": 4
         },
         {
           "id": "f2",
-          "name": "Social wall",
-          "source": "n3",
-          "target": "n6",
+          "name": "Schedule page",
+          "source": "n1",
+          "target": "n5",
           "profile": "web",
-          "demand": 8
+          "demand": 2
         }
       ],
       "situations": [{ "id": "calm", "name": "Quiet day", "steps": 6, "events": [] }],
@@ -1332,13 +1337,13 @@
     },
     "best": {
       "plan": {
-        "f2": {
+        "f1": {
           "stages": [
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n3", "n6"], "share": 0.5 },
-                { "nodes": ["n3", "n1", "n6"], "share": 0.5 }
+                { "nodes": ["n3", "n0", "n2", "n5"], "share": 0.75 },
+                { "nodes": ["n3", "n0", "n4", "n5"], "share": 0.25 }
               ]
             }
           ],
@@ -1346,12 +1351,12 @@
           "throttle": 1
         },
         "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n4"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n0", "n4", "n5"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
-        "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n0", "n4"], "share": 1 }] }],
+        "f2": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n0", "n2", "n5"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         }
@@ -1359,66 +1364,66 @@
       "score": 1,
       "built": []
     },
-    "shortest": 0.8357814527412002,
-    "balanced": 0.8887869079890198,
-    "proof": { "milliseconds": 57, "explored": 0 }
+    "shortest": 0.7416221534158167,
+    "balanced": 0.8689958355570153,
+    "proof": { "milliseconds": 36, "explored": 0 }
   },
   {
     "id": "c3-3",
     "chapter": 3,
     "setting": "campus",
-    "seed": 4104100939,
+    "seed": 3453680616,
     "level": {
       "id": "c3-3",
       "title": "Open day",
       "story": "Video, mail and the web portal share a cramped campus.",
       "nodes": [
-        { "id": "n0", "name": "Core", "kind": "router", "x": 30, "y": 14 },
-        { "id": "n1", "name": "Library", "kind": "router", "x": 50, "y": 14 },
-        { "id": "n2", "name": "Course portal", "kind": "server", "x": 90, "y": 14 },
-        { "id": "n3", "name": "Science", "kind": "router", "x": 50, "y": 86 },
-        { "id": "n4", "name": "Dorm 1", "kind": "client", "x": 10, "y": 14 },
-        { "id": "n5", "name": "Dorm 2", "kind": "client", "x": 30, "y": 86 },
-        { "id": "n6", "name": "Arts", "kind": "router", "x": 70, "y": 50 },
-        { "id": "n7", "name": "Hall A", "kind": "switch", "x": 50, "y": 50 }
+        { "id": "n0", "name": "Course portal", "kind": "server", "x": 90, "y": 86 },
+        { "id": "n1", "name": "Core", "kind": "router", "x": 70, "y": 14 },
+        { "id": "n2", "name": "Hall A", "kind": "switch", "x": 50, "y": 14 },
+        { "id": "n3", "name": "Library", "kind": "router", "x": 90, "y": 14 },
+        { "id": "n4", "name": "Science", "kind": "router", "x": 10, "y": 14 },
+        { "id": "n5", "name": "Hall B", "kind": "switch", "x": 30, "y": 86 },
+        { "id": "n6", "name": "Arts", "kind": "router", "x": 50, "y": 50 },
+        { "id": "n7", "name": "Gate", "kind": "router", "x": 10, "y": 86 }
       ],
       "links": [
-        { "id": "l0", "a": "n0", "b": "n1", "capacity": 8, "delay": 1, "loss": 0 },
-        { "id": "l1", "a": "n0", "b": "n4", "capacity": 9, "delay": 1, "loss": 0 },
-        { "id": "l2", "a": "n3", "b": "n5", "capacity": 5, "delay": 1, "loss": 0 },
-        { "id": "l3", "a": "n6", "b": "n7", "capacity": 8, "delay": 1, "loss": 0 },
-        { "id": "l4", "a": "n3", "b": "n7", "capacity": 11, "delay": 2, "loss": 0 },
-        { "id": "l5", "a": "n1", "b": "n7", "capacity": 12, "delay": 2, "loss": 0 },
-        { "id": "l6", "a": "n2", "b": "n6", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l7", "a": "n0", "b": "n7", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l8", "a": "n1", "b": "n6", "capacity": 13, "delay": 2, "loss": 0 },
-        { "id": "l9", "a": "n3", "b": "n6", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l10", "a": "n1", "b": "n2", "capacity": 8, "delay": 3, "loss": 0 }
+        { "id": "l0", "a": "n1", "b": "n2", "capacity": 11, "delay": 1, "loss": 0 },
+        { "id": "l1", "a": "n1", "b": "n3", "capacity": 9, "delay": 1, "loss": 0 },
+        { "id": "l2", "a": "n5", "b": "n7", "capacity": 10, "delay": 1, "loss": 0 },
+        { "id": "l3", "a": "n2", "b": "n6", "capacity": 12, "delay": 2, "loss": 0 },
+        { "id": "l4", "a": "n5", "b": "n6", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l5", "a": "n2", "b": "n4", "capacity": 10, "delay": 3, "loss": 0 },
+        { "id": "l6", "a": "n0", "b": "n6", "capacity": 12, "delay": 3, "loss": 0 },
+        { "id": "l7", "a": "n1", "b": "n6", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l8", "a": "n0", "b": "n3", "capacity": 6, "delay": 4, "loss": 0 },
+        { "id": "l9", "a": "n4", "b": "n7", "capacity": 8, "delay": 4, "loss": 0 },
+        { "id": "l10", "a": "n0", "b": "n5", "capacity": 8, "delay": 4, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
-          "name": "Lecture stream",
-          "source": "n6",
+          "name": "Course portal",
+          "source": "n3",
           "target": "n0",
-          "profile": "video",
-          "demand": 6
+          "profile": "web",
+          "demand": 5
         },
         {
           "id": "f1",
-          "name": "Course portal",
-          "source": "n5",
-          "target": "n2",
+          "name": "Library search",
+          "source": "n3",
+          "target": "n0",
           "profile": "web",
           "demand": 4
         },
         {
           "id": "f2",
-          "name": "Seminar call",
-          "source": "n6",
-          "target": "n2",
-          "profile": "video",
-          "demand": 5
+          "name": "Student mail",
+          "source": "n5",
+          "target": "n0",
+          "profile": "web",
+          "demand": 6
         }
       ],
       "situations": [
@@ -1444,27 +1449,26 @@
     },
     "best": {
       "plan": {
-        "f0": {
+        "f2": {
           "stages": [
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n6", "n1", "n0"], "share": 0.5 },
-                { "nodes": ["n6", "n7", "n0"], "share": 0.5 }
+                { "nodes": ["n5", "n0"], "share": 0.5 },
+                { "nodes": ["n5", "n6", "n0"], "share": 0.5 }
               ]
             }
           ],
           "redundancy": 0,
           "throttle": 1
         },
-        "f2": {
+        "f0": {
           "stages": [
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n6", "n2"], "share": 0.5 },
-                { "nodes": ["n6", "n1", "n2"], "share": 0.25 },
-                { "nodes": ["n6", "n3", "n7", "n1", "n2"], "share": 0.25 }
+                { "nodes": ["n3", "n0"], "share": 0.5 },
+                { "nodes": ["n3", "n1", "n6", "n0"], "share": 0.5 }
               ]
             }
           ],
@@ -1476,8 +1480,9 @@
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n5", "n3", "n6", "n1", "n2"], "share": 0.75 },
-                { "nodes": ["n5", "n3", "n6", "n2"], "share": 0.25 }
+                { "nodes": ["n3", "n1", "n6", "n5", "n0"], "share": 0.5 },
+                { "nodes": ["n3", "n0"], "share": 0.25 },
+                { "nodes": ["n3", "n1", "n6", "n0"], "share": 0.25 }
               ]
             }
           ],
@@ -1488,77 +1493,76 @@
       "score": 1,
       "built": []
     },
-    "shortest": 0.633020674416819,
-    "balanced": 0.8635242756326793,
-    "proof": { "milliseconds": 27, "explored": 0 }
+    "shortest": 0.6701721357235213,
+    "balanced": 0.9117572107730529,
+    "proof": { "milliseconds": 77, "explored": 51 }
   },
   {
     "id": "c3-4",
     "chapter": 3,
     "setting": "provider",
-    "seed": 3940250736,
+    "seed": 2088439990,
     "level": {
       "id": "c3-4",
       "title": "Cup final",
       "story": "The whole region watches the same match. Spread it over the ring.",
       "nodes": [
         { "id": "n0", "name": "Peering point", "kind": "server", "x": 10, "y": 14 },
-        { "id": "n1", "name": "Core 1", "kind": "router", "x": 50, "y": 14 },
-        { "id": "n2", "name": "Core 2", "kind": "router", "x": 90, "y": 14 },
-        { "id": "n3", "name": "Metro N", "kind": "router", "x": 90, "y": 38 },
-        { "id": "n4", "name": "Content cache", "kind": "server", "x": 90, "y": 86 },
-        { "id": "n5", "name": "Metro S", "kind": "router", "x": 50, "y": 86 },
-        { "id": "n6", "name": "Metro E", "kind": "router", "x": 10, "y": 86 },
-        { "id": "n7", "name": "Metro W", "kind": "router", "x": 10, "y": 62 },
-        { "id": "n8", "name": "Agg A", "kind": "switch", "x": 10, "y": 38 }
+        { "id": "n1", "name": "Agg A", "kind": "switch", "x": 30, "y": 14 },
+        { "id": "n2", "name": "Core 1", "kind": "router", "x": 50, "y": 14 },
+        { "id": "n3", "name": "Core 2", "kind": "router", "x": 70, "y": 14 },
+        { "id": "n4", "name": "Metro N", "kind": "router", "x": 90, "y": 14 },
+        { "id": "n5", "name": "Content cache", "kind": "server", "x": 90, "y": 86 },
+        { "id": "n6", "name": "Agg B", "kind": "switch", "x": 50, "y": 86 },
+        { "id": "n7", "name": "Metro S", "kind": "router", "x": 30, "y": 86 },
+        { "id": "n8", "name": "Metro E", "kind": "router", "x": 10, "y": 86 }
       ],
       "links": [
-        { "id": "l0", "a": "n6", "b": "n7", "capacity": 8, "delay": 1, "loss": 0 },
-        { "id": "l1", "a": "n0", "b": "n8", "capacity": 5, "delay": 1, "loss": 0 },
-        { "id": "l2", "a": "n2", "b": "n3", "capacity": 9, "delay": 1, "loss": 0 },
-        { "id": "l3", "a": "n7", "b": "n8", "capacity": 13, "delay": 1, "loss": 0 },
-        { "id": "l4", "a": "n3", "b": "n4", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l5", "a": "n0", "b": "n1", "capacity": 6, "delay": 3, "loss": 0 },
-        { "id": "l6", "a": "n1", "b": "n2", "capacity": 5, "delay": 3, "loss": 0 },
-        { "id": "l7", "a": "n4", "b": "n5", "capacity": 9, "delay": 3, "loss": 0 },
-        { "id": "l8", "a": "n5", "b": "n6", "capacity": 7, "delay": 3, "loss": 0 },
-        { "id": "l9", "a": "n1", "b": "n3", "capacity": 8, "delay": 3, "loss": 0 },
-        { "id": "l10", "a": "n1", "b": "n8", "capacity": 9, "delay": 3, "loss": 0 },
-        { "id": "l11", "a": "n5", "b": "n7", "capacity": 8, "delay": 3, "loss": 0 },
-        { "id": "l12", "a": "n3", "b": "n5", "capacity": 10, "delay": 3, "loss": 0 }
+        { "id": "l0", "a": "n0", "b": "n1", "capacity": 9, "delay": 1, "loss": 0 },
+        { "id": "l1", "a": "n1", "b": "n2", "capacity": 12, "delay": 1, "loss": 0 },
+        { "id": "l2", "a": "n2", "b": "n3", "capacity": 5, "delay": 1, "loss": 0 },
+        { "id": "l3", "a": "n3", "b": "n4", "capacity": 5, "delay": 1, "loss": 0 },
+        { "id": "l4", "a": "n6", "b": "n7", "capacity": 12, "delay": 1, "loss": 0 },
+        { "id": "l5", "a": "n7", "b": "n8", "capacity": 5, "delay": 1, "loss": 0 },
+        { "id": "l6", "a": "n5", "b": "n6", "capacity": 9, "delay": 3, "loss": 0 },
+        { "id": "l7", "a": "n0", "b": "n8", "capacity": 4, "delay": 4, "loss": 0 },
+        { "id": "l8", "a": "n1", "b": "n7", "capacity": 12, "delay": 4, "loss": 0 },
+        { "id": "l9", "a": "n2", "b": "n6", "capacity": 9, "delay": 4, "loss": 0 },
+        { "id": "l10", "a": "n4", "b": "n5", "capacity": 10, "delay": 4, "loss": 0 },
+        { "id": "l11", "a": "n2", "b": "n5", "capacity": 8, "delay": 4, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
-          "name": "TV service",
-          "source": "n1",
-          "target": "n4",
-          "profile": "video",
-          "demand": 6
+          "name": "Home internet",
+          "source": "n2",
+          "target": "n5",
+          "profile": "web",
+          "demand": 7
         },
         {
           "id": "f1",
-          "name": "Video on demand",
-          "source": "n2",
-          "target": "n1",
-          "profile": "video",
-          "demand": 3
+          "name": "Cloud access",
+          "source": "n7",
+          "target": "n2",
+          "profile": "web",
+          "demand": 6
         },
         {
           "id": "f2",
-          "name": "Home internet",
-          "source": "n3",
+          "name": "Mail service",
+          "source": "n7",
           "target": "n0",
           "profile": "web",
-          "demand": 4
+          "demand": 6
         },
         {
           "id": "f3",
-          "name": "Cloud access",
-          "source": "n8",
-          "target": "n3",
+          "name": "Customer portal",
+          "source": "n2",
+          "target": "n5",
           "profile": "web",
-          "demand": 2
+          "demand": 5
         }
       ],
       "situations": [
@@ -1568,8 +1572,8 @@
           "name": "Rush hour",
           "steps": 8,
           "events": [
-            { "kind": "burst", "flow": "f1", "from": 3, "to": 6, "factor": 2 },
-            { "kind": "burst", "flow": "f3", "from": 3, "to": 6, "factor": 2 }
+            { "kind": "burst", "flow": "f2", "from": 3, "to": 6, "factor": 2 },
+            { "kind": "burst", "flow": "f1", "from": 3, "to": 6, "factor": 2 }
           ]
         }
       ],
@@ -1585,14 +1589,7 @@
     "best": {
       "plan": {
         "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n3", "n4"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
-        "f2": {
-          "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n3", "n5", "n7", "n8", "n0"], "share": 1 }] }
-          ],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n5"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
@@ -1601,8 +1598,22 @@
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n2", "n1"], "share": 0.75 },
-                { "nodes": ["n2", "n3", "n1"], "share": 0.25 }
+                { "nodes": ["n7", "n1", "n2"], "share": 0.5 },
+                { "nodes": ["n7", "n6", "n2"], "share": 0.5 }
+              ]
+            }
+          ],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f2": {
+          "stages": [
+            {
+              "from": 0,
+              "paths": [
+                { "nodes": ["n7", "n1", "n0"], "share": 0.5 },
+                { "nodes": ["n7", "n8", "n0"], "share": 0.25 },
+                { "nodes": ["n7", "n6", "n2", "n1", "n0"], "share": 0.25 }
               ]
             }
           ],
@@ -1610,7 +1621,7 @@
           "throttle": 1
         },
         "f3": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n8", "n7", "n5", "n3"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n3", "n4", "n5"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         }
@@ -1618,9 +1629,9 @@
       "score": 1,
       "built": []
     },
-    "shortest": 0.6335675279582459,
-    "balanced": 0.8717382710968601,
-    "proof": { "milliseconds": 226, "explored": 102 }
+    "shortest": 0.6539195235818971,
+    "balanced": 0.8811105856101186,
+    "proof": { "milliseconds": 131, "explored": 19 }
   },
   {
     "id": "c3-5",
@@ -1657,26 +1668,26 @@
       "flows": [
         {
           "id": "f0",
-          "name": "Remote consultation",
+          "name": "Staff intranet",
           "source": "n6",
           "target": "n0",
-          "profile": "video",
+          "profile": "web",
           "demand": 6
         },
         {
           "id": "f1",
-          "name": "Staff intranet",
+          "name": "Lab results",
           "source": "n2",
           "target": "n0",
           "profile": "web",
-          "demand": 5
+          "demand": 7
         },
         {
           "id": "f2",
-          "name": "Surgery camera",
+          "name": "Appointments",
           "source": "n7",
           "target": "n0",
-          "profile": "video",
+          "profile": "web",
           "demand": 4
         }
       ],
@@ -1697,8 +1708,8 @@
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n6", "n2", "n1", "n0"], "share": 0.5 },
-                { "nodes": ["n6", "n5", "n4", "n0"], "share": 0.5 }
+                { "nodes": ["n6", "n5", "n0"], "share": 0.5 },
+                { "nodes": ["n6", "n2", "n1", "n0"], "share": 0.5 }
               ]
             }
           ],
@@ -1706,7 +1717,15 @@
           "throttle": 1
         },
         "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n1", "n0"], "share": 1 }] }],
+          "stages": [
+            {
+              "from": 0,
+              "paths": [
+                { "nodes": ["n2", "n1", "n0"], "share": 0.5 },
+                { "nodes": ["n2", "n1", "n5", "n4", "n0"], "share": 0.5 }
+              ]
+            }
+          ],
           "redundancy": 0,
           "throttle": 1
         },
@@ -1719,69 +1738,69 @@
       "score": 1,
       "built": []
     },
-    "shortest": 0.7212758544366533,
-    "balanced": 0.7015139617452361,
-    "proof": { "milliseconds": 12, "explored": 0 }
+    "shortest": 0.7951793768037566,
+    "balanced": 0.7944918239896726,
+    "proof": { "milliseconds": 64, "explored": 0 }
   },
   {
     "id": "c3-6",
     "chapter": 3,
     "setting": "datacentre",
-    "seed": 1286759994,
+    "seed": 1135614328,
     "level": {
       "id": "c3-6",
       "title": "Big transfer",
       "story": "A migration needs every spare cable, and the shop must stay online.",
       "nodes": [
-        { "id": "n0", "name": "Spine 1", "kind": "router", "x": 50, "y": 62 },
-        { "id": "n1", "name": "Rack A", "kind": "switch", "x": 50, "y": 14 },
-        { "id": "n2", "name": "Spine 2", "kind": "router", "x": 30, "y": 14 },
-        { "id": "n3", "name": "Leaf 1", "kind": "router", "x": 30, "y": 38 },
-        { "id": "n4", "name": "Leaf 2", "kind": "router", "x": 10, "y": 62 },
-        { "id": "n5", "name": "Database", "kind": "server", "x": 10, "y": 14 },
-        { "id": "n6", "name": "Rack B", "kind": "switch", "x": 50, "y": 86 },
-        { "id": "n7", "name": "Leaf 3", "kind": "router", "x": 70, "y": 62 },
+        { "id": "n0", "name": "Spine 1", "kind": "router", "x": 63.333333333333336, "y": 38 },
+        { "id": "n1", "name": "Spine 2", "kind": "router", "x": 36.66666666666667, "y": 62 },
+        { "id": "n2", "name": "Leaf 1", "kind": "router", "x": 63.333333333333336, "y": 14 },
+        { "id": "n3", "name": "Rack A", "kind": "switch", "x": 63.333333333333336, "y": 62 },
+        { "id": "n4", "name": "Leaf 2", "kind": "router", "x": 90, "y": 62 },
+        { "id": "n5", "name": "Leaf 3", "kind": "router", "x": 36.66666666666667, "y": 38 },
+        { "id": "n6", "name": "Border", "kind": "router", "x": 90, "y": 38 },
+        { "id": "n7", "name": "Database", "kind": "server", "x": 10, "y": 38 },
         { "id": "n8", "name": "Storage", "kind": "server", "x": 90, "y": 86 }
       ],
       "links": [
-        { "id": "l0", "a": "n0", "b": "n6", "capacity": 8, "delay": 1, "loss": 0 },
-        { "id": "l1", "a": "n2", "b": "n3", "capacity": 12, "delay": 1, "loss": 0 },
-        { "id": "l2", "a": "n0", "b": "n7", "capacity": 13, "delay": 1, "loss": 0 },
-        { "id": "l3", "a": "n1", "b": "n2", "capacity": 11, "delay": 1, "loss": 0 },
-        { "id": "l4", "a": "n2", "b": "n5", "capacity": 4, "delay": 1, "loss": 0 },
-        { "id": "l5", "a": "n7", "b": "n8", "capacity": 5, "delay": 2, "loss": 0 },
-        { "id": "l6", "a": "n0", "b": "n3", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l7", "a": "n3", "b": "n4", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l8", "a": "n6", "b": "n7", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l9", "a": "n1", "b": "n3", "capacity": 13, "delay": 2, "loss": 0 },
-        { "id": "l10", "a": "n0", "b": "n1", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l11", "a": "n4", "b": "n5", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l12", "a": "n6", "b": "n8", "capacity": 7, "delay": 3, "loss": 0 }
+        { "id": "l0", "a": "n4", "b": "n8", "capacity": 6, "delay": 1, "loss": 0 },
+        { "id": "l1", "a": "n0", "b": "n2", "capacity": 10, "delay": 1, "loss": 0 },
+        { "id": "l2", "a": "n0", "b": "n3", "capacity": 9, "delay": 1, "loss": 0 },
+        { "id": "l3", "a": "n1", "b": "n5", "capacity": 7, "delay": 1, "loss": 0 },
+        { "id": "l4", "a": "n4", "b": "n6", "capacity": 13, "delay": 1, "loss": 0 },
+        { "id": "l5", "a": "n0", "b": "n5", "capacity": 6, "delay": 2, "loss": 0 },
+        { "id": "l6", "a": "n0", "b": "n6", "capacity": 12, "delay": 2, "loss": 0 },
+        { "id": "l7", "a": "n5", "b": "n7", "capacity": 7, "delay": 2, "loss": 0 },
+        { "id": "l8", "a": "n1", "b": "n3", "capacity": 6, "delay": 2, "loss": 0 },
+        { "id": "l9", "a": "n3", "b": "n4", "capacity": 6, "delay": 2, "loss": 0 },
+        { "id": "l10", "a": "n3", "b": "n8", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l11", "a": "n2", "b": "n5", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l12", "a": "n2", "b": "n6", "capacity": 9, "delay": 2, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
-          "name": "Streaming service",
+          "name": "Web requests",
           "source": "n3",
-          "target": "n5",
-          "profile": "video",
-          "demand": 5
+          "target": "n7",
+          "profile": "web",
+          "demand": 7
         },
         {
           "id": "f1",
-          "name": "Video encode",
-          "source": "n7",
-          "target": "n4",
-          "profile": "video",
-          "demand": 4
+          "name": "API calls",
+          "source": "n6",
+          "target": "n1",
+          "profile": "web",
+          "demand": 8
         },
         {
           "id": "f2",
-          "name": "Web requests",
-          "source": "n1",
-          "target": "n5",
+          "name": "Search",
+          "source": "n6",
+          "target": "n8",
           "profile": "web",
-          "demand": 3
+          "demand": 9
         }
       ],
       "situations": [{ "id": "calm", "name": "Quiet day", "steps": 6, "events": [] }],
@@ -1796,13 +1815,13 @@
     },
     "best": {
       "plan": {
-        "f0": {
+        "f2": {
           "stages": [
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n3", "n4", "n5"], "share": 0.75 },
-                { "nodes": ["n3", "n2", "n5"], "share": 0.25 }
+                { "nodes": ["n6", "n4", "n8"], "share": 0.5 },
+                { "nodes": ["n6", "n0", "n3", "n8"], "share": 0.5 }
               ]
             }
           ],
@@ -1814,21 +1833,21 @@
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n7", "n0", "n3", "n4"], "share": 0.5 },
-                { "nodes": ["n7", "n0", "n1", "n2", "n5", "n4"], "share": 0.5 }
+                { "nodes": ["n6", "n2", "n5", "n1"], "share": 0.75 },
+                { "nodes": ["n6", "n0", "n3", "n1"], "share": 0.25 }
               ]
             }
           ],
           "redundancy": 0,
           "throttle": 1
         },
-        "f2": {
+        "f0": {
           "stages": [
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n1", "n3", "n4", "n5"], "share": 0.75 },
-                { "nodes": ["n1", "n2", "n5"], "share": 0.25 }
+                { "nodes": ["n3", "n4", "n6", "n0", "n5", "n7"], "share": 0.75 },
+                { "nodes": ["n3", "n0", "n2", "n5", "n7"], "share": 0.25 }
               ]
             }
           ],
@@ -1839,9 +1858,9 @@
       "score": 1,
       "built": []
     },
-    "shortest": 0.5894660664925463,
-    "balanced": 0.664155697996541,
-    "proof": { "milliseconds": 32, "explored": 0 }
+    "shortest": 0.7089589222180521,
+    "balanced": 0.7560241833268749,
+    "proof": { "milliseconds": 41, "explored": 0 }
   },
   {
     "id": "c4-1",
@@ -1938,58 +1957,58 @@
     "id": "c4-2",
     "chapter": 4,
     "setting": "hospital",
-    "seed": 3290959682,
+    "seed": 3901496109,
     "level": {
       "id": "c4-2",
       "title": "Nurse call",
       "story": "The call system must be fast; the record system can wait a moment.",
       "nodes": [
-        { "id": "n0", "name": "Records", "kind": "server", "x": 90, "y": 50 },
-        { "id": "n1", "name": "Core", "kind": "router", "x": 90, "y": 86 },
-        { "id": "n2", "name": "Ward hub", "kind": "router", "x": 70, "y": 50 },
-        { "id": "n3", "name": "Ward A", "kind": "switch", "x": 30, "y": 14 },
-        { "id": "n4", "name": "Theatre hub", "kind": "router", "x": 70, "y": 14 },
-        { "id": "n5", "name": "North wing", "kind": "router", "x": 30, "y": 86 },
-        { "id": "n6", "name": "South wing", "kind": "router", "x": 10, "y": 86 },
-        { "id": "n7", "name": "Edge", "kind": "router", "x": 10, "y": 50 }
+        { "id": "n0", "name": "Core", "kind": "router", "x": 30, "y": 14 },
+        { "id": "n1", "name": "Ward hub", "kind": "router", "x": 50, "y": 14 },
+        { "id": "n2", "name": "Records", "kind": "server", "x": 10, "y": 50 },
+        { "id": "n3", "name": "Theatre hub", "kind": "router", "x": 70, "y": 86 },
+        { "id": "n4", "name": "North wing", "kind": "router", "x": 30, "y": 86 },
+        { "id": "n5", "name": "South wing", "kind": "router", "x": 90, "y": 50 },
+        { "id": "n6", "name": "Edge", "kind": "router", "x": 90, "y": 86 },
+        { "id": "n7", "name": "Spare", "kind": "router", "x": 70, "y": 14 }
       ],
       "links": [
-        { "id": "l0", "a": "n0", "b": "n2", "capacity": 8, "delay": 1, "loss": 0 },
-        { "id": "l1", "a": "n5", "b": "n6", "capacity": 8, "delay": 1, "loss": 0 },
-        { "id": "l2", "a": "n0", "b": "n1", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l3", "a": "n6", "b": "n7", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l4", "a": "n2", "b": "n4", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l5", "a": "n3", "b": "n7", "capacity": 13, "delay": 2, "loss": 0 },
-        { "id": "l6", "a": "n3", "b": "n4", "capacity": 10, "delay": 3, "loss": 0 },
-        { "id": "l7", "a": "n0", "b": "n4", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l8", "a": "n1", "b": "n2", "capacity": 5, "delay": 2, "loss": 0 },
-        { "id": "l9", "a": "n5", "b": "n7", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l10", "a": "n2", "b": "n3", "capacity": 12, "delay": 3, "loss": 0 }
+        { "id": "l0", "a": "n0", "b": "n1", "capacity": 9, "delay": 1, "loss": 0 },
+        { "id": "l1", "a": "n1", "b": "n7", "capacity": 5, "delay": 1, "loss": 0 },
+        { "id": "l2", "a": "n3", "b": "n6", "capacity": 9, "delay": 1, "loss": 0 },
+        { "id": "l3", "a": "n5", "b": "n6", "capacity": 5, "delay": 2, "loss": 0 },
+        { "id": "l4", "a": "n0", "b": "n2", "capacity": 6, "delay": 2, "loss": 0 },
+        { "id": "l5", "a": "n2", "b": "n4", "capacity": 10, "delay": 2, "loss": 0 },
+        { "id": "l6", "a": "n5", "b": "n7", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l7", "a": "n3", "b": "n5", "capacity": 12, "delay": 2, "loss": 0 },
+        { "id": "l8", "a": "n3", "b": "n4", "capacity": 9, "delay": 3, "loss": 0 },
+        { "id": "l9", "a": "n0", "b": "n4", "capacity": 12, "delay": 4, "loss": 0 },
+        { "id": "l10", "a": "n3", "b": "n7", "capacity": 9, "delay": 4, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
           "name": "Nurse call",
           "source": "n3",
-          "target": "n0",
+          "target": "n1",
           "profile": "voice",
           "demand": 2
         },
         {
           "id": "f1",
           "name": "Staff intranet",
-          "source": "n3",
-          "target": "n0",
+          "source": "n7",
+          "target": "n2",
           "profile": "web",
-          "demand": 4
+          "demand": 1
         },
         {
           "id": "f2",
-          "name": "Remote consultation",
-          "source": "n3",
-          "target": "n0",
-          "profile": "video",
-          "demand": 5
+          "name": "Lab results",
+          "source": "n6",
+          "target": "n1",
+          "profile": "web",
+          "demand": 3
         }
       ],
       "situations": [
@@ -1999,8 +2018,8 @@
           "name": "Rush hour",
           "steps": 8,
           "events": [
-            { "kind": "burst", "flow": "f2", "from": 3, "to": 6, "factor": 2 },
-            { "kind": "burst", "flow": "f1", "from": 3, "to": 6, "factor": 2 }
+            { "kind": "burst", "flow": "f1", "from": 3, "to": 6, "factor": 2 },
+            { "kind": "burst", "flow": "f2", "from": 3, "to": 6, "factor": 2 }
           ]
         }
       ],
@@ -2015,101 +2034,103 @@
     },
     "best": {
       "plan": {
-        "f2": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n4", "n0"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
-        "f1": {
+        "f0": {
           "stages": [
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n3", "n2", "n0"], "share": 0.5 },
-                { "nodes": ["n3", "n2", "n1", "n0"], "share": 0.5 }
+                { "nodes": ["n3", "n7", "n1"], "share": 0.5 },
+                { "nodes": ["n3", "n5", "n7", "n1"], "share": 0.5 }
               ]
             }
           ],
           "redundancy": 0,
           "throttle": 1
         },
-        "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n2", "n0"], "share": 1 }] }],
+        "f1": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n7", "n1", "n0", "n2"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f2": {
+          "stages": [
+            { "from": 0, "paths": [{ "nodes": ["n6", "n3", "n4", "n0", "n1"], "share": 1 }] }
+          ],
           "redundancy": 0,
           "throttle": 1
         }
       },
-      "score": 0.9921239837398375,
+      "score": 1,
       "built": []
     },
-    "shortest": 0.4768307874108159,
-    "balanced": 0.8590887533875339,
-    "proof": { "milliseconds": 315, "explored": 5703 }
+    "shortest": 0.7057016304404818,
+    "balanced": 0.5792199828784522,
+    "proof": { "milliseconds": 98, "explored": 0 }
   },
   {
     "id": "c4-3",
     "chapter": 4,
     "setting": "festival",
-    "seed": 2958549063,
+    "seed": 2320713785,
     "level": {
       "id": "c4-3",
       "title": "Crew radio",
       "story": "Crew calls must reach the stage manager while the stream is at its peak.",
       "nodes": [
-        { "id": "n0", "name": "Tent A", "kind": "switch", "x": 50, "y": 50 },
-        { "id": "n1", "name": "Control tent", "kind": "router", "x": 50, "y": 14 },
-        { "id": "n2", "name": "North field", "kind": "router", "x": 50, "y": 86 },
-        { "id": "n3", "name": "South field", "kind": "router", "x": 10, "y": 50 },
-        { "id": "n4", "name": "Camp", "kind": "router", "x": 90, "y": 50 },
-        { "id": "n5", "name": "Ticket server", "kind": "server", "x": 10, "y": 14 },
-        { "id": "n6", "name": "Gate", "kind": "router", "x": 90, "y": 86 },
-        { "id": "n7", "name": "Stage hub", "kind": "router", "x": 90, "y": 14 }
+        { "id": "n0", "name": "Control tent", "kind": "router", "x": 50, "y": 50 },
+        { "id": "n1", "name": "North field", "kind": "router", "x": 50, "y": 14 },
+        { "id": "n2", "name": "South field", "kind": "router", "x": 50, "y": 86 },
+        { "id": "n3", "name": "Camp", "kind": "router", "x": 10, "y": 50 },
+        { "id": "n4", "name": "Gate", "kind": "router", "x": 90, "y": 50 },
+        { "id": "n5", "name": "Stage hub", "kind": "router", "x": 10, "y": 14 },
+        { "id": "n6", "name": "Ticket server", "kind": "server", "x": 10, "y": 86 },
+        { "id": "n7", "name": "Edge", "kind": "router", "x": 90, "y": 14 }
       ],
       "links": [
-        { "id": "l0", "a": "n0", "b": "n2", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l1", "a": "n4", "b": "n6", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l2", "a": "n0", "b": "n1", "capacity": 11, "delay": 2, "loss": 0 },
-        { "id": "l3", "a": "n3", "b": "n5", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l4", "a": "n4", "b": "n7", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l5", "a": "n0", "b": "n3", "capacity": 11, "delay": 3, "loss": 0 },
-        { "id": "l6", "a": "n0", "b": "n4", "capacity": 10, "delay": 3, "loss": 0 },
-        { "id": "l7", "a": "n1", "b": "n5", "capacity": 6, "delay": 3, "loss": 0 },
-        { "id": "l8", "a": "n1", "b": "n7", "capacity": 7, "delay": 3, "loss": 0 },
+        { "id": "l0", "a": "n0", "b": "n2", "capacity": 10, "delay": 2, "loss": 0 },
+        { "id": "l1", "a": "n3", "b": "n6", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l2", "a": "n0", "b": "n1", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l3", "a": "n3", "b": "n5", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l4", "a": "n4", "b": "n7", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l5", "a": "n0", "b": "n3", "capacity": 12, "delay": 3, "loss": 0 },
+        { "id": "l6", "a": "n0", "b": "n4", "capacity": 9, "delay": 3, "loss": 0 },
+        { "id": "l7", "a": "n1", "b": "n5", "capacity": 10, "delay": 3, "loss": 0 },
+        { "id": "l8", "a": "n1", "b": "n7", "capacity": 6, "delay": 3, "loss": 0 },
         { "id": "l9", "a": "n2", "b": "n6", "capacity": 10, "delay": 3, "loss": 0 },
-        { "id": "l10", "a": "n1", "b": "n3", "capacity": 10, "delay": 3, "loss": 0 }
+        { "id": "l10", "a": "n1", "b": "n3", "capacity": 11, "delay": 3, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
           "name": "Crew radio",
-          "source": "n3",
-          "target": "n5",
+          "source": "n2",
+          "target": "n6",
           "profile": "voice",
-          "demand": 2
+          "demand": 3
         },
         {
           "id": "f1",
           "name": "Stage manager calls",
-          "source": "n0",
-          "target": "n5",
+          "source": "n2",
+          "target": "n6",
           "profile": "voice",
-          "demand": 1
+          "demand": 3
         },
         {
           "id": "f2",
-          "name": "Live stream",
-          "source": "n1",
-          "target": "n5",
-          "profile": "video",
-          "demand": 4
+          "name": "Festival app",
+          "source": "n0",
+          "target": "n6",
+          "profile": "web",
+          "demand": 8
         },
         {
           "id": "f3",
-          "name": "Festival app",
-          "source": "n2",
-          "target": "n5",
+          "name": "Social wall",
+          "source": "n7",
+          "target": "n1",
           "profile": "web",
-          "demand": 3
+          "demand": 6
         }
       ],
       "situations": [
@@ -2135,108 +2156,247 @@
     },
     "best": {
       "plan": {
+        "f0": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n6"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f1": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n6"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
         "f2": {
           "stages": [
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n1", "n5"], "share": 0.75 },
-                { "nodes": ["n1", "n3", "n5"], "share": 0.25 }
+                { "nodes": ["n0", "n3", "n6"], "share": 0.75 },
+                { "nodes": ["n0", "n2", "n6"], "share": 0.25 }
               ]
             }
           ],
           "redundancy": 0,
           "throttle": 1
         },
-        "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n5"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
         "f3": {
           "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n2", "n0", "n1", "n3", "n5"], "share": 1 }] }
+            {
+              "from": 0,
+              "paths": [
+                { "nodes": ["n7", "n1"], "share": 0.5 },
+                { "nodes": ["n7", "n4", "n0", "n1"], "share": 0.5 }
+              ]
+            }
           ],
-          "redundancy": 0,
-          "throttle": 1
-        },
-        "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n0", "n3", "n5"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         }
       },
-      "score": 0.9707850561420951,
+      "score": 0.9687716260669422,
       "built": []
     },
-    "shortest": 0.5939900399930259,
-    "balanced": 0.7011726716215113,
-    "proof": { "milliseconds": 1934, "explored": 11497 }
+    "shortest": 0.6931536402602404,
+    "balanced": 0.6892479448431083,
+    "proof": { "milliseconds": 147, "explored": 523 }
   },
   {
     "id": "c4-4",
     "chapter": 4,
     "setting": "datacentre",
-    "seed": 3746357027,
+    "seed": 3676597333,
     "level": {
       "id": "c4-4",
       "title": "On-call",
       "story": "The ops bridge must stay clear while the build farm pushes out artifacts.",
       "nodes": [
         { "id": "n0", "name": "Database", "kind": "server", "x": 10, "y": 14 },
-        { "id": "n1", "name": "Spine 1", "kind": "router", "x": 36.66666666666667, "y": 14 },
-        { "id": "n2", "name": "Spine 2", "kind": "router", "x": 63.333333333333336, "y": 14 },
-        { "id": "n3", "name": "Leaf 1", "kind": "router", "x": 90, "y": 14 },
-        { "id": "n4", "name": "Leaf 2", "kind": "router", "x": 10, "y": 50 },
-        { "id": "n5", "name": "Leaf 3", "kind": "router", "x": 36.66666666666667, "y": 50 },
-        { "id": "n6", "name": "Border", "kind": "router", "x": 63.333333333333336, "y": 50 },
+        { "id": "n1", "name": "Rack A", "kind": "switch", "x": 36.66666666666667, "y": 14 },
+        { "id": "n2", "name": "Spine 1", "kind": "router", "x": 63.333333333333336, "y": 14 },
+        { "id": "n3", "name": "Spine 2", "kind": "router", "x": 90, "y": 14 },
+        { "id": "n4", "name": "Rack B", "kind": "switch", "x": 10, "y": 50 },
+        { "id": "n5", "name": "Leaf 1", "kind": "router", "x": 36.66666666666667, "y": 50 },
+        { "id": "n6", "name": "Rack C", "kind": "switch", "x": 63.333333333333336, "y": 50 },
         { "id": "n7", "name": "Storage", "kind": "server", "x": 90, "y": 50 },
-        { "id": "n8", "name": "Edge", "kind": "router", "x": 36.66666666666667, "y": 86 }
+        { "id": "n8", "name": "Leaf 2", "kind": "router", "x": 36.66666666666667, "y": 86 }
       ],
       "links": [
-        { "id": "l0", "a": "n1", "b": "n2", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l1", "a": "n2", "b": "n3", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l2", "a": "n5", "b": "n6", "capacity": 11, "delay": 2, "loss": 0 },
-        { "id": "l3", "a": "n6", "b": "n7", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l4", "a": "n0", "b": "n1", "capacity": 5, "delay": 2, "loss": 0 },
+        { "id": "l0", "a": "n1", "b": "n2", "capacity": 11, "delay": 2, "loss": 0 },
+        { "id": "l1", "a": "n2", "b": "n3", "capacity": 5, "delay": 2, "loss": 0 },
+        { "id": "l2", "a": "n5", "b": "n6", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l3", "a": "n6", "b": "n7", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l4", "a": "n0", "b": "n1", "capacity": 8, "delay": 2, "loss": 0 },
         { "id": "l5", "a": "n4", "b": "n5", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l6", "a": "n5", "b": "n8", "capacity": 7, "delay": 2, "loss": 0 },
-        { "id": "l7", "a": "n0", "b": "n4", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l8", "a": "n1", "b": "n5", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l9", "a": "n2", "b": "n6", "capacity": 11, "delay": 2, "loss": 0 },
-        { "id": "l10", "a": "n3", "b": "n7", "capacity": 5, "delay": 2, "loss": 0 },
-        { "id": "l11", "a": "n6", "b": "n8", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l12", "a": "n1", "b": "n4", "capacity": 9, "delay": 2, "loss": 0 }
+        { "id": "l6", "a": "n5", "b": "n8", "capacity": 5, "delay": 2, "loss": 0 },
+        { "id": "l7", "a": "n0", "b": "n4", "capacity": 10, "delay": 2, "loss": 0 },
+        { "id": "l8", "a": "n1", "b": "n5", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l9", "a": "n2", "b": "n6", "capacity": 10, "delay": 2, "loss": 0 },
+        { "id": "l10", "a": "n3", "b": "n7", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l11", "a": "n6", "b": "n8", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l12", "a": "n1", "b": "n4", "capacity": 11, "delay": 2, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
           "name": "Ops bridge",
-          "source": "n1",
+          "source": "n2",
           "target": "n7",
           "profile": "voice",
-          "demand": 1
-        },
-        {
-          "id": "f1",
-          "name": "Streaming service",
-          "source": "n3",
-          "target": "n7",
-          "profile": "video",
-          "demand": 4
-        },
-        {
-          "id": "f2",
-          "name": "Web requests",
-          "source": "n1",
-          "target": "n7",
-          "profile": "web",
           "demand": 2
         },
         {
-          "id": "f3",
-          "name": "API calls",
+          "id": "f1",
+          "name": "Web requests",
           "source": "n3",
+          "target": "n7",
+          "profile": "web",
+          "demand": 5
+        },
+        {
+          "id": "f2",
+          "name": "API calls",
+          "source": "n8",
+          "target": "n0",
+          "profile": "web",
+          "demand": 5
+        },
+        {
+          "id": "f3",
+          "name": "Search",
+          "source": "n1",
+          "target": "n7",
+          "profile": "web",
+          "demand": 3
+        }
+      ],
+      "situations": [
+        { "id": "calm", "name": "Quiet day", "steps": 6, "events": [] },
+        {
+          "id": "rush",
+          "name": "Rush hour",
+          "steps": 8,
+          "events": [
+            { "kind": "burst", "flow": "f1", "from": 3, "to": 6, "factor": 2 },
+            { "kind": "burst", "flow": "f3", "from": 3, "to": 6, "factor": 2 }
+          ]
+        }
+      ],
+      "rules": {
+        "split": true,
+        "backup": false,
+        "redundancy": false,
+        "throttle": false,
+        "stages": false,
+        "queues": false
+      }
+    },
+    "best": {
+      "plan": {
+        "f1": {
+          "stages": [
+            {
+              "from": 0,
+              "paths": [
+                { "nodes": ["n3", "n7"], "share": 0.75 },
+                { "nodes": ["n3", "n2", "n1", "n5", "n6", "n7"], "share": 0.25 }
+              ]
+            }
+          ],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f2": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n8", "n5", "n1", "n0"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f0": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n6", "n7"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f3": {
+          "stages": [
+            {
+              "from": 0,
+              "paths": [
+                { "nodes": ["n1", "n4", "n5", "n6", "n7"], "share": 0.75 },
+                { "nodes": ["n1", "n2", "n3", "n7"], "share": 0.25 }
+              ]
+            }
+          ],
+          "redundancy": 0,
+          "throttle": 1
+        }
+      },
+      "score": 0.9835405990555012,
+      "built": []
+    },
+    "shortest": 0.6706047626158192,
+    "balanced": 0.8013265789252669,
+    "proof": { "milliseconds": 14098, "explored": 97901 }
+  },
+  {
+    "id": "c4-5",
+    "chapter": 4,
+    "setting": "campus",
+    "seed": 3464755469,
+    "level": {
+      "id": "c4-5",
+      "title": "Helpdesk",
+      "story": "Phones ring while a lecture streams and the portal gets its rush.",
+      "nodes": [
+        { "id": "n0", "name": "Course portal", "kind": "server", "x": 90, "y": 86 },
+        { "id": "n1", "name": "Hall A", "kind": "switch", "x": 63.333333333333336, "y": 50 },
+        { "id": "n2", "name": "Core", "kind": "router", "x": 10, "y": 86 },
+        { "id": "n3", "name": "Library", "kind": "router", "x": 63.333333333333336, "y": 14 },
+        { "id": "n4", "name": "Science", "kind": "router", "x": 10, "y": 14 },
+        { "id": "n5", "name": "Arts", "kind": "router", "x": 90, "y": 14 },
+        { "id": "n6", "name": "Gate", "kind": "router", "x": 63.333333333333336, "y": 86 },
+        { "id": "n7", "name": "Annex", "kind": "router", "x": 36.66666666666667, "y": 86 }
+      ],
+      "links": [
+        { "id": "l0", "a": "n0", "b": "n6", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l1", "a": "n3", "b": "n5", "capacity": 6, "delay": 2, "loss": 0 },
+        { "id": "l2", "a": "n6", "b": "n7", "capacity": 13, "delay": 2, "loss": 0 },
+        { "id": "l3", "a": "n2", "b": "n7", "capacity": 6, "delay": 2, "loss": 0 },
+        { "id": "l4", "a": "n1", "b": "n6", "capacity": 11, "delay": 2, "loss": 0 },
+        { "id": "l5", "a": "n1", "b": "n3", "capacity": 13, "delay": 2, "loss": 0 },
+        { "id": "l6", "a": "n3", "b": "n4", "capacity": 7, "delay": 3, "loss": 0 },
+        { "id": "l7", "a": "n0", "b": "n1", "capacity": 10, "delay": 2, "loss": 0 },
+        { "id": "l8", "a": "n1", "b": "n7", "capacity": 10, "delay": 2, "loss": 0 },
+        { "id": "l9", "a": "n0", "b": "n5", "capacity": 6, "delay": 4, "loss": 0 },
+        { "id": "l10", "a": "n2", "b": "n4", "capacity": 10, "delay": 4, "loss": 0 }
+      ],
+      "flows": [
+        {
+          "id": "f0",
+          "name": "Campus phones",
+          "source": "n1",
+          "target": "n0",
+          "profile": "voice",
+          "demand": 2
+        },
+        {
+          "id": "f1",
+          "name": "Helpdesk calls",
+          "source": "n1",
+          "target": "n0",
+          "profile": "voice",
+          "demand": 3
+        },
+        {
+          "id": "f2",
+          "name": "Course portal",
+          "source": "n3",
+          "target": "n0",
+          "profile": "web",
+          "demand": 6
+        },
+        {
+          "id": "f3",
+          "name": "Library search",
+          "source": "n4",
           "target": "n0",
           "profile": "web",
           "demand": 3
@@ -2265,154 +2425,27 @@
     },
     "best": {
       "plan": {
-        "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n7"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
-        "f3": {
-          "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n3", "n2", "n1", "n4", "n0"], "share": 1 }] }
-          ],
-          "redundancy": 0,
-          "throttle": 1
-        },
         "f2": {
           "stages": [
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n1", "n2", "n6", "n7"], "share": 0.5 },
-                { "nodes": ["n1", "n4", "n5", "n6", "n7"], "share": 0.25 },
-                { "nodes": ["n1", "n5", "n8", "n6", "n7"], "share": 0.25 }
+                { "nodes": ["n3", "n1", "n0"], "share": 0.5 },
+                { "nodes": ["n3", "n5", "n0"], "share": 0.25 },
+                { "nodes": ["n3", "n1", "n7", "n6", "n0"], "share": 0.25 }
               ]
             }
           ],
           "redundancy": 0,
           "throttle": 1
         },
-        "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n5", "n6", "n7"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        }
-      },
-      "score": 0.988272291766323,
-      "built": []
-    },
-    "shortest": 0.5356121128156155,
-    "balanced": 0.7697679347658354,
-    "proof": { "milliseconds": 5787, "explored": 36453 }
-  },
-  {
-    "id": "c4-5",
-    "chapter": 4,
-    "setting": "campus",
-    "seed": 2297473861,
-    "level": {
-      "id": "c4-5",
-      "title": "Helpdesk",
-      "story": "Phones ring while a lecture streams and the portal gets its rush.",
-      "nodes": [
-        { "id": "n0", "name": "Core", "kind": "router", "x": 90, "y": 14 },
-        { "id": "n1", "name": "Library", "kind": "router", "x": 70, "y": 50 },
-        { "id": "n2", "name": "Course portal", "kind": "server", "x": 90, "y": 50 },
-        { "id": "n3", "name": "Hall A", "kind": "switch", "x": 50, "y": 50 },
-        { "id": "n4", "name": "Science", "kind": "router", "x": 30, "y": 86 },
-        { "id": "n5", "name": "Dorm 1", "kind": "client", "x": 10, "y": 14 },
-        { "id": "n6", "name": "Hall B", "kind": "switch", "x": 30, "y": 50 },
-        { "id": "n7", "name": "Arts", "kind": "router", "x": 70, "y": 14 }
-      ],
-      "links": [
-        { "id": "l0", "a": "n0", "b": "n7", "capacity": 12, "delay": 1, "loss": 0 },
-        { "id": "l1", "a": "n1", "b": "n2", "capacity": 9, "delay": 1, "loss": 0 },
-        { "id": "l2", "a": "n1", "b": "n3", "capacity": 13, "delay": 1, "loss": 0 },
-        { "id": "l3", "a": "n3", "b": "n6", "capacity": 12, "delay": 1, "loss": 0 },
-        { "id": "l4", "a": "n4", "b": "n6", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l5", "a": "n0", "b": "n2", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l6", "a": "n5", "b": "n6", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l7", "a": "n1", "b": "n7", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l8", "a": "n0", "b": "n1", "capacity": 11, "delay": 2, "loss": 0 },
-        { "id": "l9", "a": "n3", "b": "n4", "capacity": 5, "delay": 2, "loss": 0 },
-        { "id": "l10", "a": "n3", "b": "n7", "capacity": 8, "delay": 2, "loss": 0 }
-      ],
-      "flows": [
-        {
-          "id": "f0",
-          "name": "Campus phones",
-          "source": "n6",
-          "target": "n2",
-          "profile": "voice",
-          "demand": 2
-        },
-        {
-          "id": "f1",
-          "name": "Helpdesk calls",
-          "source": "n6",
-          "target": "n2",
-          "profile": "voice",
-          "demand": 2
-        },
-        {
-          "id": "f2",
-          "name": "Course portal",
-          "source": "n3",
-          "target": "n4",
-          "profile": "web",
-          "demand": 4
-        },
-        {
-          "id": "f3",
-          "name": "Lecture stream",
-          "source": "n4",
-          "target": "n2",
-          "profile": "video",
-          "demand": 3
-        }
-      ],
-      "situations": [
-        { "id": "calm", "name": "Quiet day", "steps": 6, "events": [] },
-        {
-          "id": "rush",
-          "name": "Rush hour",
-          "steps": 8,
-          "events": [
-            { "kind": "burst", "flow": "f2", "from": 3, "to": 6, "factor": 2 },
-            { "kind": "burst", "flow": "f3", "from": 3, "to": 6, "factor": 2 }
-          ]
-        }
-      ],
-      "rules": {
-        "split": true,
-        "backup": false,
-        "redundancy": false,
-        "throttle": false,
-        "stages": false,
-        "queues": false
-      }
-    },
-    "best": {
-      "plan": {
-        "f2": {
-          "stages": [
-            {
-              "from": 0,
-              "paths": [
-                { "nodes": ["n3", "n6", "n4"], "share": 0.75 },
-                { "nodes": ["n3", "n4"], "share": 0.25 }
-              ]
-            }
-          ],
-          "redundancy": 0,
-          "throttle": 1
-        },
-        "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n6", "n3", "n1", "n2"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
         "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n6", "n3", "n1", "n2"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n0"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f0": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n6", "n0"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
@@ -2421,8 +2454,8 @@
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n4", "n6", "n3", "n1", "n2"], "share": 0.5 },
-                { "nodes": ["n4", "n3", "n1", "n0", "n2"], "share": 0.5 }
+                { "nodes": ["n4", "n3", "n5", "n0"], "share": 0.5 },
+                { "nodes": ["n4", "n3", "n1", "n6", "n0"], "share": 0.5 }
               ]
             }
           ],
@@ -2430,12 +2463,12 @@
           "throttle": 1
         }
       },
-      "score": 0.9794212922728723,
+      "score": 1,
       "built": []
     },
-    "shortest": 0.7019982818423488,
-    "balanced": 0.7247109992470739,
-    "proof": { "milliseconds": 1717, "explored": 11004 }
+    "shortest": 0.6347695520998602,
+    "balanced": 0.7466222361768073,
+    "proof": { "milliseconds": 61, "explored": 0 }
   },
   {
     "id": "c4-6",
@@ -2482,15 +2515,15 @@
         },
         {
           "id": "f1",
-          "name": "TV service",
+          "name": "Home internet",
           "source": "n8",
           "target": "n0",
-          "profile": "video",
+          "profile": "web",
           "demand": 5
         },
         {
           "id": "f2",
-          "name": "Home internet",
+          "name": "Cloud access",
           "source": "n6",
           "target": "n4",
           "profile": "web",
@@ -2498,7 +2531,7 @@
         },
         {
           "id": "f3",
-          "name": "Cloud access",
+          "name": "Mail service",
           "source": "n6",
           "target": "n8",
           "profile": "web",
@@ -2562,9 +2595,9 @@
       "score": 0.9773923598306761,
       "built": []
     },
-    "shortest": 0.5381781592441027,
-    "balanced": 0.6864924232045078,
-    "proof": { "milliseconds": 393, "explored": 1739 }
+    "shortest": 0.5630128143673283,
+    "balanced": 0.6949432866696501,
+    "proof": { "milliseconds": 613, "explored": 2901 }
   },
   {
     "id": "c5-1",
@@ -2901,66 +2934,66 @@
     "id": "c5-4",
     "chapter": 5,
     "setting": "campus",
-    "seed": 2688287624,
+    "seed": 3431958620,
     "level": {
       "id": "c5-4",
       "title": "Mirror sync",
       "story": "The software mirror syncs at the worst hour. Slow it down, not the exams.",
       "nodes": [
-        { "id": "n0", "name": "Core", "kind": "router", "x": 30, "y": 14 },
-        { "id": "n1", "name": "Library", "kind": "router", "x": 10, "y": 14 },
-        { "id": "n2", "name": "Course portal", "kind": "server", "x": 10, "y": 50 },
-        { "id": "n3", "name": "Hall A", "kind": "switch", "x": 50, "y": 14 },
-        { "id": "n4", "name": "Dorm 1", "kind": "client", "x": 90, "y": 14 },
-        { "id": "n5", "name": "Science", "kind": "router", "x": 70, "y": 86 },
-        { "id": "n6", "name": "Arts", "kind": "router", "x": 30, "y": 86 },
-        { "id": "n7", "name": "Gate", "kind": "router", "x": 50, "y": 50 }
+        { "id": "n0", "name": "Core", "kind": "router", "x": 70, "y": 86 },
+        { "id": "n1", "name": "Course portal", "kind": "server", "x": 90, "y": 86 },
+        { "id": "n2", "name": "Library", "kind": "router", "x": 70, "y": 14 },
+        { "id": "n3", "name": "Science", "kind": "router", "x": 90, "y": 14 },
+        { "id": "n4", "name": "Arts", "kind": "router", "x": 30, "y": 86 },
+        { "id": "n5", "name": "Gate", "kind": "router", "x": 70, "y": 50 },
+        { "id": "n6", "name": "Annex", "kind": "router", "x": 50, "y": 50 },
+        { "id": "n7", "name": "Dorm 1", "kind": "client", "x": 10, "y": 14 }
       ],
       "links": [
-        { "id": "l0", "a": "n0", "b": "n1", "capacity": 8, "delay": 1, "loss": 0 },
-        { "id": "l1", "a": "n0", "b": "n3", "capacity": 13, "delay": 1, "loss": 0 },
-        { "id": "l2", "a": "n1", "b": "n2", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l3", "a": "n3", "b": "n7", "capacity": 13, "delay": 2, "loss": 0 },
-        { "id": "l4", "a": "n2", "b": "n6", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l5", "a": "n5", "b": "n7", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l6", "a": "n3", "b": "n4", "capacity": 9, "delay": 3, "loss": 0 },
-        { "id": "l7", "a": "n0", "b": "n2", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l8", "a": "n0", "b": "n7", "capacity": 13, "delay": 2, "loss": 0 },
-        { "id": "l9", "a": "n6", "b": "n7", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l10", "a": "n5", "b": "n6", "capacity": 6, "delay": 3, "loss": 0 }
+        { "id": "l0", "a": "n0", "b": "n1", "capacity": 11, "delay": 1, "loss": 0 },
+        { "id": "l1", "a": "n2", "b": "n3", "capacity": 10, "delay": 1, "loss": 0 },
+        { "id": "l2", "a": "n5", "b": "n6", "capacity": 9, "delay": 1, "loss": 0 },
+        { "id": "l3", "a": "n0", "b": "n5", "capacity": 12, "delay": 2, "loss": 0 },
+        { "id": "l4", "a": "n2", "b": "n5", "capacity": 6, "delay": 2, "loss": 0 },
+        { "id": "l5", "a": "n4", "b": "n6", "capacity": 6, "delay": 2, "loss": 0 },
+        { "id": "l6", "a": "n6", "b": "n7", "capacity": 10, "delay": 3, "loss": 0 },
+        { "id": "l7", "a": "n0", "b": "n6", "capacity": 13, "delay": 2, "loss": 0 },
+        { "id": "l8", "a": "n1", "b": "n5", "capacity": 11, "delay": 2, "loss": 0 },
+        { "id": "l9", "a": "n0", "b": "n4", "capacity": 5, "delay": 3, "loss": 0 },
+        { "id": "l10", "a": "n1", "b": "n3", "capacity": 6, "delay": 4, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
           "name": "Campus phones",
           "source": "n4",
-          "target": "n7",
+          "target": "n1",
           "profile": "voice",
           "demand": 3
         },
         {
           "id": "f1",
-          "name": "Lecture stream",
-          "source": "n7",
-          "target": "n2",
-          "profile": "video",
-          "demand": 7
+          "name": "Course portal",
+          "source": "n4",
+          "target": "n1",
+          "profile": "web",
+          "demand": 4
         },
         {
           "id": "f2",
           "name": "Research data",
-          "source": "n6",
-          "target": "n7",
+          "source": "n3",
+          "target": "n1",
           "profile": "bulk",
-          "demand": 7
+          "demand": 8
         },
         {
           "id": "f3",
           "name": "Backups",
           "source": "n4",
-          "target": "n5",
+          "target": "n2",
           "profile": "bulk",
-          "demand": 11
+          "demand": 9
         }
       ],
       "situations": [
@@ -2970,7 +3003,7 @@
           "name": "Rush hour",
           "steps": 8,
           "events": [
-            { "kind": "burst", "flow": "f1", "from": 3, "to": 6, "factor": 2 },
+            { "kind": "burst", "flow": "f3", "from": 3, "to": 6, "factor": 2 },
             { "kind": "burst", "flow": "f2", "from": 3, "to": 6, "factor": 2 }
           ]
         }
@@ -2987,18 +3020,22 @@
     "best": {
       "plan": {
         "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n4", "n3", "n7"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n4", "n0", "n1"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
+        },
+        "f3": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n4", "n6", "n5", "n2"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 0.5
         },
         "f1": {
           "stages": [
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n7", "n0", "n2"], "share": 0.5 },
-                { "nodes": ["n7", "n6", "n2"], "share": 0.25 },
-                { "nodes": ["n7", "n0", "n1", "n2"], "share": 0.25 }
+                { "nodes": ["n4", "n6", "n5", "n1"], "share": 0.75 },
+                { "nodes": ["n4", "n0", "n1"], "share": 0.25 }
               ]
             }
           ],
@@ -3010,28 +3047,21 @@
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n6", "n7"], "share": 0.5 },
-                { "nodes": ["n6", "n5", "n7"], "share": 0.5 }
+                { "nodes": ["n3", "n1"], "share": 0.75 },
+                { "nodes": ["n3", "n2", "n5", "n1"], "share": 0.25 }
               ]
             }
           ],
           "redundancy": 0,
           "throttle": 1
-        },
-        "f3": {
-          "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n4", "n3", "n0", "n7", "n5"], "share": 1 }] }
-          ],
-          "redundancy": 0,
-          "throttle": 0.25
         }
       },
-      "score": 0.7815266843998137,
+      "score": 0.72970087328939,
       "built": []
     },
-    "shortest": 0.6077632697744849,
-    "balanced": 0.6077632697744849,
-    "proof": { "milliseconds": 5549, "explored": 39864 }
+    "shortest": 0.5610801375892397,
+    "balanced": 0.5578587977675099,
+    "proof": { "milliseconds": 6032, "explored": 81810 }
   },
   {
     "id": "c5-5",
@@ -3164,66 +3194,66 @@
     "id": "c5-6",
     "chapter": 5,
     "setting": "provider",
-    "seed": 2489549474,
+    "seed": 2790560878,
     "level": {
       "id": "c5-6",
       "title": "Software release",
       "story": "A release goes out to a million devices on the same night as the final.",
       "nodes": [
         { "id": "n0", "name": "Peering point", "kind": "server", "x": 10, "y": 14 },
-        { "id": "n1", "name": "Core 1", "kind": "router", "x": 50, "y": 14 },
-        { "id": "n2", "name": "Core 2", "kind": "router", "x": 90, "y": 14 },
-        { "id": "n3", "name": "Metro N", "kind": "router", "x": 90, "y": 38 },
-        { "id": "n4", "name": "Metro S", "kind": "router", "x": 90, "y": 86 },
-        { "id": "n5", "name": "Metro E", "kind": "router", "x": 10, "y": 86 },
-        { "id": "n6", "name": "Metro W", "kind": "router", "x": 10, "y": 62 },
-        { "id": "n7", "name": "Agg A", "kind": "switch", "x": 10, "y": 38 }
+        { "id": "n1", "name": "Agg A", "kind": "switch", "x": 36.66666666666667, "y": 14 },
+        { "id": "n2", "name": "Core 1", "kind": "router", "x": 63.333333333333336, "y": 14 },
+        { "id": "n3", "name": "Core 2", "kind": "router", "x": 90, "y": 14 },
+        { "id": "n4", "name": "Metro N", "kind": "router", "x": 90, "y": 86 },
+        { "id": "n5", "name": "Metro S", "kind": "router", "x": 63.333333333333336, "y": 86 },
+        { "id": "n6", "name": "Metro E", "kind": "router", "x": 36.66666666666667, "y": 86 },
+        { "id": "n7", "name": "Metro W", "kind": "router", "x": 10, "y": 86 }
       ],
       "links": [
-        { "id": "l0", "a": "n5", "b": "n6", "capacity": 10, "delay": 1, "loss": 0 },
-        { "id": "l1", "a": "n0", "b": "n7", "capacity": 7, "delay": 1, "loss": 0 },
-        { "id": "l2", "a": "n2", "b": "n3", "capacity": 6, "delay": 1, "loss": 0 },
-        { "id": "l3", "a": "n6", "b": "n7", "capacity": 10, "delay": 1, "loss": 0 },
-        { "id": "l4", "a": "n3", "b": "n4", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l5", "a": "n0", "b": "n1", "capacity": 6, "delay": 3, "loss": 0 },
-        { "id": "l6", "a": "n1", "b": "n2", "capacity": 9, "delay": 3, "loss": 0 },
-        { "id": "l7", "a": "n1", "b": "n3", "capacity": 11, "delay": 3, "loss": 0 },
-        { "id": "l8", "a": "n1", "b": "n7", "capacity": 11, "delay": 3, "loss": 0 },
-        { "id": "l9", "a": "n3", "b": "n7", "capacity": 11, "delay": 4, "loss": 0 },
-        { "id": "l10", "a": "n4", "b": "n5", "capacity": 8, "delay": 4, "loss": 0 }
+        { "id": "l0", "a": "n1", "b": "n2", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l1", "a": "n2", "b": "n3", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l2", "a": "n4", "b": "n5", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l3", "a": "n5", "b": "n6", "capacity": 13, "delay": 2, "loss": 0 },
+        { "id": "l4", "a": "n0", "b": "n1", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l5", "a": "n6", "b": "n7", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l6", "a": "n0", "b": "n7", "capacity": 8, "delay": 4, "loss": 0 },
+        { "id": "l7", "a": "n1", "b": "n6", "capacity": 11, "delay": 4, "loss": 0 },
+        { "id": "l8", "a": "n2", "b": "n5", "capacity": 13, "delay": 4, "loss": 0 },
+        { "id": "l9", "a": "n3", "b": "n4", "capacity": 9, "delay": 4, "loss": 0 },
+        { "id": "l10", "a": "n0", "b": "n6", "capacity": 9, "delay": 4, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
           "name": "Phone service",
-          "source": "n6",
-          "target": "n2",
+          "source": "n5",
+          "target": "n1",
           "profile": "voice",
-          "demand": 3
+          "demand": 5
         },
         {
           "id": "f1",
-          "name": "TV service",
-          "source": "n4",
+          "name": "Home internet",
+          "source": "n3",
           "target": "n0",
-          "profile": "video",
-          "demand": 6
+          "profile": "web",
+          "demand": 7
         },
         {
           "id": "f2",
           "name": "Mirror sync",
-          "source": "n1",
-          "target": "n6",
+          "source": "n7",
+          "target": "n1",
           "profile": "bulk",
-          "demand": 12
+          "demand": 11
         },
         {
           "id": "f3",
           "name": "Backups",
-          "source": "n4",
-          "target": "n3",
+          "source": "n5",
+          "target": "n0",
           "profile": "bulk",
-          "demand": 6
+          "demand": 13
         }
       ],
       "situations": [
@@ -3233,7 +3263,7 @@
           "name": "Rush hour",
           "steps": 8,
           "events": [
-            { "kind": "burst", "flow": "f2", "from": 3, "to": 6, "factor": 2 },
+            { "kind": "burst", "flow": "f3", "from": 3, "to": 6, "factor": 2 },
             { "kind": "burst", "flow": "f1", "from": 3, "to": 6, "factor": 2 }
           ]
         }
@@ -3249,14 +3279,26 @@
     },
     "best": {
       "plan": {
+        "f0": {
+          "stages": [
+            {
+              "from": 0,
+              "paths": [
+                { "nodes": ["n5", "n2", "n1"], "share": 0.75 },
+                { "nodes": ["n5", "n6", "n1"], "share": 0.25 }
+              ]
+            }
+          ],
+          "redundancy": 0,
+          "throttle": 1
+        },
         "f1": {
           "stages": [
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n4", "n3", "n1", "n0"], "share": 0.5 },
-                { "nodes": ["n4", "n5", "n6", "n7", "n0"], "share": 0.25 },
-                { "nodes": ["n4", "n3", "n1", "n7", "n0"], "share": 0.25 }
+                { "nodes": ["n3", "n4", "n5", "n6", "n0"], "share": 0.75 },
+                { "nodes": ["n3", "n2", "n1", "n0"], "share": 0.25 }
               ]
             }
           ],
@@ -3264,27 +3306,38 @@
           "throttle": 1
         },
         "f2": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n7", "n6"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 0.5
-        },
-        "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n6", "n7", "n3", "n2"], "share": 1 }] }],
+          "stages": [
+            {
+              "from": 0,
+              "paths": [
+                { "nodes": ["n7", "n0", "n1"], "share": 0.5 },
+                { "nodes": ["n7", "n6", "n1"], "share": 0.5 }
+              ]
+            }
+          ],
           "redundancy": 0,
           "throttle": 1
         },
         "f3": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n4", "n3"], "share": 1 }] }],
+          "stages": [
+            {
+              "from": 0,
+              "paths": [
+                { "nodes": ["n5", "n6", "n0"], "share": 0.75 },
+                { "nodes": ["n5", "n6", "n7", "n0"], "share": 0.25 }
+              ]
+            }
+          ],
           "redundancy": 0,
-          "throttle": 1
+          "throttle": 0.5
         }
       },
-      "score": 0.6636419857199078,
+      "score": 0.6520593242977603,
       "built": []
     },
-    "shortest": 0.49118637034368895,
-    "balanced": 0.5040083317629516,
-    "proof": { "milliseconds": 1925, "explored": 46554 }
+    "shortest": 0.4730213181870329,
+    "balanced": 0.4730213181870329,
+    "proof": { "milliseconds": 2556, "explored": 43258 }
   },
   {
     "id": "c6-1",
@@ -5071,90 +5124,89 @@
     "id": "c8-3",
     "chapter": 8,
     "setting": "provider",
-    "seed": 1647146214,
+    "seed": 1538972344,
     "level": {
       "id": "c8-3",
       "title": "New ring",
       "story": "Close the ring in the north, or lay a shortcut across the lake. Not both.",
       "nodes": [
         { "id": "n0", "name": "Peering point", "kind": "server", "x": 10, "y": 14 },
-        { "id": "n1", "name": "Core 1", "kind": "router", "x": 50, "y": 14 },
-        { "id": "n2", "name": "Core 2", "kind": "router", "x": 90, "y": 14 },
-        { "id": "n3", "name": "Agg A", "kind": "switch", "x": 90, "y": 38 },
-        { "id": "n4", "name": "Metro N", "kind": "router", "x": 90, "y": 62 },
-        { "id": "n5", "name": "Content cache", "kind": "server", "x": 90, "y": 86 },
-        { "id": "n6", "name": "Metro S", "kind": "router", "x": 10, "y": 86 },
-        { "id": "n7", "name": "Agg B", "kind": "switch", "x": 10, "y": 62 },
-        { "id": "n8", "name": "Agg C", "kind": "switch", "x": 10, "y": 38 }
+        { "id": "n1", "name": "Agg A", "kind": "switch", "x": 30, "y": 14 },
+        { "id": "n2", "name": "Core 1", "kind": "router", "x": 50, "y": 14 },
+        { "id": "n3", "name": "Core 2", "kind": "router", "x": 90, "y": 14 },
+        { "id": "n4", "name": "Content cache", "kind": "server", "x": 90, "y": 86 },
+        { "id": "n5", "name": "Metro N", "kind": "router", "x": 70, "y": 86 },
+        { "id": "n6", "name": "Metro S", "kind": "router", "x": 50, "y": 86 },
+        { "id": "n7", "name": "Metro E", "kind": "router", "x": 30, "y": 86 },
+        { "id": "n8", "name": "Metro W", "kind": "router", "x": 10, "y": 86 }
       ],
       "links": [
-        { "id": "l0", "a": "n4", "b": "n5", "capacity": 9, "delay": 1, "loss": 0, "buffer": 0 },
-        { "id": "l1", "a": "n6", "b": "n7", "capacity": 10, "delay": 1, "loss": 0, "buffer": 8 },
-        { "id": "l2", "a": "n0", "b": "n8", "capacity": 9, "delay": 1, "loss": 0, "buffer": 4 },
+        {
+          "id": "l0",
+          "a": "n0",
+          "b": "n1",
+          "capacity": 7,
+          "delay": 1,
+          "loss": 0,
+          "buffer": 3,
+          "optional": true,
+          "cost": 4
+        },
+        { "id": "l1", "a": "n1", "b": "n2", "capacity": 11, "delay": 1, "loss": 0, "buffer": 0 },
+        { "id": "l2", "a": "n4", "b": "n5", "capacity": 8, "delay": 1, "loss": 0, "buffer": 4 },
         {
           "id": "l3",
-          "a": "n2",
-          "b": "n3",
-          "capacity": 10,
+          "a": "n5",
+          "b": "n6",
+          "capacity": 5,
           "delay": 1,
           "loss": 0,
           "buffer": 4,
           "optional": true,
-          "cost": 5
+          "cost": 3
         },
-        { "id": "l4", "a": "n3", "b": "n4", "capacity": 8, "delay": 1, "loss": 0, "buffer": 7 },
-        {
-          "id": "l5",
-          "a": "n7",
-          "b": "n8",
-          "capacity": 9,
-          "delay": 1,
-          "loss": 0,
-          "buffer": 8,
-          "optional": true,
-          "cost": 5
-        },
-        { "id": "l6", "a": "n0", "b": "n1", "capacity": 9, "delay": 3, "loss": 0, "buffer": 8 },
-        { "id": "l7", "a": "n1", "b": "n2", "capacity": 6, "delay": 3, "loss": 0, "buffer": 5 },
-        {
-          "id": "l8",
-          "a": "n1",
-          "b": "n3",
-          "capacity": 13,
-          "delay": 3,
-          "loss": 0,
-          "buffer": 11,
-          "optional": true,
-          "cost": 7
-        },
+        { "id": "l4", "a": "n6", "b": "n7", "capacity": 11, "delay": 1, "loss": 0, "buffer": 9 },
+        { "id": "l5", "a": "n7", "b": "n8", "capacity": 6, "delay": 1, "loss": 0, "buffer": 0 },
+        { "id": "l6", "a": "n2", "b": "n3", "capacity": 5, "delay": 3, "loss": 0, "buffer": 4 },
+        { "id": "l7", "a": "n0", "b": "n8", "capacity": 8, "delay": 4, "loss": 0, "buffer": 4 },
+        { "id": "l8", "a": "n1", "b": "n7", "capacity": 11, "delay": 4, "loss": 0, "buffer": 0 },
         {
           "id": "l9",
-          "a": "n1",
-          "b": "n8",
+          "a": "n2",
+          "b": "n6",
           "capacity": 12,
-          "delay": 3,
+          "delay": 4,
           "loss": 0,
           "buffer": 10,
           "optional": true,
           "cost": 6
         },
-        { "id": "l10", "a": "n3", "b": "n8", "capacity": 13, "delay": 4, "loss": 0, "buffer": 0 },
-        { "id": "l11", "a": "n4", "b": "n7", "capacity": 8, "delay": 4, "loss": 0, "buffer": 7 },
-        { "id": "l12", "a": "n5", "b": "n6", "capacity": 6, "delay": 4, "loss": 0, "buffer": 0 }
+        { "id": "l10", "a": "n3", "b": "n4", "capacity": 8, "delay": 4, "loss": 0, "buffer": 7 },
+        {
+          "id": "l11",
+          "a": "n2",
+          "b": "n4",
+          "capacity": 11,
+          "delay": 4,
+          "loss": 0,
+          "buffer": 9,
+          "optional": true,
+          "cost": 6
+        }
       ],
       "flows": [
         {
           "id": "f0",
           "name": "TV service",
-          "source": "n3",
-          "target": "n5",
+          "source": "n2",
+          "target": "n4",
           "profile": "video",
-          "demand": 5
+          "demand": 3
         },
         {
           "id": "f1",
           "name": "Video on demand",
-          "source": "n4",
+          "source": "n5",
           "target": "n0",
           "profile": "video",
           "demand": 4
@@ -5162,18 +5214,18 @@
         {
           "id": "f2",
           "name": "Home internet",
-          "source": "n4",
-          "target": "n0",
+          "source": "n6",
+          "target": "n4",
           "profile": "web",
-          "demand": 3
+          "demand": 2
         },
         {
           "id": "f3",
-          "name": "Bank links",
-          "source": "n7",
-          "target": "n5",
-          "profile": "transaction",
-          "demand": 3
+          "name": "Phone service",
+          "source": "n2",
+          "target": "n4",
+          "profile": "voice",
+          "demand": 1
         }
       ],
       "situations": [
@@ -5184,7 +5236,7 @@
           "steps": 8,
           "events": [
             { "kind": "burst", "flow": "f2", "from": 3, "to": 6, "factor": 2 },
-            { "kind": "burst", "flow": "f3", "from": 3, "to": 6, "factor": 2 }
+            { "kind": "burst", "flow": "f0", "from": 3, "to": 6, "factor": 2 }
           ]
         }
       ],
@@ -5196,45 +5248,41 @@
         "stages": false,
         "queues": true
       },
-      "budget": 12
+      "budget": 10
     },
     "best": {
       "plan": {
-        "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n4", "n5"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
-        "f3": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n7", "n6", "n5"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
         "f1": {
           "stages": [
-            {
-              "from": 0,
-              "paths": [
-                { "nodes": ["n4", "n3", "n8", "n0"], "share": 0.5 },
-                { "nodes": ["n4", "n7", "n8", "n0"], "share": 0.5 }
-              ]
-            }
+            { "from": 0, "paths": [{ "nodes": ["n5", "n6", "n7", "n8", "n0"], "share": 1 }] }
           ],
           "redundancy": 0,
           "throttle": 1
         },
+        "f0": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n4"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
         "f2": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n4", "n7", "n8", "n0"], "share": 1 }] }],
+          "stages": [
+            { "from": 0, "paths": [{ "nodes": ["n6", "n7", "n1", "n2", "n3", "n4"], "share": 1 }] }
+          ],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f3": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n4"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         }
       },
       "score": 1,
-      "built": ["l3", "l5"]
+      "built": ["l3", "l11"]
     },
-    "shortest": 0.7381404984075456,
-    "balanced": 0.7381404984075456,
-    "proof": { "milliseconds": 4663, "explored": 32916 }
+    "shortest": 0.22200107995941465,
+    "balanced": 0.22200107995941465,
+    "proof": { "milliseconds": 5954, "explored": 36001 }
   },
   {
     "id": "c8-4",
@@ -5427,80 +5475,80 @@
     "id": "c8-5",
     "chapter": 8,
     "setting": "hospital",
-    "seed": 54347607,
+    "seed": 4248649189,
     "level": {
       "id": "c8-5",
       "title": "New building",
       "story": "The new wing opens in spring. Which cables does it need first?",
       "nodes": [
-        { "id": "n0", "name": "Core", "kind": "router", "x": 50, "y": 50 },
-        { "id": "n1", "name": "Records", "kind": "server", "x": 90, "y": 14 },
-        { "id": "n2", "name": "Ward hub", "kind": "router", "x": 10, "y": 86 },
-        { "id": "n3", "name": "Theatre hub", "kind": "router", "x": 90, "y": 86 },
-        { "id": "n4", "name": "Ward A", "kind": "switch", "x": 50, "y": 86 },
-        { "id": "n5", "name": "North wing", "kind": "router", "x": 10, "y": 14 },
-        { "id": "n6", "name": "Ward B", "kind": "switch", "x": 30, "y": 86 },
-        { "id": "n7", "name": "South wing", "kind": "router", "x": 50, "y": 14 }
+        { "id": "n0", "name": "Core", "kind": "router", "x": 50, "y": 86 },
+        { "id": "n1", "name": "Ward hub", "kind": "router", "x": 70, "y": 86 },
+        { "id": "n2", "name": "Ward A", "kind": "switch", "x": 30, "y": 86 },
+        { "id": "n3", "name": "Theatre hub", "kind": "router", "x": 10, "y": 50 },
+        { "id": "n4", "name": "Records", "kind": "server", "x": 90, "y": 14 },
+        { "id": "n5", "name": "North wing", "kind": "router", "x": 10, "y": 86 },
+        { "id": "n6", "name": "South wing", "kind": "router", "x": 90, "y": 86 },
+        { "id": "n7", "name": "Ward B", "kind": "switch", "x": 10, "y": 14 }
       ],
       "links": [
-        { "id": "l0", "a": "n2", "b": "n6", "capacity": 10, "delay": 1, "loss": 0, "buffer": 4 },
-        { "id": "l1", "a": "n4", "b": "n6", "capacity": 13, "delay": 1, "loss": 0, "buffer": 11 },
+        { "id": "l0", "a": "n0", "b": "n1", "capacity": 7, "delay": 1, "loss": 0, "buffer": 3 },
+        {
+          "id": "l1",
+          "a": "n0",
+          "b": "n2",
+          "capacity": 6,
+          "delay": 1,
+          "loss": 0,
+          "buffer": 3,
+          "optional": true,
+          "cost": 3
+        },
         {
           "id": "l2",
-          "a": "n0",
-          "b": "n4",
-          "capacity": 10,
-          "delay": 2,
-          "loss": 0,
-          "buffer": 8,
-          "optional": true,
-          "cost": 5
-        },
-        {
-          "id": "l3",
-          "a": "n0",
-          "b": "n7",
-          "capacity": 10,
-          "delay": 2,
-          "loss": 0,
-          "buffer": 0,
-          "optional": true,
-          "cost": 5
-        },
-        {
-          "id": "l4",
           "a": "n1",
-          "b": "n7",
+          "b": "n6",
           "capacity": 8,
-          "delay": 3,
+          "delay": 1,
           "loss": 0,
-          "buffer": 7,
+          "buffer": 4,
           "optional": true,
           "cost": 4
         },
-        { "id": "l5", "a": "n3", "b": "n4", "capacity": 8, "delay": 3, "loss": 0, "buffer": 7 },
-        { "id": "l6", "a": "n5", "b": "n7", "capacity": 7, "delay": 3, "loss": 0, "buffer": 6 },
-        { "id": "l7", "a": "n0", "b": "n6", "capacity": 9, "delay": 2, "loss": 0, "buffer": 8 },
+        { "id": "l3", "a": "n2", "b": "n5", "capacity": 7, "delay": 1, "loss": 0, "buffer": 6 },
+        { "id": "l4", "a": "n3", "b": "n5", "capacity": 6, "delay": 2, "loss": 0, "buffer": 3 },
+        { "id": "l5", "a": "n3", "b": "n7", "capacity": 8, "delay": 2, "loss": 0, "buffer": 4 },
         {
-          "id": "l8",
-          "a": "n0",
-          "b": "n1",
-          "capacity": 10,
-          "delay": 3,
+          "id": "l6",
+          "a": "n4",
+          "b": "n6",
+          "capacity": 7,
+          "delay": 4,
           "loss": 0,
-          "buffer": 8,
+          "buffer": 3,
           "optional": true,
-          "cost": 5
+          "cost": 4
         },
-        { "id": "l9", "a": "n1", "b": "n3", "capacity": 10, "delay": 4, "loss": 0, "buffer": 8 },
-        { "id": "l10", "a": "n2", "b": "n5", "capacity": 5, "delay": 4, "loss": 0, "buffer": 0 }
+        { "id": "l7", "a": "n2", "b": "n3", "capacity": 13, "delay": 2, "loss": 0, "buffer": 11 },
+        { "id": "l8", "a": "n1", "b": "n3", "capacity": 13, "delay": 4, "loss": 0, "buffer": 6 },
+        { "id": "l9", "a": "n4", "b": "n7", "capacity": 10, "delay": 4, "loss": 0, "buffer": 8 },
+        {
+          "id": "l10",
+          "a": "n6",
+          "b": "n7",
+          "capacity": 12,
+          "delay": 4,
+          "loss": 0,
+          "buffer": 0,
+          "optional": true,
+          "cost": 6
+        }
       ],
       "flows": [
         {
           "id": "f0",
           "name": "Nurse call",
-          "source": "n7",
-          "target": "n5",
+          "source": "n1",
+          "target": "n4",
           "profile": "voice",
           "demand": 2
         },
@@ -5508,25 +5556,25 @@
           "id": "f1",
           "name": "Staff intranet",
           "source": "n7",
-          "target": "n1",
+          "target": "n4",
           "profile": "web",
-          "demand": 5
+          "demand": 3
         },
         {
           "id": "f2",
           "name": "Remote consultation",
-          "source": "n5",
-          "target": "n1",
+          "source": "n3",
+          "target": "n4",
           "profile": "video",
-          "demand": 5
+          "demand": 4
         },
         {
           "id": "f3",
-          "name": "Prescriptions",
-          "source": "n2",
-          "target": "n1",
-          "profile": "transaction",
-          "demand": 6
+          "name": "Scan archive",
+          "source": "n7",
+          "target": "n4",
+          "profile": "bulk",
+          "demand": 5
         }
       ],
       "situations": [{ "id": "calm", "name": "Quiet day", "steps": 6, "events": [] }],
@@ -5538,17 +5586,17 @@
         "stages": false,
         "queues": true
       },
-      "budget": 10
+      "budget": 9
     },
     "best": {
       "plan": {
         "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n7", "n5"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n6", "n4"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
         "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n7", "n1"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n7", "n4"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
@@ -5557,8 +5605,8 @@
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n5", "n7", "n1"], "share": 0.75 },
-                { "nodes": ["n5", "n2", "n6", "n4", "n3", "n1"], "share": 0.25 }
+                { "nodes": ["n3", "n7", "n4"], "share": 0.75 },
+                { "nodes": ["n3", "n1", "n6", "n4"], "share": 0.25 }
               ]
             }
           ],
@@ -5566,23 +5614,23 @@
           "throttle": 1
         },
         "f3": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n6", "n0", "n1"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n7", "n4"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         }
       },
       "score": 1,
-      "built": ["l4", "l8"]
+      "built": ["l2", "l6"]
     },
-    "shortest": 0.31136505797752934,
-    "balanced": 0.31136505797752934,
-    "proof": { "milliseconds": 5941, "explored": 82864 }
+    "shortest": 0.6533333333333333,
+    "balanced": 0.6533333333333333,
+    "proof": { "milliseconds": 37, "explored": 183 }
   },
   {
     "id": "c8-6",
     "chapter": 8,
     "setting": "datacentre",
-    "seed": 1994227087,
+    "seed": 2011004706,
     "level": {
       "id": "c8-6",
       "title": "Second hall",
@@ -5592,55 +5640,68 @@
         { "id": "n1", "name": "Spine 1", "kind": "router", "x": 36.66666666666667, "y": 14 },
         { "id": "n2", "name": "Spine 2", "kind": "router", "x": 63.333333333333336, "y": 14 },
         { "id": "n3", "name": "Leaf 1", "kind": "router", "x": 90, "y": 14 },
-        { "id": "n4", "name": "Leaf 2", "kind": "router", "x": 10, "y": 50 },
-        { "id": "n5", "name": "Leaf 3", "kind": "router", "x": 36.66666666666667, "y": 50 },
-        { "id": "n6", "name": "Border", "kind": "router", "x": 63.333333333333336, "y": 50 },
+        { "id": "n4", "name": "Rack A", "kind": "switch", "x": 10, "y": 50 },
+        { "id": "n5", "name": "Leaf 2", "kind": "router", "x": 36.66666666666667, "y": 50 },
+        { "id": "n6", "name": "Leaf 3", "kind": "router", "x": 63.333333333333336, "y": 50 },
         { "id": "n7", "name": "Storage", "kind": "server", "x": 90, "y": 50 },
-        { "id": "n8", "name": "Edge", "kind": "router", "x": 36.66666666666667, "y": 86 }
+        { "id": "n8", "name": "Border", "kind": "router", "x": 36.66666666666667, "y": 86 }
       ],
       "links": [
-        { "id": "l0", "a": "n1", "b": "n2", "capacity": 8, "delay": 2, "loss": 0, "buffer": 4 },
-        { "id": "l1", "a": "n2", "b": "n3", "capacity": 7, "delay": 2, "loss": 0, "buffer": 3 },
-        {
-          "id": "l2",
-          "a": "n5",
-          "b": "n6",
-          "capacity": 10,
-          "delay": 2,
-          "loss": 0,
-          "buffer": 8,
-          "optional": true,
-          "cost": 5
-        },
+        { "id": "l0", "a": "n1", "b": "n2", "capacity": 9, "delay": 2, "loss": 0, "buffer": 0 },
+        { "id": "l1", "a": "n2", "b": "n3", "capacity": 5, "delay": 2, "loss": 0, "buffer": 0 },
+        { "id": "l2", "a": "n5", "b": "n6", "capacity": 13, "delay": 2, "loss": 0, "buffer": 0 },
         {
           "id": "l3",
           "a": "n6",
           "b": "n7",
-          "capacity": 10,
+          "capacity": 5,
           "delay": 2,
           "loss": 0,
-          "buffer": 8,
+          "buffer": 0,
           "optional": true,
-          "cost": 5
+          "cost": 3
         },
-        { "id": "l4", "a": "n0", "b": "n1", "capacity": 7, "delay": 2, "loss": 0, "buffer": 0 },
-        { "id": "l5", "a": "n4", "b": "n5", "capacity": 8, "delay": 2, "loss": 0, "buffer": 7 },
-        { "id": "l6", "a": "n5", "b": "n8", "capacity": 8, "delay": 2, "loss": 0, "buffer": 0 },
         {
-          "id": "l7",
+          "id": "l4",
           "a": "n0",
-          "b": "n4",
-          "capacity": 7,
+          "b": "n1",
+          "capacity": 8,
           "delay": 2,
           "loss": 0,
-          "buffer": 6,
+          "buffer": 4,
           "optional": true,
           "cost": 4
         },
         {
-          "id": "l8",
-          "a": "n1",
+          "id": "l5",
+          "a": "n4",
           "b": "n5",
+          "capacity": 11,
+          "delay": 2,
+          "loss": 0,
+          "buffer": 0,
+          "optional": true,
+          "cost": 6
+        },
+        { "id": "l6", "a": "n5", "b": "n8", "capacity": 8, "delay": 2, "loss": 0, "buffer": 7 },
+        { "id": "l7", "a": "n0", "b": "n4", "capacity": 10, "delay": 2, "loss": 0, "buffer": 8 },
+        { "id": "l8", "a": "n1", "b": "n5", "capacity": 13, "delay": 2, "loss": 0, "buffer": 0 },
+        {
+          "id": "l9",
+          "a": "n2",
+          "b": "n6",
+          "capacity": 10,
+          "delay": 2,
+          "loss": 0,
+          "buffer": 0,
+          "optional": true,
+          "cost": 5
+        },
+        { "id": "l10", "a": "n3", "b": "n7", "capacity": 6, "delay": 2, "loss": 0, "buffer": 0 },
+        {
+          "id": "l11",
+          "a": "n6",
+          "b": "n8",
           "capacity": 9,
           "delay": 2,
           "loss": 0,
@@ -5648,34 +5709,21 @@
           "optional": true,
           "cost": 5
         },
-        { "id": "l9", "a": "n2", "b": "n6", "capacity": 9, "delay": 2, "loss": 0, "buffer": 8 },
-        { "id": "l10", "a": "n3", "b": "n7", "capacity": 5, "delay": 2, "loss": 0, "buffer": 2 },
-        { "id": "l11", "a": "n6", "b": "n8", "capacity": 6, "delay": 2, "loss": 0, "buffer": 5 },
-        {
-          "id": "l12",
-          "a": "n1",
-          "b": "n4",
-          "capacity": 11,
-          "delay": 2,
-          "loss": 0,
-          "buffer": 5,
-          "optional": true,
-          "cost": 6
-        }
+        { "id": "l12", "a": "n1", "b": "n4", "capacity": 10, "delay": 2, "loss": 0, "buffer": 4 }
       ],
       "flows": [
         {
           "id": "f0",
           "name": "Streaming service",
-          "source": "n1",
-          "target": "n7",
+          "source": "n2",
+          "target": "n0",
           "profile": "video",
           "demand": 2
         },
         {
           "id": "f1",
           "name": "Web requests",
-          "source": "n5",
+          "source": "n8",
           "target": "n0",
           "profile": "web",
           "demand": 1
@@ -5683,17 +5731,17 @@
         {
           "id": "f2",
           "name": "Nightly backup",
-          "source": "n3",
-          "target": "n7",
+          "source": "n6",
+          "target": "n3",
           "profile": "bulk",
-          "demand": 3
+          "demand": 5
         },
         {
           "id": "f3",
-          "name": "Payments API",
-          "source": "n1",
+          "name": "Ops bridge",
+          "source": "n2",
           "target": "n7",
-          "profile": "transaction",
+          "profile": "voice",
           "demand": 1
         }
       ],
@@ -5703,13 +5751,13 @@
           "id": "cut",
           "name": "Cable cut A",
           "steps": 8,
-          "events": [{ "kind": "down", "link": "l0", "from": 2, "to": 6 }]
+          "events": [{ "kind": "down", "link": "l9", "from": 2, "to": 6 }]
         },
         {
           "id": "cut-2",
           "name": "Cable cut B",
           "steps": 8,
-          "events": [{ "kind": "down", "link": "l8", "from": 2, "to": 6 }]
+          "events": [{ "kind": "down", "link": "l6", "from": 2, "to": 6 }]
         }
       ],
       "rules": {
@@ -5720,40 +5768,46 @@
         "stages": false,
         "queues": true
       },
-      "budget": 13
+      "budget": 12
     },
     "best": {
       "plan": {
         "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n2", "n3", "n7"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n1", "n0"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f1": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n8", "n5", "n1", "n0"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1,
-          "backup": ["n1", "n5", "n8", "n6", "n7"]
+          "backup": ["n8", "n6", "n5", "n1", "n0"]
         },
         "f2": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n2", "n6", "n7"], "share": 1 }] }],
+          "stages": [
+            {
+              "from": 0,
+              "paths": [
+                { "nodes": ["n6", "n7", "n3"], "share": 0.5 },
+                { "nodes": ["n6", "n5", "n1", "n2", "n3"], "share": 0.5 }
+              ]
+            }
+          ],
           "redundancy": 0,
           "throttle": 1
         },
         "f3": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n2", "n3", "n7"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n3", "n7"], "share": 1 }] }],
           "redundancy": 0,
-          "throttle": 1,
-          "backup": ["n1", "n5", "n8", "n6", "n7"]
-        },
-        "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n5", "n1", "n0"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1,
-          "backup": ["n5", "n8", "n6", "n2", "n1", "n0"]
+          "throttle": 1
         }
       },
       "score": 1,
-      "built": ["l3", "l8"]
+      "built": ["l3", "l4", "l11"]
     },
-    "shortest": 0.7829861111111112,
-    "balanced": 0.8125,
-    "proof": { "milliseconds": 666, "explored": 2935 }
+    "shortest": 0.8765922619047619,
+    "balanced": 0.7913331220061989,
+    "proof": { "milliseconds": 1746, "explored": 5266 }
   },
   {
     "id": "c9-1",
@@ -5972,10 +6026,10 @@
       "flows": [
         {
           "id": "f0",
-          "name": "Flight commands",
+          "name": "Pilot voice",
           "source": "n3",
           "target": "n5",
-          "profile": "control",
+          "profile": "voice",
           "demand": 1
         },
         {
@@ -6033,97 +6087,91 @@
           "redundancy": 0.5,
           "throttle": 1
         },
-        "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n5"], "share": 1 }] }],
-          "redundancy": 0.25,
-          "throttle": 1
-        },
         "f1": {
           "stages": [
-            {
-              "from": 0,
-              "paths": [
-                { "nodes": ["n1", "n2", "n7", "n5"], "share": 0.5 },
-                { "nodes": ["n1", "n2", "n7", "n3", "n5"], "share": 0.5 }
-              ]
-            }
+            { "from": 0, "paths": [{ "nodes": ["n1", "n2", "n7", "n3", "n5"], "share": 1 }] }
           ],
           "redundancy": 0.5,
+          "throttle": 1
+        },
+        "f0": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n7", "n5"], "share": 1 }] }],
+          "redundancy": 0,
           "throttle": 1
         }
       },
       "score": 1,
       "built": []
     },
-    "shortest": 0.42260590988786406,
-    "balanced": 0.50280733320075,
-    "proof": { "milliseconds": 364, "explored": 0 }
+    "shortest": 0.45003912927142525,
+    "balanced": 0.5810040692338719,
+    "proof": { "milliseconds": 356, "explored": 0 }
   },
   {
     "id": "c9-4",
     "chapter": 9,
     "setting": "hospital",
-    "seed": 1778023481,
+    "seed": 1761245862,
     "level": {
       "id": "c9-4",
       "title": "Telemetry",
       "story": "Ventilator data and imaging cross a noisy wing. Protect the right one. Either of two cables may fail.",
       "nodes": [
         { "id": "n0", "name": "Core", "kind": "router", "x": 10, "y": 14 },
-        { "id": "n1", "name": "Ward hub", "kind": "router", "x": 30, "y": 14 },
-        { "id": "n2", "name": "Theatre hub", "kind": "router", "x": 50, "y": 14 },
-        { "id": "n3", "name": "North wing", "kind": "router", "x": 70, "y": 14 },
+        { "id": "n1", "name": "Ward A", "kind": "switch", "x": 30, "y": 14 },
+        { "id": "n2", "name": "Ward hub", "kind": "router", "x": 50, "y": 14 },
+        { "id": "n3", "name": "Theatre hub", "kind": "router", "x": 70, "y": 14 },
         { "id": "n4", "name": "Records", "kind": "server", "x": 90, "y": 14 },
         { "id": "n5", "name": "Imaging store", "kind": "server", "x": 10, "y": 86 },
-        { "id": "n6", "name": "South wing", "kind": "router", "x": 30, "y": 86 },
-        { "id": "n7", "name": "Edge", "kind": "router", "x": 50, "y": 86 },
-        { "id": "n8", "name": "Spare", "kind": "router", "x": 70, "y": 86 }
+        { "id": "n6", "name": "Ward B", "kind": "switch", "x": 30, "y": 86 },
+        { "id": "n7", "name": "North wing", "kind": "router", "x": 50, "y": 86 },
+        { "id": "n8", "name": "South wing", "kind": "router", "x": 70, "y": 86 }
       ],
       "links": [
-        { "id": "l0", "a": "n0", "b": "n1", "capacity": 9, "delay": 1, "loss": 0, "buffer": 0 },
-        { "id": "l1", "a": "n1", "b": "n2", "capacity": 8, "delay": 1, "loss": 0, "buffer": 0 },
-        { "id": "l2", "a": "n2", "b": "n3", "capacity": 11, "delay": 1, "loss": 0.2, "buffer": 0 },
-        { "id": "l3", "a": "n3", "b": "n4", "capacity": 9, "delay": 1, "loss": 0, "buffer": 8 },
-        { "id": "l4", "a": "n5", "b": "n6", "capacity": 5, "delay": 1, "loss": 0, "buffer": 2 },
-        { "id": "l5", "a": "n6", "b": "n7", "capacity": 13, "delay": 1, "loss": 0, "buffer": 6 },
-        { "id": "l6", "a": "n7", "b": "n8", "capacity": 9, "delay": 1, "loss": 0, "buffer": 4 },
-        { "id": "l7", "a": "n0", "b": "n5", "capacity": 6, "delay": 4, "loss": 0.2, "buffer": 0 },
-        { "id": "l8", "a": "n1", "b": "n6", "capacity": 9, "delay": 4, "loss": 0, "buffer": 0 },
-        { "id": "l9", "a": "n2", "b": "n7", "capacity": 9, "delay": 4, "loss": 0, "buffer": 4 },
-        { "id": "l10", "a": "n3", "b": "n8", "capacity": 7, "delay": 4, "loss": 0, "buffer": 6 }
+        { "id": "l0", "a": "n0", "b": "n1", "capacity": 6, "delay": 1, "loss": 0.1, "buffer": 3 },
+        { "id": "l1", "a": "n1", "b": "n2", "capacity": 13, "delay": 1, "loss": 0, "buffer": 0 },
+        { "id": "l2", "a": "n2", "b": "n3", "capacity": 11, "delay": 1, "loss": 0, "buffer": 5 },
+        { "id": "l3", "a": "n3", "b": "n4", "capacity": 5, "delay": 1, "loss": 0, "buffer": 4 },
+        { "id": "l4", "a": "n5", "b": "n6", "capacity": 6, "delay": 1, "loss": 0.1, "buffer": 3 },
+        { "id": "l5", "a": "n6", "b": "n7", "capacity": 8, "delay": 1, "loss": 0, "buffer": 4 },
+        { "id": "l6", "a": "n7", "b": "n8", "capacity": 5, "delay": 1, "loss": 0, "buffer": 4 },
+        { "id": "l7", "a": "n0", "b": "n5", "capacity": 10, "delay": 4, "loss": 0, "buffer": 8 },
+        { "id": "l8", "a": "n1", "b": "n6", "capacity": 8, "delay": 4, "loss": 0, "buffer": 7 },
+        { "id": "l9", "a": "n2", "b": "n7", "capacity": 9, "delay": 4, "loss": 0, "buffer": 0 },
+        { "id": "l10", "a": "n3", "b": "n8", "capacity": 8, "delay": 4, "loss": 0, "buffer": 0 }
       ],
       "flows": [
         {
           "id": "f0",
-          "name": "Patient monitors",
-          "source": "n7",
+          "name": "Nurse call",
+          "source": "n8",
           "target": "n5",
-          "profile": "control",
+          "profile": "voice",
           "demand": 1
         },
         {
           "id": "f1",
           "name": "Prescriptions",
-          "source": "n2",
-          "target": "n5",
+          "source": "n3",
+          "target": "n7",
           "profile": "transaction",
-          "demand": 2
+          "demand": 1
         },
         {
           "id": "f2",
           "name": "Remote consultation",
-          "source": "n0",
+          "source": "n2",
           "target": "n5",
           "profile": "video",
-          "demand": 2
+          "demand": 4
         },
         {
           "id": "f3",
           "name": "Scan archive",
-          "source": "n0",
+          "source": "n2",
           "target": "n4",
           "profile": "bulk",
-          "demand": 6
+          "demand": 5
         }
       ],
       "situations": [
@@ -6132,7 +6180,7 @@
           "id": "cut",
           "name": "Cable cut A",
           "steps": 8,
-          "events": [{ "kind": "down", "link": "l2", "from": 2, "to": 6 }]
+          "events": [{ "kind": "down", "link": "l5", "from": 2, "to": 6 }]
         },
         {
           "id": "cut-2",
@@ -6153,37 +6201,33 @@
     "best": {
       "plan": {
         "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n7", "n6", "n5"], "share": 1 }] }],
-          "redundancy": 0,
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n8", "n7", "n6", "n5"], "share": 1 }] }],
+          "redundancy": 0.25,
           "throttle": 1
         },
         "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n1", "n6", "n5"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n3", "n2", "n7"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
         "f2": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n0", "n5"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n1", "n0", "n5"], "share": 1 }] }],
           "redundancy": 0.25,
-          "throttle": 1
+          "throttle": 1,
+          "backup": ["n2", "n1", "n6", "n5"]
         },
         "f3": {
-          "stages": [
-            {
-              "from": 0,
-              "paths": [{ "nodes": ["n0", "n1", "n2", "n7", "n8", "n3", "n4"], "share": 1 }]
-            }
-          ],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n3", "n4"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         }
       },
-      "score": 0.93875,
+      "score": 0.9605263157894737,
       "built": []
     },
-    "shortest": 0.6565183505599865,
-    "balanced": 0.6565183505599865,
-    "proof": { "milliseconds": 3803, "explored": 23080 }
+    "shortest": 0.8535773194401356,
+    "balanced": 0.8535773194401356,
+    "proof": { "milliseconds": 586, "explored": 0 }
   },
   {
     "id": "c9-5",
@@ -6450,156 +6494,44 @@
     "id": "c10-1",
     "chapter": 10,
     "setting": "drones",
-    "seed": 19567608,
+    "seed": 70047560,
     "level": {
       "id": "c10-1",
       "title": "Passing relay",
       "story": "A relay drifts out of range while another comes into range. Switch in time.",
       "nodes": [
-        { "id": "n0", "name": "Relay 1", "kind": "router", "x": 63.333333333333336, "y": 50 },
-        { "id": "n1", "name": "Ground station", "kind": "server", "x": 10, "y": 86 },
-        { "id": "n2", "name": "Relay 2", "kind": "router", "x": 90, "y": 14 },
-        { "id": "n3", "name": "Relay 3", "kind": "router", "x": 36.66666666666667, "y": 86 },
-        { "id": "n4", "name": "Hub A", "kind": "switch", "x": 10, "y": 14 },
-        { "id": "n5", "name": "Relay 4", "kind": "router", "x": 90, "y": 50 }
+        { "id": "n0", "name": "Relay 1", "kind": "router", "x": 70, "y": 50 },
+        { "id": "n1", "name": "Relay 2", "kind": "router", "x": 30, "y": 14 },
+        { "id": "n2", "name": "Relay 3", "kind": "router", "x": 50, "y": 50 },
+        { "id": "n3", "name": "Ground station", "kind": "server", "x": 10, "y": 50 },
+        { "id": "n4", "name": "Scout A", "kind": "client", "x": 90, "y": 86 },
+        { "id": "n5", "name": "Relay 4", "kind": "router", "x": 50, "y": 14 }
       ],
       "links": [
-        { "id": "l0", "a": "n0", "b": "n5", "capacity": 7, "delay": 2, "loss": 0, "buffer": 6 },
-        { "id": "l1", "a": "n1", "b": "n3", "capacity": 7, "delay": 2, "loss": 0, "buffer": 0 },
-        { "id": "l2", "a": "n2", "b": "n5", "capacity": 7, "delay": 2, "loss": 0, "buffer": 6 },
-        { "id": "l3", "a": "n0", "b": "n3", "capacity": 10, "delay": 2, "loss": 0, "buffer": 0 },
-        { "id": "l4", "a": "n1", "b": "n4", "capacity": 5, "delay": 4, "loss": 0, "buffer": 2 },
-        { "id": "l5", "a": "n0", "b": "n2", "capacity": 10, "delay": 2, "loss": 0, "buffer": 0 },
-        { "id": "l6", "a": "n0", "b": "n4", "capacity": 13, "delay": 4, "loss": 0, "buffer": 6 },
-        { "id": "l7", "a": "n3", "b": "n4", "capacity": 12, "delay": 4, "loss": 0, "buffer": 0 }
+        { "id": "l0", "a": "n0", "b": "n2", "capacity": 11, "delay": 1, "loss": 0, "buffer": 0 },
+        { "id": "l1", "a": "n1", "b": "n5", "capacity": 12, "delay": 1, "loss": 0, "buffer": 5 },
+        { "id": "l2", "a": "n2", "b": "n5", "capacity": 13, "delay": 2, "loss": 0, "buffer": 0 },
+        { "id": "l3", "a": "n0", "b": "n4", "capacity": 9, "delay": 2, "loss": 0, "buffer": 4 },
+        { "id": "l4", "a": "n1", "b": "n3", "capacity": 8, "delay": 2, "loss": 0, "buffer": 0 },
+        { "id": "l5", "a": "n0", "b": "n5", "capacity": 9, "delay": 2, "loss": 0, "buffer": 0 },
+        { "id": "l6", "a": "n1", "b": "n2", "capacity": 13, "delay": 2, "loss": 0, "buffer": 11 },
+        { "id": "l7", "a": "n2", "b": "n3", "capacity": 8, "delay": 3, "loss": 0, "buffer": 4 }
       ],
       "flows": [
         {
           "id": "f0",
-          "name": "Flight commands",
-          "source": "n5",
-          "target": "n1",
-          "profile": "control",
-          "demand": 2
+          "name": "Pilot voice",
+          "source": "n1",
+          "target": "n3",
+          "profile": "voice",
+          "demand": 3
         },
         {
           "id": "f1",
           "name": "Camera feed",
-          "source": "n0",
-          "target": "n1",
+          "source": "n4",
+          "target": "n3",
           "profile": "video",
-          "demand": 6
-        }
-      ],
-      "situations": [
-        { "id": "calm", "name": "Quiet day", "steps": 6, "events": [] },
-        {
-          "id": "moving",
-          "name": "On the move",
-          "steps": 8,
-          "events": [
-            { "kind": "down", "link": "l3", "from": 4, "to": 8 },
-            { "kind": "down", "link": "l0", "from": 0, "to": 3 }
-          ]
-        }
-      ],
-      "rules": {
-        "split": true,
-        "throttle": true,
-        "queues": true,
-        "backup": true,
-        "redundancy": true,
-        "stages": true
-      }
-    },
-    "best": {
-      "plan": {
-        "f1": {
-          "stages": [
-            {
-              "from": 0,
-              "paths": [
-                { "nodes": ["n0", "n3", "n4", "n1"], "share": 0.75 },
-                { "nodes": ["n0", "n3", "n1"], "share": 0.25 }
-              ]
-            }
-          ],
-          "redundancy": 0,
-          "throttle": 1,
-          "backup": ["n0", "n4", "n3", "n1"]
-        },
-        "f0": {
-          "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n5", "n2", "n0", "n3", "n1"], "share": 1 }] },
-            { "from": 3, "paths": [{ "nodes": ["n5", "n0", "n3", "n1"], "share": 1 }] }
-          ],
-          "redundancy": 0,
-          "throttle": 1,
-          "backup": ["n5", "n0", "n4", "n1"]
-        }
-      },
-      "score": 0.8696435026969368,
-      "built": []
-    },
-    "shortest": 0.539875042419052,
-    "balanced": 0.6119050467336359,
-    "proof": { "milliseconds": 1026, "explored": 3139 }
-  },
-  {
-    "id": "c10-2",
-    "chapter": 10,
-    "setting": "drones",
-    "seed": 2352256235,
-    "level": {
-      "id": "c10-2",
-      "title": "Search pattern",
-      "story": "The swarm sweeps a valley. Links open and close as it moves.",
-      "nodes": [
-        { "id": "n0", "name": "Ground station", "kind": "server", "x": 10, "y": 50 },
-        { "id": "n1", "name": "Relay 1", "kind": "router", "x": 36.66666666666667, "y": 14 },
-        { "id": "n2", "name": "Relay 2", "kind": "router", "x": 90, "y": 50 },
-        { "id": "n3", "name": "Relay 3", "kind": "router", "x": 36.66666666666667, "y": 86 },
-        { "id": "n4", "name": "Relay 4", "kind": "router", "x": 36.66666666666667, "y": 50 },
-        { "id": "n5", "name": "Relay 5", "kind": "router", "x": 10, "y": 86 },
-        { "id": "n6", "name": "Relay 6", "kind": "router", "x": 90, "y": 86 },
-        { "id": "n7", "name": "Relay 7", "kind": "router", "x": 63.333333333333336, "y": 50 }
-      ],
-      "links": [
-        { "id": "l0", "a": "n2", "b": "n7", "capacity": 10, "delay": 2, "loss": 0, "buffer": 4 },
-        { "id": "l1", "a": "n4", "b": "n7", "capacity": 10, "delay": 2, "loss": 0, "buffer": 0 },
-        { "id": "l2", "a": "n0", "b": "n4", "capacity": 11, "delay": 2, "loss": 0, "buffer": 0 },
-        { "id": "l3", "a": "n3", "b": "n5", "capacity": 7, "delay": 2, "loss": 0, "buffer": 6 },
-        { "id": "l4", "a": "n0", "b": "n5", "capacity": 10, "delay": 2, "loss": 0, "buffer": 0 },
-        { "id": "l5", "a": "n2", "b": "n6", "capacity": 9, "delay": 2, "loss": 0, "buffer": 8 },
-        { "id": "l6", "a": "n1", "b": "n4", "capacity": 6, "delay": 2, "loss": 0, "buffer": 0 },
-        { "id": "l7", "a": "n3", "b": "n4", "capacity": 12, "delay": 2, "loss": 0, "buffer": 10 },
-        { "id": "l8", "a": "n3", "b": "n7", "capacity": 11, "delay": 2, "loss": 0, "buffer": 5 },
-        { "id": "l9", "a": "n6", "b": "n7", "capacity": 9, "delay": 2, "loss": 0, "buffer": 8 },
-        { "id": "l10", "a": "n0", "b": "n1", "capacity": 10, "delay": 2, "loss": 0, "buffer": 0 }
-      ],
-      "flows": [
-        {
-          "id": "f0",
-          "name": "Flight commands",
-          "source": "n2",
-          "target": "n0",
-          "profile": "control",
-          "demand": 2
-        },
-        {
-          "id": "f1",
-          "name": "Camera feed",
-          "source": "n6",
-          "target": "n7",
-          "profile": "video",
-          "demand": 10
-        },
-        {
-          "id": "f2",
-          "name": "Map tiles",
-          "source": "n2",
-          "target": "n0",
-          "profile": "web",
           "demand": 9
         }
       ],
@@ -6610,8 +6542,8 @@
           "name": "On the move",
           "steps": 8,
           "events": [
-            { "kind": "down", "link": "l2", "from": 4, "to": 8 },
-            { "kind": "down", "link": "l1", "from": 0, "to": 3 }
+            { "kind": "down", "link": "l0", "from": 4, "to": 8 },
+            { "kind": "down", "link": "l4", "from": 0, "to": 3 }
           ]
         }
       ],
@@ -6626,35 +6558,140 @@
     },
     "best": {
       "plan": {
-        "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n6", "n7"], "share": 1 }] }],
+        "f0": {
+          "stages": [
+            { "from": 0, "paths": [{ "nodes": ["n1", "n3"], "share": 1 }] },
+            { "from": 4, "paths": [{ "nodes": ["n1", "n2", "n3"], "share": 1 }] }
+          ],
           "redundancy": 0,
           "throttle": 1
         },
-        "f2": {
+        "f1": {
           "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n2", "n7", "n4", "n0"], "share": 1 }] },
-            { "from": 4, "paths": [{ "nodes": ["n2", "n7", "n3", "n5", "n0"], "share": 1 }] }
-          ],
-          "redundancy": 0,
-          "throttle": 1,
-          "backup": ["n2", "n7", "n3", "n4", "n0"]
-        },
-        "f0": {
-          "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n2", "n7", "n3", "n5", "n0"], "share": 1 }] },
-            { "from": 4, "paths": [{ "nodes": ["n2", "n7", "n4", "n0"], "share": 1 }] }
+            { "from": 0, "paths": [{ "nodes": ["n4", "n0", "n2", "n3"], "share": 1 }] },
+            { "from": 4, "paths": [{ "nodes": ["n4", "n0", "n5", "n1", "n3"], "share": 1 }] }
           ],
           "redundancy": 0,
           "throttle": 1
         }
       },
-      "score": 0.9094086686422448,
+      "score": 0.855386349881285,
       "built": []
     },
-    "shortest": 0.6704012086232126,
-    "balanced": 0.6704012086232126,
-    "proof": { "milliseconds": 2643, "explored": 18217 }
+    "shortest": 0.7151620942909963,
+    "balanced": 0.7151620942909963,
+    "proof": { "milliseconds": 720, "explored": 4088 }
+  },
+  {
+    "id": "c10-2",
+    "chapter": 10,
+    "setting": "drones",
+    "seed": 2369033854,
+    "level": {
+      "id": "c10-2",
+      "title": "Search pattern",
+      "story": "The swarm sweeps a valley. Links open and close as it moves.",
+      "nodes": [
+        { "id": "n0", "name": "Hub A", "kind": "switch", "x": 50, "y": 50 },
+        { "id": "n1", "name": "Relay 1", "kind": "router", "x": 30, "y": 86 },
+        { "id": "n2", "name": "Ground station", "kind": "server", "x": 90, "y": 14 },
+        { "id": "n3", "name": "Relay 2", "kind": "router", "x": 10, "y": 14 },
+        { "id": "n4", "name": "Hub B", "kind": "switch", "x": 30, "y": 50 },
+        { "id": "n5", "name": "Scout A", "kind": "client", "x": 90, "y": 86 },
+        { "id": "n6", "name": "Hub C", "kind": "switch", "x": 10, "y": 86 },
+        { "id": "n7", "name": "Relay 3", "kind": "router", "x": 90, "y": 50 }
+      ],
+      "links": [
+        { "id": "l0", "a": "n0", "b": "n4", "capacity": 9, "delay": 1, "loss": 0, "buffer": 0 },
+        { "id": "l1", "a": "n1", "b": "n6", "capacity": 8, "delay": 1, "loss": 0, "buffer": 7 },
+        { "id": "l2", "a": "n1", "b": "n4", "capacity": 9, "delay": 2, "loss": 0, "buffer": 4 },
+        { "id": "l3", "a": "n5", "b": "n7", "capacity": 9, "delay": 2, "loss": 0, "buffer": 4 },
+        { "id": "l4", "a": "n2", "b": "n7", "capacity": 9, "delay": 2, "loss": 0, "buffer": 4 },
+        { "id": "l5", "a": "n3", "b": "n4", "capacity": 6, "delay": 2, "loss": 0, "buffer": 5 },
+        { "id": "l6", "a": "n0", "b": "n7", "capacity": 13, "delay": 3, "loss": 0, "buffer": 0 },
+        { "id": "l7", "a": "n0", "b": "n1", "capacity": 12, "delay": 2, "loss": 0, "buffer": 10 },
+        { "id": "l8", "a": "n4", "b": "n6", "capacity": 10, "delay": 2, "loss": 0, "buffer": 4 },
+        { "id": "l9", "a": "n0", "b": "n2", "capacity": 8, "delay": 3, "loss": 0, "buffer": 0 },
+        { "id": "l10", "a": "n3", "b": "n6", "capacity": 10, "delay": 4, "loss": 0, "buffer": 8 }
+      ],
+      "flows": [
+        {
+          "id": "f0",
+          "name": "Pilot voice",
+          "source": "n6",
+          "target": "n2",
+          "profile": "voice",
+          "demand": 1
+        },
+        {
+          "id": "f1",
+          "name": "Camera feed",
+          "source": "n4",
+          "target": "n2",
+          "profile": "video",
+          "demand": 3
+        },
+        {
+          "id": "f2",
+          "name": "Map tiles",
+          "source": "n3",
+          "target": "n2",
+          "profile": "web",
+          "demand": 5
+        }
+      ],
+      "situations": [
+        { "id": "calm", "name": "Quiet day", "steps": 6, "events": [] },
+        {
+          "id": "moving",
+          "name": "On the move",
+          "steps": 8,
+          "events": [
+            { "kind": "down", "link": "l5", "from": 4, "to": 8 },
+            { "kind": "down", "link": "l9", "from": 0, "to": 3 }
+          ]
+        }
+      ],
+      "rules": {
+        "split": true,
+        "throttle": true,
+        "queues": true,
+        "backup": true,
+        "redundancy": true,
+        "stages": true
+      }
+    },
+    "best": {
+      "plan": {
+        "f2": {
+          "stages": [
+            { "from": 0, "paths": [{ "nodes": ["n3", "n4", "n0", "n7", "n2"], "share": 1 }] }
+          ],
+          "redundancy": 0,
+          "throttle": 1,
+          "backup": ["n3", "n6", "n1", "n0", "n2"]
+        },
+        "f1": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n4", "n0", "n7", "n2"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f0": {
+          "stages": [
+            { "from": 0, "paths": [{ "nodes": ["n6", "n1", "n0", "n2"], "share": 1 }] },
+            { "from": 4, "paths": [{ "nodes": ["n6", "n4", "n0", "n2"], "share": 1 }] }
+          ],
+          "redundancy": 0,
+          "throttle": 1,
+          "backup": ["n6", "n1", "n0", "n7", "n2"]
+        }
+      },
+      "score": 0.929859486679662,
+      "built": []
+    },
+    "shortest": 0.5722913120043771,
+    "balanced": 0.7943110344071883,
+    "proof": { "milliseconds": 12655, "explored": 164637 }
   },
   {
     "id": "c10-3",
@@ -6777,58 +6814,58 @@
     "id": "c10-4",
     "chapter": 10,
     "setting": "drones",
-    "seed": 1721033057,
+    "seed": 1854562461,
     "level": {
       "id": "c10-4",
       "title": "Valley run",
       "story": "Four drones and one ground station, and every link has its time.",
       "nodes": [
-        { "id": "n0", "name": "Hub A", "kind": "switch", "x": 36.66666666666667, "y": 50 },
-        { "id": "n1", "name": "Relay 1", "kind": "router", "x": 90, "y": 50 },
-        { "id": "n2", "name": "Relay 2", "kind": "router", "x": 63.333333333333336, "y": 50 },
-        { "id": "n3", "name": "Relay 3", "kind": "router", "x": 90, "y": 86 },
-        { "id": "n4", "name": "Relay 4", "kind": "router", "x": 63.333333333333336, "y": 14 },
-        { "id": "n5", "name": "Ground station", "kind": "server", "x": 90, "y": 14 },
-        { "id": "n6", "name": "Relay 5", "kind": "router", "x": 10, "y": 86 },
-        { "id": "n7", "name": "Relay 6", "kind": "router", "x": 10, "y": 50 }
+        { "id": "n0", "name": "Ground station", "kind": "server", "x": 90, "y": 14 },
+        { "id": "n1", "name": "Hub A", "kind": "switch", "x": 50, "y": 14 },
+        { "id": "n2", "name": "Hub B", "kind": "switch", "x": 70, "y": 86 },
+        { "id": "n3", "name": "Scout A", "kind": "client", "x": 30, "y": 14 },
+        { "id": "n4", "name": "Hub C", "kind": "switch", "x": 90, "y": 50 },
+        { "id": "n5", "name": "Relay 1", "kind": "router", "x": 70, "y": 50 },
+        { "id": "n6", "name": "Relay 2", "kind": "router", "x": 50, "y": 50 },
+        { "id": "n7", "name": "Scout B", "kind": "client", "x": 10, "y": 86 }
       ],
       "links": [
-        { "id": "l0", "a": "n0", "b": "n2", "capacity": 12, "delay": 2, "loss": 0, "buffer": 5 },
-        { "id": "l1", "a": "n1", "b": "n2", "capacity": 10, "delay": 2, "loss": 0, "buffer": 0 },
-        { "id": "l2", "a": "n4", "b": "n5", "capacity": 8, "delay": 2, "loss": 0, "buffer": 0 },
-        { "id": "l3", "a": "n0", "b": "n7", "capacity": 7, "delay": 2, "loss": 0, "buffer": 3 },
-        { "id": "l4", "a": "n1", "b": "n3", "capacity": 6, "delay": 2, "loss": 0, "buffer": 5 },
-        { "id": "l5", "a": "n6", "b": "n7", "capacity": 9, "delay": 2, "loss": 0, "buffer": 4 },
-        { "id": "l6", "a": "n1", "b": "n5", "capacity": 7, "delay": 2, "loss": 0, "buffer": 0 },
-        { "id": "l7", "a": "n2", "b": "n4", "capacity": 8, "delay": 2, "loss": 0, "buffer": 7 },
-        { "id": "l8", "a": "n2", "b": "n3", "capacity": 5, "delay": 2, "loss": 0, "buffer": 2 },
-        { "id": "l9", "a": "n0", "b": "n4", "capacity": 10, "delay": 2, "loss": 0, "buffer": 4 },
-        { "id": "l10", "a": "n0", "b": "n6", "capacity": 5, "delay": 2, "loss": 0, "buffer": 0 }
+        { "id": "l0", "a": "n1", "b": "n3", "capacity": 5, "delay": 1, "loss": 0, "buffer": 0 },
+        { "id": "l1", "a": "n4", "b": "n5", "capacity": 10, "delay": 1, "loss": 0, "buffer": 4 },
+        { "id": "l2", "a": "n5", "b": "n6", "capacity": 9, "delay": 1, "loss": 0, "buffer": 8 },
+        { "id": "l3", "a": "n2", "b": "n5", "capacity": 11, "delay": 2, "loss": 0, "buffer": 9 },
+        { "id": "l4", "a": "n0", "b": "n4", "capacity": 13, "delay": 2, "loss": 0, "buffer": 0 },
+        { "id": "l5", "a": "n1", "b": "n6", "capacity": 9, "delay": 2, "loss": 0, "buffer": 0 },
+        { "id": "l6", "a": "n6", "b": "n7", "capacity": 9, "delay": 3, "loss": 0, "buffer": 0 },
+        { "id": "l7", "a": "n0", "b": "n5", "capacity": 8, "delay": 2, "loss": 0, "buffer": 0 },
+        { "id": "l8", "a": "n2", "b": "n4", "capacity": 12, "delay": 2, "loss": 0, "buffer": 10 },
+        { "id": "l9", "a": "n2", "b": "n6", "capacity": 8, "delay": 2, "loss": 0, "buffer": 7 },
+        { "id": "l10", "a": "n0", "b": "n1", "capacity": 11, "delay": 3, "loss": 0, "buffer": 0 }
       ],
       "flows": [
         {
           "id": "f0",
-          "name": "Flight commands",
-          "source": "n7",
-          "target": "n5",
-          "profile": "control",
-          "demand": 1
+          "name": "Pilot voice",
+          "source": "n1",
+          "target": "n0",
+          "profile": "voice",
+          "demand": 3
         },
         {
           "id": "f1",
           "name": "Camera feed",
-          "source": "n6",
-          "target": "n5",
+          "source": "n1",
+          "target": "n0",
           "profile": "video",
-          "demand": 3
+          "demand": 10
         },
         {
           "id": "f2",
           "name": "Map tiles",
-          "source": "n6",
-          "target": "n5",
+          "source": "n7",
+          "target": "n0",
           "profile": "web",
-          "demand": 2
+          "demand": 9
         }
       ],
       "situations": [
@@ -6838,8 +6875,8 @@
           "name": "On the move",
           "steps": 8,
           "events": [
-            { "kind": "down", "link": "l10", "from": 4, "to": 8 },
-            { "kind": "down", "link": "l9", "from": 0, "to": 3 }
+            { "kind": "down", "link": "l7", "from": 4, "to": 8 },
+            { "kind": "down", "link": "l2", "from": 0, "to": 3 }
           ]
         }
       ],
@@ -6856,34 +6893,38 @@
       "plan": {
         "f1": {
           "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n6", "n0", "n2", "n4", "n5"], "share": 1 }] }
+            {
+              "from": 0,
+              "paths": [
+                { "nodes": ["n1", "n0"], "share": 0.75 },
+                { "nodes": ["n1", "n6", "n5", "n0"], "share": 0.25 }
+              ]
+            }
           ],
           "redundancy": 0,
           "throttle": 1,
-          "backup": ["n6", "n7", "n0", "n4", "n5"]
-        },
-        "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n7", "n0", "n4", "n5"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1,
-          "backup": ["n7", "n0", "n2", "n1", "n5"]
+          "backup": ["n1", "n6", "n2", "n4", "n0"]
         },
         "f2": {
           "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n6", "n0", "n2", "n4", "n5"], "share": 1 }] },
-            { "from": 3, "paths": [{ "nodes": ["n6", "n0", "n2", "n1", "n5"], "share": 1 }] }
+            { "from": 0, "paths": [{ "nodes": ["n7", "n6", "n2", "n4", "n0"], "share": 1 }] },
+            { "from": 3, "paths": [{ "nodes": ["n7", "n6", "n5", "n4", "n0"], "share": 1 }] }
           ],
           "redundancy": 0,
-          "throttle": 1,
-          "backup": ["n6", "n7", "n0", "n4", "n5"]
+          "throttle": 1
+        },
+        "f0": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n1", "n0"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
         }
       },
-      "score": 0.9789808066083575,
+      "score": 0.9827436292514897,
       "built": []
     },
-    "shortest": 0.6983363702623907,
-    "balanced": 0.7130749478555695,
-    "proof": { "milliseconds": 14897, "explored": 119958 }
+    "shortest": 0.6939644003649043,
+    "balanced": 0.7510134184174232,
+    "proof": { "milliseconds": 848, "explored": 3121 }
   },
   {
     "id": "c10-5",
@@ -7031,61 +7072,61 @@
     "id": "c10-6",
     "chapter": 10,
     "setting": "drones",
-    "seed": 2430726884,
+    "seed": 4098154195,
     "level": {
       "id": "c10-6",
       "title": "Rescue convoy",
       "story": "A convoy drives through the mountains. Radio links appear and vanish with every bend.",
       "nodes": [
-        { "id": "n0", "name": "Ground station", "kind": "server", "x": 10, "y": 62 },
-        { "id": "n1", "name": "Hub A", "kind": "switch", "x": 50, "y": 38 },
-        { "id": "n2", "name": "Relay 1", "kind": "router", "x": 50, "y": 62 },
-        { "id": "n3", "name": "Hub B", "kind": "switch", "x": 50, "y": 86 },
-        { "id": "n4", "name": "Hub C", "kind": "switch", "x": 90, "y": 38 },
-        { "id": "n5", "name": "Hub D", "kind": "switch", "x": 90, "y": 62 },
-        { "id": "n6", "name": "Command post", "kind": "server", "x": 90, "y": 14 },
-        { "id": "n7", "name": "Relay 2", "kind": "router", "x": 70, "y": 86 },
-        { "id": "n8", "name": "Relay 3", "kind": "router", "x": 90, "y": 86 }
+        { "id": "n0", "name": "Relay 1", "kind": "router", "x": 50, "y": 14 },
+        { "id": "n1", "name": "Relay 2", "kind": "router", "x": 90, "y": 38 },
+        { "id": "n2", "name": "Ground station", "kind": "server", "x": 10, "y": 38 },
+        { "id": "n3", "name": "Hub A", "kind": "switch", "x": 50, "y": 86 },
+        { "id": "n4", "name": "Command post", "kind": "server", "x": 90, "y": 86 },
+        { "id": "n5", "name": "Relay 3", "kind": "router", "x": 30, "y": 86 },
+        { "id": "n6", "name": "Relay 4", "kind": "router", "x": 50, "y": 62 },
+        { "id": "n7", "name": "Relay 5", "kind": "router", "x": 70, "y": 14 },
+        { "id": "n8", "name": "Hub B", "kind": "switch", "x": 30, "y": 38 }
       ],
       "links": [
-        { "id": "l0", "a": "n2", "b": "n3", "capacity": 8, "delay": 1, "loss": 0, "buffer": 4 },
-        { "id": "l1", "a": "n5", "b": "n8", "capacity": 5, "delay": 1, "loss": 0, "buffer": 2 },
-        { "id": "l2", "a": "n4", "b": "n6", "capacity": 10, "delay": 1, "loss": 0, "buffer": 4 },
-        { "id": "l3", "a": "n1", "b": "n2", "capacity": 12, "delay": 1, "loss": 0, "buffer": 0 },
-        { "id": "l4", "a": "n4", "b": "n5", "capacity": 13, "delay": 1, "loss": 0, "buffer": 0 },
-        { "id": "l5", "a": "n3", "b": "n7", "capacity": 10, "delay": 1, "loss": 0, "buffer": 0 },
-        { "id": "l6", "a": "n7", "b": "n8", "capacity": 10, "delay": 1, "loss": 0, "buffer": 0 },
-        { "id": "l7", "a": "n0", "b": "n2", "capacity": 7, "delay": 3, "loss": 0, "buffer": 0 },
-        { "id": "l8", "a": "n2", "b": "n7", "capacity": 11, "delay": 2, "loss": 0, "buffer": 0 },
-        { "id": "l9", "a": "n5", "b": "n7", "capacity": 10, "delay": 2, "loss": 0, "buffer": 0 },
-        { "id": "l10", "a": "n1", "b": "n4", "capacity": 13, "delay": 3, "loss": 0, "buffer": 0 },
-        { "id": "l11", "a": "n0", "b": "n3", "capacity": 5, "delay": 3, "loss": 0, "buffer": 2 },
-        { "id": "l12", "a": "n1", "b": "n6", "capacity": 8, "delay": 3, "loss": 0, "buffer": 7 }
+        { "id": "l0", "a": "n3", "b": "n6", "capacity": 8, "delay": 1, "loss": 0, "buffer": 0 },
+        { "id": "l1", "a": "n0", "b": "n7", "capacity": 8, "delay": 1, "loss": 0, "buffer": 4 },
+        { "id": "l2", "a": "n2", "b": "n8", "capacity": 10, "delay": 1, "loss": 0, "buffer": 4 },
+        { "id": "l3", "a": "n3", "b": "n5", "capacity": 13, "delay": 1, "loss": 0, "buffer": 6 },
+        { "id": "l4", "a": "n0", "b": "n8", "capacity": 8, "delay": 2, "loss": 0, "buffer": 7 },
+        { "id": "l5", "a": "n1", "b": "n7", "capacity": 5, "delay": 2, "loss": 0, "buffer": 4 },
+        { "id": "l6", "a": "n6", "b": "n8", "capacity": 11, "delay": 2, "loss": 0, "buffer": 0 },
+        { "id": "l7", "a": "n1", "b": "n4", "capacity": 10, "delay": 2, "loss": 0, "buffer": 4 },
+        { "id": "l8", "a": "n5", "b": "n6", "capacity": 10, "delay": 2, "loss": 0, "buffer": 4 },
+        { "id": "l9", "a": "n5", "b": "n8", "capacity": 10, "delay": 2, "loss": 0, "buffer": 8 },
+        { "id": "l10", "a": "n0", "b": "n6", "capacity": 8, "delay": 2, "loss": 0, "buffer": 0 },
+        { "id": "l11", "a": "n3", "b": "n4", "capacity": 9, "delay": 3, "loss": 0, "buffer": 8 },
+        { "id": "l12", "a": "n2", "b": "n5", "capacity": 10, "delay": 3, "loss": 0, "buffer": 8 }
       ],
       "flows": [
         {
           "id": "f0",
-          "name": "Flight commands",
-          "source": "n3",
-          "target": "n6",
-          "profile": "control",
+          "name": "Pilot voice",
+          "source": "n5",
+          "target": "n4",
+          "profile": "voice",
           "demand": 2
         },
         {
           "id": "f1",
           "name": "Camera feed",
-          "source": "n2",
-          "target": "n5",
+          "source": "n8",
+          "target": "n4",
           "profile": "video",
-          "demand": 8
+          "demand": 5
         },
         {
           "id": "f2",
           "name": "Map tiles",
-          "source": "n2",
-          "target": "n6",
+          "source": "n3",
+          "target": "n4",
           "profile": "web",
-          "demand": 7
+          "demand": 3
         }
       ],
       "situations": [
@@ -7095,8 +7136,8 @@
           "name": "On the move",
           "steps": 8,
           "events": [
-            { "kind": "down", "link": "l8", "from": 4, "to": 8 },
-            { "kind": "down", "link": "l3", "from": 0, "to": 3 }
+            { "kind": "down", "link": "l3", "from": 4, "to": 8 },
+            { "kind": "down", "link": "l9", "from": 0, "to": 3 }
           ]
         }
       ],
@@ -7113,40 +7154,40 @@
       "plan": {
         "f1": {
           "stages": [
+            { "from": 0, "paths": [{ "nodes": ["n8", "n6", "n3", "n4"], "share": 1 }] },
+            { "from": 4, "paths": [{ "nodes": ["n8", "n5", "n3", "n4"], "share": 1 }] }
+          ],
+          "redundancy": 0,
+          "throttle": 1,
+          "backup": ["n8", "n0", "n7", "n1", "n4"]
+        },
+        "f0": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n5", "n3", "n4"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1,
+          "backup": ["n5", "n6", "n3", "n4"]
+        },
+        "f2": {
+          "stages": [
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n2", "n7", "n5"], "share": 0.5 },
-                { "nodes": ["n2", "n3", "n7", "n8", "n5"], "share": 0.5 }
+                { "nodes": ["n3", "n5", "n6", "n0", "n7", "n1", "n4"], "share": 0.75 },
+                { "nodes": ["n3", "n6", "n0", "n7", "n1", "n4"], "share": 0.25 }
               ]
             }
           ],
           "redundancy": 0,
           "throttle": 1,
-          "backup": ["n2", "n3", "n7", "n5"]
-        },
-        "f2": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n2", "n1", "n6"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1,
-          "backup": ["n2", "n7", "n5", "n4", "n6"]
-        },
-        "f0": {
-          "stages": [
-            { "from": 0, "paths": [{ "nodes": ["n3", "n2", "n1", "n4", "n6"], "share": 1 }] },
-            { "from": 3, "paths": [{ "nodes": ["n3", "n7", "n5", "n4", "n6"], "share": 1 }] }
-          ],
-          "redundancy": 0,
-          "throttle": 1,
-          "backup": ["n3", "n7", "n8", "n5", "n4", "n6"]
+          "backup": ["n3", "n4"]
         }
       },
-      "score": 0.976677418874937,
+      "score": 0.9778595573560018,
       "built": []
     },
-    "shortest": 0.7784805522122741,
-    "balanced": 0.6765224007375217,
-    "proof": { "milliseconds": 1462, "explored": 11643 }
+    "shortest": 0.7168676735924331,
+    "balanced": 0.5984280303030304,
+    "proof": { "milliseconds": 2518, "explored": 18551 }
   },
   {
     "id": "c11-1",

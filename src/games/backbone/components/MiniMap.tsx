@@ -44,7 +44,11 @@ export function MiniMap({
         viewBox={`0 0 ${String(MAP_WIDTH)} ${String(MAP_HEIGHT)}`}
         className="bb-mini-svg"
         role="img"
-        aria-label={`${title}: score ${String(Math.round(score * 100))}`}
+        aria-label={
+          locked
+            ? `${title}: locked until you earn a star`
+            : `${title}: score ${String(Math.round(score * 100))}`
+        }
       >
         {!locked &&
           level.links.map((link) => {
@@ -75,6 +79,14 @@ export function MiniMap({
               <circle key={node.id} className="bb-mini-node" cx={point.x} cy={point.y} r={2.6} />
             );
           })}
+        {locked && (
+          <text className="bb-mini-lock" x={MAP_WIDTH / 2} y={MAP_HEIGHT / 2} textAnchor="middle">
+            <tspan x={MAP_WIDTH / 2}>Earn a star</tspan>
+            <tspan x={MAP_WIDTH / 2} dy="9">
+              to see it
+            </tspan>
+          </text>
+        )}
       </svg>
       <figcaption>
         <span>{title}</span>

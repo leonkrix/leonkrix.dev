@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LevelRecord } from '../data/pool';
 import { loadBalancedPlan, shortestPathPlan } from '../logic/baselines';
 import { optionalLinks, simpleBuild, withBuilt } from '../logic/build';
+import { floodDirections } from '../logic/flood';
 import { indexLevel } from '../logic/graph';
 import { hintFor } from '../logic/hint';
 import { placeNames, placeTag } from '../logic/labels';
@@ -25,7 +26,7 @@ import {
 } from '../logic/play';
 import { evaluate } from '../logic/simulate';
 import { starsFor, starThresholds } from '../logic/stars';
-import { linkName, riskyLinks } from '../logic/text';
+import { linkName, type RiskKind, riskyLinks } from '../logic/text';
 import type { Evaluation, LinkStepResult } from '../logic/types';
 import { advanceClock, type Clock, linkBetween, nodesOfLinks, packetsAt } from '../logic/view';
 import { BuildPanel } from './BuildPanel';
@@ -42,7 +43,7 @@ const STEP_MS = 1100;
 const STILL_TIME = 0.3;
 
 /** No cable is marked while the stress test runs: the map shows what happens */
-const noRisks: ReadonlyMap<string, 'down' | 'lossy' | 'slow'> = new Map();
+const noRisks: ReadonlyMap<string, RiskKind> = new Map();
 
 interface RoundProps {
   record: LevelRecord;
@@ -244,10 +245,28 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
       }
     }
   }
+  const stressSituation = level.situations[clock.situation];
+  // The way a flood runs over the cables in this minute of the stress test
+  const attackFrom =
+    stressSituation === undefined || stressStep === undefined
+      ? new Map<string, string>()
+      : floodDirections(
+          index,
+          stressSituation.events,
+          clock.step,
+          (link) => stressStep.links[link]?.down !== true,
+        );
+  const stressSteps = run?.evaluation.situations[clock.situation]?.steps;
   const packets =
-    stressStep === undefined
+    stressSituation === undefined || stressSteps === undefined
       ? []
-      : packetsAt(index, stressStep, reducedRef.current ? STILL_TIME : clock.time);
+      : packetsAt(
+          index,
+          stressSituation,
+          stressSteps,
+          clock.step,
+          reducedRef.current ? STILL_TIME : clock.time,
+        );
   const loads = run === undefined ? preview?.links : stressStep?.links;
 
   const missing = unrouted(play);
@@ -324,6 +343,7 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
             lifted={placement.lifted}
             badgesLeft={placement.badgesLeft}
             risks={run === undefined ? risks : noRisks}
+            attackFrom={attackFrom}
             loadAt={placement.loads}
             sourceSide={
               selectedFlow === undefined
@@ -492,24 +512,38 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
                 }}
                 thresholds={thresholds}
                 assisted={run.assisted}
+                plan={play.plan}
                 situation={clock.situation}
                 solved={solved || justSolved}
-                onEdit={onEdit}
                 focus={focusFlow}
                 onFocus={setFocusFlow}
-                onLoadBest={() => {
-                  setPlay(loadDesign(play, record.best.plan, record.best.built));
-                  onEdit();
-                }}
               />
             )}
           </aside>
           {/* Under the panel, on the height of the play bar: the way on, once the level is run */}
           <div className="bb-next-row">
-            {run !== undefined && next !== undefined && (
-              <button type="button" data-primary onClick={next.onClick}>
-                {next.label}
-              </button>
+            {run !== undefined && (
+              <>
+                <button type="button" onClick={onEdit}>
+                  Change the plan
+                </button>
+                {(solved || justSolved) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPlay(loadDesign(play, record.best.plan, record.best.built));
+                      onEdit();
+                    }}
+                  >
+                    Load the best plan
+                  </button>
+                )}
+                {next !== undefined && (
+                  <button type="button" data-primary onClick={next.onClick}>
+                    {next.label}
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

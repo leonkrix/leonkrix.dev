@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { shortestPathPlan } from './baselines';
 import { diamond, randomLevel } from './fixtures';
+import { floodDirections, floodLinks } from './flood';
 import { indexLevel } from './graph';
 import { evaluate } from './simulate';
 import {
@@ -74,7 +75,8 @@ describe('what changes at a step', () => {
 describe('the forecast', () => {
   it('writes out every situation with the minutes of its events, counted from 1', () => {
     const index = indexLevel(randomLevel(5));
-    const forecast = forecastOf(index);
+    // The cables that lose packets all the time come first, as "On every day"
+    const forecast = forecastOf(index).filter((entry) => entry.id !== 'always');
     expect(forecast.map((situation) => situation.name)).toEqual(['Calm', 'Rush', 'Attack']);
     expect(forecast[0]?.items).toEqual([]);
     // The cable is cut from index 2 to 6 (minutes 3 to 6), the burst from 3 to 5 (minutes 4 and 5)
@@ -82,7 +84,9 @@ describe('the forecast', () => {
       ['down', 'Minutes 3–6'],
       ['burst', 'Minutes 4–5'],
     ]);
-    expect(forecast[2]?.items[0]?.text).toMatch(/ floods .* with 4 per minute$/);
+    expect(forecast[2]?.items[0]?.text).toMatch(
+      / floods .* with 4 per minute. It goes the fastest way/,
+    );
   });
 
   it('marks the cables that something happens to, a cut before loss before slowness', () => {
@@ -90,6 +94,58 @@ describe('the forecast', () => {
     const risks = riskyLinks(level);
     const cut = level.situations[1]?.events.find((event) => event.kind === 'down');
     expect(cut?.kind === 'down' ? risks.get(cut.link) : undefined).toBe('down');
-    expect(risks.size).toBe(1);
+    // The cut wins over the loss of the same cable and over a flood
+    expect([...risks.values()].filter((kind) => kind === 'down')).toHaveLength(1);
+  });
+});
+
+describe('what a cable loses all the time and where a flood goes', () => {
+  it('lists a cable with a loss of its own in the forecast, as always', () => {
+    const level = diamond({
+      links: [
+        { id: 'AB', a: 'A', b: 'B', capacity: 10, delay: 1, loss: 0.1 },
+        { id: 'BD', a: 'B', b: 'D', capacity: 10, delay: 1, loss: 0 },
+        { id: 'AC', a: 'A', b: 'C', capacity: 10, delay: 2, loss: 0 },
+        { id: 'CD', a: 'C', b: 'D', capacity: 10, delay: 2, loss: 0 },
+      ],
+    });
+    const forecast = forecastOf(indexLevel(level));
+    expect(forecast[0]?.id).toBe('always');
+    expect(forecast[0]?.items[0]?.text).toBe('A – B loses 10 % of its packets');
+    expect(forecast[0]?.items[0]?.minutes).toBe('Always');
+    expect(riskyLinks(level).get('AB')).toBe('lossy');
+  });
+
+  it('says over which nodes a flood goes, and marks those cables', () => {
+    const level = randomLevel(5);
+    const index = indexLevel(level);
+    const attack = forecastOf(index).find((entry) => entry.name === 'Attack');
+    expect(attack?.items[0]?.text).toMatch(/It goes the fastest way: N\d.* → N\d/);
+    const flood = level.situations[2]?.events[0];
+    expect(flood?.kind).toBe('flood');
+    if (flood?.kind === 'flood') {
+      const marked = [...riskyLinks(level)].filter(([, kind]) => kind === 'flood');
+      expect(marked.map(([id]) => id).sort()).toEqual(
+        [...floodLinks(index, flood, () => true)].sort(),
+      );
+    }
+  });
+
+  it('runs the marks of a flood the way the flood goes, cable after cable', () => {
+    const level = randomLevel(5);
+    const index = indexLevel(level);
+    const flood = level.situations[2]?.events[0];
+    if (flood?.kind !== 'flood') {
+      throw new Error('the random level has a flood');
+    }
+    const directions = floodDirections(index, [flood], 2, () => true);
+    const links = floodLinks(index, flood, () => true);
+    let at = flood.source;
+    for (const id of links) {
+      expect(directions.get(id), id).toBe(at);
+      const link = index.linkById.get(id);
+      at = link?.a === at ? link.b : (link?.a ?? '');
+    }
+    expect(at).toBe(flood.target);
   });
 });

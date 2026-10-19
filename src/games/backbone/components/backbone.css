@@ -191,7 +191,9 @@
 
 .bb-next-row {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 0.5rem;
   min-height: 2.4rem;
 }
 
@@ -641,7 +643,7 @@
   }
 }
 
-.bb-game button:not(.bb-node, .bb-level, .bb-flow, .bb-card) {
+.bb-game button:not(.bb-node, .bb-level, .bb-flow, .bb-card, .bb-build-label) {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -657,12 +659,13 @@
     transform 160ms ease;
 }
 
-.bb-game button:not(.bb-node, .bb-level, .bb-flow, .bb-card):hover:not(:disabled) {
+.bb-game button:not(.bb-node, .bb-level, .bb-flow, .bb-card, .bb-build-label):hover:not(:disabled) {
   border-color: var(--color-accent-2);
   transform: translateY(-1px);
 }
 
-.bb-game button:not(.bb-node, .bb-level, .bb-flow, .bb-card):active:not(:disabled) {
+.bb-game
+  button:not(.bb-node, .bb-level, .bb-flow, .bb-card, .bb-build-label):active:not(:disabled) {
   transform: translateY(0) scale(0.97);
 }
 
@@ -756,13 +759,16 @@
   --bb-event: var(--bb-over);
 }
 
-.bb-step-events li[data-kind='lossy'],
 .bb-step-events li[data-kind='slow'] {
   --bb-event: var(--bb-busy);
 }
 
-.bb-step-events li[data-kind='burst'] {
+.bb-step-events li[data-kind='lossy'] {
   --bb-event: var(--color-accent-2);
+}
+
+.bb-step-events li[data-kind='burst'] {
+  --bb-event: var(--color-accent);
 }
 
 .bb-step-quiet {
@@ -1732,13 +1738,16 @@
   --bb-event: var(--bb-over);
 }
 
-.bb-forecast li[data-kind='lossy'],
 .bb-forecast li[data-kind='slow'] {
   --bb-event: var(--bb-busy);
 }
 
-.bb-forecast li[data-kind='burst'] {
+.bb-forecast li[data-kind='lossy'] {
   --bb-event: var(--color-accent-2);
+}
+
+.bb-forecast li[data-kind='burst'] {
+  --bb-event: var(--color-accent);
 }
 
 .bb-forecast-when {
@@ -1754,12 +1763,12 @@
 /* A cable that something happens to in the stress test: a dashed halo in the colour of the event */
 .bb-link-risk {
   stroke: var(--bb-event, var(--color-border));
-  stroke-dasharray: 1 1.3;
+  stroke-dasharray: 0.5 1.4;
   stroke-linecap: round;
-  opacity: 0.9;
 }
 
-[data-risk='down'] {
+[data-risk='down'],
+[data-risk='flood'] {
   --bb-event: var(--bb-over);
 }
 
@@ -1769,4 +1778,180 @@
 
 [data-risk='slow'] {
   --bb-event: var(--bb-busy);
+}
+
+.bb-problems li[data-problem='info'] {
+  border-left-color: var(--color-accent-2);
+  background-color: color-mix(in srgb, var(--color-accent-2) 8%, transparent);
+}
+
+.bb-mini-lock {
+  fill: var(--color-muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 7px;
+}
+
+.bb-situations {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.bb-situations th,
+.bb-situations td {
+  padding: 0.2rem 0.4rem;
+  font-weight: 400;
+  text-align: left;
+}
+
+.bb-situations small {
+  margin-left: 0.3rem;
+  color: var(--color-muted);
+  font-size: 0.7rem;
+}
+
+.bb-situations-total th,
+.bb-situations-total td {
+  border-top: 1px solid var(--color-border);
+  font-weight: 600;
+}
+
+/* The build button sits on its cable, centred by a transform: it must not lift or move on hover
+   (the pointer would leave it and the hover would flicker), only change its colour */
+.bb-game button.bb-build-label {
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.bb-game button.bb-build-label:hover:not(:disabled),
+.bb-game button.bb-build-label:focus-visible {
+  border-style: solid;
+  border-color: var(--color-contrast);
+  background-color: color-mix(in srgb, var(--color-contrast) 16%, var(--color-bg));
+}
+
+/* ---- The list of paths, the backup and the slider of the throttle ---- */
+
+.bb-paths {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bb-paths li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.3rem 0.25rem 0.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+}
+
+.bb-paths li[data-selected='true'] {
+  border-color: var(--bb-color, var(--color-accent-2));
+  background-color: color-mix(in srgb, var(--bb-color, var(--color-accent-2)) 10%, transparent);
+}
+
+.bb-game .bb-paths button.bb-path-pick {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  border-color: transparent;
+  background-color: transparent;
+  text-align: left;
+}
+
+.bb-path-name {
+  font-weight: 500;
+}
+
+.bb-path-share {
+  color: var(--color-muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.78rem;
+}
+
+.bb-path-actions {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.bb-game button.bb-small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.78rem;
+}
+
+.bb-small .bb-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.bb-game button.bb-add {
+  justify-self: start;
+  border-style: dashed;
+}
+
+.bb-add .bb-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.bb-slider {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 3.2rem;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.bb-slider input {
+  accent-color: var(--bb-color, var(--color-accent-2));
+}
+
+.bb-slider output {
+  color: var(--color-fg);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+/* What waits in the buffer of a cable: a small "q2" under its load, only while something waits */
+.bb-link-queue {
+  position: absolute;
+  top: calc(100% - 0.1em);
+  left: 50%;
+  padding: 0 0.4em;
+  border-radius: 0.7em;
+  background-color: color-mix(in srgb, var(--color-bg) 88%, transparent);
+  color: var(--bb-busy);
+  font-size: 0.85em;
+  line-height: 1.4;
+  transform: translateX(-50%);
+}
+
+/* On a narrow screen the three buttons of the way on stay in one row */
+@container (max-width: 40rem) {
+  .bb-next-row {
+    justify-content: stretch;
+  }
+
+  .bb-game .bb-next-row button {
+    flex: 1;
+    justify-content: center;
+    padding: 0.4rem 0.4rem;
+    font-size: 0.78rem;
+  }
+}
+
+/* ...and when the screen is too narrow for three buttons the room of two rows is kept, so that the
+   page does not move when "Load the best plan" appears */
+@container (max-width: 40rem) {
+  .bb-next-row {
+    min-height: 5.3rem;
+    align-content: flex-start;
+  }
 }

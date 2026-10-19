@@ -9,6 +9,7 @@ import {
   applyStrategy,
   cancelDraft,
   clickNode,
+  donorOf,
   drawPath,
   editedPath,
   flowNumber,
@@ -158,7 +159,15 @@ describe('the options of a flow', () => {
   it('splits a flow in quarters and keeps the plan valid', () => {
     let state = addLane(routed());
     expect(state.plan.f1?.stages[0]?.paths.map((entry) => entry.share)).toEqual([0.5, 0.5]);
-    expect(editedPath(state)).not.toEqual(['A', 'B', 'D']);
+    // The new path is a copy of the first one, selected, until the player draws its own route
+    expect(editedPath(state)).toEqual(['A', 'B', 'D']);
+    expect(state.lane).toBe(1);
+    expect(state.message).toContain('click the nodes');
+    state = drawPath(state, ['A', 'C', 'D']);
+    expect(state.plan.f1?.stages[0]?.paths.map((entry) => entry.nodes.join())).toEqual([
+      'A,B,D',
+      'A,C,D',
+    ]);
     state = moveShare(state, 1, 0);
     expect(state.plan.f1?.stages[0]?.paths.map((entry) => entry.share)).toEqual([0.75, 0.25]);
     state = addLane(state);
@@ -170,6 +179,16 @@ describe('the options of a flow', () => {
     expect(problemsOfPlan(state.index, state.plan)).toEqual([]);
   });
 
+  it('says which path can give a quarter to another one', () => {
+    let state = addLane(routed());
+    expect(donorOf(state, 1)).toBe(0);
+    expect(donorOf(state, 0)).toBe(1);
+    state = moveShare(state, 0, 1);
+    // 25 against 75: the path with a quarter cannot give
+    expect(donorOf(state, 0)).toBe(1);
+    expect(donorOf(state, 1)).toBeUndefined();
+  });
+
   it('keeps at least a quarter on every path', () => {
     const state = moveShare(addLane(routed()), 0, 1);
     const again = moveShare(state, 0, 1);
@@ -177,11 +196,13 @@ describe('the options of a flow', () => {
     expect(moveShare(again, 0, 1).message).toContain('at least a quarter');
   });
 
-  it('adds a backup that avoids the cables in use, and removes it', () => {
+  it('adds a backup that the player draws, and removes it', () => {
     let state = addBackup(routed());
-    expect(state.plan.f1?.backup).toEqual(['A', 'C', 'D']);
+    // It starts as a copy of the path, and it is the one that is edited
+    expect(state.plan.f1?.backup).toEqual(['A', 'B', 'D']);
     expect(state.target).toBe('backup');
-    state = drawPath(selectEdit(state, 0, 0, 'backup'), ['A', 'C', 'D']);
+    state = drawPath(state, ['A', 'C', 'D']);
+    expect(state.plan.f1?.backup).toEqual(['A', 'C', 'D']);
     expect(problemsOfPlan(state.index, state.plan)).toEqual([]);
     state = removeBackup(state);
     expect(state.plan.f1?.backup).toBeUndefined();
@@ -258,5 +279,50 @@ describe('taking a route away', () => {
     const level = start().index.level;
     expect(flowNumber(level, 'f1')).toBe(1);
     expect(flowNumber(level, 'f2')).toBe(2);
+  });
+});
+
+describe('drawing over a cable that is not built yet', () => {
+  const withGhost = (budget: number): PlayState =>
+    startState(
+      diamond({
+        flows: flows.slice(0, 1),
+        links: [
+          { id: 'AB', a: 'A', b: 'B', capacity: 10, delay: 1, loss: 0 },
+          { id: 'BD', a: 'B', b: 'D', capacity: 10, delay: 1, loss: 0 },
+          { id: 'AC', a: 'A', b: 'C', capacity: 10, delay: 2, loss: 0 },
+          { id: 'CD', a: 'C', b: 'D', capacity: 10, delay: 2, loss: 0 },
+          { id: 'AD', a: 'A', b: 'D', capacity: 10, delay: 1, loss: 0, optional: true, cost: 4 },
+        ],
+        budget,
+      }),
+    );
+
+  it('builds the cable by clicking over it, when the budget is enough', () => {
+    let state = withGhost(5);
+    expect(state.built).toEqual([]);
+    state = drawn(state, ['A', 'D']);
+    expect(state.built).toEqual(['AD']);
+    expect(editedPath(state)).toEqual(['A', 'D']);
+    expect(state.message).toContain('is built for 4');
+    // Undo takes the route first and then the cable
+    expect(undo(state).built).toEqual(['AD']);
+    expect(undo(undo(state)).built).toEqual([]);
+  });
+
+  it('builds the cables of a path that is drawn in one go', () => {
+    const state = drawPath(withGhost(5), ['A', 'D']);
+    expect(state.built).toEqual(['AD']);
+    expect(editedPath(state)).toEqual(['A', 'D']);
+  });
+
+  it('says so and builds nothing when the budget is not enough', () => {
+    const clicked = drawn(withGhost(3), ['A', 'D']);
+    expect(clicked.built).toEqual([]);
+    expect(clicked.message).toContain('only 3 is left');
+    expect(clicked.draft?.nodes).toEqual(['A']);
+    const dragged = drawPath(withGhost(3), ['A', 'D']);
+    expect(dragged.built).toEqual([]);
+    expect(dragged.plan).toEqual({});
   });
 });

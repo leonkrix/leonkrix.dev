@@ -220,11 +220,15 @@ test.describe('Backbone', () => {
     page,
   }) => {
     await open(page, 'c3-1');
-    await expect(page.getByText('Split', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Paths', { exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'Auto: shortest' }).click();
-    await expect(page.getByText('Split', { exact: true })).toBeVisible();
+    await expect(page.getByText('Paths', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Add path' }).click();
-    await expect(page.getByRole('button', { name: /Path 2/ })).toBeVisible();
+    // The second path is not chosen for the player: it is a copy, and the player draws its route
+    await expect(page.getByRole('button', { name: /^Path 2/ })).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: /click the nodes/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Remove path 2' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Give path 1 a quarter more' })).toBeVisible();
     await page.getByRole('link', { name: 'All levels' }).click();
     await page.locator('a[href="?level=c8-1"]').click();
     await expect(page.getByRole('list', { name: 'Cables that can be built' })).toBeVisible({
@@ -234,6 +238,27 @@ test.describe('Backbone', () => {
     await expect(page.getByText(/is built for/)).toBeVisible();
     await page.getByRole('button', { name: 'Remove', exact: true }).first().click();
     await expect(page.getByText(/is not built any more/)).toBeVisible();
+  });
+
+  test('holds a flow back with a slider in steps of five percent', async ({ page }) => {
+    const record = levels.find(
+      (entry) => entry.chapter === 5 && entry.level.flows.some((flow) => flow.profile === 'bulk'),
+    );
+    expect(record).toBeDefined();
+    await open(page, record?.id ?? 'c5-1');
+    await page.getByRole('button', { name: 'Auto: shortest' }).click();
+    const bulk = record?.level.flows.findIndex((flow) => flow.profile === 'bulk') ?? 0;
+    await page
+      .getByRole('button', { name: new RegExp('^Flow ' + String(bulk + 1) + ': ') })
+      .click();
+    const slider = page.getByRole('slider', { name: 'Send at most' });
+    await expect(slider).toHaveAttribute('step', '5');
+    await slider.focus();
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('Tab');
+    await expect(
+      page.getByRole('status').filter({ hasText: /sends 95 % of its traffic/ }),
+    ).toBeVisible();
   });
 
   test('numbers the flows, takes one route away and looks at one flow in the result', async ({

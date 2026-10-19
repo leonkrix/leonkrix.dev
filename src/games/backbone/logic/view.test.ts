@@ -93,7 +93,7 @@ describe('packets', () => {
     const result = evaluate(calmIndex, { f1: singlePath(['A', 'B', 'D']) });
     const step = result.situations[0]?.steps[0];
     expect(step).toBeDefined();
-    const packets = packetsAt(calmIndex, need(step), 0.3);
+    const packets = packetsAt(calmIndex, need(calm.situations[0]), [need(step)], 0, 0.3);
     expect(packets.length).toBeGreaterThan(0);
     expect(packets.every((packet) => packet.point.y <= 40 + 1e-9)).toBe(true);
   });
@@ -101,7 +101,9 @@ describe('packets', () => {
   it('drops the packets that do not fit before the end of the full link', () => {
     const result = evaluate(calmIndex, { f1: singlePath(['A', 'B', 'D']) });
     const step = result.situations[0]?.steps[0];
-    const all = [0, 0.2, 0.4, 0.6, 0.8].flatMap((time) => packetsAt(calmIndex, need(step), time));
+    const all = [0, 0.2, 0.4, 0.6, 0.8].flatMap((time) =>
+      packetsAt(calmIndex, need(calm.situations[0]), [need(step)], 0, time),
+    );
     expect(all.some((packet) => packet.dropped)).toBe(true);
     expect(all.some((packet) => !packet.dropped)).toBe(true);
   });
@@ -112,7 +114,9 @@ describe('packets', () => {
     });
     const fitsIndex = indexLevel(fits);
     const step = evaluate(fitsIndex, { f1: singlePath(['A', 'B', 'D']) }).situations[0]?.steps[0];
-    const all = [0, 0.25, 0.5, 0.75].flatMap((time) => packetsAt(fitsIndex, need(step), time));
+    const all = [0, 0.25, 0.5, 0.75].flatMap((time) =>
+      packetsAt(fitsIndex, need(fits.situations[0]), [need(step)], 0, time),
+    );
     expect(all.some((packet) => packet.dropped)).toBe(false);
   });
 });
@@ -134,5 +138,71 @@ describe('the clock of the stress test', () => {
     const result = advanceClock([2], { situation: 0, step: 1, time: 0.5 }, 1);
     expect(result.finished).toBe(true);
     expect(result.clock).toEqual({ situation: 0, step: 1, time: 0 });
+  });
+});
+
+describe('packets over several steps', () => {
+  // A burst of web traffic in the steps 2 and 3 of five
+  const burst = diamond({
+    flows: [{ id: 'f1', name: 'Web', source: 'A', target: 'D', profile: 'web', demand: 4 }],
+    situations: [
+      {
+        id: 'rush',
+        name: 'Rush',
+        steps: 5,
+        events: [{ kind: 'burst', flow: 'f1', from: 1, to: 3, factor: 3 }],
+      },
+    ],
+  });
+  const burstIndex = indexLevel(burst);
+  const steps = need(evaluate(burstIndex, { f1: singlePath(['A', 'B', 'D']) }).situations[0]).steps;
+  const situation = need(burst.situations[0]);
+
+  it('sends more packets in a burst', () => {
+    const quiet = packetsAt(burstIndex, situation, steps, 0, 0.9).length;
+    const busy = packetsAt(burstIndex, situation, steps, 1, 0.9).length;
+    expect(busy).toBeGreaterThan(quiet);
+  });
+
+  it('lets the packets of a step go on to their target when the step is over', () => {
+    for (const boundary of [1, 2, 3, 4]) {
+      const before = packetsAt(burstIndex, situation, steps, boundary - 1, 0.9999);
+      const after = packetsAt(burstIndex, situation, steps, boundary, 0.0001);
+      for (const packet of before) {
+        // A packet that has not reached its target is still there, a hair further on
+        const still = after.find((other) => other.key === packet.key);
+        if (packet.point.x < 89) {
+          expect(still, packet.key + ' at the end of step ' + String(boundary - 1)).toBeDefined();
+          expect(still?.point.x).toBeGreaterThanOrEqual(packet.point.x - 1e-6);
+        }
+      }
+    }
+  });
+});
+
+describe('packets that a cable loses', () => {
+  const lossy = diamond({
+    flows: [{ id: 'f1', name: 'Web', source: 'A', target: 'D', profile: 'web', demand: 8 }],
+    links: [
+      { id: 'AB', a: 'A', b: 'B', capacity: 10, delay: 1, loss: 0.5 },
+      { id: 'BD', a: 'B', b: 'D', capacity: 10, delay: 1, loss: 0 },
+      { id: 'AC', a: 'A', b: 'C', capacity: 10, delay: 2, loss: 0 },
+      { id: 'CD', a: 'C', b: 'D', capacity: 10, delay: 2, loss: 0 },
+    ],
+  });
+  const lossyIndex = indexLevel(lossy);
+  const steps = need(evaluate(lossyIndex, { f1: singlePath(['A', 'B', 'D']) }).situations[0]).steps;
+  const situation = need(lossy.situations[0]);
+
+  it('fades some of them on the cable, in the share of the loss, a little bigger', () => {
+    const all = [0.55, 0.65, 0.75, 0.85, 0.95].flatMap((time) =>
+      packetsAt(lossyIndex, situation, steps, 0, time),
+    );
+    const lost = all.filter((packet) => packet.dropped);
+    expect(lost.length).toBeGreaterThan(0);
+    // They are lost on the first cable (A to B lies between x 10 and 50), never behind it
+    expect(lost.every((packet) => packet.point.x <= 50 + 1e-6)).toBe(true);
+    expect(lost.some((packet) => packet.scale > 1)).toBe(true);
+    expect(all.some((packet) => !packet.dropped)).toBe(true);
   });
 });

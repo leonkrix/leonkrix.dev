@@ -21,7 +21,10 @@ const all = liveGames().length;
       <GameGrid games={games} />
     </div>
     <p class="reveal mt-8">
-      <a href={gamesPath} class="btn-outline inline-flex items-center gap-2">
+      <a
+        href={gamesPath}
+        class="btn-outline inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-medium text-fg"
+      >
         All games ({all})
         <Icon name="lucide:arrow-right" class="size-4" />
       </a>

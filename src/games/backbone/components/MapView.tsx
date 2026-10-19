@@ -8,6 +8,7 @@ import {
 
 import { type LevelIndex } from '../logic/graph';
 import type { Side } from '../logic/labels';
+import type { RiskKind } from '../logic/text';
 import type { LinkStepResult, NetLink, NodePath } from '../logic/types';
 import {
   type Direction,
@@ -56,7 +57,9 @@ interface MapViewProps {
   /** The nodes whose numbers sit on the top left corner (the right one is too near the border) */
   badgesLeft: ReadonlySet<string>;
   /** Cables something happens to in a situation of the stress test (marked while planning) */
-  risks: ReadonlyMap<string, 'down' | 'lossy' | 'slow'>;
+  risks: ReadonlyMap<string, RiskKind>;
+  /** For a cable a flood runs over: the node it runs from, so that the marks run the right way */
+  attackFrom: ReadonlyMap<string, string>;
   /** Where along every cable its load (and the button that builds it) sits, 0 to 1 */
   loadAt: ReadonlyMap<string, number>;
   sourceSide: Side;
@@ -125,17 +128,21 @@ function lerp(from: number, to: number, at = 0.5): number {
   return from + (to - from) * at;
 }
 
+/** The width of the thin dashed line that marks what happens to a cable (loss, a cut, a flood). */
+const LINE_MARK = 0.55;
+
 function trim(value: number): string {
   return String(Math.round(value * 10) / 10);
 }
 
 /** A number written on a link: what it carries out of what it can carry. */
 function loadLabel(result: LinkStepResult | undefined): string {
-  if (result === undefined) {
-    return '';
-  }
-  const waiting = result.queued > 0.05 ? ` · q${trim(result.queued)}` : '';
-  return `${trim(result.offered)}/${String(result.capacity)}${waiting}`;
+  return result === undefined ? '' : `${trim(result.offered)}/${String(result.capacity)}`;
+}
+
+/** What waits in the buffer of a cable ("q2"), or nothing while nothing waits. */
+function queueLabel(result: LinkStepResult | undefined): string {
+  return result !== undefined && result.queued > 0.05 ? `q${trim(result.queued)}` : '';
 }
 
 export function MapView({
@@ -152,6 +159,7 @@ export function MapView({
   lifted,
   badgesLeft,
   risks,
+  attackFrom,
   loadAt,
   sourceSide,
   targetSide,
@@ -210,9 +218,15 @@ export function MapView({
   const nextNodes = new Set(
     last === undefined
       ? []
-      : (index.neighbours.get(last) ?? [])
-          .map((step) => step.node)
-          .filter((node) => draft?.includes(node) !== true),
+      : [
+          ...(index.neighbours.get(last) ?? []).map((step) => step.node),
+          // A cable that is not built yet can be drawn over too, if the budget pays for it
+          ...unbuilt
+            .filter(
+              (link) => (link.cost ?? 0) <= budgetLeft && (link.a === last || link.b === last),
+            )
+            .map((link) => (link.a === last ? link.b : link.a)),
+        ].filter((node) => draft?.includes(node) !== true),
   );
 
   return (
@@ -293,16 +307,6 @@ export function MapView({
               data-hint={hinted.has(link.id)}
               data-risk={risks.get(link.id)}
             >
-              {risks.has(link.id) && (
-                <line
-                  className="bb-link-risk"
-                  x1={from.x}
-                  y1={from.y}
-                  x2={to.x}
-                  y2={to.y}
-                  strokeWidth={width + 1.1}
-                />
-              )}
               <line
                 className="bb-link"
                 x1={from.x}
@@ -320,13 +324,15 @@ export function MapView({
                 strokeWidth={Math.max(0.5, width * 0.5)}
               />
               {(result?.attack ?? 0) > 0 && (
+                // The marks of a flood run the way the flood goes (the drawing runs from the first
+                // point to the second)
                 <line
                   className="bb-link-attack"
-                  x1={from.x}
-                  y1={from.y}
-                  x2={to.x}
-                  y2={to.y}
-                  strokeWidth={width * 0.35}
+                  x1={attackFrom.get(link.id) === b.id ? to.x : from.x}
+                  y1={attackFrom.get(link.id) === b.id ? to.y : from.y}
+                  x2={attackFrom.get(link.id) === b.id ? from.x : to.x}
+                  y2={attackFrom.get(link.id) === b.id ? from.y : to.y}
+                  strokeWidth={LINE_MARK}
                 />
               )}
               {link.loss > 0 && (
@@ -336,7 +342,17 @@ export function MapView({
                   y1={from.y}
                   x2={to.x}
                   y2={to.y}
-                  strokeWidth={width * 0.35}
+                  strokeWidth={LINE_MARK}
+                />
+              )}
+              {risks.has(link.id) && (
+                <line
+                  className="bb-link-risk"
+                  x1={from.x}
+                  y1={from.y}
+                  x2={to.x}
+                  y2={to.y}
+                  strokeWidth={LINE_MARK}
                 />
               )}
             </g>
@@ -407,10 +423,10 @@ export function MapView({
               className="bb-packet"
               data-profile={profile}
               data-dropped={packet.dropped}
-              x={packet.point.x - 1.4}
-              y={packet.point.y - 1.4}
-              width={2.8}
-              height={2.8}
+              x={packet.point.x - 1.4 * packet.scale}
+              y={packet.point.y - 1.4 * packet.scale}
+              width={2.8 * packet.scale}
+              height={2.8 * packet.scale}
               opacity={
                 packet.opacity * (emphasis === undefined || packet.flow === emphasis ? 1 : 0.18)
               }
@@ -475,6 +491,9 @@ export function MapView({
             }}
           >
             {result?.down === true ? 'cut' : label || String(link.capacity)}
+            {result?.down !== true && queueLabel(result) !== '' && (
+              <small className="bb-link-queue">{queueLabel(result)}</small>
+            )}
           </span>
         );
       })}

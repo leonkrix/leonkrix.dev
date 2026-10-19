@@ -1,10 +1,19 @@
 import { loadBalancedPlan, shortestPathPlan } from './baselines';
 import { costOf, optionalLinks, simpleBuild, spent, withBuilt } from './build';
-import { fastestRoute, indexLevel, type LevelIndex, linksOfPath, routesOf } from './graph';
+import { fastestRoute, indexLevel, type LevelIndex, linksOfPath } from './graph';
 import { switchSteps } from './options';
 import { problemsOfPlan, singlePath } from './plan';
 import { profiles } from './profiles';
-import type { Flow, FlowPlan, Level, NodePath, Plan, Redundancy, RouteStage } from './types';
+import type {
+  Flow,
+  FlowPlan,
+  Level,
+  NetLink,
+  NodePath,
+  Plan,
+  Redundancy,
+  RouteStage,
+} from './types';
 
 /**
  * The moves of the player, as pure functions on an immutable state. The React component only draws
@@ -220,6 +229,29 @@ export function describePath(state: PlayState, path: NodePath): string {
   return path.map((node) => nameOf(state, node)).join(', ');
 }
 
+/** The cable that is not built yet and joins two nodes, if there is one. */
+function unbuiltBetween(state: PlayState, a: string, b: string): NetLink | undefined {
+  return optionalLinks(state.base).find(
+    (link) =>
+      !state.built.includes(link.id) &&
+      ((link.a === a && link.b === b) || (link.a === b && link.b === a)),
+  );
+}
+
+/**
+ * Builds the cable between two nodes when a route is drawn over it, as long as the budget is
+ * enough. The drawing in progress is kept. Without a cable to build the state is returned as it is;
+ * when the budget is not enough the state says so.
+ */
+function buildOnTheWay(state: PlayState, a: string, b: string): PlayState {
+  const ghost = unbuiltBetween(state, a, b);
+  if (ghost === undefined) {
+    return state;
+  }
+  const built = toggleBuild(state, ghost.id);
+  return built.built.includes(ghost.id) ? { ...built, draft: state.draft } : built;
+}
+
 /** The player clicks (or taps) a node while drawing a path. */
 export function clickNode(state: PlayState, node: string): PlayState {
   const flow = flowOf(state, state.selected);
@@ -243,14 +275,30 @@ export function clickNode(state: PlayState, node: string): PlayState {
     };
   }
   const last = draft[draft.length - 1] ?? flow.source;
+  let current = state;
   if (!state.index.neighbours.get(last)?.some((step) => step.node === node)) {
-    return say(state, `${nameOf(state, node)} is not next to ${nameOf(state, last)}.`);
+    // A cable that is not built yet is built by drawing over it, if the budget allows
+    current = buildOnTheWay(state, last, node);
+    if (current === state) {
+      return say(state, `${nameOf(state, node)} is not next to ${nameOf(state, last)}.`);
+    }
+    if (!current.built.includes(unbuiltBetween(state, last, node)?.id ?? '')) {
+      return current;
+    }
   }
   const next = [...draft, node];
   if (node === flow.target) {
-    return replaceEditedPath(state, flow, next);
+    return saying(current, state, replaceEditedPath(current, flow, next));
   }
-  return { ...state, draft: { nodes: next }, message: `${nameOf(state, node)} added.` };
+  return {
+    ...current,
+    draft: { nodes: next },
+    message: `${current === state ? '' : `${current.message} `}${nameOf(current, node)} added.`,
+  };
+}
+
+function wrongDrawing(state: PlayState, flow: Flow): string {
+  return `Draw from ${nameOf(state, flow.source)} to ${nameOf(state, flow.target)} along the cables.`;
 }
 
 /** A path drawn in one go (a drag over the nodes). */
@@ -259,17 +307,35 @@ export function drawPath(state: PlayState, nodes: NodePath): PlayState {
   if (flow === undefined) {
     return say(state, 'Select a flow first.');
   }
+  // Cables on the way that are not built yet are built, as long as the budget is enough
+  let current = state;
+  for (let step = 1; step < nodes.length; step += 1) {
+    const from = nodes[step - 1] ?? '';
+    const to = nodes[step] ?? '';
+    if (!current.index.neighbours.get(from)?.some((entry) => entry.node === to)) {
+      const wanted = unbuiltBetween(current, from, to);
+      const built = buildOnTheWay(current, from, to);
+      if (wanted === undefined || !built.built.includes(wanted.id)) {
+        return built === current ? say(state, wrongDrawing(state, flow)) : built;
+      }
+      current = built;
+    }
+  }
   if (
-    linksOfPath(state.index, nodes) === undefined ||
+    linksOfPath(current.index, nodes) === undefined ||
     nodes[0] !== flow.source ||
     nodes[nodes.length - 1] !== flow.target
   ) {
-    return say(
-      state,
-      `Draw from ${nameOf(state, flow.source)} to ${nameOf(state, flow.target)} along the cables.`,
-    );
+    return say(state, wrongDrawing(state, flow));
   }
-  return replaceEditedPath(state, flow, nodes);
+  return saying(current, state, replaceEditedPath(current, flow, nodes));
+}
+
+/** The result of a move, with the building that came before it (if there was one) in its message. */
+function saying(current: PlayState, before: PlayState, done: PlayState): PlayState {
+  return current.built === before.built
+    ? done
+    : { ...done, message: `${current.message} ${done.message}` };
 }
 
 export function cancelDraft(state: PlayState): PlayState {
@@ -308,10 +374,8 @@ export function addLane(state: PlayState): PlayState {
   if (stage.paths.length >= MOST_LANES) {
     return say(state, `A flow can use at most ${String(MOST_LANES)} paths.`);
   }
-  const options = routesOf(state.index, flow, 8);
-  const used = new Set(stage.paths.map((entry) => entry.nodes.join()));
-  const fresh =
-    options.find((path) => !used.has(path.join())) ?? options[0] ?? stage.paths[0]?.nodes ?? [];
+  // The new path starts as a copy of the first one: the player draws its own route on the map
+  const fresh = stage.paths[0]?.nodes ?? [];
   const count = stage.paths.length + 1;
   const shares = evenShares(count);
   const paths = [...stage.paths.map((entry) => entry.nodes), fresh].map((nodes, at) => ({
@@ -326,7 +390,7 @@ export function addLane(state: PlayState): PlayState {
       state,
       flow.id,
       { ...flowPlan, stages },
-      `${flow.name} now uses ${String(count)} paths. Redraw the new one if you like.`,
+      `${flow.name} now has ${String(count)} paths. Path ${String(count)} is a copy of path 1 for now: click the nodes of its own route on the map.`,
     ),
     lane: count - 1,
     target: 'path',
@@ -366,6 +430,23 @@ export function removeLane(state: PlayState): PlayState {
 }
 
 /** Moves a quarter of the flow from one path of the split to another. */
+/** The path of the edited stage that can give a quarter to another one: the biggest with more than a quarter. */
+export function donorOf(state: PlayState, to: number): number | undefined {
+  const flow = flowOf(state, state.selected);
+  const stage = flow === undefined ? undefined : state.plan[flow.id]?.stages[state.stage];
+  let best: number | undefined;
+  for (const [at, entry] of (stage?.paths ?? []).entries()) {
+    if (
+      at !== to &&
+      entry.share > 0.25 &&
+      (best === undefined || entry.share > (stage?.paths[best]?.share ?? 0))
+    ) {
+      best = at;
+    }
+  }
+  return best;
+}
+
 export function moveShare(state: PlayState, from: number, to: number): PlayState {
   const flow = flowOf(state, state.selected);
   const flowPlan = flow === undefined ? undefined : state.plan[flow.id];
@@ -412,27 +493,14 @@ export function addBackup(state: PlayState): PlayState {
   if (!state.index.level.rules.backup) {
     return say(state, 'This level has no backup paths yet.');
   }
-  const main = new Set(
-    (flowPlan.stages[0]?.paths ?? []).flatMap(
-      (entry) => linksOfPath(state.index, entry.nodes) ?? [],
-    ),
-  );
-  const options = routesOf(state.index, flow, 8)
-    .map((path) => ({
-      path,
-      shared: (linksOfPath(state.index, path) ?? []).filter((id) => main.has(id)).length,
-    }))
-    .sort((a, b) => a.shared - b.shared);
-  const best = options[0];
-  if (best === undefined) {
-    return say(state, 'There is no other way through.');
-  }
+  // The backup starts as a copy of the main path: the player draws its own route on the map
+  const copy = flowPlan.stages[0]?.paths[0]?.nodes ?? [];
   return {
     ...withFlowPlan(
       state,
       flow.id,
-      { ...flowPlan, backup: best.path },
-      `Backup for ${flow.name}: ${describePath(state, best.path)}.`,
+      { ...flowPlan, backup: copy },
+      `Backup for ${flow.name}: it is a copy of the path for now. Click the nodes of the backup route on the map.`,
     ),
     target: 'backup',
   };

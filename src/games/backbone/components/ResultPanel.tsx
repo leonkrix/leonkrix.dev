@@ -1,7 +1,7 @@
 import { type LevelIndex } from '../logic/graph';
-import { type Baselines, starsFor, type Thresholds } from '../logic/stars';
+import { type Baselines, pointsOf, starsFor, type Thresholds } from '../logic/stars';
 import { describeBusiest, summarize } from '../logic/text';
-import type { Evaluation } from '../logic/types';
+import type { Evaluation, Plan } from '../logic/types';
 import { MiniMap } from './MiniMap';
 import { Star } from './Svg';
 
@@ -18,6 +18,8 @@ interface ResultPanelProps {
   baselines: Baselines;
   thresholds: Thresholds;
   assisted: boolean;
+  /** The plan that was run (what the player held back is told from it) */
+  plan: Plan;
   /** The situation whose pictures are shown */
   situation: number;
   /** The level has been solved (one star or more) in this visit, so the best plan may be shown */
@@ -25,12 +27,31 @@ interface ResultPanelProps {
   /** The flow whose routes the map shows (the table lets the player pick one) */
   focus: string | undefined;
   onFocus: (flow: string | undefined) => void;
-  onEdit: () => void;
-  onLoadBest: () => void;
 }
 
 function points(score: number): string {
-  return String(Math.round(score * 100));
+  return String(pointsOf(score));
+}
+
+/** What the stars mean, said exactly: a tie with a simple strategy is a tie, not "better". */
+function verdictOf(stars: number, you: number, baselines: Baselines): string {
+  const same = (other: number): boolean => pointsOf(you) === pointsOf(other);
+  if (stars === 3) {
+    return same(baselines.best) ? 'As good as the best plan.' : 'Within reach of the best plan.';
+  }
+  if (stars === 2) {
+    return 'Better than both simple strategies.';
+  }
+  if (stars === 1) {
+    if (same(baselines.shortest)) {
+      return 'As good as the shortest path, no better. That is the first star.';
+    }
+    if (same(baselines.balanced)) {
+      return 'As good as the load balanced strategy, and better than the shortest path.';
+    }
+    return 'Better than the shortest path. The load balanced strategy is still ahead or level.';
+  }
+  return 'Not yet as good as everybody taking the shortest path.';
 }
 
 export function ResultPanel({
@@ -44,12 +65,11 @@ export function ResultPanel({
   baselines,
   thresholds,
   assisted,
+  plan,
   situation,
   solved,
   focus,
   onFocus,
-  onEdit,
-  onLoadBest,
 }: ResultPanelProps) {
   const stars = assisted ? 0 : starsFor(you.score, thresholds);
   const summary = summarize(index, you);
@@ -59,6 +79,10 @@ export function ResultPanel({
     index.level.flows.findIndex((flow) => flow.id === id) + 1;
   const overloaded = summary.busiest !== undefined && summary.busiest.ratio > 1 + 1e-9;
   const struggled = overloaded || worst !== undefined;
+  const worstSituation = [...summary.situations].sort((a, b) => a.score - b.score)[0];
+  // As good as the best plan: what is left over is not a fault, nothing better is possible
+  const bestAlready = pointsOf(you.score) >= pointsOf(baselines.best) - 1;
+  const heldBack = worst === undefined ? undefined : plan[worst.flow]?.throttle;
   return (
     <div className="bb-result">
       <section className="bb-result-block" aria-labelledby="bb-result-you">
@@ -84,29 +108,58 @@ export function ResultPanel({
         <p className="bb-verdict">
           {assisted
             ? 'A helper filled in this plan, so it earns no stars. Change it, or build your own.'
-            : stars === 3
-              ? 'Within reach of the best plan.'
-              : stars === 2
-                ? 'Better than both simple strategies.'
-                : stars === 1
-                  ? 'Better than the shortest path. The simple strategies are still ahead of a bare minimum, though.'
-                  : 'Not yet as good as everybody taking the shortest path.'}
+            : verdictOf(stars, you.score, baselines)}
         </p>
         <p className="bb-thresholds">
           Stars at {points(thresholds.one)} · {points(thresholds.two)} · {points(thresholds.three)}
         </p>
+        {summary.situations.length > 1 && (
+          <table className="bb-situations">
+            <caption className="bb-sr">The score of every situation</caption>
+            <tbody>
+              {summary.situations.map((entry) => (
+                <tr key={entry.id}>
+                  <th scope="row">
+                    {entry.name}
+                    {entry.id === worstSituation?.id && <small> counts twice</small>}
+                  </th>
+                  <td>
+                    <span className="bb-bar" aria-hidden="true">
+                      <span style={{ width: `${String(Math.round(entry.score * 100))}%` }} />
+                    </span>
+                    {points(entry.score)}
+                  </td>
+                </tr>
+              ))}
+              <tr className="bb-situations-total">
+                <th scope="row">Total</th>
+                <td>{points(you.score)}</td>
+              </tr>
+            </tbody>
+          </table>
+        )}
       </section>
 
       <section className="bb-result-block" aria-labelledby="bb-result-problems">
         <h2 id="bb-result-problems">
-          {struggled ? 'Where your plan fell short' : 'How your plan held up'}
+          {bestAlready && struggled
+            ? 'What it costs'
+            : struggled
+              ? 'Where your plan fell short'
+              : 'How your plan held up'}
         </h2>
         <ul className="bb-problems">
-          <li data-problem={overloaded}>{describeBusiest(index, summary)}</li>
+          <li data-problem={bestAlready && struggled ? 'info' : overloaded}>
+            {describeBusiest(index, summary, bestAlready)}
+          </li>
           {worst !== undefined && (
-            <li data-problem="true">
-              Flow {flowNumber(worst.flow)}, {names.get(worst.flow)}, lost{' '}
-              {Math.round(worst.lost * 100)} % of what it could have earned.
+            <li data-problem={bestAlready || (heldBack ?? 1) < 1 ? 'info' : 'true'}>
+              Flow {flowNumber(worst.flow)}, {names.get(worst.flow)},{' '}
+              {heldBack !== undefined && heldBack < 1
+                ? `you hold it back to ${String(Math.round(heldBack * 100))} %, so it earns ${String(Math.round((1 - worst.lost) * 100))} %.`
+                : bestAlready
+                  ? `earns ${String(Math.round((1 - worst.lost) * 100))} % of what it could. The best plan does not do better.`
+                  : `lost ${String(Math.round(worst.lost * 100))} % of what it could have earned.`}
             </li>
           )}
           {worst === undefined && <li data-problem="false">Every flow got what it needed.</li>}
@@ -195,20 +248,13 @@ export function ResultPanel({
             cable.
           </dd>
           <dt>Best plan</dt>
-          <dd>The best plan there is, proven by a search before you saw the level.</dd>
+          <dd>
+            The best plan a search proved before you saw the level.
+            {index.level.rules.throttle &&
+              ' It holds traffic back only in a few steps, so a finer setting of the slider can beat it a little.'}
+          </dd>
         </dl>
       </section>
-
-      <div className="bb-row">
-        <button type="button" onClick={onEdit}>
-          Change the plan
-        </button>
-        {solved && (
-          <button type="button" onClick={onLoadBest}>
-            Load the best plan
-          </button>
-        )}
-      </div>
     </div>
   );
 }
