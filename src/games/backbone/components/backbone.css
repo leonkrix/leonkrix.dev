@@ -2201,3 +2201,14 @@
   border-color: var(--bb-over);
   color: var(--bb-over);
 }
+
+/* The numbers of the flows and the "from" and "to" marks are drawn by the style, not written in the
+   button of a node: the name of the button (its aria-label) says all of it, and a visible text that
+   is not part of that name breaks "Label in Name" (WCAG 2.5.3, found by axe 4.14) */
+.bb-badge::before {
+  content: attr(data-number);
+}
+
+.bb-node-tag::before {
+  content: attr(data-text);
+}

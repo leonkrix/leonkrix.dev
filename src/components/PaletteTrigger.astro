@@ -4,7 +4,9 @@ import { siteConfig } from '@/lib/site';
 ---
 
 <!--
-  The button of the command palette (Ctrl or Cmd + K). It does nothing without JavaScript, so it is
+  The button of the command palette (Ctrl or Cmd + K). Its name is made of its text (a hidden
+  "Search and commands" and the visible key), not of an aria-label: the visible text has to be part
+  of the name (WCAG 2.5.3, the rule "label-content-name-mismatch" of axe 4.14 found it). It does nothing without JavaScript, so it is
   hidden then. Only the small script below is part of the page; the palette itself (about 10 KB) is
   fetched when it is opened for the first time.
 -->
@@ -12,16 +14,12 @@ import { siteConfig } from '@/lib/site';
   type="button"
   data-palette-open
   data-repo={siteConfig.repo}
-  aria-label="Search and commands"
   aria-keyshortcuts="Control+K Meta+K"
   class="inline-flex size-10 items-center justify-center gap-2 rounded-md text-muted transition-colors hover:text-fg md:h-8 md:w-auto md:border md:border-border md:px-2.5 md:hover:border-accent/50 [@media(scripting:none)]:hidden"
 >
   <Icon name="lucide:search" class="size-5 md:size-4" />
-  <kbd
-    data-palette-key
-    class="hidden min-w-[3.1rem] text-center font-mono text-xs md:inline"
-    aria-hidden="true"
-  >
+  <span class="sr-only">Search and commands</span>
+  <kbd data-palette-key class="hidden min-w-[3.1rem] text-center font-mono text-xs md:inline">
     Ctrl K
   </kbd>
 </button>

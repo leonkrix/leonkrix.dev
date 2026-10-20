@@ -1435,3 +1435,12 @@
   color: var(--color-accent-2);
   font-family: var(--font-mono);
 }
+
+/* The letters on a cell (the room letter, the people in the notes, the person that stands there) are
+   drawn by the style, not written in the cell: the name of the cell (its aria-label) says all of it,
+   and a visible text that is not part of that name breaks "Label in Name" (WCAG 2.5.3, axe 4.14) */
+.rc-room-letter::before,
+.rc-notes > span::before,
+.rc-token::before {
+  content: attr(data-text);
+}
