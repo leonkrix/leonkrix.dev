@@ -8,7 +8,7 @@ stats:
     label: security headers grade (securityheaders.com)
   - value: '95+'
     label: Lighthouse score in every category (mobile, enforced in CI)
-  - value: '2,400+'
+  - value: '2,900+'
     label: automated tests (unit, build output, browser, accessibility)
 highlights:
   - Static portfolio built with Astro, TypeScript, React islands and Tailwind CSS, hosted on Cloudflare, with a command palette (Ctrl K) and a small terminal that load only when they are opened. Its content is typed YAML that is validated at build time, so a typo fails the build instead of shipping.

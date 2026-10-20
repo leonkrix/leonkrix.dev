@@ -122,3 +122,37 @@ describe('the newer clues', () => {
     ).toBe('Ben is in the same column as a chair in another room.');
   });
 });
+
+describe('a count that is every one of them is said that way', () => {
+  // Two developers (Ann is one) and one designer, one admin
+  it('says "both" instead of "at least 2" when there are only two', () => {
+    const both = say({
+      type: 'roomRole',
+      person: BEN,
+      role: 'developer',
+      counting: 'atLeast',
+      n: 2,
+    });
+    expect(both).toBe('Ben is in a room with both developers.');
+    expect(both).not.toContain('at least');
+  });
+
+  it('says "the other" for the one other person with your own role', () => {
+    expect(
+      say({ type: 'roomRole', person: ANN, role: 'developer', counting: 'atLeast', n: 1 }),
+    ).toBe('Ann is in a room with the other developer.');
+  });
+
+  it('keeps "at least" when there are more of them than the number', () => {
+    // Only two developers exist, so "at least 1" of them is a real choice for somebody else
+    expect(
+      say({ type: 'roomRole', person: BEN, role: 'developer', counting: 'atLeast', n: 1 }),
+    ).toBe('Ben is in a room with at least one developer.');
+  });
+
+  it('says that a diagonal neighbour touches at a corner', () => {
+    expect(say({ type: 'diagonal', person: ANN, other: BEN })).toBe(
+      'Ann is diagonally next to Ben, touching at a corner.',
+    );
+  });
+});
