@@ -7,6 +7,8 @@ import { floodDirections } from '../logic/flood';
 import { indexLevel } from '../logic/graph';
 import { hintFor } from '../logic/hint';
 import { placeNames, placeTag } from '../logic/labels';
+import { delayMs, showsDelay } from '../logic/latency';
+import { lossOfCable, percentOf } from '../logic/loss';
 import {
   applyStrategy,
   budgetLeft,
@@ -278,6 +280,9 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
         );
   const loads = run === undefined ? preview?.links : stressStep?.links;
 
+  const withDelay = showsDelay(level);
+  // The loss column appears when some cable loses packets, all the time or in a situation
+  const withLoss = level.links.some((link) => lossOfCable(level, link) !== undefined);
   const missing = unrouted(play);
   const hint =
     run === undefined && asked?.plan === play.plan && asked.built === play.built
@@ -569,23 +574,32 @@ export function Round({ record, chapterRule, solved, next, onStars }: RoundProps
             <tr>
               <th scope="col">Cable</th>
               <th scope="col">Capacity</th>
-              <th scope="col">Delay</th>
-              <th scope="col">Queue</th>
+              {withDelay && <th scope="col">Delay (ms)</th>}
+              {level.rules.queues && <th scope="col">Queue</th>}
               <th scope="col">Traffic</th>
-              <th scope="col">Loss</th>
+              {withLoss && <th scope="col">Loss</th>}
             </tr>
           </thead>
           <tbody>
-            {level.links.map((link) => (
-              <tr key={link.id}>
-                <th scope="row">{linkName(index, link.id)}</th>
-                <td>{link.capacity}</td>
-                <td>{link.delay}</td>
-                <td>{bufferSize(index.level, link)}</td>
-                <td>{Math.round((loads?.[link.id]?.offered ?? 0) * 10) / 10}</td>
-                <td>{link.loss > 0 ? `${String(Math.round(link.loss * 100))} %` : 'none'}</td>
-              </tr>
-            ))}
+            {level.links.map((link) => {
+              const loss = lossOfCable(level, link);
+              return (
+                <tr key={link.id}>
+                  <th scope="row">{linkName(index, link.id)}</th>
+                  <td>{link.capacity}</td>
+                  {withDelay && <td>{delayMs(link.delay)}</td>}
+                  {level.rules.queues && <td>{bufferSize(index.level, link)}</td>}
+                  <td>{Math.round((loads?.[link.id]?.offered ?? 0) * 10) / 10}</td>
+                  {withLoss && (
+                    <td>
+                      {loss === undefined
+                        ? 'none'
+                        : `${percentOf(loss.share)}${loss.atTimes ? ' at times' : ''}`}
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
         <h3>Flows</h3>

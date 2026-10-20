@@ -318,17 +318,31 @@
   stroke-linecap: round;
 }
 
+/* The label is a point (width 0) on the cable; its pills and chips are centred on that point with a
+   transform, so that a number that changes grows to the right in the layout and nothing moves (the
+   layout guard looks at the layout, not at transforms) */
 .bb-link-label {
   position: absolute;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05em;
+  align-items: flex-start;
+  width: 0;
+  color: var(--color-muted);
+  font-family: var(--font-mono), monospace;
+  pointer-events: none;
+  transform: translate(0, -50%);
+}
+
+/* The load of a cable, a pill of its own (the delay, the queue and the loss have theirs) */
+.bb-link-main {
   padding: 0 0.44em;
   border-radius: 0.88em;
   background-color: color-mix(in srgb, var(--color-bg) 82%, transparent);
-  color: var(--color-muted);
-  font-family: var(--font-mono), monospace;
   line-height: 1.69em;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  transform: translateX(-50%);
 }
 
 .bb-link-label[data-load='ok'] {
@@ -1183,7 +1197,7 @@
 }
 
 /* A forecast on a cable while a path is drawn */
-.bb-link-label[data-forecast='true'] {
+.bb-link-label[data-forecast='true'] .bb-link-main {
   outline: 1px dashed currentcolor;
 }
 
@@ -1970,6 +1984,11 @@
 }
 
 /* What a cable loses: a small chip above its load, in the colour of loss */
+.bb-link-loss[data-times='true'] {
+  outline: 1px dashed currentcolor;
+  outline-offset: -1px;
+}
+
 .bb-link-loss {
   position: absolute;
   bottom: calc(100% + 0.1em);
@@ -2019,17 +2038,19 @@
 
 /* The delay of a cable, under its load (from the chapter about latency): milliseconds, longer while the cable is full */
 .bb-link-delay {
-  display: block;
+  padding: 0 0.4em;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  border-radius: 0.7em;
+  background-color: color-mix(in srgb, var(--color-bg) 82%, transparent);
   color: var(--color-muted);
   font-size: 0.82em;
-  line-height: 1.1;
-  text-align: center;
+  line-height: 1.15;
 }
 
-/* With the delay under it the load is a tighter line, so that the label stays as small as it can */
-.bb-link-label[data-delay='true'] {
-  padding-block: 0.1em;
-  line-height: 1.15em;
+/* With the delay under it the load is a tighter pill, so that the two together stay as small as they can */
+.bb-link-label[data-delay='true'] .bb-link-main {
+  line-height: 1.25em;
 }
 
 /* A flow that lost value to delay says so in its row */

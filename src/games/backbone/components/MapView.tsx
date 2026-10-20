@@ -10,9 +10,10 @@ import {
 import { type LevelIndex } from '../logic/graph';
 import type { Side } from '../logic/labels';
 import { delayMs, showsDelay } from '../logic/latency';
+import { lossOfCable, percentOf } from '../logic/loss';
 import { bufferSize } from '../logic/queues';
 import type { RiskKind } from '../logic/text';
-import type { Level, LinkStepResult, NetLink, NodePath } from '../logic/types';
+import type { LinkStepResult, NetLink, NodePath } from '../logic/types';
 import {
   type Direction,
   loadClass,
@@ -153,31 +154,6 @@ function loadLabel(result: LinkStepResult | undefined): string {
 function effectiveDelay(delay: number, result: LinkStepResult | undefined): number {
   const load = Math.min(1, loadRatio(result));
   return delay * (1 + load * load);
-}
-
-/** The loss of a cable in words: what it loses now (while the test runs), or what it loses all the time and at times. */
-function lossText(
-  link: NetLink,
-  level: Level,
-  result: LinkStepResult | undefined,
-  running: boolean,
-): string {
-  const percent = (share: number): string => `${String(Math.round(share * 100))} %`;
-  if (running) {
-    return result !== undefined && result.loss > 0.005 ? `${percent(result.loss)} lost` : '';
-  }
-  const atTimes = Math.max(
-    0,
-    ...level.situations.flatMap((situation) =>
-      situation.events.flatMap((event) =>
-        event.kind === 'lossy' && event.link === link.id ? [event.loss] : [],
-      ),
-    ),
-  );
-  if (link.loss > 0) {
-    return `${percent(link.loss)} lost`;
-  }
-  return atTimes > 0 ? `${percent(atTimes)} at times` : '';
 }
 
 /** The queue of a cable: a small bar and "Q 3/5" (what waits, out of what the queue holds), always there from the chapter about queues on. */
@@ -592,6 +568,7 @@ export function MapView({
         const projected = forecast[link.id];
         const result = projected ?? loads?.[link.id];
         const label = loadLabel(result);
+        const loss = lossOfCable(level, link, result, running);
         return (
           <span
             key={link.id}
@@ -607,11 +584,13 @@ export function MapView({
               top: `${String((lerp(from.y, to.y, loadAt.get(link.id)) / MAP_HEIGHT) * 100)}%`,
             }}
           >
-            {result?.down === true
-              ? result.absent
-                ? 'away'
-                : 'cut'
-              : label || String(link.capacity)}
+            <span className="bb-link-main">
+              {result?.down === true
+                ? result.absent
+                  ? 'away'
+                  : 'cut'
+                : label || String(link.capacity)}
+            </span>
             {result?.down !== true && withDelay && (
               <small className="bb-link-delay">
                 {delayMs(effectiveDelay(link.delay, result))} ms
@@ -620,8 +599,10 @@ export function MapView({
             {result?.down !== true && bufferSize(level, link) > 0 && (
               <Queue result={result} size={bufferSize(level, link)} />
             )}
-            {result?.down !== true && lossText(link, level, result, running) !== '' && (
-              <small className="bb-link-loss">{lossText(link, level, result, running)}</small>
+            {result?.down !== true && loss !== undefined && (
+              <small className="bb-link-loss" data-times={loss.atTimes}>
+                {percentOf(loss.share)} lost
+              </small>
             )}
           </span>
         );

@@ -55,7 +55,7 @@ export const chapters: readonly Chapter[] = [
   {
     number: 9,
     title: 'Loss',
-    rule: 'Some links lose packets: a small label above the cable says how many ("10 % lost" all the time, "20 % at times" in some situations). Redundancy sends extra coded packets to recover them, but they use capacity too. New traffic: payments (transactions) must not lose a single packet.',
+    rule: 'Some links lose packets: a small label above the cable says how many ("10 % lost"; a dashed outline means only in some situations, see "What will happen"). Redundancy sends extra coded packets to recover them, but they use capacity too. New traffic: payments (transactions) must not lose a single packet.',
   },
   {
     number: 10,

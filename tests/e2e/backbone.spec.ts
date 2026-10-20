@@ -577,8 +577,44 @@ test.describe('Backbone: only what has been taught is said', () => {
 
   test('shows what a cable loses as a label, from the chapter about loss on', async ({ page }) => {
     await open(page, 'c9-1');
-    await expect(page.locator('.bb-link-loss').first()).toContainText(/[0-9]+ % (lost|at times)/);
+    await expect(page.locator('.bb-link-loss').first()).toContainText(/^[0-9]+ % lost$/);
     expect(await page.locator('.bb-link-loss').count()).toBeGreaterThan(1);
+    // A cable that loses all the time has a solid chip, one that loses only in a situation a dashed one
+    await expect(page.locator('.bb-link-loss[data-times="false"]').first()).toBeVisible();
+    await expect(page.locator('.bb-link-loss[data-times="true"]').first()).toBeVisible();
+  });
+
+  test('lists in the text version only what has been taught: delay in ms, queue, loss', async ({
+    page,
+  }) => {
+    const columns = async (): Promise<string[]> =>
+      page.locator('.bb-text thead th').allTextContents();
+    await open(page, 'c1-1');
+    await page.getByText('Text version of the network').click();
+    expect(await columns()).toEqual(['Cable', 'Capacity', 'Traffic']);
+    await page.getByRole('link', { name: 'All levels' }).click();
+    await page.locator('a[href="?level=c4-1"]').click();
+    await expect(page.locator('.bb-node').first()).toBeVisible({ timeout: 15_000 });
+    await page.getByText('Text version of the network').click();
+    expect(await columns()).toEqual(['Cable', 'Capacity', 'Delay (ms)', 'Traffic']);
+    await page.getByRole('link', { name: 'All levels' }).click();
+    await page.locator('a[href="?level=c9-1"]').click();
+    await expect(page.locator('.bb-node').first()).toBeVisible({ timeout: 15_000 });
+    await page.getByText('Text version of the network').click();
+    expect(await columns()).toEqual([
+      'Cable',
+      'Capacity',
+      'Delay (ms)',
+      'Queue',
+      'Traffic',
+      'Loss',
+    ]);
+    await expect(
+      page
+        .locator('.bb-text tbody td')
+        .filter({ hasText: /at times/ })
+        .first(),
+    ).toBeVisible();
   });
 
   test('lights the cable that the next click would build, while the route is drawn', async ({

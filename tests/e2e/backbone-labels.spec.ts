@@ -61,7 +61,12 @@ async function measure(page: Page): Promise<Measure> {
     add('name', '.bb-node-name', nodeOf);
     add('tag', '.bb-node-tag', nodeOf);
     add('badge', '.bb-badge', nodeOf);
-    add('load', '.bb-link-label', (element) => (element as HTMLElement).dataset.link ?? '');
+    // The load and the delay are pills of their own inside the label of a cable
+    add(
+      'load',
+      '.bb-link-main, .bb-link-delay',
+      (element) => element.closest<HTMLElement>('.bb-link-label')?.dataset.link ?? '',
+    );
     return { map, boxes, nodes };
   });
 }
