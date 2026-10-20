@@ -89,7 +89,8 @@ function build(data: PaletteData): Palette {
   });
   const closeButton = element('button', 'palette-close', { type: 'button' });
   closeButton.textContent = 'Esc';
-  closeButton.setAttribute('aria-label', 'Close');
+  // The visible text (Esc) is part of the name (WCAG 2.5.3, Label in Name; axe 4.14 ignores what is in brackets)
+  closeButton.setAttribute('aria-label', 'Close, Esc');
   head.append(mark, input, closeButton);
 
   const body = element('div', 'palette-body');

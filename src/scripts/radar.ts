@@ -143,7 +143,8 @@ function showPanel(finds: Find[]): () => void {
   closeButton.type = 'button';
   closeButton.className = 'radar-close';
   closeButton.textContent = 'Esc';
-  closeButton.setAttribute('aria-label', 'Close the radar');
+  // The visible text (Esc) is part of the name (WCAG 2.5.3, Label in Name; axe 4.14 ignores what is in brackets)
+  closeButton.setAttribute('aria-label', 'Close the radar, Esc');
 
   const list = document.createElement('ul');
   list.className = 'radar-list';

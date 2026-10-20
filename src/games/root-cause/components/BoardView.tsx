@@ -205,9 +205,11 @@ export function BoardView({
                 }}
               >
                 {letterCell.has(cell) && (
-                  <span className="rc-room-letter" aria-hidden="true">
-                    {ROOM_LETTERS[room]}
-                  </span>
+                  <span
+                    className="rc-room-letter"
+                    data-text={ROOM_LETTERS[room]}
+                    aria-hidden="true"
+                  />
                 )}
                 {(windows.get(cell) ?? []).map((side) => (
                   <span
@@ -235,9 +237,11 @@ export function BoardView({
                 {notes.length > 0 && (
                   <span className="rc-notes" aria-hidden="true">
                     {notes.map((person) => (
-                      <span key={person} data-selected={person === selected || undefined}>
-                        {level.people[person]?.label}
-                      </span>
+                      <span
+                        key={person}
+                        data-selected={person === selected || undefined}
+                        data-text={level.people[person]?.label}
+                      />
                     ))}
                   </span>
                 )}
@@ -249,10 +253,9 @@ export function BoardView({
                     data-hint={occupant === hinted || undefined}
                     data-culprit={occupant === culprit || undefined}
                     data-long={(level.people[occupant]?.label.length ?? 0) > 2 || undefined}
+                    data-text={level.people[occupant]?.label}
                     aria-hidden="true"
-                  >
-                    {level.people[occupant]?.label}
-                  </span>
+                  />
                 )}
               </div>
             );
