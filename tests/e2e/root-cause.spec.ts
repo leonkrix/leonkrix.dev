@@ -312,7 +312,8 @@ test.describe('Root Cause', () => {
     await expect(page.getByRole('button', { name: 'Level selection' })).toBeVisible({
       timeout: 60_000,
     });
-    expect(page.url()).toContain('skin=outage');
+    // The address follows the level a moment later, so it is waited for
+    await expect(page).toHaveURL(/skin=outage/);
     await expect(page.locator('.rc-eyebrow')).toContainText('Outage');
   });
 

@@ -697,9 +697,8 @@ export function MapView({
                   data-profile={badge.profile}
                   data-end={badge.end}
                   data-dim={emphasis !== undefined && badge.flow !== emphasis}
-                >
-                  {badge.number}
-                </span>
+                  data-number={badge.number}
+                />
               ))}
             </span>
             <span
@@ -709,16 +708,8 @@ export function MapView({
             >
               {node.name}
             </span>
-            {isSource && (
-              <span className="bb-node-tag" data-side={sourceSide}>
-                from
-              </span>
-            )}
-            {isTarget && (
-              <span className="bb-node-tag" data-side={targetSide}>
-                to
-              </span>
-            )}
+            {isSource && <span className="bb-node-tag" data-side={sourceSide} data-text="from" />}
+            {isTarget && <span className="bb-node-tag" data-side={targetSide} data-text="to" />}
           </button>
         );
       })}
