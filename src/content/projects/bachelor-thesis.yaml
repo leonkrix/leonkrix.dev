@@ -20,4 +20,5 @@ highlights:
   - Identified and analyzed a sender-side limit, since encoding time grows quickly with the sliding window size. This defines two use cases, low-latency networks for real-time applications and high-latency networks for non-critical data.
 technologies: [cpp, c, networking, networkprotocols, networkcoding, wireshark, profiling, git]
 code:
-  status: planned
+  status: public
+  url: https://github.com/leonkrix/on-the-fly-erasure-coding
