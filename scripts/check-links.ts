@@ -33,6 +33,7 @@ export const PAGES: readonly string[] = [
   '/notes/tech-words/',
   '/notes/link-up/',
   '/notes/word-radar/',
+  '/notes/backbone/',
   '/notes/how-this-site-is-built/',
   '/notes/a-page-that-never-moves/',
   '/notes/a-contact-form-without-a-third-party/',

@@ -22,23 +22,25 @@ export interface GameDefinition {
   /** Fallback tile icon in the form "<set>:<name>", see Icon.astro */
   icon: string;
   status: GameStatus;
+  /** `false`: not on the home page, only on the overview of the games (where it comes last) */
+  home?: boolean;
 }
 
 export const games: readonly GameDefinition[] = [
-  {
-    slug: 'tech-words',
-    name: 'Tech Words',
-    tag: 'Words',
-    description: 'Guess the hidden tech term in six tries.',
-    icon: 'lucide:spell-check',
-    status: 'live',
-  },
   {
     slug: 'root-cause',
     name: 'Root Cause',
     tag: 'Logic',
     description: 'A logic puzzle: work out which suspect shared a room with the victim.',
     icon: 'lucide:search',
+    status: 'live',
+  },
+  {
+    slug: 'backbone',
+    name: 'Backbone',
+    tag: 'Network',
+    description: 'Route traffic through a network, then survive the stress test.',
+    icon: 'lucide:network',
     status: 'live',
   },
   {
@@ -57,6 +59,15 @@ export const games: readonly GameDefinition[] = [
     icon: 'lucide:link',
     status: 'live',
   },
+  {
+    slug: 'tech-words',
+    name: 'Tech Words',
+    tag: 'Words',
+    description: 'Guess the hidden tech term in six tries.',
+    icon: 'lucide:spell-check',
+    status: 'live',
+    home: false,
+  },
 ];
 
 /** Address of the overview page. */
@@ -72,6 +83,11 @@ export function gamePath(slug: string): string {
 
 export function liveGames(list: readonly GameDefinition[] = games): readonly GameDefinition[] {
   return list.filter((game) => game.status === 'live');
+}
+
+/** The games the home page shows: the live ones that are not kept for the overview only. */
+export function homeGames(list: readonly GameDefinition[] = games): readonly GameDefinition[] {
+  return liveGames(list).filter((game) => game.home !== false);
 }
 
 /** Pages that exist for the given games: the overview and one page per live game, or none. */

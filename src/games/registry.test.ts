@@ -12,6 +12,7 @@ import {
   games,
   gamesPath,
   type GameTag,
+  homeGames,
   liveGames,
 } from './registry';
 
@@ -99,5 +100,34 @@ describe('liveGames and gamePaths', () => {
   it('gives no pages at all while no game is live', () => {
     expect(gamePaths([game('hidden-one', 'hidden')])).toEqual([]);
     expect(gamePaths([])).toEqual([]);
+  });
+});
+
+describe('homeGames', () => {
+  const list: GameDefinition[] = [
+    { slug: 'a', name: 'A', tag: 'Logic', description: 'a', icon: 'lucide:x', status: 'live' },
+    {
+      slug: 'b',
+      name: 'B',
+      tag: 'Logic',
+      description: 'b',
+      icon: 'lucide:x',
+      status: 'live',
+      home: false,
+    },
+    { slug: 'c', name: 'C', tag: 'Logic', description: 'c', icon: 'lucide:x', status: 'hidden' },
+  ];
+
+  it('are the live games that are not kept for the overview', () => {
+    expect(homeGames(list).map((entry) => entry.slug)).toEqual(['a']);
+    expect(liveGames(list).map((entry) => entry.slug)).toEqual(['a', 'b']);
+  });
+
+  it('leave out at most one game of the real list, and it is the last one', () => {
+    const out = liveGames().filter((entry) => !homeGames().includes(entry));
+    expect(out.length).toBeLessThanOrEqual(1);
+    if (out[0] !== undefined) {
+      expect(liveGames().at(-1)).toBe(out[0]);
+    }
   });
 });

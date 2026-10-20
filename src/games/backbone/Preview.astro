@@ -1,0 +1,388 @@
+---
+// The tile of the game on the Playground section: a plan, judged twice. Two flows leave the
+// computer on the left for the server on the right. At first both take the fast way over the top,
+// that cable turns red and a packet is dropped in the middle of it. Then the second flow moves to
+// the lower road, the cable turns green and both packets arrive; in a second round they stop in
+// the middle of their last cable, which is the final picture. It plays when the tile appears,
+// and again whenever it is pointed at or focused. Pure CSS, no script. The final picture (both
+// roads in use, nothing red) is also the normal look, so the tile is right without any motion.
+// The pictures of the nodes are the ones of the game (`data/icons.ts`), the colours the ones of
+// the kinds of traffic. Every animated part has the class `pv-a`; its variant class says what it
+// does (`--an`) and the numbers in its style tell when (`--dur`, `--delay`, `--n`).
+import { NODE_ICONS } from './data/icons';
+
+type Point = readonly [number, number];
+
+const nodes = {
+  a: { at: [30, 70], kind: 'client' },
+  b: { at: [100, 28], kind: 'router' },
+  c: { at: [100, 112], kind: 'router' },
+  d: { at: [170, 70], kind: 'server' },
+} as const satisfies Record<string, { at: Point; kind: string }>;
+type NodeId = keyof typeof nodes;
+
+const point = (id: NodeId): Point => nodes[id].at;
+const cables: readonly (readonly [NodeId, NodeId])[] = [
+  ['a', 'b'],
+  ['b', 'd'],
+  ['a', 'c'],
+  ['c', 'd'],
+];
+
+const blue = 'var(--color-accent)';
+const amber = 'var(--color-contrast)';
+
+/** The line of a route over its nodes, moved sideways by `shift` (so two flows on one cable show both). */
+function lane(route: readonly NodeId[], shift = 0) {
+  return route.slice(1).map((to, step) => {
+    const [x1, y1] = point(route[step] as NodeId);
+    const [x2, y2] = point(to);
+    const length = Math.hypot(x2 - x1, y2 - y1);
+    const nx = (-(y2 - y1) / length) * shift;
+    const ny = ((x2 - x1) / length) * shift;
+    return { x1: x1 + nx, y1: y1 + ny, x2: x2 + nx, y2: y2 + ny };
+  });
+}
+
+const along = (from: NodeId, to: NodeId, share: number): Point => {
+  const [x1, y1] = point(from);
+  const [x2, y2] = point(to);
+  return [x1 + (x2 - x1) * share, y1 + (y2 - y1) * share];
+};
+
+/** The corners of the way of a packet (the vars of the animation) */
+function way(points: readonly Point[]): string {
+  return points
+    .map(([x, y], at) => `--x${String(at)}:${String(x)}px;--y${String(at)}:${String(y)}px`)
+    .join(';');
+}
+
+const topWay = way([point('a'), point('b'), point('d')]);
+const lowWay = way([point('a'), point('c'), point('d')]);
+// The packet that is dropped runs to the middle of the full cable and stops there
+const droppedWay = way([point('a'), point('b'), along('b', 'd', 0.5)]);
+// The good plan runs a round to the server first; in the second round its packets stop in the
+// middle of their last cable, where the picture ends
+const topStop = way([point('a'), point('b'), along('b', 'd', 0.45)]);
+const lowStop = way([point('a'), point('c'), along('c', 'd', 0.45)]);
+
+const icon = (kind: string): string => NODE_ICONS[kind] ?? '';
+---
+
+<div class="pv" aria-hidden="true">
+  <svg viewBox="0 0 200 140" focusable="false">
+    <defs>
+      {/* A data packet: a little box (the shape of the Lucide icon "box", ISC license) */}
+      <symbol id="pv-box" viewBox="0 0 24 24">
+        <path
+          class="pv-box-body"
+          d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"
+        ></path>
+        <path class="pv-box-edge" d="m3.3 7 8.7 5 8.7-5M12 22V12"></path>
+      </symbol>
+    </defs>
+    {cables.map(([from, to]) => (
+      <line
+        class="pv-cable"
+        x1={point(from)[0]}
+        y1={point(from)[1]}
+        x2={point(to)[0]}
+        y2={point(to)[1]}
+      />
+    ))}
+    <line
+      class="pv-hot pv-a pv-out"
+      x1={point('b')[0]}
+      y1={point('b')[1]}
+      x2={point('d')[0]}
+      y2={point('d')[1]}
+    />
+
+    {lane(['a', 'b', 'd'], -2).map((line) => (
+      <line class="pv-lane" style={`--c:${blue}`} {...line} />
+    ))}
+    {lane(['a', 'b', 'd'], 2).map((line) => (
+      <line class="pv-lane pv-a pv-out" style={`--c:${amber}`} {...line} />
+    ))}
+    {lane(['a', 'c', 'd']).map((line) => (
+      <line class="pv-lane pv-a pv-in" style={`--c:${amber}`} {...line} />
+    ))}
+
+    {Object.values(nodes).map((node) => (
+      <>
+        <rect
+          class="pv-node"
+          x={node.at[0] - 14}
+          y={node.at[1] - 14}
+          width="28"
+          height="28"
+          rx="8"
+        />
+        <g
+          class="pv-icon"
+          transform={`translate(${node.at[0] - 8} ${node.at[1] - 8}) scale(0.667)`}
+          set:html={icon(node.kind)}
+        />
+      </>
+    ))}
+
+    <use
+      href="#pv-box"
+      class="pv-packet pv-a pv-travel"
+      x="-5.5"
+      y="-5.5"
+      width="11"
+      height="11"
+      style={`--c:${blue};--end:${blue};--dur:1300ms;--n:2;${topWay}`}
+    />
+    <use
+      href="#pv-box"
+      class="pv-packet pv-a pv-travel"
+      x="-5.5"
+      y="-5.5"
+      width="11"
+      height="11"
+      style={`--c:${amber};--end:var(--color-danger);--dur:1300ms;--n:2;--delay:0.3s;${droppedWay}`}
+    />
+    <use
+      href="#pv-box"
+      class="pv-packet pv-a pv-travel"
+      x="-5.5"
+      y="-5.5"
+      width="11"
+      height="11"
+      style={`--c:${blue};--end:${blue};--dur:1300ms;--delay:3.2s;${topWay}`}
+    />
+    <use
+      href="#pv-box"
+      class="pv-packet pv-a pv-travel"
+      x="-5.5"
+      y="-5.5"
+      width="11"
+      height="11"
+      style={`--c:${amber};--end:${amber};--dur:1300ms;--delay:3.3s;${lowWay}`}
+    />
+    <use
+      href="#pv-box"
+      class="pv-packet pv-a pv-travel pv-stay"
+      x="-5.5"
+      y="-5.5"
+      width="11"
+      height="11"
+      style={`--c:${blue};--end:${blue};--dur:1800ms;--delay:4.6s;${topStop}`}
+    />
+    <use
+      href="#pv-box"
+      class="pv-packet pv-a pv-travel pv-stay"
+      x="-5.5"
+      y="-5.5"
+      width="11"
+      height="11"
+      style={`--c:${amber};--end:${amber};--dur:1800ms;--delay:4.7s;${lowStop}`}
+    />
+  </svg>
+</div>
+
+<style>
+  .pv {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  svg {
+    display: block;
+    width: 12rem;
+    height: 8.4rem;
+  }
+
+  .pv-cable,
+  .pv-hot,
+  .pv-lane {
+    stroke-linecap: round;
+  }
+
+  .pv-cable {
+    stroke: color-mix(in srgb, var(--color-fg) 11%, transparent);
+    stroke-width: 8;
+  }
+
+  .pv-hot {
+    stroke: var(--color-danger);
+    stroke-width: 8;
+    opacity: 0;
+  }
+
+  .pv-lane {
+    stroke: var(--c);
+    stroke-width: 2.6;
+  }
+
+  .pv-node {
+    fill: var(--color-surface);
+    stroke: color-mix(in srgb, var(--color-fg) 32%, transparent);
+    stroke-width: 1.2;
+  }
+
+  .pv-icon {
+    color: var(--color-fg);
+  }
+
+  .pv-packet {
+    color: var(--c);
+  }
+
+  .pv-box-body {
+    fill: currentcolor;
+    fill-opacity: 0.4;
+    stroke: currentcolor;
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+
+  .pv-box-edge {
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* What is only there while the wrong plan runs is not there in the final picture */
+  .pv-out {
+    opacity: 0;
+  }
+
+  /* One rule for every animated part: its variant says which animation, the style the numbers */
+  .pv-a {
+    animation-name: var(--an), none;
+    animation-duration: var(--dur, 5600ms);
+    animation-delay: var(--delay, 0s);
+    animation-iteration-count: var(--n, 1);
+    animation-timing-function: linear;
+    animation-fill-mode: backwards;
+  }
+
+  .pv-out {
+    --an: pvb-out;
+    --again: pvb-out-again;
+  }
+
+  /* What comes in is what goes out, played backwards */
+  .pv-in {
+    --an: pvb-out;
+    --again: pvb-out-again;
+    animation-direction: reverse;
+  }
+
+  .pv-travel {
+    --an: pvb-travel;
+    --again: pvb-travel-again;
+    opacity: 0;
+  }
+
+  /* The packets of the good plan stay where their way ends: that is the picture without motion */
+  .pv-stay {
+    --keep: 1;
+    opacity: 1;
+    transform: translate(var(--x2), var(--y2));
+  }
+
+  /* A tile that is waiting to be revealed has not started yet: it begins when it appears */
+  :global(.reveal-pending) .pv-a {
+    animation-name: none, none;
+  }
+
+  /* Pointing at the tile plays it again: the same animations under other names start from the start */
+  :global(.game-tile):hover .pv-a,
+  :global(.game-tile):focus-visible .pv-a {
+    animation-name: var(--an), var(--again);
+  }
+
+  /* The names start with "pvb-": keyframes are not scoped to a component */
+  @keyframes pvb-out {
+    0%,
+    48% {
+      opacity: 1;
+    }
+    56%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes pvb-out-again {
+    0%,
+    48% {
+      opacity: 1;
+    }
+    56%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  /* A packet: from its first corner over the second to the third, it is seen on the way only */
+  @keyframes pvb-travel {
+    0% {
+      opacity: 0;
+      transform: translate(var(--x0), var(--y0));
+    }
+    8% {
+      opacity: 1;
+    }
+    50% {
+      transform: translate(var(--x1), var(--y1));
+    }
+    86% {
+      opacity: 1;
+      color: var(--end);
+    }
+    94% {
+      opacity: 1;
+      color: var(--end);
+      transform: translate(var(--x2), var(--y2));
+    }
+    100% {
+      opacity: var(--keep, 0);
+      color: var(--end);
+      transform: translate(var(--x2), var(--y2));
+    }
+  }
+
+  @keyframes pvb-travel-again {
+    0% {
+      opacity: 0;
+      transform: translate(var(--x0), var(--y0));
+    }
+    8% {
+      opacity: 1;
+    }
+    50% {
+      transform: translate(var(--x1), var(--y1));
+    }
+    86% {
+      opacity: 1;
+      color: var(--end);
+    }
+    94% {
+      opacity: 1;
+      color: var(--end);
+      transform: translate(var(--x2), var(--y2));
+    }
+    100% {
+      opacity: var(--keep, 0);
+      color: var(--end);
+      transform: translate(var(--x2), var(--y2));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pv-a,
+    :global(.game-tile):hover .pv-a,
+    :global(.game-tile):focus-visible .pv-a {
+      animation-name: none, none;
+    }
+  }
+</style>

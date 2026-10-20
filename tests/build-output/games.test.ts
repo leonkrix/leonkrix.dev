@@ -3,7 +3,13 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { gamePath, gamePaths, liveGames, playgroundIntro } from '../../src/games/registry';
+import {
+  gamePath,
+  gamePaths,
+  homeGames,
+  liveGames,
+  playgroundIntro,
+} from '../../src/games/registry';
 import { distDir, readDistFile } from './helpers';
 
 /**
@@ -32,6 +38,26 @@ describe('playground', () => {
     // The contact section is numbered after the playground
     expect(home).toContain(live.length > 0 ? '05 /' : '04 /');
     expect(home.includes('05 /')).toBe(live.length > 0);
+  });
+
+  it('shows only the games meant for the home page there, and all of them on the overview', async () => {
+    if (live.length === 0) {
+      return;
+    }
+    const home = await readDistFile('index.html');
+    const overview = await readDistFile('games/index.html');
+    for (const game of live) {
+      const link = `href="${gamePath(game.slug)}"`;
+      expect(home.includes(link), `${game.slug} on the home page`).toBe(
+        homeGames().some((entry) => entry.slug === game.slug),
+      );
+      expect(overview, `${game.slug} on the overview`).toContain(link);
+    }
+    // The overview keeps the games that are not on the home page for the end
+    const order = live.map((game) => overview.indexOf(`href="${gamePath(game.slug)}"`));
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    // The way to the rest is a button that says how many there are
+    expect(home).toContain(`All games (${String(live.length)})`);
   });
 
   it('says the same about the playground on the home page and on the overview', async () => {
