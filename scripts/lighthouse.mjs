@@ -46,14 +46,14 @@ const BUDGETS = {
  */
 const GAME_BUDGETS = {
   // Measured on 2026-10-09 (React, the game, the five-letter list): scripts 96 KB, stylesheets 12.8 KB, total 203 KB
-  // The stylesheet is shared by the Playground pages and holds the CSS of every game (21.6 KB on 2026-10-13 with four games; the styles are imported once, by the page of each game, not by the picture of the game and the game itself), so every game page has the same stylesheet limit: a new game adds about 3 KB
-  'tech-words': { script: 130 * 1024, stylesheet: 24 * 1024, total: 260 * 1024 },
+  // The stylesheet is shared by the Playground pages and holds the CSS of every game (21.6 KB on 2026-10-13 with four games; the styles are imported once, by the page of each game, not by the picture of the game and the game itself), so every game page has the same stylesheet limit: a new game adds about 3 KB. Backbone (the biggest, 27.8 KB for all of them on 2026-10-20) raised the limit of every game page from 24 to 28 KB, because all of them carry its styles
+  'tech-words': { script: 130 * 1024, stylesheet: 28 * 1024, total: 260 * 1024 },
   // Measured on 2026-10-10 (React, the game, the 18 levels, the generator is a separate worker file that is only loaded for a random level): scripts 100 KB, stylesheets 17.7 KB, total 212 KB
-  'root-cause': { script: 130 * 1024, stylesheet: 24 * 1024, total: 260 * 1024 },
+  'root-cause': { script: 130 * 1024, stylesheet: 28 * 1024, total: 260 * 1024 },
   // Measured on 2026-10-12 (React, the game, about 240 categories: the data is split into 14 files and only the files of the four categories of a puzzle are fetched, usually three or four): scripts 111 KB, stylesheets 21.1 KB, total 227 KB
-  'link-up': { script: 130 * 1024, stylesheet: 24 * 1024, total: 260 * 1024 },
+  'link-up': { script: 130 * 1024, stylesheet: 28 * 1024, total: 260 * 1024 },
   // Measured on 2026-10-13 (React, the game, and the word data of about 2 MB that is fetched when the page opens: 1.9 MB of vectors, 0.27 MB of words): scripts 78 KB, stylesheets 24.2 KB, total 2196 KB; performance 98
-  'word-radar': { script: 130 * 1024, stylesheet: 24 * 1024, total: 2600 * 1024 },
+  'word-radar': { script: 130 * 1024, stylesheet: 28 * 1024, total: 2600 * 1024 },
   // Measured on 2026-10-18 (React, the game and the overview of the campaign, made from a small catalog; the level pool (about 330 KB, fetched when a level is opened) and the generator of random levels are separate files that are not part of the first load): scripts 109 KB, stylesheets 25.9 KB, total 238 KB; performance 96
   backbone: { script: 130 * 1024, stylesheet: 28 * 1024, total: 300 * 1024 },
 };

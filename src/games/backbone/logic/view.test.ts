@@ -363,3 +363,118 @@ describe('where a packet is lost', () => {
     expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(10);
   });
 });
+
+describe('packets that a full cable cannot take', () => {
+  it('are dropped at the node where the cable starts, and nothing that is dropped travels on', () => {
+    // 12 per minute over A-B-D, but the cable B-D carries 5: what does not fit stays behind at B
+    const full = diamond({
+      flows: [{ id: 'f1', name: 'Web', source: 'A', target: 'D', profile: 'web', demand: 12 }],
+      links: [
+        { id: 'AB', a: 'A', b: 'B', capacity: 30, delay: 2, loss: 0 },
+        { id: 'BD', a: 'B', b: 'D', capacity: 5, delay: 2, loss: 0 },
+        { id: 'AC', a: 'A', b: 'C', capacity: 30, delay: 2, loss: 0 },
+        { id: 'CD', a: 'C', b: 'D', capacity: 30, delay: 2, loss: 0 },
+      ],
+      situations: [{ id: 'calm', name: 'Calm', steps: 6, events: [] }],
+    });
+    const index = indexLevel(full);
+    const steps = need(evaluate(index, { f1: singlePath(['A', 'B', 'D']) }).situations[0]).steps;
+    const stops: number[] = [];
+    let passed = 0;
+    let total = 0;
+    for (let tick = 0; tick < 60; tick += 1) {
+      for (const packet of packetsAt(index, need(full.situations[0]), steps, 4, tick / 60)) {
+        total += 1;
+        if (packet.dropped) {
+          stops.push(packet.point.x);
+        } else if (packet.point.x > 50 + 1e-6) {
+          passed += 1;
+        }
+      }
+    }
+    expect(stops.length).toBeGreaterThan(0);
+    // B stands at x 50: every dropped packet stops there, none on the cable behind it
+    expect(stops.every((x) => Math.abs(x - 50) < 1e-6)).toBe(true);
+    expect(passed).toBeGreaterThan(0);
+    expect(total).toBeGreaterThan(passed);
+  });
+
+  it('keeps the packets of the kind that is served first and drops the others', () => {
+    const shared = diamond({
+      rules: { ...diamond().rules, queues: false },
+      flows: [
+        { id: 'voice', name: 'Voice', source: 'A', target: 'D', profile: 'voice', demand: 4 },
+        { id: 'bulk', name: 'Bulk', source: 'A', target: 'D', profile: 'bulk', demand: 12 },
+      ],
+      links: [
+        { id: 'AB', a: 'A', b: 'B', capacity: 30, delay: 2, loss: 0 },
+        { id: 'BD', a: 'B', b: 'D', capacity: 8, delay: 2, loss: 0 },
+        { id: 'AC', a: 'A', b: 'C', capacity: 30, delay: 2, loss: 0 },
+        { id: 'CD', a: 'C', b: 'D', capacity: 30, delay: 2, loss: 0 },
+      ],
+      situations: [{ id: 'calm', name: 'Calm', steps: 6, events: [] }],
+    });
+    const index = indexLevel(shared);
+    const steps = need(
+      evaluate(index, { voice: singlePath(['A', 'B', 'D']), bulk: singlePath(['A', 'B', 'D']) })
+        .situations[0],
+    ).steps;
+    const dropped = new Map<string, Set<string>>();
+    const passed = new Map<string, Set<string>>();
+    for (let tick = 0; tick < 120; tick += 1) {
+      for (const packet of packetsAt(index, need(shared.situations[0]), steps, 4, tick / 120)) {
+        const into = packet.dropped ? dropped : packet.point.x > 50 + 1e-6 ? passed : undefined;
+        into?.set(packet.flow, (into.get(packet.flow) ?? new Set()).add(packet.key));
+      }
+    }
+    // Voice (4) fits in the cable of 8 and loses nothing; bulk gets the 4 that are left of its 12
+    expect(dropped.get('voice')?.size ?? 0).toBe(0);
+    expect(passed.get('voice')?.size ?? 0).toBeGreaterThan(0);
+    expect(dropped.get('bulk')?.size ?? 0).toBeGreaterThan(0);
+  });
+});
+
+describe('packets that wait in a queue', () => {
+  // 16 per minute (twelve packets are drawn) on a cable of 10 with a queue of 10: ten go through at
+  // once, six wait at the node before the cable
+  const queued = diamond({
+    rules: { ...diamond().rules, queues: true },
+    flows: [{ id: 'f1', name: 'Web', source: 'A', target: 'D', profile: 'web', demand: 16 }],
+    situations: [{ id: 'calm', name: 'Calm', steps: 5, events: [] }],
+  });
+  const index = indexLevel(queued);
+  const steps = need(evaluate(index, { f1: singlePath(['A', 'B', 'D']) }).situations[0]).steps;
+  const situation = need(queued.situations[0]);
+
+  it('stand at the node before the cable while the queue holds them, then go on', () => {
+    const early = packetsAt(index, situation, steps, 1, 0).filter((packet) =>
+      packet.key.startsWith('f1:0:0:'),
+    );
+    const waiting = early.filter((packet) => Math.abs(packet.point.x - 10) < 1e-6);
+    // The last of the twelve packets of minute 1 are held back at A (x 10), none of them dropped
+    expect(waiting.length).toBeGreaterThan(0);
+    expect(waiting.every((packet) => !packet.dropped)).toBe(true);
+    expect(early.some((packet) => packet.point.x > 10 + 1e-6)).toBe(true);
+    // A little later they are on their way
+    const later = packetsAt(index, situation, steps, 1, 0.9).filter((packet) =>
+      waiting.some((other) => other.key === packet.key),
+    );
+    expect(later.length).toBeGreaterThan(0);
+    expect(later.every((packet) => packet.point.x > 10 + 1e-6)).toBe(true);
+  });
+
+  it('are never more on a cable than the cable carries in a minute', () => {
+    // Count what leaves the node A over the cable A to B in step 3 (a full queue): the packets that
+    // are on the cable at a moment never come from more than ten units of traffic per minute
+    let most = 0;
+    for (let tick = 0; tick < 100; tick += 1) {
+      const onCable = packetsAt(index, situation, steps, 3, tick / 100).filter(
+        (packet) => !packet.dropped && packet.point.x > 10 + 1e-6 && packet.point.x < 50 - 1e-6,
+      );
+      most = Math.max(most, onCable.length);
+    }
+    // The cable takes 0.3 minutes (delay 2 at full load: 2 x 2 x 0.15 = 0.6), so at most ten per
+    // minute times that many are on it at a time, with a margin for the packets of two minutes
+    expect(most).toBeLessThanOrEqual(Math.ceil(10 * 0.6) + 2);
+  });
+});

@@ -192,6 +192,15 @@ export interface LinkStepResult {
   /** The same split by class of traffic (served first, middle, last): it adds up to `queued` */
   queuedBy: readonly number[];
   buffer: number;
+  /**
+   * What happens, per class of traffic (served first, middle, last), to the traffic that arrives at
+   * the cable in this step: the share that goes through at once, the share that is dropped because
+   * the queue is full, and (for the rest, which waits in the queue) the minutes it waits. The
+   * drawing uses them to hold packets back at the node before the cable.
+   */
+  through: readonly number[];
+  dropped: readonly number[];
+  waitMinutes: readonly number[];
   /** The share of the traffic this cable loses in this step (its own loss and an event), 0 to 1 */
   loss: number;
   /** Capacity of the link in this step (0 when it is down) */

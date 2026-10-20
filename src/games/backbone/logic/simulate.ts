@@ -245,8 +245,11 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
       const behind: number[] = [];
       let queued = 0;
       const queuedBy: number[] = [];
+      const through: number[] = [];
+      const dropped: number[] = [];
       queues.forEach((want, queue) => {
-        const content = (held[queue] ?? 0) + want;
+        const heldBefore = held[queue] ?? 0;
+        const content = heldBefore + want;
         const served = Math.min(content, remaining);
         remaining -= served;
         const left = content - served;
@@ -257,6 +260,9 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
         queuedBy.push(keep);
         behind.push(queued);
         shares.push(want > 0 ? Math.max(0, 1 - (left - keep) / want) : 1);
+        // The backlog goes first: what this step sent goes through at once only after it
+        through.push(want > 0 ? Math.min(1, Math.max(0, served - heldBefore) / want) : 1);
+        dropped.push(want > 0 ? Math.min(1, Math.max(0, (left - keep) / want)) : 0);
       });
       satisfied.set(link.id, shares);
       waiting.set(
@@ -269,6 +275,9 @@ function simulateSituation(index: LevelIndex, plan: Plan, situation: Situation):
         queued,
         queuedBy,
         buffer,
+        through,
+        dropped,
+        waitMinutes: behind.map((value) => value / Math.max(capacity, 1)),
         loss: state.get(link.id)?.loss ?? 0,
         capacity,
         down: state.get(link.id)?.down ?? false,
