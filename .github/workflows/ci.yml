@@ -58,20 +58,20 @@ jobs:
       # The Cloudflare Functions must bundle with the Workers runtime settings (nodejs_compat)
       - run: pnpm build:functions
 
-  # The browser tests run as two jobs at once, each on its own machine and with its own half of the
-  # tests (Playwright's --shard splits the list of tests, every test is in exactly one half). The
-  # same tests, the same limits, in half the time. The number of halves is written here twice (the
+  # The browser tests run as three jobs at once, each on its own machine and with its own third of the
+  # tests (Playwright's --shard splits the list of tests, every test is in exactly one third). The
+  # same tests, the same limits, in a third of the time. The number of parts is written here twice (the
   # matrix and the argument); tests/build-output/ci-shards.test.ts checks that they agree, so that
   # a shard cannot be dropped by accident (its tests would silently not run).
   e2e:
-    name: End-to-end tests (${{ matrix.shard }}/2)
+    name: End-to-end tests (${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       # A failure in one half does not hide a failure in the other
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -98,7 +98,7 @@ jobs:
         run: pnpm exec playwright install-deps chromium
       # Builds the site, serves it and runs half of the browser tests: smoke, privacy guard, accessibility
       # Playwright stops itself after 15 minutes (playwright.config.ts); this limit is a little above it
-      - run: pnpm test:e2e --shard=${{ matrix.shard }}/2
+      - run: pnpm test:e2e --shard=${{ matrix.shard }}/3
         timeout-minutes: 17
       - name: Upload the Playwright report when tests failed
         if: failure()

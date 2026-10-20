@@ -1,0 +1,704 @@
+[
+  {
+    "id": "c1-1",
+    "chapter": 1,
+    "setting": "office",
+    "title": "The new printer",
+    "nodes": 6,
+    "flows": 2,
+    "situations": 1
+  },
+  {
+    "id": "c1-2",
+    "chapter": 1,
+    "setting": "office",
+    "title": "Monday morning",
+    "nodes": 6,
+    "flows": 2,
+    "situations": 1
+  },
+  {
+    "id": "c1-3",
+    "chapter": 1,
+    "setting": "campus",
+    "title": "Exam week",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c1-4",
+    "chapter": 1,
+    "setting": "office",
+    "title": "Open plan",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c1-5",
+    "chapter": 1,
+    "setting": "hospital",
+    "title": "Ward round",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c1-6",
+    "chapter": 1,
+    "setting": "festival",
+    "title": "Gates open",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 1
+  },
+  {
+    "id": "c2-1",
+    "chapter": 2,
+    "setting": "hospital",
+    "title": "Morning rounds",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c2-2",
+    "chapter": 2,
+    "setting": "campus",
+    "title": "Lecture night",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 1
+  },
+  {
+    "id": "c2-3",
+    "chapter": 2,
+    "setting": "festival",
+    "title": "Main gate",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 1
+  },
+  {
+    "id": "c2-4",
+    "chapter": 2,
+    "setting": "provider",
+    "title": "Prime time",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 1
+  },
+  {
+    "id": "c2-5",
+    "chapter": 2,
+    "setting": "datacentre",
+    "title": "Two tiers",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 1
+  },
+  {
+    "id": "c2-6",
+    "chapter": 2,
+    "setting": "office",
+    "title": "Town hall",
+    "nodes": 9,
+    "flows": 5,
+    "situations": 1
+  },
+  {
+    "id": "c3-1",
+    "chapter": 3,
+    "setting": "datacentre",
+    "title": "Two roads",
+    "nodes": 6,
+    "flows": 2,
+    "situations": 1
+  },
+  {
+    "id": "c3-2",
+    "chapter": 3,
+    "setting": "festival",
+    "title": "Main stage",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c3-3",
+    "chapter": 3,
+    "setting": "campus",
+    "title": "Open day",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c3-4",
+    "chapter": 3,
+    "setting": "provider",
+    "title": "Cup final",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c3-5",
+    "chapter": 3,
+    "setting": "hospital",
+    "title": "Imaging day",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c3-6",
+    "chapter": 3,
+    "setting": "datacentre",
+    "title": "Big transfer",
+    "nodes": 9,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c4-1",
+    "chapter": 4,
+    "setting": "office",
+    "title": "The long call",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c4-2",
+    "chapter": 4,
+    "setting": "hospital",
+    "title": "Nurse call",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c4-3",
+    "chapter": 4,
+    "setting": "festival",
+    "title": "Crew radio",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c4-4",
+    "chapter": 4,
+    "setting": "datacentre",
+    "title": "On-call",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c4-5",
+    "chapter": 4,
+    "setting": "campus",
+    "title": "Helpdesk",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c4-6",
+    "chapter": 4,
+    "setting": "provider",
+    "title": "Emergency line",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c5-1",
+    "chapter": 5,
+    "setting": "office",
+    "title": "Backup night",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c5-2",
+    "chapter": 5,
+    "setting": "hospital",
+    "title": "Scan archive",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c5-3",
+    "chapter": 5,
+    "setting": "datacentre",
+    "title": "Batch window",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c5-4",
+    "chapter": 5,
+    "setting": "campus",
+    "title": "Mirror sync",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c5-5",
+    "chapter": 5,
+    "setting": "festival",
+    "title": "Upload rush",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c5-6",
+    "chapter": 5,
+    "setting": "provider",
+    "title": "Software release",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c6-1",
+    "chapter": 6,
+    "setting": "office",
+    "title": "Coffee break",
+    "nodes": 6,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c6-2",
+    "chapter": 6,
+    "setting": "campus",
+    "title": "Lecture ends",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c6-3",
+    "chapter": 6,
+    "setting": "festival",
+    "title": "Encore",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c6-4",
+    "chapter": 6,
+    "setting": "hospital",
+    "title": "Shift change",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c6-5",
+    "chapter": 6,
+    "setting": "provider",
+    "title": "Goal!",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c6-6",
+    "chapter": 6,
+    "setting": "datacentre",
+    "title": "Flash sale",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c7-1",
+    "chapter": 7,
+    "setting": "office",
+    "title": "The cut cable",
+    "nodes": 6,
+    "flows": 2,
+    "situations": 2
+  },
+  {
+    "id": "c7-2",
+    "chapter": 7,
+    "setting": "hospital",
+    "title": "Night shift",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c7-3",
+    "chapter": 7,
+    "setting": "provider",
+    "title": "Storm",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 3
+  },
+  {
+    "id": "c7-4",
+    "chapter": 7,
+    "setting": "datacentre",
+    "title": "Pulled plug",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 3
+  },
+  {
+    "id": "c7-5",
+    "chapter": 7,
+    "setting": "campus",
+    "title": "Construction site",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 3
+  },
+  {
+    "id": "c7-6",
+    "chapter": 7,
+    "setting": "festival",
+    "title": "Cable thief",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 3
+  },
+  {
+    "id": "c8-1",
+    "chapter": 8,
+    "setting": "office",
+    "title": "The new wing",
+    "nodes": 6,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c8-2",
+    "chapter": 8,
+    "setting": "campus",
+    "title": "Summer upgrade",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 1
+  },
+  {
+    "id": "c8-3",
+    "chapter": 8,
+    "setting": "provider",
+    "title": "New ring",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c8-4",
+    "chapter": 8,
+    "setting": "festival",
+    "title": "Pop-up network",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c8-5",
+    "chapter": 8,
+    "setting": "hospital",
+    "title": "New building",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 1
+  },
+  {
+    "id": "c8-6",
+    "chapter": 8,
+    "setting": "datacentre",
+    "title": "Second hall",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 3
+  },
+  {
+    "id": "c9-1",
+    "chapter": 9,
+    "setting": "provider",
+    "title": "Wet cable",
+    "nodes": 6,
+    "flows": 2,
+    "situations": 2
+  },
+  {
+    "id": "c9-2",
+    "chapter": 9,
+    "setting": "office",
+    "title": "Payday",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c9-3",
+    "chapter": 9,
+    "setting": "drones",
+    "title": "Over the ridge",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c9-4",
+    "chapter": 9,
+    "setting": "hospital",
+    "title": "Telemetry",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 3
+  },
+  {
+    "id": "c9-5",
+    "chapter": 9,
+    "setting": "festival",
+    "title": "Fog",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c9-6",
+    "chapter": 9,
+    "setting": "datacentre",
+    "title": "Dirty fibre",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c10-1",
+    "chapter": 10,
+    "setting": "drones",
+    "title": "Passing relay",
+    "nodes": 6,
+    "flows": 2,
+    "situations": 2
+  },
+  {
+    "id": "c10-2",
+    "chapter": 10,
+    "setting": "drones",
+    "title": "Search pattern",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c10-3",
+    "chapter": 10,
+    "setting": "festival",
+    "title": "Parade",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c10-4",
+    "chapter": 10,
+    "setting": "drones",
+    "title": "Valley run",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c10-5",
+    "chapter": 10,
+    "setting": "provider",
+    "title": "Ferry crossing",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c10-6",
+    "chapter": 10,
+    "setting": "drones",
+    "title": "Rescue convoy",
+    "nodes": 9,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c11-1",
+    "chapter": 11,
+    "setting": "office",
+    "title": "Guest wifi",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c11-2",
+    "chapter": 11,
+    "setting": "hospital",
+    "title": "Visitors and patients",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c11-3",
+    "chapter": 11,
+    "setting": "campus",
+    "title": "The open lab",
+    "nodes": 10,
+    "flows": 4,
+    "situations": 3
+  },
+  {
+    "id": "c11-4",
+    "chapter": 11,
+    "setting": "datacentre",
+    "title": "Tenants",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 1
+  },
+  {
+    "id": "c11-5",
+    "chapter": 11,
+    "setting": "festival",
+    "title": "Press tent",
+    "nodes": 9,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c11-6",
+    "chapter": 11,
+    "setting": "provider",
+    "title": "Business park",
+    "nodes": 10,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c12-1",
+    "chapter": 12,
+    "setting": "office",
+    "title": "Spam wave",
+    "nodes": 7,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c12-2",
+    "chapter": 12,
+    "setting": "datacentre",
+    "title": "Packet storm",
+    "nodes": 8,
+    "flows": 4,
+    "situations": 2
+  },
+  {
+    "id": "c12-3",
+    "chapter": 12,
+    "setting": "provider",
+    "title": "Botnet",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 3
+  },
+  {
+    "id": "c12-4",
+    "chapter": 12,
+    "setting": "campus",
+    "title": "Exam hack",
+    "nodes": 8,
+    "flows": 3,
+    "situations": 2
+  },
+  {
+    "id": "c12-5",
+    "chapter": 12,
+    "setting": "hospital",
+    "title": "Ransom note",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 3
+  },
+  {
+    "id": "c12-6",
+    "chapter": 12,
+    "setting": "festival",
+    "title": "Ticket bots",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 3
+  },
+  {
+    "id": "c13-1",
+    "chapter": 13,
+    "setting": "campus",
+    "title": "The big day",
+    "nodes": 10,
+    "flows": 5,
+    "situations": 3
+  },
+  {
+    "id": "c13-2",
+    "chapter": 13,
+    "setting": "provider",
+    "title": "Black Friday",
+    "nodes": 10,
+    "flows": 5,
+    "situations": 3
+  },
+  {
+    "id": "c13-3",
+    "chapter": 13,
+    "setting": "drones",
+    "title": "Rescue",
+    "nodes": 10,
+    "flows": 5,
+    "situations": 3
+  },
+  {
+    "id": "c13-4",
+    "chapter": 13,
+    "setting": "hospital",
+    "title": "Heatwave",
+    "nodes": 10,
+    "flows": 4,
+    "situations": 3
+  },
+  {
+    "id": "c13-5",
+    "chapter": 13,
+    "setting": "datacentre",
+    "title": "Launch day",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 3
+  },
+  {
+    "id": "c13-6",
+    "chapter": 13,
+    "setting": "festival",
+    "title": "Headline act",
+    "nodes": 9,
+    "flows": 4,
+    "situations": 3
+  }
+]

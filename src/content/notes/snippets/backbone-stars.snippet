@@ -1,0 +1,16 @@
+export function starThresholds(b: Baselines) {
+  const gap = b.best - b.shortest;
+  const better = Math.max(b.shortest, b.balanced);
+  return {
+    one: b.shortest,
+    two: Math.max(better, b.shortest + 0.4 * gap),
+    three: b.shortest + 0.95 * gap,
+  };
+}
+
+// a level is only admitted when the steps are real
+export function isAdmissible(b: Baselines) {
+  const better = Math.max(b.shortest, b.balanced);
+  const room = Math.max(0.04, 0.08 * better);
+  return b.best - better >= room && b.best > b.shortest;
+}

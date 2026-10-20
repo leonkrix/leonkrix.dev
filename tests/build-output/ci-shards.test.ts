@@ -24,7 +24,7 @@ function job(id: string): string {
 }
 
 const sharded = [
-  { id: 'e2e', command: /pnpm test:e2e --shard=\$\{\{ matrix\.shard \}\}\/(\d+)/, parts: 2 },
+  { id: 'e2e', command: /pnpm test:e2e --shard=\$\{\{ matrix\.shard \}\}\/(\d+)/, parts: 3 },
   {
     id: 'lighthouse',
     command: /pnpm lighthouse --shard \$\{\{ matrix\.shard \}\}\/(\d+)/,

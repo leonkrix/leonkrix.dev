@@ -437,6 +437,7 @@ describe('legal texts', () => {
         // The legal norm of the cookie of Cloudflare, and what the command palette does
         'Section 25(2) no. 2 TDDDG',
         'writes my email address to the clipboard',
+        'copies a link to the current puzzle or level',
       ],
     ],
     [
@@ -456,6 +457,7 @@ describe('legal texts', () => {
         'Art. 21 Abs. 1 DSGVO',
         '§ 25 Abs. 2 Nr. 2 TDDDG',
         'schreibt Ihr Browser auf Ihren Wunsch meine E-Mail-Adresse in die Zwischenablage',
+        'einen Link zum aktuellen Rätsel oder Level kopiert',
       ],
     ],
   ] as const)(

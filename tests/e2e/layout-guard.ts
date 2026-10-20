@@ -159,6 +159,17 @@ export function layoutGuardScript(reportName: string): void {
   };
   window.addEventListener('resize', forget);
   document.addEventListener('toggle', forget, true);
+  // The toggle event of a <details> comes a moment after the panel has opened (a task of its own), and
+  // a frame can be sampled in between on a busy machine: the click on the summary is the first sign
+  document.addEventListener(
+    'click',
+    (event) => {
+      if (event.target instanceof Element && event.target.closest('summary') !== null) {
+        forget();
+      }
+    },
+    true,
+  );
   window.addEventListener('popstate', forget);
   // A page that changes its own address (a game that opens a level) shows something new on purpose
   for (const name of ['pushState', 'replaceState'] as const) {

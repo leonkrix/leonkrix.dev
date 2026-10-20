@@ -30,6 +30,7 @@
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build && pnpm test:dist",
     "prepare": "husky",
     "levels": "vitest run --config vitest.levels.config.ts",
+    "levels-backbone": "vitest run --config vitest.backbone.config.ts",
     "word-radar-data": "node scripts/word-radar/build-data.ts",
     "word-radar-data-de": "node scripts/word-radar/build-data-de.ts"
   },
