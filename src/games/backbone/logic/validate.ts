@@ -1,5 +1,5 @@
 import { geometryProblems } from './geometry';
-import { indexLevel, routesOf, shortestPath } from './graph';
+import { indexLevel, maxFlow, routesOf, shortestPath } from './graph';
 import { profiles } from './profiles';
 import { outOfRange } from './simulate';
 import type { Level } from './types';
@@ -136,6 +136,17 @@ export function problemsOfLevel(level: Level): string[] {
   for (const flow of level.flows) {
     if ((flow.via ?? []).length > 0 && routesOf(indexLevel(level), flow, 1).length === 0) {
       problems.push(`${flow.id} has no route through the node it has to pass`);
+    }
+  }
+
+  // A flow that cannot be held back must be possible to carry in full when nothing else uses the
+  // network (over several paths if it has to), otherwise it loses traffic whatever the player does
+  for (const flow of level.flows) {
+    if (
+      !profiles[flow.profile].throttlable &&
+      flow.demand > maxFlow(level, flow.source, flow.target) + 1e-9
+    ) {
+      problems.push(`${flow.id} sends more than the network can ever carry for it`);
     }
   }
 

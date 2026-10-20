@@ -235,9 +235,7 @@ export function ResultPanel({
                   {Math.round(entry.earned * 100)} %
                   {entry.late !== undefined && (
                     <small className="bb-late">
-                      {showsDelay(index.level)
-                        ? ` · too slow: ${String(entry.late.ms)} ms`
-                        : ' · late'}
+                      {showsDelay(index.level) ? `too slow: ${String(entry.late.ms)} ms` : 'late'}
                     </small>
                   )}
                 </td>

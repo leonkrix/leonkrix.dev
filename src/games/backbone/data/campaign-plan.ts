@@ -832,7 +832,7 @@ export const LEVEL_PLAN: readonly LevelPlan[] = [
       'A flood of junk hits the mail server. Keep the rest of the office out of its way.',
       7,
       'mesh',
-      'WWV',
+      'CWV',
       'calm flood',
     ],
     [

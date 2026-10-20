@@ -597,7 +597,9 @@ export function MapView({
               </small>
             )}
             {result?.down !== true && bufferSize(level, link) > 0 && (
-              <Queue result={result} size={bufferSize(level, link)} />
+              // Before the run nothing waits yet: the load says what the plan asks of the cable, the
+              // queue fills only while the stress test runs
+              <Queue result={running ? result : undefined} size={bufferSize(level, link)} />
             )}
             {result?.down !== true && loss !== undefined && (
               <small className="bb-link-loss" data-times={loss.atTimes}>

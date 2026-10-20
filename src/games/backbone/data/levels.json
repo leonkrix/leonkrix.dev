@@ -7953,128 +7953,93 @@
     "id": "c11-6",
     "chapter": 11,
     "setting": "provider",
-    "seed": 951538733,
+    "seed": 599355829,
     "level": {
       "id": "c11-6",
       "title": "Business park",
       "story": "Companies in the park share a link, and every one of them has its own firewall rules.",
       "nodes": [
+        { "id": "n0", "name": "Core 1", "kind": "router", "x": 70, "y": 62, "zone": "servers" },
+        { "id": "n1", "name": "Core 2", "kind": "router", "x": 30, "y": 86, "zone": "guests" },
+        { "id": "n2", "name": "Metro N", "kind": "router", "x": 70, "y": 38, "zone": "servers" },
+        { "id": "n3", "name": "Metro S", "kind": "router", "x": 70, "y": 86, "zone": "servers" },
         {
-          "id": "n0",
-          "name": "Agg A",
-          "kind": "switch",
-          "x": 63.333333333333336,
-          "y": 14,
-          "zone": "office"
-        },
-        {
-          "id": "n1",
+          "id": "n4",
           "name": "Peering point",
           "kind": "server",
           "x": 90,
-          "y": 14,
+          "y": 38,
           "zone": "servers"
         },
-        { "id": "n2", "name": "Town A", "kind": "client", "x": 10, "y": 14, "zone": "guests" },
-        {
-          "id": "n3",
-          "name": "Core 1",
-          "kind": "router",
-          "x": 63.333333333333336,
-          "y": 62,
-          "zone": "office"
-        },
-        { "id": "n4", "name": "Core 2", "kind": "router", "x": 90, "y": 62, "zone": "servers" },
-        {
-          "id": "n5",
-          "name": "Metro N",
-          "kind": "router",
-          "x": 36.66666666666667,
-          "y": 86,
-          "zone": "guests"
-        },
-        {
-          "id": "n6",
-          "name": "Border firewall",
-          "kind": "firewall",
-          "x": 63.333333333333336,
-          "y": 38,
-          "zone": "office"
-        },
-        {
-          "id": "n7",
-          "name": "Metro S",
-          "kind": "router",
-          "x": 36.66666666666667,
-          "y": 14,
-          "zone": "guests"
-        },
+        { "id": "n5", "name": "Agg A", "kind": "switch", "x": 50, "y": 14, "zone": "office" },
+        { "id": "n6", "name": "Metro E", "kind": "router", "x": 10, "y": 38, "zone": "guests" },
+        { "id": "n7", "name": "Metro W", "kind": "router", "x": 30, "y": 14, "zone": "guests" },
         {
           "id": "n8",
+          "name": "Border firewall",
+          "kind": "firewall",
+          "x": 50,
+          "y": 86,
+          "zone": "office"
+        },
+        {
+          "id": "n9",
           "name": "Content cache",
           "kind": "server",
           "x": 10,
           "y": 62,
           "zone": "guests"
-        },
-        {
-          "id": "n9",
-          "name": "Metro E",
-          "kind": "router",
-          "x": 63.333333333333336,
-          "y": 86,
-          "zone": "office"
         }
       ],
       "links": [
-        { "id": "l0", "a": "n3", "b": "n9", "capacity": 11, "delay": 1, "loss": 0 },
-        { "id": "l1", "a": "n0", "b": "n6", "capacity": 9, "delay": 1, "loss": 0 },
-        { "id": "l2", "a": "n3", "b": "n6", "capacity": 12, "delay": 1, "loss": 0 },
-        { "id": "l3", "a": "n0", "b": "n1", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l4", "a": "n0", "b": "n7", "capacity": 6, "delay": 2, "loss": 0 },
-        { "id": "l5", "a": "n3", "b": "n4", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l6", "a": "n5", "b": "n9", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l7", "a": "n2", "b": "n7", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l8", "a": "n5", "b": "n8", "capacity": 5, "delay": 2, "loss": 0 },
-        { "id": "l9", "a": "n3", "b": "n5", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l10", "a": "n4", "b": "n9", "capacity": 10, "delay": 2, "loss": 0 },
-        { "id": "l11", "a": "n1", "b": "n6", "capacity": 11, "delay": 2, "loss": 0 },
-        { "id": "l12", "a": "n4", "b": "n6", "capacity": 8, "delay": 2, "loss": 0 },
-        { "id": "l13", "a": "n1", "b": "n4", "capacity": 11, "delay": 2, "loss": 0 }
+        { "id": "l0", "a": "n0", "b": "n3", "capacity": 9, "delay": 1, "loss": 0 },
+        { "id": "l1", "a": "n0", "b": "n2", "capacity": 12, "delay": 1, "loss": 0 },
+        { "id": "l2", "a": "n6", "b": "n9", "capacity": 7, "delay": 1, "loss": 0 },
+        { "id": "l3", "a": "n1", "b": "n8", "capacity": 9, "delay": 1, "loss": 0 },
+        { "id": "l4", "a": "n2", "b": "n4", "capacity": 6, "delay": 1, "loss": 0 },
+        { "id": "l5", "a": "n3", "b": "n8", "capacity": 10, "delay": 1, "loss": 0 },
+        { "id": "l6", "a": "n5", "b": "n7", "capacity": 9, "delay": 1, "loss": 0 },
+        { "id": "l7", "a": "n1", "b": "n9", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l8", "a": "n2", "b": "n5", "capacity": 10, "delay": 2, "loss": 0 },
+        { "id": "l9", "a": "n0", "b": "n8", "capacity": 9, "delay": 2, "loss": 0 },
+        { "id": "l10", "a": "n0", "b": "n4", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l11", "a": "n6", "b": "n7", "capacity": 7, "delay": 2, "loss": 0 },
+        { "id": "l12", "a": "n1", "b": "n2", "capacity": 12, "delay": 3, "loss": 0 },
+        { "id": "l13", "a": "n5", "b": "n9", "capacity": 11, "delay": 3, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
           "name": "Phone service",
-          "source": "n7",
-          "target": "n1",
+          "source": "n5",
+          "target": "n4",
           "profile": "voice",
-          "demand": 2,
-          "via": ["n6"]
+          "demand": 2
         },
         {
           "id": "f1",
           "name": "TV service",
-          "source": "n6",
-          "target": "n8",
+          "source": "n2",
+          "target": "n9",
           "profile": "video",
           "demand": 6
         },
         {
           "id": "f2",
           "name": "Home internet",
-          "source": "n9",
-          "target": "n1",
+          "source": "n8",
+          "target": "n5",
           "profile": "web",
-          "demand": 7
+          "demand": 3
         },
         {
           "id": "f3",
           "name": "Bank links",
-          "source": "n9",
-          "target": "n1",
+          "source": "n6",
+          "target": "n4",
           "profile": "transaction",
-          "demand": 4
+          "demand": 2,
+          "via": ["n8"]
         }
       ],
       "situations": [
@@ -8084,8 +8049,8 @@
           "name": "Rush hour",
           "steps": 8,
           "events": [
-            { "kind": "burst", "flow": "f1", "from": 3, "to": 6, "factor": 2 },
-            { "kind": "burst", "flow": "f2", "from": 3, "to": 6, "factor": 2 }
+            { "kind": "burst", "flow": "f2", "from": 3, "to": 6, "factor": 2 },
+            { "kind": "burst", "flow": "f1", "from": 3, "to": 6, "factor": 2 }
           ]
         }
       ],
@@ -8105,16 +8070,8 @@
     },
     "best": {
       "plan": {
-        "f2": {
-          "stages": [
-            {
-              "from": 0,
-              "paths": [
-                { "nodes": ["n9", "n3", "n4", "n1"], "share": 0.75 },
-                { "nodes": ["n9", "n4", "n1"], "share": 0.25 }
-              ]
-            }
-          ],
+        "f0": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n5", "n2", "n4"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
@@ -8123,86 +8080,87 @@
             {
               "from": 0,
               "paths": [
-                { "nodes": ["n6", "n3", "n5", "n8"], "share": 0.75 },
-                { "nodes": ["n6", "n4", "n9", "n5", "n8"], "share": 0.25 }
+                { "nodes": ["n2", "n1", "n9"], "share": 0.75 },
+                { "nodes": ["n2", "n5", "n9"], "share": 0.25 }
               ]
             }
           ],
           "redundancy": 0,
           "throttle": 1
         },
-        "f3": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n9", "n3", "n6", "n1"], "share": 1 }] }],
+        "f2": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n8", "n0", "n2", "n5"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         },
-        "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n7", "n0", "n6", "n1"], "share": 1 }] }],
+        "f3": {
+          "stages": [
+            { "from": 0, "paths": [{ "nodes": ["n6", "n9", "n1", "n8", "n0", "n4"], "share": 1 }] }
+          ],
           "redundancy": 0,
           "throttle": 1
         }
       },
-      "score": 0.9122503133180139,
+      "score": 1,
       "built": []
     },
-    "shortest": 0.8101671027877858,
-    "balanced": 0.7760978764591755,
-    "proof": { "milliseconds": 293, "explored": 1319 }
+    "shortest": 0.8587819577440833,
+    "balanced": 0.803145345488873,
+    "proof": { "milliseconds": 140, "explored": 0 }
   },
   {
     "id": "c12-1",
     "chapter": 12,
     "setting": "office",
-    "seed": 4204388111,
+    "seed": 1939953999,
     "level": {
       "id": "c12-1",
       "title": "Spam wave",
       "story": "A flood of junk hits the mail server. Keep the rest of the office out of its way.",
       "nodes": [
-        { "id": "n0", "name": "Gateway", "kind": "router", "x": 70, "y": 50 },
-        { "id": "n1", "name": "Core", "kind": "router", "x": 90, "y": 86 },
-        { "id": "n2", "name": "File server", "kind": "server", "x": 90, "y": 14 },
-        { "id": "n3", "name": "Floor 1", "kind": "router", "x": 30, "y": 14 },
-        { "id": "n4", "name": "Floor 2", "kind": "router", "x": 50, "y": 14 },
-        { "id": "n5", "name": "Annex", "kind": "router", "x": 30, "y": 50 },
-        { "id": "n6", "name": "Reception", "kind": "client", "x": 10, "y": 86 }
+        { "id": "n0", "name": "Switch A", "kind": "switch", "x": 90, "y": 14 },
+        { "id": "n1", "name": "File server", "kind": "server", "x": 90, "y": 86 },
+        { "id": "n2", "name": "Gateway", "kind": "router", "x": 70, "y": 86 },
+        { "id": "n3", "name": "Switch B", "kind": "switch", "x": 30, "y": 14 },
+        { "id": "n4", "name": "Reception", "kind": "client", "x": 10, "y": 14 },
+        { "id": "n5", "name": "Switch C", "kind": "switch", "x": 50, "y": 14 },
+        { "id": "n6", "name": "Core", "kind": "router", "x": 50, "y": 50 }
       ],
       "links": [
-        { "id": "l0", "a": "n3", "b": "n4", "capacity": 7, "delay": 1, "loss": 0 },
-        { "id": "l1", "a": "n3", "b": "n5", "capacity": 7, "delay": 2, "loss": 0 },
-        { "id": "l2", "a": "n0", "b": "n1", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l3", "a": "n0", "b": "n2", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l4", "a": "n0", "b": "n4", "capacity": 11, "delay": 2, "loss": 0 },
-        { "id": "l5", "a": "n5", "b": "n6", "capacity": 9, "delay": 2, "loss": 0 },
-        { "id": "l6", "a": "n4", "b": "n5", "capacity": 12, "delay": 2, "loss": 0 },
-        { "id": "l7", "a": "n0", "b": "n5", "capacity": 13, "delay": 3, "loss": 0 },
-        { "id": "l8", "a": "n2", "b": "n4", "capacity": 11, "delay": 3, "loss": 0 },
-        { "id": "l9", "a": "n1", "b": "n2", "capacity": 9, "delay": 4, "loss": 0 }
+        { "id": "l0", "a": "n1", "b": "n2", "capacity": 5, "delay": 1, "loss": 0 },
+        { "id": "l1", "a": "n3", "b": "n4", "capacity": 6, "delay": 1, "loss": 0 },
+        { "id": "l2", "a": "n3", "b": "n5", "capacity": 10, "delay": 1, "loss": 0 },
+        { "id": "l3", "a": "n5", "b": "n6", "capacity": 8, "delay": 2, "loss": 0 },
+        { "id": "l4", "a": "n2", "b": "n6", "capacity": 7, "delay": 2, "loss": 0 },
+        { "id": "l5", "a": "n0", "b": "n5", "capacity": 9, "delay": 3, "loss": 0 },
+        { "id": "l6", "a": "n3", "b": "n6", "capacity": 11, "delay": 2, "loss": 0 },
+        { "id": "l7", "a": "n0", "b": "n6", "capacity": 10, "delay": 3, "loss": 0 },
+        { "id": "l8", "a": "n0", "b": "n1", "capacity": 5, "delay": 4, "loss": 0 }
       ],
       "flows": [
         {
           "id": "f0",
-          "name": "Web browsing",
+          "name": "Door locks",
           "source": "n4",
-          "target": "n2",
-          "profile": "web",
-          "demand": 3
+          "target": "n1",
+          "profile": "control",
+          "demand": 1
         },
         {
           "id": "f1",
-          "name": "Cloud documents",
-          "source": "n0",
-          "target": "n2",
+          "name": "Web browsing",
+          "source": "n5",
+          "target": "n1",
           "profile": "web",
-          "demand": 4
+          "demand": 2
         },
         {
           "id": "f2",
           "name": "Video meeting",
-          "source": "n3",
-          "target": "n2",
+          "source": "n5",
+          "target": "n1",
           "profile": "video",
-          "demand": 8
+          "demand": 3
         }
       ],
       "situations": [
@@ -8212,7 +8170,7 @@
           "name": "Under attack",
           "steps": 8,
           "events": [
-            { "kind": "flood", "source": "n3", "target": "n2", "from": 2, "to": 7, "rate": 5 }
+            { "kind": "flood", "source": "n5", "target": "n1", "from": 2, "to": 7, "rate": 4 }
           ]
         }
       ],
@@ -8228,35 +8186,29 @@
     "best": {
       "plan": {
         "f2": {
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n5", "n0", "n1"], "share": 1 }] }],
+          "redundancy": 0,
+          "throttle": 1
+        },
+        "f0": {
           "stages": [
-            {
-              "from": 0,
-              "paths": [
-                { "nodes": ["n3", "n5", "n0", "n2"], "share": 0.75 },
-                { "nodes": ["n3", "n4", "n2"], "share": 0.25 }
-              ]
-            }
+            { "from": 0, "paths": [{ "nodes": ["n4", "n3", "n6", "n2", "n1"], "share": 1 }] }
           ],
           "redundancy": 0,
           "throttle": 1
         },
         "f1": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n0", "n2"], "share": 1 }] }],
-          "redundancy": 0,
-          "throttle": 1
-        },
-        "f0": {
-          "stages": [{ "from": 0, "paths": [{ "nodes": ["n4", "n0", "n1", "n2"], "share": 1 }] }],
+          "stages": [{ "from": 0, "paths": [{ "nodes": ["n5", "n0", "n1"], "share": 1 }] }],
           "redundancy": 0,
           "throttle": 1
         }
       },
-      "score": 1,
+      "score": 0.9990369811508494,
       "built": []
     },
-    "shortest": 0.8624339482842437,
-    "balanced": 0.8793707626234335,
-    "proof": { "milliseconds": 96, "explored": 0 }
+    "shortest": 0.7619877256552195,
+    "balanced": 0.8639218641231771,
+    "proof": { "milliseconds": 186, "explored": 0 }
   },
   {
     "id": "c12-2",

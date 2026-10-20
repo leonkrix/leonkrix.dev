@@ -330,3 +330,36 @@ describe('packets follow the delay of the route', () => {
     expect(share).toBeLessThan(0.3);
   });
 });
+
+describe('where a packet is lost', () => {
+  it('differs from packet to packet and stays between a tenth and nine tenths of the cable', () => {
+    const lossy = diamond({
+      flows: [{ id: 'f1', name: 'Web', source: 'A', target: 'D', profile: 'web', demand: 10 }],
+      links: [
+        { id: 'AB', a: 'A', b: 'B', capacity: 30, delay: 2, loss: 0.5 },
+        { id: 'BD', a: 'B', b: 'D', capacity: 30, delay: 2, loss: 0 },
+        { id: 'AC', a: 'A', b: 'C', capacity: 30, delay: 2, loss: 0 },
+        { id: 'CD', a: 'C', b: 'D', capacity: 30, delay: 2, loss: 0 },
+      ],
+      situations: [{ id: 'calm', name: 'Calm', steps: 8, events: [] }],
+    });
+    const index = indexLevel(lossy);
+    const steps = need(evaluate(index, { f1: singlePath(['A', 'B', 'D']) }).situations[0]).steps;
+    const places = new Map<string, number>();
+    for (let step = 0; step < 8; step += 1) {
+      for (let tick = 0; tick < 40; tick += 1) {
+        for (const packet of packetsAt(index, need(lossy.situations[0]), steps, step, tick / 40)) {
+          // A cable A to B runs from x 10 to x 50: the packet is lost where it stands when it stops
+          if (packet.dropped) {
+            places.set(packet.key, packet.point.x);
+          }
+        }
+      }
+    }
+    const xs = [...places.values()];
+    expect(xs.length).toBeGreaterThan(5);
+    expect(xs.every((x) => x >= 10 + 4 - 1e-6 && x <= 10 + 36 + 1e-6)).toBe(true);
+    // Not all in the middle of the cable
+    expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(10);
+  });
+});

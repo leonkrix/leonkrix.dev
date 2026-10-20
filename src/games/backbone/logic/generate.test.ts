@@ -237,3 +237,37 @@ describe('the situation "on the move"', () => {
     }
   });
 });
+
+describe('a flow that the network can carry', () => {
+  it('knows the most a network carries between two nodes', async () => {
+    const { diamond } = await import('./fixtures');
+    const { maxFlow } = await import('./graph');
+    // Two ways of 10 each from A to D
+    expect(maxFlow(diamond(), 'A', 'D')).toBe(20);
+    expect(maxFlow(diamond(), 'B', 'C')).toBe(20);
+  });
+
+  it('refuses a level whose flow could never be carried in full, except bulk that can be held back', async () => {
+    const { diamond } = await import('./fixtures');
+    const flow = (profile: 'web' | 'bulk', demand: number) => ({
+      id: 'f1',
+      name: 'Flow',
+      source: 'A',
+      target: 'D',
+      profile,
+      demand,
+    });
+    expect(problemsOfLevel(diamond({ flows: [flow('web', 20)] }))).toEqual([]);
+    expect(problemsOfLevel(diamond({ flows: [flow('web', 21)] }))).toEqual([
+      'f1 sends more than the network can ever carry for it',
+    ]);
+    expect(problemsOfLevel(diamond({ flows: [flow('bulk', 21)] }))).toEqual([]);
+  });
+
+  it('makes levels in which every flow fits the network', () => {
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const { problems } = generateChecked(spec(seed, { nodes: 6 }));
+      expect(problems, `seed ${String(seed)}`).toEqual([]);
+    }
+  });
+});

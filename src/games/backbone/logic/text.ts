@@ -206,7 +206,15 @@ export interface LateFlow {
 
 export interface RunSummary {
   /** The busiest link of the whole run, how full it got (1 is exactly full) and in which situation */
-  busiest: { link: string; ratio: number; situation: string } | undefined;
+  busiest:
+    | {
+        link: string;
+        ratio: number;
+        situation: string;
+        /** The first minute (from 1) in which the queue of the cable was full, if it ever was */
+        queueFullFrom: number | undefined;
+      }
+    | undefined;
   /** The flow that lost the most, and the share of its value it lost (0 to 1) */
   worstFlow: { flow: string; lost: number } | undefined;
   /** For every flow: the share of its possible value that it earned over the whole run, and what delay cost it */
@@ -229,7 +237,16 @@ export function summarize(index: LevelIndex, evaluation: Evaluation): RunSummary
       for (const [id, result] of Object.entries(step.links)) {
         const ratio = loadRatio(result);
         if (ratio > (busiest?.ratio ?? 0)) {
-          busiest = { link: id, ratio, situation: index.level.situations[at]?.name ?? '' };
+          const full = situation.steps.findIndex((other) => {
+            const queue = other.links[id];
+            return queue !== undefined && queue.buffer > 0 && queue.queued >= queue.buffer - 1e-9;
+          });
+          busiest = {
+            link: id,
+            ratio,
+            situation: index.level.situations[at]?.name ?? '',
+            queueFullFrom: full >= 0 ? full + 1 : undefined,
+          };
         }
       }
       for (const [id, result] of Object.entries(step.flows)) {
@@ -299,13 +316,17 @@ export function describeBusiest(
   }
   const where = summary.busiest.situation === '' ? '' : ` (in "${summary.busiest.situation}")`;
   const link = linkName(index, summary.busiest.link);
+  const queue =
+    summary.busiest.queueFullFrom === undefined
+      ? ''
+      : ` Its queue was full from minute ${String(summary.busiest.queueFullFrom)}, from then on the rest was dropped.`;
   if (neutral) {
     return Number.isFinite(summary.busiest.ratio)
-      ? `${link} gets ${String(Math.round(summary.busiest.ratio * 100))} % of its capacity${where}. The best plan scores no better.`
+      ? `${link} gets ${String(Math.round(summary.busiest.ratio * 100))} % of its capacity${where}.${queue} The best plan scores no better.`
       : `${link} is cut${where} and a flow still uses it. The best plan scores no better.`;
   }
   return Number.isFinite(summary.busiest.ratio)
-    ? `Your plan sends more through ${link} than it can carry: ${String(Math.round(summary.busiest.ratio * 100))} % of its capacity${where}.`
+    ? `Your plan sends more through ${link} than it can carry: ${String(Math.round(summary.busiest.ratio * 100))} % of its capacity${where}.${queue}`
     : `Your plan still sends traffic over ${link} while it is cut${where}.`;
 }
 

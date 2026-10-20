@@ -163,3 +163,52 @@ export function fastestRoute(index: LevelIndex, flow: Flow): NodePath | undefine
     ? shortestPath(index, flow.source, flow.target)
     : routesOf(index, flow, 1)[0];
 }
+
+/**
+ * The most traffic a network can carry from one node to another if nothing else uses it (the
+ * largest flow, found by augmenting paths; cables carry traffic in both directions together, so a
+ * cable counts for its capacity in either direction). Cables that are not built yet count too.
+ */
+export function maxFlow(level: Level, from: string, to: string): number {
+  const room = new Map<string, number>();
+  const key = (a: string, b: string): string => `${a}>${b}`;
+  for (const link of level.links) {
+    for (const [a, b] of [
+      [link.a, link.b],
+      [link.b, link.a],
+    ] as const) {
+      room.set(key(a, b), (room.get(key(a, b)) ?? 0) + link.capacity);
+    }
+  }
+  let total = 0;
+  for (;;) {
+    const before = new Map<string, string>();
+    const queue = [from];
+    for (let at = 0; at < queue.length && !before.has(to); at += 1) {
+      const node = queue[at] ?? '';
+      for (const next of level.nodes) {
+        if (
+          next.id !== from &&
+          !before.has(next.id) &&
+          (room.get(key(node, next.id)) ?? 0) > 1e-9
+        ) {
+          before.set(next.id, node);
+          queue.push(next.id);
+        }
+      }
+    }
+    if (!before.has(to)) {
+      return total;
+    }
+    let push = Infinity;
+    for (let node = to; node !== from; node = before.get(node) ?? from) {
+      push = Math.min(push, room.get(key(before.get(node) ?? from, node)) ?? 0);
+    }
+    for (let node = to; node !== from; node = before.get(node) ?? from) {
+      const previous = before.get(node) ?? from;
+      room.set(key(previous, node), (room.get(key(previous, node)) ?? 0) - push);
+      room.set(key(node, previous), (room.get(key(node, previous)) ?? 0) + push);
+    }
+    total += push;
+  }
+}

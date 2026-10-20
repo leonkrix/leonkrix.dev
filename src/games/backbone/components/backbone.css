@@ -2055,6 +2055,7 @@
 
 /* A flow that lost value to delay says so in its row */
 .bb-late {
+  display: block;
   color: var(--bb-busy);
 }
 

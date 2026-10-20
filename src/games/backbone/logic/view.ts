@@ -139,6 +139,12 @@ export function crossingMinutes(index: LevelIndex, result: StepResult, id: strin
   return delay * (1 + load * load) * MINUTES_PER_DELAY;
 }
 
+/** A number between 0 and 1 that looks random but is the same for the same input (a packet always is lost in the same place). */
+function unit(seed: number): number {
+  const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
 /** The packet number `at` of `count` is dropped when the running count of a share steps up (an even spread). */
 function dropsAt(at: number, share: number): boolean {
   return Math.floor((at + 1) * share + 1e-9) > Math.floor(at * share + 1e-9);
@@ -223,15 +229,22 @@ function sentIn(
         1,
       );
       const lossy = path.links.findIndex((id) => lossOf(index, situation, step, id) > 0);
-      const lossAt = lossy < 0 ? 1 : ((reached[lossy] ?? 0) + (reached[lossy + 1] ?? 1)) / 2;
       const bad = path.links.findIndex((id) => loadRatio(result.links[id]) > 1 + 1e-9);
-      const overAt = bad >= 0 ? (reached[bad + 1] ?? 0.6) : 0.6;
+      // Where on its cable a packet is lost is chosen for every packet, between a tenth and nine
+      // tenths of the way along it (so never at the start or at the end of the cable)
+      const spot = (link: number, number: number): number => {
+        const from = reached[link] ?? 0;
+        const to = reached[link + 1] ?? 1;
+        return from + (to - from) * (0.1 + 0.8 * unit(number));
+      };
       for (let packet = 0; packet < total; packet += 1) {
         const leaves = at + packet / total;
         const progress = (now - leaves) / duration;
         const number = Math.round(at * total) + packet;
         const lostToLoss = lossy >= 0 && dropsAt(number, 1 - survives);
         const lostToLoad = dropsAt(number + 3, 1 - path.kept);
+        const lossAt = lossy < 0 ? 1 : spot(lossy, number);
+        const overAt = bad < 0 ? 0.6 : spot(bad, number + 1);
         const endsAt = lostToLoss
           ? Math.min(lossAt, lostToLoad ? overAt : 1)
           : lostToLoad

@@ -182,3 +182,32 @@ describe('radio links in words', () => {
     expect(riskyLinks(level).get('AC')).toBe('range');
   });
 });
+
+describe('the queue in the words about the busiest cable', () => {
+  it('says from which minute the queue was full', async () => {
+    const { evaluate } = await import('./simulate');
+    const { singlePath } = await import('./plan');
+    const { allRules } = await import('./fixtures');
+    const level = diamond({
+      rules: { ...allRules, queues: true },
+      flows: [{ id: 'f1', name: 'Web', source: 'A', target: 'D', profile: 'web', demand: 16 }],
+    });
+    const index = indexLevel(level);
+    const summary = summarize(index, evaluate(index, { f1: singlePath(['A', 'B', 'D']) }));
+    // 16 on a cable of 10: 6 wait in minute 1, the queue (10) is full in minute 2
+    expect(summary.busiest?.queueFullFrom).toBe(2);
+    expect(describeBusiest(index, summary)).toContain('Its queue was full from minute 2');
+  });
+
+  it('says nothing about a queue in a level that has none', async () => {
+    const { evaluate } = await import('./simulate');
+    const { singlePath } = await import('./plan');
+    const level = diamond({
+      flows: [{ id: 'f1', name: 'Web', source: 'A', target: 'D', profile: 'web', demand: 16 }],
+    });
+    const index = indexLevel(level);
+    const summary = summarize(index, evaluate(index, { f1: singlePath(['A', 'B', 'D']) }));
+    expect(summary.busiest?.queueFullFrom).toBeUndefined();
+    expect(describeBusiest(index, summary)).not.toContain('queue');
+  });
+});
