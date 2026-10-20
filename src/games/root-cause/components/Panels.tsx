@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type CSSProperties, type ReactNode } from 'react';
 
 import { type SkinWords } from '../data/words';
 import { type Play } from '../logic/play';
@@ -29,7 +29,17 @@ interface RosterProps {
 export function Roster({ people, play, selected, words, noted, hinted, onSelect }: RosterProps) {
   const victim = people.length - 1;
   return (
-    <ul className="rc-roster" aria-label="People">
+    <ul
+      className="rc-roster"
+      aria-label="People"
+      // Every token is as wide as the longest label (SRV, DNS, AP-02 ...), so that the names and
+      // roles start at the same place in every row
+      style={
+        {
+          '--rc-token-chars': String(Math.max(1, ...people.map((person) => person.label.length))),
+        } as CSSProperties
+      }
+    >
       {people.map((person, index) => (
         <li key={person.name}>
           <button

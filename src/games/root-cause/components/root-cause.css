@@ -274,7 +274,9 @@
 
 .rc-person-token {
   display: grid;
+  flex: none;
   place-items: center;
+  width: max(1.9rem, calc(var(--rc-token-chars, 1) * 0.5rem + 0.8rem));
   min-width: 1.9rem;
   height: 1.9rem;
   padding: 0 0.25rem;

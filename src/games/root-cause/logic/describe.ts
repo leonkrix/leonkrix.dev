@@ -110,6 +110,17 @@ function countText(counting: Counting, n: number): string {
   return `${counting === 'atLeast' ? 'at least' : 'exactly'} ${number(n)}`;
 }
 
+/**
+ * "Both", "all 3" or "the other": how to say that a room holds every one of a number of things,
+ * so that "at least 2" of two is not read as a count to reach
+ */
+function everyOne(n: number, singular: string, plural: string): string {
+  if (n === 1) {
+    return `the ${singular}`;
+  }
+  return n === 2 ? `both ${plural}` : `all ${String(n)} ${plural}`;
+}
+
 function relationText(where: RoomRelation | 'any'): string {
   return where === 'same' ? ' in the same room' : where === 'other' ? ' in another room' : '';
 }
@@ -249,6 +260,10 @@ function predicate(clue: PersonClue, context: DescribeContext, mentions: Mention
     case 'alone':
       return 'is alone in the room';
     case 'roomMates':
+      // Everybody else in the room is not a number to reach
+      if (clue.n >= 2 && clue.n === people.length - 1) {
+        return `shares a room with all ${String(clue.n)} other ${words.people}`;
+      }
       return `shares a room with ${countText(clue.counting, clue.n)} ${clue.n === 1 ? `other ${words.person}` : `other ${words.people}`}`;
     case 'roomRole': {
       const own = people[clue.person]?.role === clue.role;
@@ -263,6 +278,11 @@ function predicate(clue: PersonClue, context: DescribeContext, mentions: Mention
       if (clue.counting === 'none') {
         return `is in a room with no ${others}`;
       }
+      // "At least 2" or "exactly 2" when there are only two of them is every one of them: say so
+      const available = people.filter((person) => person.role === clue.role).length - (own ? 1 : 0);
+      if (clue.n === available && clue.n >= 1) {
+        return `is in a room with ${everyOne(clue.n, own ? `other ${bare(value)}` : bare(value), others)}`;
+      }
       const single = own ? `other ${bare(value)}` : bare(value);
       return `is in a room with ${countText(clue.counting, clue.n)} ${clue.n === 1 ? single : others}`;
     }
@@ -271,7 +291,7 @@ function predicate(clue: PersonClue, context: DescribeContext, mentions: Mention
         ? `is exactly one step ${DIRECTION_TEXT[clue.direction]} of ${name(clue.other)}`
         : `is somewhere ${DIRECTION_TEXT[clue.direction]} of ${name(clue.other)}`;
     case 'diagonal':
-      return `is diagonally next to ${name(clue.other)}`;
+      return `is diagonally next to ${name(clue.other)}, touching at a corner`;
     case 'between':
       return `is in a ${clue.axis === 'row' ? 'row' : 'column'} between those of ${name(clue.other)} and ${name(clue.third)}`;
     case 'distance':
