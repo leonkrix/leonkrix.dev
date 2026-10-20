@@ -15,6 +15,7 @@ import { appendFile, mkdir, readdir, writeFile } from 'node:fs/promises';
 import * as chromeLauncher from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 
+import { launchWithRetry } from './launch-with-retry.mjs';
 import { takeShard } from './shard.mjs';
 
 const PORT = 4323;
@@ -153,10 +154,15 @@ let exitCode = 0;
 
 try {
   await waitForServer();
-  chrome = await chromeLauncher.launch({
-    chromeFlags: ['--headless=new', '--no-sandbox', '--disable-gpu'],
-    ...(process.env.CHROME_PATH ? { chromePath: process.env.CHROME_PATH } : {}),
-  });
+  // Chrome sometimes does not open its debugging port on a CI runner: only the start is repeated
+  chrome = await launchWithRetry(
+    () =>
+      chromeLauncher.launch({
+        chromeFlags: ['--headless=new', '--no-sandbox', '--disable-gpu'],
+        ...(process.env.CHROME_PATH ? { chromePath: process.env.CHROME_PATH } : {}),
+      }),
+    { log },
+  );
 
   await mkdir(REPORT_DIR, { recursive: true });
 
