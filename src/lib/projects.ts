@@ -5,11 +5,12 @@ import { technologies, type TechnologyId } from './technologies';
 
 const technologyIds = Object.keys(technologies) as [TechnologyId, ...TechnologyId[]];
 
-export const projectKinds = ['project', 'bachelor-thesis', 'master-thesis'] as const;
+export const projectKinds = ['project', 'package', 'bachelor-thesis', 'master-thesis'] as const;
 export type ProjectKind = (typeof projectKinds)[number];
 
 export const kindLabels: Record<ProjectKind, string> = {
   project: 'Project',
+  package: 'Open source package',
   'bachelor-thesis': "Bachelor's thesis",
   'master-thesis': "Master's thesis",
 };
@@ -34,7 +35,7 @@ const code = z.discriminatedUnion('status', [
 ]);
 
 /** The small animated pictures a project card can show (see components/project-art) */
-export const projectArts = ['tetrys', 'routing', 'defuze', 'grades', 'pipeline'] as const;
+export const projectArts = ['tetrys', 'routing', 'defuze', 'grades', 'pipeline', 'guard'] as const;
 export type ProjectArt = (typeof projectArts)[number];
 
 export const projectSchema = z
@@ -65,6 +66,13 @@ export const projectSchema = z
       .optional(),
     technologies: z.array(z.enum(technologyIds)).min(1),
     code,
+    /** Optional page of the project on npm, shown as a second link next to the code */
+    npm: z
+      .url()
+      .refine((url) => url.startsWith('https://www.npmjs.com/package/'), {
+        message: 'must be a https://www.npmjs.com/package/ URL',
+      })
+      .optional(),
     /** Optional animated picture on the card */
     art: z.enum(projectArts).optional(),
     /** Short extra remark shown next to the code status, e.g. "No longer available." */

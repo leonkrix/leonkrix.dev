@@ -1,0 +1,22 @@
+art: guard
+title: playwright-layout-guard
+subtitle: A Playwright fixture that fails a test when the page moves
+kind: package
+start: 2026
+stats:
+  - value: '3'
+    label: browsers, Chromium, Firefox and WebKit, on every change
+  - value: '0'
+    label: runtime dependencies
+  - value: '440'
+    label: faults injected to compare it with the guard it replaced (same result)
+highlights:
+  - Any element that moves or changes its size after the page has loaded fails the test, and the message names the element, how far it moved and when. It measures layout in the test itself, so it also sees what Lighthouse's layout shift score leaves out, such as shifts after a click or far below the first screen.
+  - Extracted from the browser tests of this site, which have run with it since the first version of the [layout guard](/notes/a-page-that-never-moves/). Before it replaced the original, both ran side by side on every page of the site against built-in faults, and running the whole suite with the package found three bugs that none of its own tests had found.
+  - Tried on 23 public sites next to the browser's own layout shift measurement. The false alarms of the first versions (one cause reported fifty times, sticky headers, a blind spot after a history call) are rules with tests now.
+  - Released like a product, with semantic versioning and a changelog from changesets, CI on three browsers and three Node versions including the oldest supported Playwright, and publishing from GitHub Actions with npm provenance and trusted publishing. A release is staged and only goes live when I approve it with two-factor authentication, so no publish token exists anywhere.
+technologies: [typescript, playwright, vitest, cicd, npm, git, eslint, prettier]
+code:
+  status: public
+  url: https://github.com/leonkrix/playwright-layout-guard
+npm: https://www.npmjs.com/package/playwright-layout-guard

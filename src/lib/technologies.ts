@@ -53,6 +53,7 @@ export const technologies = {
   linux: { label: 'Linux / Unix', icon: 'simple-icons:linux' },
   docker: { label: 'Docker', icon: 'simple-icons:docker' },
   cicd: { label: 'CI/CD', icon: 'simple-icons:githubactions' },
+  npm: { label: 'npm', icon: 'simple-icons:npm' },
   cloudflare: { label: 'Cloudflare', icon: 'simple-icons:cloudflare' },
   profiling: { label: 'Profiling & Debugging', icon: 'lucide:activity' },
   jetbrains: { label: 'JetBrains IDEs', icon: 'simple-icons:jetbrains' },
@@ -114,7 +115,17 @@ export const technologyGroups: readonly TechnologyGroup[] = [
   },
   {
     title: 'Tooling',
-    items: ['git', 'linux', 'docker', 'cicd', 'cloudflare', 'profiling', 'jetbrains', 'aiassisted'],
+    items: [
+      'git',
+      'linux',
+      'docker',
+      'cicd',
+      'npm',
+      'cloudflare',
+      'profiling',
+      'jetbrains',
+      'aiassisted',
+    ],
   },
   {
     title: 'Code Quality',
