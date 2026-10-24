@@ -15,9 +15,10 @@ test.describe('scrolling and history', () => {
       .first()
       .getByRole('link', { name: 'Contact' })
       .click();
-    // Go back while the page is still scrolling down
-    await page.waitForTimeout(150);
-    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    // Go back while the page is still scrolling down: at the first frame in which it has moved. A fixed
+    // wait was too short on a busy machine (the scroll had not started after 150 ms) and too long on a
+    // fast one (the scroll was nearly over)
+    await page.waitForFunction(() => window.scrollY > 0);
     await page.goBack();
 
     await expect(page).toHaveURL(/\/$/);
