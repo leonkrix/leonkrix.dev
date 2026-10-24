@@ -11,7 +11,7 @@ import { distDir, readPages } from './helpers';
 
 const e2eDir = join(import.meta.dirname, '..', 'e2e');
 /** Files in tests/e2e that are not tests */
-const helpers = new Set(['fixtures.ts', 'layout-guard.ts', 'pages.ts']);
+const helpers = new Set(['fixtures.ts', 'pages.ts']);
 
 /** The address of a built page: dist/games/index.html is /games/ */
 function addressOf(file: string): string {

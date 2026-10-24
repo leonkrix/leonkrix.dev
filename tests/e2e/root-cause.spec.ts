@@ -305,6 +305,9 @@ test.describe('Root Cause', () => {
 
   test('makes a random level in the look that was asked for', async ({ page }) => {
     await page.goto(PATH);
+    // The page shows the skeleton of the game first: the choices must be made in the game, otherwise
+    // the game takes over a moment later and starts again with its own defaults
+    await gameReady(page);
     await page.getByLabel('Difficulty').selectOption('easy');
     await page.getByLabel('Size').selectOption('4');
     await page.getByLabel('Look of the level').selectOption('outage');
@@ -347,6 +350,7 @@ test.describe('Root Cause', () => {
     page,
   }) => {
     await page.goto(PATH);
+    await gameReady(page);
     await expect(page.locator('.rc-card')).toHaveCount(18);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
