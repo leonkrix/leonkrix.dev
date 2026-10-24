@@ -37,7 +37,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@axe-core/playwright": "^4.14.0",
-    "@cloudflare/workers-types": "^5.20261016.1",
+    "@cloudflare/workers-types": "^5.20261023.1",
     "@eslint-react/eslint-plugin": "^5.28.1",
     "@eslint/js": "^10.0.1",
     "@iconify-json/lucide": "^1.2.145",
@@ -66,7 +66,7 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.2",
     "vitest": "^5.0.5",
-    "wrangler": "^4.151.1"
+    "wrangler": "^4.152.0"
   },
   "dependencies": {
     "@astrojs/mdx": "^8.1.0",
