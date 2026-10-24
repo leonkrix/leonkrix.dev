@@ -106,6 +106,15 @@ const { project } = Astro.props;
         {project.code.status === 'planned' ? 'Code coming soon' : 'Private project'}
       </p>
     )}
+    {project.npm && (
+      <ExternalLink
+        href={project.npm}
+        class="btn-outline inline-flex items-center gap-2 rounded-lg px-4 py-2 text-fg"
+      >
+        <Icon name="simple-icons:npm" class="size-4" />
+        View on npm
+      </ExternalLink>
+    )}
     {project.note && <p class="text-muted">{project.note}</p>}
   </div>
 </article>
