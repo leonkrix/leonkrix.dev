@@ -2,6 +2,6 @@
 // right edge changed. One that only grows or shrinks did not move: what
 // it pushes did, and that is reported at the thing that moved.
 const moved =
-  Math.abs(top - oldTop) > 1 ||
-  (Math.abs(left - oldLeft) > 1 &&
-    Math.abs(left + width - (oldLeft + oldWidth)) > 1);
+  Math.abs(top - oldTop) > tolerance ||
+  (Math.abs(left - oldLeft) > tolerance &&
+    Math.abs(left + width - (oldLeft + oldWidth)) > tolerance);

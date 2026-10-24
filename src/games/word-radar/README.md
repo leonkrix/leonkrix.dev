@@ -16,7 +16,7 @@ A word is hidden. Guess words, and the game tells you how close each one is in *
 
 The address can prepare a round: `?seed=anything`. The same seed always hides the same word (the end-to-end tests use this). Digits are the seed itself (that is what the link of the game contains), any other text is turned into a seed.
 
-The page reserves the space of everything that appears later (the message, the newest guess, the result), and the list scrolls inside a box of fixed height, so **nothing on the page moves** while you play. Every browser test watches the layout on every frame (the generic layout guard, `tests/e2e/layout-guard.ts`); the tests of this game play a full round on desktop and phone and give up on a 320 pixel wide screen.
+The page reserves the space of everything that appears later (the message, the newest guess, the result), and the list scrolls inside a box of fixed height, so **nothing on the page moves** while you play. Every browser test watches the layout on every frame (the generic layout guard, the package `playwright-layout-guard`); the tests of this game play a full round on desktop and phone and give up on a 320 pixel wide screen.
 
 ## Design decisions
 

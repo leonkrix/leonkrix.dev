@@ -1,3 +1,7 @@
 allowBuilds:
   esbuild: true
   workerd: true
+# My own package (playwright-layout-guard, published by me): the minimum release age of pnpm does
+# not apply to it. Remove the entry when the version is old enough or when it is updated.
+minimumReleaseAgeExclude:
+  - playwright-layout-guard@0.2.0

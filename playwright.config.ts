@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import type { LayoutGuardOptions } from 'playwright-layout-guard';
 
 // The ports: `astro dev` is 4321 (WebStorm or Claude, only one of them at a time), the browser tests
 // start their own `astro preview` on 4322, Lighthouse uses 4323. A server that already stands on
@@ -7,7 +8,7 @@ import { defineConfig, devices } from '@playwright/test';
 const port = 4322;
 const isCI = Boolean(process.env.CI);
 
-export default defineConfig({
+export default defineConfig<{ layoutGuard: boolean | LayoutGuardOptions }>({
   testDir: './tests/e2e',
   fullyParallel: true,
   forbidOnly: isCI,
@@ -25,6 +26,9 @@ export default defineConfig({
   reporter: isCI ? [['list'], ['github'], ['html', { open: 'never' }]] : [['list']],
   use: {
     baseURL: `http://localhost:${String(port)}`,
+    // On this site not even the height of a page may change, also not when it gets lower (the default
+    // of the layout guard is to count only a page that gets higher)
+    layoutGuard: { pageHeight: 'any' },
     trace: 'on-first-retry',
     // Fail fast instead of waiting minutes when the browser cannot start
     launchOptions: { timeout: 60_000 },

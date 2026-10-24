@@ -5,10 +5,11 @@ tag: 'Site · Layout'
 code: tests/e2e
 group: site
 order: 2
-updated: '2026-10-14'
+updated: '2026-10-24'
 ---
 
 import Code from '@/components/notes/Code.astro';
+import ExternalLink from '@/components/ExternalLink.astro';
 import layoutGuardMoved from './snippets/layout-guard-moved.snippet?raw';
 import layoutGuardReport from './snippets/layout-guard-report.snippet?raw';
 import Steps from '@/components/notes/Steps.astro';
@@ -45,7 +46,7 @@ The first version was a tracker for a single game, written when a message under 
 - **The contact form pushed the page** when an error or the confirmation appeared.
 - **A few details in the games**: the area for a random level in Root Cause and the width of two controls.
 
-This is what a report looks like. It is a real one, from the contact form while I made it fail on purpose:
+This is what a report looked like in the first version. It is a real one, from the contact form while I made it fail on purpose (the package names the element with a short path and says how far it moved, in pixels):
 
 <Code lang="plaintext" code={layoutGuardReport} />
 
@@ -87,9 +88,20 @@ And one limit remains: the guard only sees states that a test triggers. A new dy
 
 There is a second way a page can move that no state of a game causes: the fonts. A web font arrives after the first paint on a slow line and the text is set again. That has its own note, with the numbers: [Fonts that arrive late](/notes/fonts-that-arrive-late/).
 
+## From a file to a package
+
+The guard started as one file of this repository. On 24 October 2026 it became an open source package, <ExternalLink href="https://github.com/leonkrix/playwright-layout-guard">playwright-layout-guard</ExternalLink>, and this site now uses it from npm like anybody else would. Taking it out was only worth it if nothing got worse, so I checked that before I switched.
+
+I wrote a test that puts the old guard and the package side by side on the same page and then makes the page move on purpose, after it has settled: a banner above everything, a block that grows, one that moves sideways, a text that wraps differently, something added at the end of the page, something removed from the end, and three things that are not shifts (one pixel, a `transform`, scrolling). That is 22 pages at desktop and phone size and 10 kinds of fault, 440 runs. Both guards found the same faults and stayed quiet about the same controls. One difference showed up: the old guard also reported a page that got **lower**, the package counted only a page that got higher. That became an option, `pageHeight: 'any'`, and this site switches it on.
+
+Running the whole suite with the package found three bugs in the package that none of its own tests had found. A page that writes its document again made it throw. A resize a moment after the load made it report what the page did in reaction (eight tests of the Backbone map failed with up to 131 shifts). And on a phone, a shift that makes the page wider than the window was swallowed. All three have a test now, and the fixes are in version 0.2.0.
+
+The guard is code that I do not look at every day, so I added a canary. `layout-guard-canary.spec.ts` makes the page move on purpose, and the guard has to fail the test. If the wiring ever breaks (a fixture without the guard, an option that switches it off, a package update that changes a default), the pages would be calm for the wrong reason, and the canary is the test that notices.
+
 ## What it protects
 
 - Every browser test of every page, at desktop and phone size, from load to the end of the test.
 - Every game from the loading state to a finished round, including a 320 pixel wide screen.
 - The contact form with an error, with a failed sending and with the confirmation.
 - The rule that an exception needs a reason, and that every browser test uses the fixture that has the guard.
+- The guard itself, through the canary that moves a page on purpose.
