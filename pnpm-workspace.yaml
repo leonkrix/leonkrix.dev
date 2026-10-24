@@ -1,6 +1,11 @@
 allowBuilds:
   esbuild: true
   workerd: true
+# miniflare (inside wrangler) pins undici 7.29.1 exactly, and 7.29.1 has known denial of service
+# findings (patched in 7.30.1; found by pnpm audit on 2026-10-24). Written as a range of the bad
+# versions, so it does nothing once miniflare asks for a patched version itself: then delete it.
+overrides:
+  'undici@>=7.0.0 <7.30.1': 7.30.1
 # My own package (playwright-layout-guard, published by me): the minimum release age of pnpm does
 # not apply to it. Remove the entry when the version is old enough or when it is updated.
 minimumReleaseAgeExclude:
