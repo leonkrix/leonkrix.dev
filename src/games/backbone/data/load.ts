@@ -4,8 +4,8 @@ let loaded: Promise<readonly LevelRecord[]> | undefined;
 
 /**
  * The page is drawn first; the level pool (a few hundred kilobytes of JSON) is fetched afterwards,
- * so that it never competes with the first paint (see CLAUDE.md, "Fonts and layout shift", and the
- * note "One page, four scores"). The wait ends when the page has loaded and its fonts are there,
+ * so that it never competes with the first paint (see the note "One page, four
+ * scores"). The wait ends when the page has loaded and its fonts are there,
  * plus a moment, or after four seconds at the latest.
  */
 function afterPaint(): Promise<void> {

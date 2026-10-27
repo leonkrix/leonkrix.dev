@@ -78,6 +78,27 @@ export function extractExternalLinks(html: string, ownHost: string): string[] {
   return [...links].sort();
 }
 
+/**
+ * npmjs.com shows a challenge to automated requests (HTTP 403), also for a package that exists. The
+ * registry is where the package really lives and answers everybody, so a link to a package page is
+ * checked there. Anything else on npmjs.com is checked as it is.
+ */
+export function registryAddress(url: string): string | undefined {
+  const { hostname, pathname } = new URL(url);
+  if (hostname !== 'www.npmjs.com' && hostname !== 'npmjs.com') {
+    return undefined;
+  }
+  const parts = pathname.split('/').filter((part) => part !== '');
+  if (parts[0] !== 'package') {
+    return undefined;
+  }
+  // A scoped package is two parts, @scope/name; the whole name is encoded, so the slash becomes %2F
+  const name = parts[1]?.startsWith('@') === true ? parts.slice(1, 3).join('/') : parts[1];
+  return name === undefined || name === ''
+    ? undefined
+    : `https://registry.npmjs.org/${encodeURIComponent(name)}`;
+}
+
 /** The domain itself or one of its subdomains, nothing that only ends with the same letters. */
 const isBotWall = (url: string): boolean => {
   const { hostname } = new URL(url);
@@ -106,15 +127,24 @@ export async function checkLink(
   retryDelay = 3000,
 ): Promise<LinkResult> {
   let detail = '';
+  const registry = registryAddress(url);
+  const target = registry ?? url;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     try {
-      let status = await request(url, 'HEAD', fetchImpl);
+      let status = await request(target, 'HEAD', fetchImpl);
       // Some servers do not answer HEAD requests
       if ([400, 403, 405, 501].includes(status)) {
-        status = await request(url, 'GET', fetchImpl);
+        status = await request(target, 'GET', fetchImpl);
       }
       if (status < 400) {
-        return { url, status: 'pass', detail: `HTTP ${String(status)}` };
+        return {
+          url,
+          status: 'pass',
+          detail:
+            registry === undefined
+              ? `HTTP ${String(status)}`
+              : `HTTP ${String(status)} in the npm registry (npmjs.com refuses automated requests)`,
+        };
       }
       if (isBotWall(url) && [401, 403, 429, 999].includes(status)) {
         return {
