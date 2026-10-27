@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { checkLink, checkLinks, extractExternalLinks, fetchPage, summarize } from './check-links';
+import {
+  checkLink,
+  checkLinks,
+  extractExternalLinks,
+  fetchPage,
+  registryAddress,
+  summarize,
+} from './check-links';
 
 /** A fetch that answers by "METHOD url" with a status, or throws for the value "error". */
 function fakeFetch(answers: Record<string, number | 'error'>): {
@@ -47,12 +54,61 @@ describe('extractExternalLinks', () => {
   });
 });
 
+describe('registryAddress', () => {
+  it('turns the page of a package on npmjs.com into its address in the registry', () => {
+    expect(registryAddress('https://www.npmjs.com/package/playwright-layout-guard')).toBe(
+      'https://registry.npmjs.org/playwright-layout-guard',
+    );
+    expect(registryAddress('https://www.npmjs.com/package/playwright-layout-guard/v/0.3.0')).toBe(
+      'https://registry.npmjs.org/playwright-layout-guard',
+    );
+  });
+
+  it('writes the slash of a scoped package as %2F', () => {
+    expect(registryAddress('https://www.npmjs.com/package/@playwright/test')).toBe(
+      'https://registry.npmjs.org/@playwright%2Ftest',
+    );
+  });
+
+  it('leaves everything else alone', () => {
+    expect(registryAddress('https://www.npmjs.com/~leonkrix')).toBeUndefined();
+    expect(registryAddress('https://www.npmjs.com/package/')).toBeUndefined();
+    expect(registryAddress('https://github.com/leonkrix')).toBeUndefined();
+    expect(registryAddress('https://notnpmjs.com/package/x')).toBeUndefined();
+  });
+});
+
 describe('checkLink', () => {
   it('passes a link that answers with success', async () => {
     const { fetch: fetchImpl } = fakeFetch({ 'HEAD https://github.com/leonkrix': 200 });
     expect(await checkLink('https://github.com/leonkrix', fetchImpl, 0)).toMatchObject({
       status: 'pass',
     });
+  });
+
+  it('checks a package of npm in the registry, because npmjs.com refuses automated requests', async () => {
+    const { fetch: fetchImpl, calls } = fakeFetch({
+      'HEAD https://registry.npmjs.org/playwright-layout-guard': 200,
+    });
+    const result = await checkLink(
+      'https://www.npmjs.com/package/playwright-layout-guard',
+      fetchImpl,
+      0,
+    );
+    expect(result).toMatchObject({
+      url: 'https://www.npmjs.com/package/playwright-layout-guard',
+      status: 'pass',
+    });
+    expect(calls).toEqual(['HEAD https://registry.npmjs.org/playwright-layout-guard']);
+  });
+
+  it('fails a package that does not exist in the registry', async () => {
+    const { fetch: fetchImpl } = fakeFetch({
+      'HEAD https://registry.npmjs.org/no-such-package': 404,
+    });
+    expect(
+      await checkLink('https://www.npmjs.com/package/no-such-package', fetchImpl, 0),
+    ).toMatchObject({ status: 'fail' });
   });
 
   it('asks again with GET when a server refuses HEAD', async () => {

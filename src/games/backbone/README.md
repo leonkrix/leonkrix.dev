@@ -1,8 +1,8 @@
 # Backbone
 
-A planning game about networks: you route traffic through a small network, then a stress test judges the plan. Our own game, our own levels, texts and drawings. The concept (the reasoning behind every rule) is in [docs/network-game-concept.md](../../../docs/network-game-concept.md).
+A planning game about networks: you route traffic through a small network, then a stress test judges the plan. Our own game, our own levels, texts and drawings.
 
-Status: **built and live in this branch** (set to `live` in the registry; it is merged after Leon's okay). The model, the stress test, the exact solver, the generator, the campaign pool (13 chapters, 78 levels), the interface, the overview page, random levels in five tiers, the note, the browser tests and the Lighthouse budget are done. Open: polish (fonts, animation, real packets instead of dots), see PLAN.md, 4.5.
+Status: **live** (set to `live` in the registry). The model, the stress test, the exact solver, the generator, the campaign pool (13 chapters, 78 levels), the interface, the overview page, random levels in five tiers, the note, the browser tests and the Lighthouse budget are done. Open: polish (fonts, animation, real packets instead of dots).
 
 ## Rules
 

@@ -9,7 +9,7 @@ Guess the hidden tech term in six tries. Like the well-known word game, but the 
 - After a guess every tile shows: **correct** (green, check mark: right letter, right place), **present** (amber, circle: the letter is in the term, elsewhere), **absent** (grey, cross: no unused copy of the letter is left). Repeated letters are counted: correct tiles are handed out first, then present tiles from left to right, and a letter is only marked as often as it appears in the term.
 - Letters known to be absent are greyed out on the on-screen keyboard. A letter keeps the best result seen so far (correct, then present, then absent).
 - When the round ends the term, its category and its definition are shown. The result can be copied as colored squares.
-- Unlimited rounds, no daily word, nothing saved (see the site-wide storage rule in `CLAUDE.md`).
+- Unlimited rounds, no daily word, nothing saved (a site-wide rule that tests enforce: nothing of the site is stored on the device).
 
 The address can prepare a round: `?length=4`, `?category=security`, `?seed=anything`. The same setup always picks the same term (the end-to-end tests use this). A seed made of digits is the seed itself, any other text is turned into a seed. **The link in a copied result contains all three** (for example `?length=4&category=networking&seed=1234567890`), so whoever receives a result can play exactly that puzzle at once. `logic/link.ts` reads and writes these addresses and is unit tested, including the round trip.
 

@@ -13,7 +13,7 @@ Sixteen tech terms belong to four hidden groups of four. Pick four that you thin
 - **What a term means:** pointing at a tile, focusing it with the keyboard or tapping it shows its definition in the line under the board. The terms in the bars of the found groups can be asked, too.
 - **The eye** next to the definition line blurs the definitions (a harder game) and shows them again. It is on at the start, it survives a new puzzle, and nothing is stored: a new visit starts with the definitions shown. With the eye off, the name of the term stays readable and the definition is hidden from screen readers, too.
 - Buttons: **Shuffle** (the tiles that are left in a new order, with a slide), **Deselect all** (or the Esc key), **New puzzle**, **Copy link to this puzzle**.
-- Unlimited rounds, no daily puzzle, nothing saved (see the site-wide storage rule in `CLAUDE.md`).
+- Unlimited rounds, no daily puzzle, nothing saved (a site-wide rule that tests enforce: nothing of the site is stored on the device).
 
 The page reserves the space of everything that appears later (the result, the line with the definition, the bars of the found groups), so **nothing on the page moves** while you play. An end-to-end test watches the layout on every frame of a won game, a lost game and a game on a 320 pixel wide screen (position and size of the bar, the message, the board, the definition line, the result, the buttons and the whole page, with the eye used and definitions of all lengths) and fails when something moves by more than half a pixel. It was checked by removing a reserved space: the test then fails.
 
