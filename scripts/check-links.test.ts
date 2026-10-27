@@ -64,9 +64,9 @@ describe('registryAddress', () => {
     );
   });
 
-  it('writes the slash of a scoped package as %2F', () => {
+  it('encodes the name of a scoped package, so the slash becomes %2F', () => {
     expect(registryAddress('https://www.npmjs.com/package/@playwright/test')).toBe(
-      'https://registry.npmjs.org/@playwright%2Ftest',
+      'https://registry.npmjs.org/%40playwright%2Ftest',
     );
   });
 

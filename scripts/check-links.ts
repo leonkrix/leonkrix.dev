@@ -92,11 +92,11 @@ export function registryAddress(url: string): string | undefined {
   if (parts[0] !== 'package') {
     return undefined;
   }
-  // A scoped package is two parts, @scope/name, and the registry wants the slash written as %2F
+  // A scoped package is two parts, @scope/name; the whole name is encoded, so the slash becomes %2F
   const name = parts[1]?.startsWith('@') === true ? parts.slice(1, 3).join('/') : parts[1];
   return name === undefined || name === ''
     ? undefined
-    : `https://registry.npmjs.org/${name.replace('/', '%2F')}`;
+    : `https://registry.npmjs.org/${encodeURIComponent(name)}`;
 }
 
 /** The domain itself or one of its subdomains, nothing that only ends with the same letters. */
