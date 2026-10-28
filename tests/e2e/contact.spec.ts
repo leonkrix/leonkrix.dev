@@ -1,7 +1,7 @@
-import AxeBuilder from '@axe-core/playwright';
 import type { Page, Route } from '@playwright/test';
 
 import { siteConfig } from '../../src/lib/site';
+import AxeBuilder from './axe';
 import { expect, test } from './fixtures';
 
 // The browser tests run against the static build, so the API does not exist. Every test answers
@@ -169,7 +169,9 @@ test.describe('contact form', () => {
     expect(api.posts).toHaveLength(1);
   });
 
-  test('shows the field problems the server reports', async ({ page, issues }) => {
+  test('shows the field problems the server reports', async ({ page, privacy }) => {
+    // The 422 is the answer under test
+    privacy.allow({ errors: [/^422 \S+\/api\/contact$/] });
     await mockApi(page, (route) =>
       route.fulfill({
         status: 422,
@@ -191,7 +193,6 @@ test.describe('contact form', () => {
       { timeout: 15_000 },
     );
     await expect(page.getByLabel('Email', { exact: true })).toBeFocused();
-    issues.length = 0; // the 422 is expected here
   });
 
   for (const [status, text] of [
@@ -200,8 +201,10 @@ test.describe('contact form', () => {
   ] as const) {
     test(`tells the visitor what happened on HTTP ${String(status)} and keeps the text`, async ({
       page,
-      issues,
+      privacy,
     }) => {
+      // The error status is the answer under test
+      privacy.allow({ errors: [new RegExp(`^${String(status)} \\S+/api/contact$`)] });
       await mockApi(page, (route) =>
         route.fulfill({ status, json: { ok: false, error: 'x', message: 'ignored' } }),
       );
@@ -212,11 +215,12 @@ test.describe('contact form', () => {
       await expect(page.getByRole('alert')).toContainText(text, { timeout: 15_000 });
       await expect(send(page)).toBeEnabled();
       await expect(page.getByLabel('Message', { exact: true })).toHaveValue(valid.message);
-      issues.length = 0; // the error status is expected here
     });
   }
 
-  test('says so and disables sending when the form is switched off', async ({ page, issues }) => {
+  test('says so and disables sending when the form is switched off', async ({ page, privacy }) => {
+    // The 503 is the answer under test
+    privacy.allow({ errors: [/^503 \S+\/api\/contact-token$/] });
     await mockApi(page, undefined, (route) =>
       route.fulfill({ status: 503, json: { ok: false, error: 'unavailable' } }),
     );
@@ -225,10 +229,11 @@ test.describe('contact form', () => {
 
     await expect(page.getByRole('alert')).toContainText(/not available right now/);
     await expect(send(page)).toBeDisabled();
-    issues.length = 0; // the 503 is expected here
   });
 
-  test('reports a network failure without losing the text', async ({ page, issues }) => {
+  test('reports a network failure without losing the text', async ({ page, privacy }) => {
+    // The request that is aborted on purpose
+    privacy.allow({ errors: [/^net::ERR_FAILED \S+\/api\/contact$/] });
     await mockApi(page, (route) => route.abort('failed'));
     await page.goto('/');
     await fill(page);
@@ -236,7 +241,6 @@ test.describe('contact form', () => {
 
     await expect(page.getByRole('alert')).toContainText(/No connection/, { timeout: 15_000 });
     await expect(page.getByLabel('Name', { exact: true })).toHaveValue(valid.name);
-    issues.length = 0; // the aborted request is logged as a console error
   });
 
   test('can be completed with the keyboard alone', async ({ page }) => {

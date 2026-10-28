@@ -5,9 +5,10 @@ tag: 'Site · Overview'
 code: .github/workflows
 group: site
 order: 1
-updated: '2026-10-20'
+updated: '2026-10-28'
 ---
 
+import ExternalLink from '@/components/ExternalLink.astro';
 import Stats from '@/components/notes/Stats.astro';
 import Steps from '@/components/notes/Steps.astro';
 
@@ -64,16 +65,18 @@ The decision that shapes the rest is _where the gate sits_. Cloudflare deploys f
 
 There is a small trick in it. The branch rule requires one check, and that check is a job that waits for all the others. A new job is added to its list and never needs a change in the repository settings.
 
-| Job                    | What it checks                                                                                                                                                                                        |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Lint, format and types | ESLint with type-aware rules, Prettier, the TypeScript check of the site and of the function                                                                                                          |
-| Unit tests             | Vitest: game logic, the rules of the contact form, content schemas                                                                                                                                    |
-| Build and site checks  | The production build, then tests over the built files: security headers, the content security policy, the legal pages in both languages, links, the sitemap                                           |
-| End-to-end tests       | A real browser at desktop and phone size: smoke tests, a privacy guard, accessibility scans, and a guard that fails when anything moves. Two halves of the tests run at once, each on its own machine |
-| Lighthouse             | Three runs, the median, every category at least 95, and budgets for the bytes transferred. Three parts of the pages run at once, each on its own machine (two runs on one machine disturb each other) |
-| Dependency audit       | Known vulnerabilities in any dependency                                                                                                                                                               |
-| Lint workflows         | The workflow files themselves                                                                                                                                                                         |
-| Dependency review      | What a pull request adds to the dependencies                                                                                                                                                          |
+| Job                    | What it checks                                                                                                                                                                                                                                                                                      |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lint, format and types | ESLint with type-aware rules, Prettier, the TypeScript check of the site and of the function                                                                                                                                                                                                        |
+| Unit tests             | Vitest: game logic, the rules of the contact form, content schemas                                                                                                                                                                                                                                  |
+| Build and site checks  | The production build, then tests over the built files: security headers, the content security policy, the legal pages in both languages, links, the sitemap                                                                                                                                         |
+| End-to-end tests       | A real browser at desktop and phone size: smoke tests, accessibility scans, and two guards in every test, one that fails when anything moves and one that fails when a page talks to another origin, sets a cookie or stores anything. Two halves of the tests run at once, each on its own machine |
+| Lighthouse             | Three runs, the median, every category at least 95, and budgets for the bytes transferred. Three parts of the pages run at once, each on its own machine (two runs on one machine disturb each other)                                                                                               |
+| Dependency audit       | Known vulnerabilities in any dependency                                                                                                                                                                                                                                                             |
+| Lint workflows         | The workflow files themselves                                                                                                                                                                                                                                                                       |
+| Dependency review      | What a pull request adds to the dependencies                                                                                                                                                                                                                                                        |
+
+The two guards of the browser tests are open source packages of their own, which came out of this repository: <ExternalLink href="https://github.com/leonkrix/playwright-layout-guard">playwright-layout-guard</ExternalLink> ([the note about it](/notes/a-page-that-never-moves/)) and <ExternalLink href="https://github.com/leonkrix/playwright-privacy-guard">playwright-privacy-guard</ExternalLink>. The second one is what keeps the promise of the privacy policy: not a single request to another origin, no cookie, nothing stored on the device, on every page and in every test.
 
 The halves and the parts are a matrix of the workflow, and a test fails when the number of them in the matrix, in the name and in the command do not agree, because a dropped part would silently skip tests or pages while the check stays green. The whole gate takes about four minutes.
 

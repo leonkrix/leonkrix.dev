@@ -33,10 +33,13 @@ const CATEGORIES = ['performance', 'accessibility', 'best-practices', 'seo'];
  * conservative. Measured on 2026-10-01 (with the contact form): scripts 4.5 KB, stylesheets 7.1 KB, total 134 KB.
  * The stylesheet limit was raised from 20 to 21 KB on 2026-10-18: the home page carries the pictures of
  * the tiles of all five games (the Backbone tile came last), it measured 20.2 KB with a smaller tile.
+ * It was raised from 21 to 22 KB on 2026-10-28: the project card of playwright-privacy-guard brings its
+ * own picture (the same kind as the one of the layout guard, a loop of ten seconds), the page measured
+ * 21.2 KB with it, and a card of this kind is part of the design of the page.
  */
 const BUDGETS = {
   script: 10 * 1024,
-  stylesheet: 21 * 1024,
+  stylesheet: 22 * 1024,
   total: 200 * 1024,
 };
 

@@ -1,0 +1,22 @@
+art: privacy
+title: playwright-privacy-guard
+subtitle: A Playwright fixture that fails a test when the page leaks
+kind: package
+start: 2026
+stats:
+  - value: '14'
+    label: checks in every test, from other origins and cookies to weak policies
+  - value: '3'
+    label: browsers, Chromium, Firefox and WebKit, on every change
+  - value: '0'
+    label: runtime dependencies
+highlights:
+  - Any request to another origin, cookie, entry in the storage of the device, violation of the content security policy or error on the page fails the test. The message names the host, the cookie or the script, says which company is behind it, and ends with the exact setting that would allow it if it is meant.
+  - Extracted from the browser tests of this site, which promise no cookies, nothing stored and no other origin. It replaced the hand-written privacy and error tests there, and now watches every one of the browser tests instead of one loop over the pages. Canary tests make a page misbehave on purpose and expect the guard to fail them.
+  - Goes beyond a privacy test. It also rates security headers and the content security policy, finds scripts without an integrity attribute, forms that send elsewhere, sensitive browser APIs, canvas and audio fingerprinting, and values that must not leave. Results come as a readable message, an HTML and JSON report per test, a report for the whole run and a baseline for projects that leak today.
+  - Released like a product, with semantic versioning and a changelog from changesets, CI on three browsers and three Node versions including the oldest supported Playwright, which found a bug that the newest one hides, and publishing from GitHub Actions with npm provenance. A release is staged and only goes live when I approve it with two-factor authentication.
+technologies: [typescript, playwright, vitest, cicd, npm, git, eslint, prettier]
+code:
+  status: public
+  url: https://github.com/leonkrix/playwright-privacy-guard
+npm: https://www.npmjs.com/package/playwright-privacy-guard

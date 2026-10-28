@@ -1,5 +1,4 @@
-import AxeBuilder from '@axe-core/playwright';
-
+import AxeBuilder from './axe';
 import { expect, pages, test } from './fixtures';
 
 // The scan runs without motion: while an element fades in its contrast would be measured mid-way.
