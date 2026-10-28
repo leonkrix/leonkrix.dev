@@ -24,7 +24,11 @@ export default class AxeBuilder extends BaseAxeBuilder {
   }
 
   override analyze(): ReturnType<BaseAxeBuilder['analyze']> {
-    guards.get(this.watched)?.allow({ fingerprint: ['canvas'] });
+    guards.get(this.watched)?.allow({
+      fingerprint: [
+        { match: 'canvas', reason: 'axe-core reads pixels back for its colour contrast check' },
+      ],
+    });
     return super.analyze();
   }
 }

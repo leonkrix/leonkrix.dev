@@ -170,8 +170,9 @@ test.describe('contact form', () => {
   });
 
   test('shows the field problems the server reports', async ({ page, privacy }) => {
-    // The 422 is the answer under test
-    privacy.allow({ errors: [/^422 \S+\/api\/contact$/] });
+    privacy.allow({
+      errors: [{ match: /^422 \S+\/api\/contact$/, reason: 'the 422 is the answer under test' }],
+    });
     await mockApi(page, (route) =>
       route.fulfill({
         status: 422,
@@ -203,8 +204,14 @@ test.describe('contact form', () => {
       page,
       privacy,
     }) => {
-      // The error status is the answer under test
-      privacy.allow({ errors: [new RegExp(`^${String(status)} \\S+/api/contact$`)] });
+      privacy.allow({
+        errors: [
+          {
+            match: new RegExp(`^${String(status)} \\S+/api/contact$`),
+            reason: 'the error status is the answer under test',
+          },
+        ],
+      });
       await mockApi(page, (route) =>
         route.fulfill({ status, json: { ok: false, error: 'x', message: 'ignored' } }),
       );
@@ -219,8 +226,11 @@ test.describe('contact form', () => {
   }
 
   test('says so and disables sending when the form is switched off', async ({ page, privacy }) => {
-    // The 503 is the answer under test
-    privacy.allow({ errors: [/^503 \S+\/api\/contact-token$/] });
+    privacy.allow({
+      errors: [
+        { match: /^503 \S+\/api\/contact-token$/, reason: 'the 503 is the answer under test' },
+      ],
+    });
     await mockApi(page, undefined, (route) =>
       route.fulfill({ status: 503, json: { ok: false, error: 'unavailable' } }),
     );
@@ -232,8 +242,14 @@ test.describe('contact form', () => {
   });
 
   test('reports a network failure without losing the text', async ({ page, privacy }) => {
-    // The request that is aborted on purpose
-    privacy.allow({ errors: [/^net::ERR_FAILED \S+\/api\/contact$/] });
+    privacy.allow({
+      errors: [
+        {
+          match: /^net::ERR_FAILED \S+\/api\/contact$/,
+          reason: 'the request is aborted on purpose',
+        },
+      ],
+    });
     await mockApi(page, (route) => route.abort('failed'));
     await page.goto('/');
     await fill(page);
