@@ -37,3 +37,4 @@ pnpm-debug.log*
 # Local development documents (instructions and roadmap), kept on this machine only
 /CLAUDE.md
 /PLAN.md
+privacy-report/

@@ -1,7 +1,7 @@
-import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 
 import { siteConfig } from '../../src/lib/site';
+import AxeBuilder from './axe';
 import { expect, notFoundPath, test } from './fixtures';
 
 // The command palette (Ctrl or Cmd + K) with its terminal mode, the terminal of the 404 page and
@@ -151,9 +151,11 @@ test.describe('search', () => {
     await tab.close();
   });
 
-  test('copies the email address and tells so', async ({ page, context, browserName }) => {
+  test('copies the email address and tells so', async ({ page, context, browserName, privacy }) => {
     test.skip(browserName !== 'chromium', 'the clipboard permission is a Chromium feature');
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    // The test reads the clipboard to see what was copied; the site only writes to it
+    privacy.allow({ apis: ['clipboard-read'] });
     await openWithKeyboard(page);
     await field(page).fill('copy');
     await page.keyboard.press('Enter');

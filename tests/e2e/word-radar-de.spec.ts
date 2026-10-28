@@ -1,12 +1,12 @@
 import { readFileSync } from 'node:fs';
 
-import AxeBuilder from '@axe-core/playwright';
 import { type Page } from '@playwright/test';
 
 import { makeWordData } from '../../src/games/word-radar/logic/data';
 import { bucketOf } from '../../src/games/word-radar/logic/radar';
 import { pickSecret, startRound } from '../../src/games/word-radar/logic/round';
 import { texts } from '../../src/games/word-radar/logic/texts';
+import AxeBuilder from './axe';
 import { expect, gameReady, test } from './fixtures';
 
 // Word Radar in German: the language is chosen by the address (?lang=de), the game is the same

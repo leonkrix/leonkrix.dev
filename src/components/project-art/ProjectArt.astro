@@ -9,6 +9,7 @@ import Defuze from '@/components/project-art/Defuze.astro';
 import Grades from '@/components/project-art/Grades.astro';
 import Guard from '@/components/project-art/Guard.astro';
 import Pipeline from '@/components/project-art/Pipeline.astro';
+import Privacy from '@/components/project-art/Privacy.astro';
 import Routing from '@/components/project-art/Routing.astro';
 import Tetrys from '@/components/project-art/Tetrys.astro';
 import { type ProjectArt } from '@/lib/projects';
@@ -30,6 +31,7 @@ const { art } = Astro.props;
   {art === 'grades' && <Grades />}
   {art === 'pipeline' && <Pipeline />}
   {art === 'guard' && <Guard />}
+  {art === 'privacy' && <Privacy />}
 </div>
 
 <script>

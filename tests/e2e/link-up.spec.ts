@@ -1,9 +1,9 @@
-import AxeBuilder from '@axe-core/playwright';
 import { type Page } from '@playwright/test';
 
 import { categories, conflicts } from '../../src/games/link-up/data';
 import { generatePuzzle } from '../../src/games/link-up/logic/puzzle';
 import { createRandom } from '../../src/games/shared/random';
+import AxeBuilder from './axe';
 import { expect, gameReady, test } from './fixtures';
 
 const PATH = '/games/link-up/';

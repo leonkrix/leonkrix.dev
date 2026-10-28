@@ -1,12 +1,12 @@
 import { readFileSync } from 'node:fs';
 
-import AxeBuilder from '@axe-core/playwright';
 import { type Locator, type Page } from '@playwright/test';
 
 import { STORIES } from '../../src/games/root-cause/data/stories';
 import { Board } from '../../src/games/root-cause/logic/board';
 import { check, subjectOf, UNPLACED } from '../../src/games/root-cause/logic/clues';
 import { type LevelRecord, toLevel } from '../../src/games/root-cause/pool';
+import AxeBuilder from './axe';
 import { expect, gameReady, test } from './fixtures';
 
 const PATH = '/games/root-cause/';

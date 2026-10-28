@@ -5,7 +5,7 @@ tag: 'Site · Layout'
 code: tests/e2e
 group: site
 order: 2
-updated: '2026-10-24'
+updated: '2026-10-28'
 ---
 
 import Code from '@/components/notes/Code.astro';
@@ -97,6 +97,10 @@ I wrote a test that puts the old guard and the package side by side on the same 
 Running the whole suite with the package found three bugs in the package that none of its own tests had found. A page that writes its document again made it throw. A resize a moment after the load made it report what the page did in reaction (eight tests of the Backbone map failed with up to 131 shifts). And on a phone, a shift that makes the page wider than the window was swallowed. All three have a test now, and the fixes are in version 0.2.0.
 
 The guard is code that I do not look at every day, so I added a canary. `layout-guard-canary.spec.ts` makes the page move on purpose, and the guard has to fail the test. If the wiring ever breaks (a fixture without the guard, an option that switches it off, a package update that changes a default), the pages would be calm for the wrong reason, and the canary is the test that notices.
+
+A second guard came out of the same suite. The privacy tests of this site were one loop over the pages, and a fixture that collected console errors and failed responses. They are a package now as well, <ExternalLink href="https://github.com/leonkrix/playwright-privacy-guard">playwright-privacy-guard</ExternalLink>, and it looks at every test instead of one loop: a request to another origin, a cookie, anything in the storage of the device, a violation of the content security policy, an error. It has a canary of its own, with fifteen things a page can do wrong that the guard has to find and four that have to fail a test. It adds nothing I can measure to the run: 4 minutes 48 seconds with it and 4 minutes 45 without, on the same machine.
+
+The first run of the whole suite found one thing to fix in the package, not in the site. A test follows a link to GitHub in a new tab, and the guard counted what GitHub does in that tab, its requests and its cookies, as a leak of this site. A tab that the page opened and that left the site is not judged any more. The fixes are in version 0.2.0.
 
 ## What it protects
 

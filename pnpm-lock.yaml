@@ -269,6 +269,9 @@ importers:
       playwright-layout-guard:
         specifier: 0.3.0
         version: 0.3.0(@playwright/test@1.64.1)
+      playwright-privacy-guard:
+        specifier: 0.2.0
+        version: 0.2.0(@playwright/test@1.64.1)
       prettier:
         specifier: ^3.9.10
         version: 3.9.10
@@ -3265,6 +3268,12 @@ packages:
 
   playwright-layout-guard@0.3.0:
     resolution: {integrity: sha512-sg+0xZ9Pp5EHi7LYabSZOPfn8klL7sDLaNh4pt7rvLvi4ssBLb746PppZRga2/a3TFWghEOIt50SDmzQX5Nemw==}
+    engines: {node: '>=20.19.0'}
+    peerDependencies:
+      '@playwright/test': '>=1.45.0'
+
+  playwright-privacy-guard@0.2.0:
+    resolution: {integrity: sha512-JJx2UkwBvtXMzNzF5a9nGG5vEQNB809oq5Fo/blHH8Nhnhs9yJaL1W0hpy3y+aXIqxtGPYKAPeAy37+M9QRhwQ==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
       '@playwright/test': '>=1.45.0'
@@ -7287,6 +7296,10 @@ snapshots:
   playwright-core@1.64.1: {}
 
   playwright-layout-guard@0.3.0(@playwright/test@1.64.1):
+    dependencies:
+      '@playwright/test': 1.64.1
+
+  playwright-privacy-guard@0.2.0(@playwright/test@1.64.1):
     dependencies:
       '@playwright/test': 1.64.1
 

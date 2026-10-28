@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 
-import AxeBuilder from '@axe-core/playwright';
 import { type Page } from '@playwright/test';
 
 import { type LevelRecord } from '../../src/games/backbone/data/pool';
+import AxeBuilder from './axe';
 import { expect, gameReady, test } from './fixtures';
 
 const PATH = '/games/backbone/';

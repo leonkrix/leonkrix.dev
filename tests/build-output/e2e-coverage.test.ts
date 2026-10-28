@@ -6,12 +6,13 @@ import { describe, expect, it } from 'vitest';
 import { pages } from '../e2e/pages';
 import { distDir, readPages } from './helpers';
 
-// Nothing on any page may move (the layout guard of the browser tests). That only protects pages
-// that a browser test opens, so these checks make sure that no page and no test is left out.
+// Nothing on any page may move (the layout guard of the browser tests), and nothing may talk to
+// another origin or store anything (the privacy guard). That only protects pages that a browser test
+// opens, so these checks make sure that no page and no test is left out.
 
 const e2eDir = join(import.meta.dirname, '..', 'e2e');
 /** Files in tests/e2e that are not tests */
-const helpers = new Set(['fixtures.ts', 'pages.ts']);
+const helpers = new Set(['axe.ts', 'fixtures.ts', 'pages.ts', 'privacy-options.ts']);
 
 /** The address of a built page: dist/games/index.html is /games/ */
 function addressOf(file: string): string {
@@ -27,7 +28,7 @@ describe('every page is covered by the browser tests', () => {
     expect([...built].sort()).toEqual([...pages].sort());
   });
 
-  it('uses the shared fixture in every browser test, so the layout guard is on', () => {
+  it('uses the shared fixture in every browser test, so both guards are on', () => {
     const specs = readdirSync(e2eDir).filter((name) => name.endsWith('.ts') && !helpers.has(name));
     expect(specs.length).toBeGreaterThan(0);
     for (const name of specs) {
@@ -37,6 +38,21 @@ describe('every page is covered by the browser tests', () => {
         /import\s*(?:type\s*)?\{[^}]*\btest\b[^}]*\}\s*from\s*'@playwright\/test'/,
       );
       expect(source, name).toMatch(/from '\.\/fixtures'/);
+    }
+  });
+
+  it('switches the privacy guard off only with a reason next to it', () => {
+    const specs = readdirSync(e2eDir).filter((name) => name.endsWith('.ts') && !helpers.has(name));
+    for (const name of specs) {
+      const lines = readFileSync(join(e2eDir, name), 'utf8').split('\n');
+      lines.forEach((line, index) => {
+        if (/privacyGuard:\s*(false|\{[^}]*mode:\s*'report')/.test(line)) {
+          const before = lines.slice(Math.max(0, index - 3), index).join('\n');
+          expect(before, `${name}:${String(index + 1)} needs a comment that says why`).toMatch(
+            /^\s*\/\/ .{20,}/m,
+          );
+        }
+      });
     }
   });
 

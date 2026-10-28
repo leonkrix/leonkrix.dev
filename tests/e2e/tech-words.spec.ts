@@ -1,4 +1,3 @@
-import AxeBuilder from '@axe-core/playwright';
 import { type Locator, type Page } from '@playwright/test';
 
 import { createRandom } from '../../src/games/shared/random';
@@ -8,6 +7,7 @@ import { terms4 } from '../../src/games/tech-words/data/terms-4';
 import { terms5 } from '../../src/games/tech-words/data/terms-5';
 import { evaluateGuess } from '../../src/games/tech-words/logic/evaluate';
 import { type CategoryChoice, selectTerm } from '../../src/games/tech-words/logic/select';
+import AxeBuilder from './axe';
 import { expect, gameReady, test } from './fixtures';
 
 const PATH = '/games/tech-words/';
@@ -196,8 +196,11 @@ test.describe('Tech Words', () => {
   test('puts a link into the copied result that opens the same puzzle', async ({
     page,
     context,
+    privacy,
   }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    // The test reads the clipboard to see what was copied; the game only writes to it
+    privacy.allow({ apis: ['clipboard-read'] });
     const answer = answerFor('e2e-share', terms4, 'networking');
     await openRound(page, 'seed=e2e-share&length=4&category=networking');
     await play(page, answer.term);

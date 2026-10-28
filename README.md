@@ -30,7 +30,7 @@ Nothing reaches `main` without a green `CI passed` check (enforced by a reposito
 | Lint, format, types | ESLint (typescript-eslint strict), Prettier, `astro check`                               |
 | Unit tests          | Vitest                                                                                   |
 | Build-output checks | Metadata, legal pages, links and anchors, security headers, CSP, contact data protection |
-| End-to-end tests    | Playwright (desktop and mobile), privacy guard (same-origin only, nothing stored), axe   |
+| End-to-end tests    | Playwright (desktop and mobile), layout guard and privacy guard (own packages), axe      |
 | Lighthouse          | Every category at least 95 on mobile, size budgets, no third-party requests              |
 | Security            | CodeQL, dependency review, `pnpm audit`, OpenSSF Scorecard, Dependabot, secret scanning  |
 | Workflow lint       | `actionlint` for the workflow files, actions pinned to commit SHAs                       |

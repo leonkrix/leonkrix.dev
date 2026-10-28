@@ -1,11 +1,11 @@
 import { readFileSync } from 'node:fs';
 
-import AxeBuilder from '@axe-core/playwright';
 import { type Page } from '@playwright/test';
 
 import { makeWordData } from '../../src/games/word-radar/logic/data';
 import { bucketOf } from '../../src/games/word-radar/logic/radar';
 import { pickSecret, startRound } from '../../src/games/word-radar/logic/round';
+import AxeBuilder from './axe';
 import { expect, gameReady, test } from './fixtures';
 
 const PATH = '/games/word-radar/';

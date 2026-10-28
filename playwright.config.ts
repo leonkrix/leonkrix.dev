@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 import type { LayoutGuardOptions } from 'playwright-layout-guard';
+import type { PrivacyGuardOptions } from 'playwright-privacy-guard';
+
+import { privacyGuardOptions } from './tests/e2e/privacy-options';
 
 // The ports: `astro dev` is 4321 (WebStorm or Claude, only one of them at a time), the browser tests
 // start their own `astro preview` on 4322, Lighthouse uses 4323. A server that already stands on
@@ -8,7 +11,10 @@ import type { LayoutGuardOptions } from 'playwright-layout-guard';
 const port = 4322;
 const isCI = Boolean(process.env.CI);
 
-export default defineConfig<{ layoutGuard: boolean | LayoutGuardOptions }>({
+export default defineConfig<{
+  layoutGuard: boolean | LayoutGuardOptions;
+  privacyGuard: boolean | PrivacyGuardOptions;
+}>({
   testDir: './tests/e2e',
   fullyParallel: true,
   forbidOnly: isCI,
@@ -23,12 +29,20 @@ export default defineConfig<{ layoutGuard: boolean | LayoutGuardOptions }>({
   ...(isCI ? { workers: 4 } : {}),
   retries: isCI ? 1 : 0,
   // `list` prints every test as it finishes, so a stuck run is visible in the CI log
-  reporter: isCI ? [['list'], ['github'], ['html', { open: 'never' }]] : [['list']],
+  reporter: [
+    ['list'],
+    ...(isCI ? ([['github'], ['html', { open: 'never' }]] as const) : []),
+    // One page for the whole run with everything the privacy guard found (also in the summary of a CI run)
+    // The tests that make a page misbehave on purpose are not part of the report
+    ['playwright-privacy-guard/reporter', { ignore: [/canary/] }],
+  ],
   use: {
     baseURL: `http://localhost:${String(port)}`,
     // On this site not even the height of a page may change, also not when it gets lower (the default
     // of the layout guard is to count only a page that gets higher)
     layoutGuard: { pageHeight: 'any' },
+    // The promise of the privacy policy, for every test (what is watched: privacy-options.ts)
+    privacyGuard: privacyGuardOptions,
     trace: 'on-first-retry',
     // Fail fast instead of waiting minutes when the browser cannot start
     launchOptions: { timeout: 60_000 },

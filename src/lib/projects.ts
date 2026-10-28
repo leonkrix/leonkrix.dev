@@ -35,7 +35,15 @@ const code = z.discriminatedUnion('status', [
 ]);
 
 /** The small animated pictures a project card can show (see components/project-art) */
-export const projectArts = ['tetrys', 'routing', 'defuze', 'grades', 'pipeline', 'guard'] as const;
+export const projectArts = [
+  'tetrys',
+  'routing',
+  'defuze',
+  'grades',
+  'pipeline',
+  'guard',
+  'privacy',
+] as const;
 export type ProjectArt = (typeof projectArts)[number];
 
 export const projectSchema = z
