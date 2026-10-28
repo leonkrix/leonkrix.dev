@@ -8,13 +8,12 @@ stats:
     label: security headers grade (securityheaders.com)
   - value: '95+'
     label: Lighthouse score in every category (mobile, enforced in CI)
-  - value: '2,900+'
+  - value: '3,000+'
     label: automated tests (unit, build output, browser, accessibility)
 highlights:
-  - Static portfolio built with Astro, TypeScript, React islands and Tailwind CSS, hosted on Cloudflare, with a command palette (Ctrl K) and a small terminal that load only when they are opened. Its content is typed YAML that is validated at build time, so a typo fails the build instead of shipping.
-  - Every change goes through a pull request and automated gates before it goes live, from linting, type checks and unit tests to build-output checks (security headers, CSP, legal pages), end-to-end tests with accessibility scans and two guards (my own open source packages) in every test, one that fails when anything on any page moves or changes size and one that fails when a page talks to another origin, sets a cookie or stores anything, Lighthouse budgets, CodeQL, dependency review and OpenSSF Scorecard. After the deployment a live check of the published site (headers, redirects, legal pages, contact form, certificate, domain, mail DNS) runs every few hours, plus a weekly link check.
-  - A contact form without any third-party service. A Cloudflare Function validates the message with the same rules as the browser, checks origin, a signed time token, a honeypot and a rate limit, and hands it to my own mailbox over SMTP.
-  - Privacy and security by design with a strict content security policy, HSTS, no cookies of its own, self-hosted fonts and obfuscated contact data.
+  - Static portfolio built with Astro, TypeScript, React islands and Tailwind CSS on Cloudflare, with a command palette (Ctrl K) and a small terminal that load only when they are opened. Its content is typed YAML that is validated at build time, so a typo fails the build instead of shipping.
+  - Every change goes through a pull request and automated gates before it goes live, from linting, type checks, unit, build-output and end-to-end tests with accessibility scans, Lighthouse budgets, CodeQL and dependency review. Two of my own open source packages guard every browser test, one against anything that moves and one against leaks to other origins. A live check of the published site runs every few hours.
+  - A contact form without any third-party service. A Cloudflare Function validates the message, checks a signed time token, a honeypot and a rate limit, and hands it to my own mailbox. Strict content security policy, HSTS, no cookies of its own and self-hosted fonts.
   - Five browser games in the [Playground](/#playground) further down this page, written as tested pure functions, playable with the keyboard, with nothing stored on your device. How they and this site are built is written up in [Behind the scenes](/notes/).
 technologies:
   [

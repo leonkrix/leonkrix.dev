@@ -1,11 +1,12 @@
 allowBuilds:
   esbuild: true
   workerd: true
-# pnpm does not install a version that is younger than its minimum release age. playwright-privacy-guard
-# is my own package and 0.3.0 was published on 2026-10-28: delete this entry once pnpm installs it
-# without it (a few days after the release).
+# pnpm does not install a version that is younger than its minimum release age. playwright-layout-guard
+# and playwright-privacy-guard are my own packages and 0.4.0 of both was published on 2026-10-29:
+# delete these entries once pnpm installs them without (a few days after the release).
 minimumReleaseAgeExclude:
-  - playwright-privacy-guard@0.3.0
+  - playwright-layout-guard@0.4.0
+  - playwright-privacy-guard@0.4.0
 # miniflare (inside wrangler) pins undici 7.29.1 exactly, and 7.29.1 has known denial of service
 # findings (patched in 7.30.1; found by pnpm audit on 2026-10-24). Written as a range of the bad
 # versions, so it does nothing once miniflare asks for a patched version itself: then delete it.
