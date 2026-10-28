@@ -199,8 +199,14 @@ test.describe('Tech Words', () => {
     privacy,
   }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-    // The test reads the clipboard to see what was copied; the game only writes to it
-    privacy.allow({ apis: ['clipboard-read'] });
+    privacy.allow({
+      apis: [
+        {
+          match: 'clipboard-read',
+          reason: 'the test reads what was copied; the game only writes to the clipboard',
+        },
+      ],
+    });
     const answer = answerFor('e2e-share', terms4, 'networking');
     await openRound(page, 'seed=e2e-share&length=4&category=networking');
     await play(page, answer.term);

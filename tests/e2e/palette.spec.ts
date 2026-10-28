@@ -154,8 +154,14 @@ test.describe('search', () => {
   test('copies the email address and tells so', async ({ page, context, browserName, privacy }) => {
     test.skip(browserName !== 'chromium', 'the clipboard permission is a Chromium feature');
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-    // The test reads the clipboard to see what was copied; the site only writes to it
-    privacy.allow({ apis: ['clipboard-read'] });
+    privacy.allow({
+      apis: [
+        {
+          match: 'clipboard-read',
+          reason: 'the test reads what was copied; the site only writes to the clipboard',
+        },
+      ],
+    });
     await openWithKeyboard(page);
     await field(page).fill('copy');
     await page.keyboard.press('Enter');
