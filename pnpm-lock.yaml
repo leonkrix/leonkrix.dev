@@ -267,11 +267,11 @@ importers:
         specifier: ^17.6.0
         version: 17.6.0
       playwright-layout-guard:
-        specifier: 0.3.0
-        version: 0.3.0(@playwright/test@1.64.1)
+        specifier: 0.4.0
+        version: 0.4.0(@playwright/test@1.64.1)
       playwright-privacy-guard:
-        specifier: 0.3.0
-        version: 0.3.0(@playwright/test@1.64.1)
+        specifier: 0.4.0
+        version: 0.4.0(@playwright/test@1.64.1)
       prettier:
         specifier: ^3.9.10
         version: 3.9.10
@@ -3266,15 +3266,17 @@ packages:
     engines: {node: '>=20'}
     hasBin: true
 
-  playwright-layout-guard@0.3.0:
-    resolution: {integrity: sha512-sg+0xZ9Pp5EHi7LYabSZOPfn8klL7sDLaNh4pt7rvLvi4ssBLb746PppZRga2/a3TFWghEOIt50SDmzQX5Nemw==}
+  playwright-layout-guard@0.4.0:
+    resolution: {integrity: sha512-xGzaXPzOay80Qj7d4zJPBs1wfxZbL8zY7sf7K/CKU5XdLr1PAWX0BtaXbLmledJWOy2RGHlFUbmRV6mem16roA==}
     engines: {node: '>=20.19.0'}
+    hasBin: true
     peerDependencies:
       '@playwright/test': '>=1.45.0'
 
-  playwright-privacy-guard@0.3.0:
-    resolution: {integrity: sha512-2dG0A4ku7gw7SMULoY36aC3c+tL37F0eSWmZAGMfBleu9F8oG+U1cEMjKl4LzleMdEaK3zMDq3LYKio/gcsVyw==}
+  playwright-privacy-guard@0.4.0:
+    resolution: {integrity: sha512-1E7qPlGwfgUoFKjZ687FrdN4mtX3fjdf/rNZ6HwZc8nEsCQXS6TbNvNzDJRKk2VGyXEIL1Y+3EjAqopOFXjT5Q==}
     engines: {node: '>=20.19.0'}
+    hasBin: true
     peerDependencies:
       '@playwright/test': '>=1.45.0'
 
@@ -7295,11 +7297,11 @@ snapshots:
 
   playwright-core@1.64.1: {}
 
-  playwright-layout-guard@0.3.0(@playwright/test@1.64.1):
+  playwright-layout-guard@0.4.0(@playwright/test@1.64.1):
     dependencies:
       '@playwright/test': 1.64.1
 
-  playwright-privacy-guard@0.3.0(@playwright/test@1.64.1):
+  playwright-privacy-guard@0.4.0(@playwright/test@1.64.1):
     dependencies:
       '@playwright/test': 1.64.1
 
