@@ -6,3 +6,11 @@ allowBuilds:
 # versions, so it does nothing once miniflare asks for a patched version itself: then delete it.
 overrides:
   'undici@>=7.0.0 <7.30.1': 7.30.1
+# picomatch up to 4.0.7 (the newest version, 2026-11-18) has a ReDoS through extglob patterns such as
+# +(*) (GHSA-fc5q-39xc-vjpf, rated high on 2026-11-17, no patched version exists). picomatch is only
+# used by build and test tools (astro, vite, vitest, eslint, lint-staged) on patterns from their own
+# configuration, never on input from a visitor, and the site ships none of it. Remove this entry as
+# soon as a patched version is out (check with `pnpm audit` without it, then update picomatch).
+auditConfig:
+  ignoreGhsas:
+    - GHSA-fc5q-39xc-vjpf
