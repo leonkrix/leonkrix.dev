@@ -86,6 +86,49 @@
     text-decoration-thickness: 2px;
   }
 
+  /* Code in a text (an address of a server) */
+  .legal code {
+    color: var(--color-fg);
+    font-family: var(--font-mono), monospace;
+    font-size: 0.875em;
+    overflow-wrap: anywhere;
+  }
+
+  /* A table of a policy (the privacy policy of an app): it sits in a region that scrolls and can be
+     reached with the keyboard, so it never makes the page wider than the screen */
+  .legal .table-scroll {
+    overflow-x: auto;
+    margin-bottom: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+  }
+
+  .legal table {
+    width: 100%;
+    min-width: 36rem;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  .legal th,
+  .legal td {
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-muted);
+    line-height: 1.6;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .legal th {
+    color: var(--color-fg);
+    font-weight: 600;
+  }
+
+  .legal tr:last-child td {
+    border-bottom: 0;
+  }
+
   .legal .notice {
     border: 1px solid var(--color-border);
     background-color: var(--color-surface);

@@ -50,6 +50,9 @@ function securityText(days: number): string {
 const LEGAL = `<html><head><meta name="robots" content="noindex"></head><body>
 <section lang="en" id="en">Leon Krix</section><section lang="de" id="de">Leon Krix</section></body></html>`;
 
+const POLICY = `<html><head><meta name="robots" content="noindex"></head><body><a href="/legal-notice/">Legal notice</a>
+<section lang="en" id="en">WhyMail</section><section lang="de" id="de">WhyMail</section></body></html>`;
+
 type Route = (init: { method: string; headers: Record<string, string> }) => Response | undefined;
 
 function page(body: string, init: ResponseInit = {}): Response {
@@ -106,6 +109,15 @@ function fakeSite(
     [`GET ${base}/uses/`]: page('<title>Uses | Leon Krix</title><h1>What I work with</h1>'),
     [`GET ${base}/legal-notice/`]: page(LEGAL),
     [`GET ${base}/privacy-policy/`]: page(LEGAL),
+    [`GET ${base}/whymail/privacy`]: new Response('', {
+      status: 301,
+      headers: { location: '/whymail/datenschutz' },
+    }),
+    [`GET ${base}/whymail/privacy-policy`]: new Response('', {
+      status: 301,
+      headers: { location: '/whymail/datenschutz' },
+    }),
+    [`GET ${base}/whymail/datenschutz/`]: page(POLICY),
     [`GET ${base}/robots.txt`]: new Response(
       'User-agent: GPTBot\nDisallow: /\nSitemap: https://leonkrix.dev/sitemap.xml',
     ),
@@ -190,6 +202,7 @@ describe('runLiveChecks', () => {
       'assets',
       'redirects',
       'legal pages',
+      'whymail privacy policy',
       'search engine files',
       'security.txt',
       'palette data',
@@ -498,6 +511,52 @@ describe('runLiveChecks', () => {
     const result = find(await runLiveChecks(options({ fetch: leak })), 'legal pages');
     expect(result.status).toBe('fail');
     expect(result.detail).toContain('email address is readable');
+  });
+
+  describe('the privacy policy of the WhyMail app', () => {
+    const name = 'whymail privacy policy';
+
+    it('passes for a page with both languages and nothing readable', async () => {
+      expect(find(await runLiveChecks(options()), name).status).toBe('pass');
+    });
+
+    it('fails when the page is gone, because its address is entered in the Play Console', async () => {
+      const gone = fakeSite({
+        [`GET ${BASE}/whymail/datenschutz/`]: new Response('', { status: 404 }),
+      });
+      const result = find(await runLiveChecks(options({ fetch: gone })), name);
+      expect(result.status).toBe('fail');
+      expect(result.detail).toContain('HTTP 404');
+    });
+
+    it('fails with a placeholder, a readable email address or a missing language', async () => {
+      const cases: [string, string, string][] = [
+        ['placeholder', POLICY.replace('WhyMail', 'WhyMail [ANSCHRIFT]'), '[ANSCHRIFT]'],
+        ['postal placeholder', POLICY.replace('WhyMail', '[PLZ]'), '[PLZ]'],
+        [
+          'email',
+          POLICY + '<a href="mailto:whymail.app@gmail.com">whymail.app@gmail.com</a>',
+          'email address is readable',
+        ],
+        ['language', POLICY.replace('lang="de"', 'lang="fr"'), 'language versions'],
+        ['noindex', POLICY.replace('noindex', 'index'), 'noindex'],
+      ];
+      for (const [label, body, expected] of cases) {
+        const broken = fakeSite({ [`GET ${BASE}/whymail/datenschutz/`]: page(body) });
+        const result = find(await runLiveChecks(options({ fetch: broken })), name);
+        expect(result.status, label).toBe('fail');
+        expect(result.detail, label).toContain(expected);
+      }
+    });
+
+    it('fails when an English address no longer redirects to the page', async () => {
+      const broken = fakeSite({
+        [`GET ${BASE}/whymail/privacy`]: new Response('', { status: 404 }),
+      });
+      const result = find(await runLiveChecks(options({ fetch: broken })), 'redirects');
+      expect(result.status).toBe('fail');
+      expect(result.detail).toContain('/whymail/privacy');
+    });
   });
 
   it('fails when one of the two languages is missing from a legal page', async () => {

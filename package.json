@@ -27,6 +27,7 @@
     "og": "node scripts/generate-og.mjs",
     "live-check": "node scripts/live-check.ts",
     "check-links": "node scripts/check-links.ts",
+    "whymail-policy": "node scripts/whymail-policy.ts",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build && pnpm test:dist",
     "prepare": "husky",
     "levels": "vitest run --config vitest.levels.config.ts",

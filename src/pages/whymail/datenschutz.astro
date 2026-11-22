@@ -1,0 +1,27 @@
+---
+import LegalLayout from '@/layouts/LegalLayout.astro';
+import { whymail } from '@/lib/whymail';
+import Policy from '@/texts/whymail/privacy-policy.mdx';
+---
+
+<!-- The privacy policy of the WhyMail app: the address that is entered in the Google Play Console.
+     The text comes from the repository of the app (see src/lib/whymail-policy.ts). Like the legal
+     pages of this site: English first, German second and legally binding. -->
+<LegalLayout
+  title={`Privacy policy of ${whymail.name}`}
+  germanTitle={`Datenschutzerklärung ${whymail.name}`}
+  description="Privacy policy of the Android app WhyMail, in English and German (Datenschutzerklärung der Android-App WhyMail)."
+>
+  <div class="notice">
+    <p lang="en">
+      This is the privacy policy of the app <strong>{whymail.name}</strong>. Visiting this website
+      is covered by the <a href="/privacy-policy/">privacy policy of leonkrix.dev</a>.
+    </p>
+    <p lang="de">
+      Das ist die Datenschutzerklärung der App <strong>{whymail.name}</strong>. Für den Besuch
+      dieser Webseite gilt die <a href="/privacy-policy/">Datenschutzerklärung von leonkrix.dev</a>.
+    </p>
+  </div>
+
+  <Policy />
+</LegalLayout>
