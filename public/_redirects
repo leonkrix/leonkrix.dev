@@ -4,3 +4,8 @@
 /impressum/ /legal-notice 301
 /datenschutz /privacy-policy 301
 /datenschutz/ /privacy-policy 301
+# The privacy policy of the WhyMail app (entered in the Play Console): the English addresses lead to the page
+/whymail/privacy /whymail/datenschutz 301
+/whymail/privacy/ /whymail/datenschutz 301
+/whymail/privacy-policy /whymail/datenschutz 301
+/whymail/privacy-policy/ /whymail/datenschutz 301

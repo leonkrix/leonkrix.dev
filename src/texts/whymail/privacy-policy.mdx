@@ -1,0 +1,257 @@
+import ContactEmail from '@/components/legal/whymail/ContactEmail.astro';
+import PublisherAddress from '@/components/legal/whymail/PublisherAddress.astro';
+import PublisherName from '@/components/legal/whymail/PublisherName.astro';
+
+{/* Made by scripts/whymail-policy.ts from privacy-policy.upstream.md (sha256 338b7b20dd515a237f551c51332ad3287c206ca66f57c334f7c81e5931fc0eca). Do not edit by hand: change the text in the repository of the app, then run `pnpm whymail-policy sync <file>`. */}
+
+<section lang="en" id="en" aria-labelledby="whymail-en">
+
+<h2 id="whymail-en">Privacy policy of WhyMail</h2>
+
+Last updated: 22 November 2026
+
+### 1. Who is responsible
+
+The person responsible for this app is:
+
+<address>
+  <PublisherName />
+  <br />
+  <PublisherAddress />
+  <br />
+  <span>Legal notice: <a href="/legal-notice/">leonkrix.dev/legal-notice</a></span>
+  <br />
+  <span>Email: <ContactEmail /></span>
+</address>
+
+This is also the address for all questions about privacy.
+
+### 2. The short version
+
+- WhyMail is an email app. It has **no server of its own**. The app connects directly to the server of your email
+  provider (IMAP and SMTP). Your Mails, addresses and your password **do not go to us**.
+- Everything the app stores of your Mails is **on your device**.
+- **No ads, no usage analytics, no tracking, no passing on or selling of data.**
+- Only you send reports about crashes and errors, after you have seen what is in them.
+- The app is meant for people aged 18 and over.
+
+### 3. What is stored on your device
+
+- Your login details for the mail account. The password is encrypted with a key from the Android Keystore and leaves
+  the device only on its way to your email provider.
+- Your Mails (headers, texts, attachments), the chats and contacts that the app forms from them, drafts, a search index
+  and your settings. The encryption of your device protects the Mails.
+- Attachments are in the private storage of the app. It needs no access to your files. WhyMail downloads the attachments
+  of Mails of the last 30 days **automatically in the background** from your email provider, without a tap of yours,
+  at the moment up to 10 MB a file, by default only on Wi-Fi and while enough storage is free. The app loads all
+  others when you tap them.
+- **None of this goes into a cloud backup or to a new device.** On a new device you add the account again and the Mails
+  come from the server.
+- **Deleting:** "Remove Account" in the settings deletes everything of that account from the device, the password too.
+  When you uninstall the app, Android deletes all its data. The Mails on your provider's server are not touched.
+
+### 4. What the app sends over the network
+
+<div class="table-scroll" role="region" tabindex="0" aria-label="What the app sends over the network">
+
+| Where to | What for | What is sent |
+| --- | --- | --- |
+| The server of your email provider (IMAP, SMTP) | fetching Mails and attachments, sending Mails, telling you about new Mail at once | your login details, your Mails; always encrypted (TLS, with a check of the certificate) |
+| The server of your email provider and the configuration database of Mozilla (`autoconfig.thunderbird.net`) | finding the server settings for your address when you add an account | the **domain** of your address (the part after the @) and the IP address of your device |
+| The DNS server of your network or Google Public DNS (8.8.8.8) | if nothing was found: looking up the mail server of the domain (MX) | the domain and the IP address of your device |
+
+</div>
+
+Never sent when looking for the server settings: the part of your address before the @, the whole address and the
+password. The app **does not load images from the web** and runs no program code from Mails (no JavaScript); it shows
+the text of the Mails. A link in a Mail opens in your browser or another app, after you tap it.
+If the DNS step reaches Google Public DNS, Google according to its own statements keeps the query with the IP address
+in temporary logs that it normally deletes within 24 to 48 hours; it can keep them longer for security and for the
+protection against abuse. Besides, Google keeps a sample without the IP address, with the requested domain and a place
+at city or region level. These are statements of Google, on which we have no influence.
+
+### 5. Reports to the team
+
+- If the app crashes, it saves a report on the device. At the next start it offers to **send it through WhyMail**. You
+  see the text on the screen for writing a Mail and can change or delete it. Nothing leaves without your sending it. If
+  you decline, the report is deleted. At most the last five reports are kept.
+- A report contains only: the kind of error (class names), the stack of calls (names from the program code, with a line
+  number), the version of the app, the version of Android and the device model. **No texts from error messages, no
+  Mails, no addresses, no login details.**
+- You can also send a bug report yourself from the settings and attach the local **diagnostics log**: a list of events
+  (kind, number, class name of an error; no Mails and no addresses) that stays on your device and goes along only if
+  you choose it. We **never** attach an image of the screen by ourselves: you choose it, you see it before sending, and
+  it can show Mails.
+- The report goes as a normal Mail **from your account** to <ContactEmail />. The team sees your sender address
+  in the header of the Mail. The mailbox is at Google (Gmail). The team deletes reports once the error is fixed, after
+  12 months at the latest.
+
+### 6. Permissions
+
+- **Internet and network state:** to fetch and send Mails and to know whether you are online.
+- **Foreground service ("special use") and notifications:** WhyMail keeps a connection to your Inbox open so that new
+  Mail arrives at once. Android shows a permanent notification for it. There is no push server of ours. In the
+  settings you can turn off the instant notice; the app then checks every 15 minutes. You can hide the preview of a
+  Mail in a notification on the lock screen.
+- **Start after a restart and keeping the device awake:** so that the check for new Mail goes on after a restart and
+  the device does not fall asleep during a sync.
+
+### 7. Google Play
+
+You get the app through Google Play. Google processes data under its own terms (for example for the download and for
+statistics about installs). We have no influence on that. If you have allowed the sharing of usage and diagnostics
+data in Android, Google can show us reports about crashes and hangs (ANR) in the Play Console, with a stack trace,
+the app version, the Android version and the device model. These are reports of Google, not of WhyMail: we do not
+filter them and have no influence on what Google writes into them. They are not the reports that you send yourself
+through WhyMail (section 5).
+
+### 8. Legal bases
+
+- The processing that is needed to read and send your Mails (the connection to your provider, the search for the server
+  settings) is done to provide the app as you use it (Art. 6(1)(b) GDPR).
+- Reports to the team rest on your consent, which you give by sending and can withdraw for the future
+  (Art. 6(1)(a) GDPR).
+- With the queries for the server settings and with DNS, your IP address can reach servers outside the EU (Google,
+  Mozilla). We have no influence on how they process it.
+
+### 9. Your rights
+
+You have the right of access (Art. 15 GDPR), rectification (Art. 16), erasure (Art. 17), restriction of processing
+(Art. 18), data portability (Art. 20) and objection (Art. 21), and you can withdraw a consent at any time. Since the
+Mails are only on your device and with your email provider, you can see and delete them there yourself. For data that we
+received (reports) write to <ContactEmail />. You can also complain to a data protection supervisory authority, for
+example the data protection supervisory authority of the German state in which the publisher lives.
+
+### 10. Changes
+
+If the app changes so that it sends or stores other data, we change this policy and the date above.
+
+</section>
+
+<section lang="de" id="de" aria-labelledby="whymail-de">
+
+<h2 id="whymail-de">Datenschutzerklärung WhyMail</h2>
+
+Stand: 22. November 2026
+
+### 1. Wer verantwortlich ist
+
+Verantwortlich für diese App ist:
+
+<address>
+  <PublisherName />
+  <br />
+  <PublisherAddress />
+  <br />
+  <span>Impressum: <a href="/legal-notice/">leonkrix.dev/legal-notice</a></span>
+  <br />
+  <span>E-Mail: <ContactEmail /></span>
+</address>
+
+Das ist auch die Adresse für alle Fragen zum Datenschutz.
+
+### 2. Das Wichtigste in Kürze
+
+- WhyMail ist ein E-Mail-Programm. Es hat **keinen eigenen Server**. Die App verbindet sich direkt mit dem Server deines
+  Mailanbieters (IMAP und SMTP). Deine Mails, Adressen und dein Passwort gehen **nicht an uns**.
+- Alles, was die App von deinen Mails speichert, liegt **auf deinem Gerät**.
+- **Keine Werbung, keine Nutzungsanalyse, kein Tracking, keine Weitergabe oder Verkauf von Daten.**
+- Berichte über Abstürze und Fehler schickst nur du, nachdem du gesehen hast, was drinsteht.
+- Die App ist für Personen ab 18 Jahren gedacht.
+
+### 3. Was auf deinem Gerät gespeichert wird
+
+- Deine Zugangsdaten zum Mailkonto. Das Passwort ist mit einem Schlüssel aus dem Android Keystore verschlüsselt und
+  verlässt das Gerät nur auf dem Weg zu deinem Mailanbieter.
+- Deine Mails (Kopfzeilen, Texte, Anhänge), die Chats und Kontakte, die die App daraus bildet, Entwürfe, ein Suchindex
+  und deine Einstellungen. Die Mails schützt die Verschlüsselung deines Geräts.
+- Anhänge liegen im privaten Speicher der App. Sie brauchen keinen Zugriff auf deine Dateien. WhyMail lädt Anhänge
+  von Mails der letzten 30 Tage **automatisch im Hintergrund** von deinem Mailanbieter, ohne dass du sie antippst,
+  zurzeit bis 10 MB je Datei, standardmäßig nur im WLAN und solange genug Speicher frei ist. Alle anderen lädt die App,
+  wenn du sie antippst.
+- **Nichts davon kommt in ein Cloud-Backup oder auf ein neues Gerät.** Auf einem neuen Gerät legst du das Konto neu an,
+  die Mails kommen vom Server.
+- **Löschen:** „Konto entfernen“ in den Einstellungen löscht alles von diesem Konto auf dem Gerät, auch das Passwort.
+  Beim Deinstallieren der App löscht Android alle Daten der App. Die Mails auf dem Server deines Anbieters bleiben
+  unberührt.
+
+### 4. Was die App über das Netz sendet
+
+<div class="table-scroll" role="region" tabindex="0" aria-label="Was die App über das Netz sendet">
+
+| Wohin | Wozu | Was dabei übertragen wird |
+| --- | --- | --- |
+| Server deines Mailanbieters (IMAP, SMTP) | Mails und Anhänge holen, Mails senden, neue Mails sofort melden | deine Zugangsdaten, deine Mails; immer verschlüsselt (TLS, mit Prüfung des Zertifikats) |
+| Server deines Mailanbieters und die Konfigurationsdatenbank von Mozilla (`autoconfig.thunderbird.net`) | die Servereinstellungen zu deiner Adresse finden, wenn du ein Konto anlegst | die **Domain** deiner Adresse (der Teil nach dem @) und die IP-Adresse deines Geräts |
+| der DNS-Server deines Netzwerks oder Google Public DNS (8.8.8.8) | wenn nichts gefunden wurde: den Mailserver der Domain nachschlagen (MX) | die Domain und die IP-Adresse deines Geräts |
+
+</div>
+
+Nie übertragen werden bei der Suche nach den Servereinstellungen der Teil deiner Adresse vor dem @, die ganze Adresse
+und das Passwort. Die App **lädt keine Bilder aus dem Netz nach** und führt keinen Programmcode aus Mails aus (kein
+JavaScript); sie zeigt den Text der Mails. Ein Link in einer Mail öffnet sich in deinem Browser oder einer anderen App,
+nach deinem Tipp.
+Wenn der DNS-Schritt Google Public DNS erreicht, speichert Google die Anfrage nach seinen eigenen Angaben samt
+IP-Adresse in temporären Protokollen, die es normalerweise innerhalb von 24 bis 48 Stunden löscht; für Sicherheit und
+den Schutz vor Missbrauch kann es sie länger behalten. Daneben behält Google eine Stichprobe ohne IP-Adresse, mit der
+angefragten Domain und einem Ort auf Stadt- oder Regionsebene. Das sind Angaben von Google, auf die wir keinen Einfluss
+haben.
+
+### 5. Berichte an das Team
+
+- Stürzt die App ab, speichert sie einen Bericht auf dem Gerät. Beim nächsten Start bietet sie an, ihn **über WhyMail zu
+  senden**. Du siehst den Text auf dem Bildschirm zum Schreiben einer Mail und kannst ihn ändern oder löschen. Ohne dein
+  Senden geht nichts raus. Lehnst du ab, wird der Bericht gelöscht. Es werden höchstens die letzten fünf Berichte
+  aufbewahrt.
+- Ein Bericht enthält nur: Art der Fehlermeldung (Klassennamen), den Stapel der Aufrufe (Namen aus dem Programmcode, mit
+  Zeilennummer), die Version der App, die Version von Android und das Gerätemodell. **Keine Texte aus Fehlermeldungen,
+  keine Mails, keine Adressen, keine Zugangsdaten.**
+- Einen Fehlerbericht kannst du auch selbst aus den Einstellungen schicken und dabei das lokale **Diagnoseprotokoll**
+  anhängen: eine Liste von Ereignissen (Art, Zahl, Klassenname eines Fehlers; ohne Mails und ohne Adressen), die nur auf
+  deinem Gerät liegt und nur dann mitgeht, wenn du es wählst. Ein Bild vom Bildschirm hängen wir **nie von selbst** an: du
+  wählst es aus, siehst es vor dem Senden, und es kann Mails zeigen.
+- Der Bericht geht als normale Mail **aus deinem Konto** an <ContactEmail />. Das Team sieht deine
+  Absenderadresse im Kopf der Mail. Das Postfach liegt bei Google (Gmail). Das Team löscht Berichte, sobald der Fehler
+  behoben ist, spätestens nach 12 Monaten.
+
+### 6. Berechtigungen
+
+- **Internet und Netzwerkstatus:** zum Abrufen und Senden von Mails und um zu wissen, ob du online bist.
+- **Vordergrunddienst („besonderer Zweck“) und Benachrichtigungen:** WhyMail hält eine Verbindung zu deinem
+  Posteingang offen, damit neue Mails sofort ankommen. Dafür zeigt Android eine dauerhafte Benachrichtigung. Es gibt
+  keinen Push-Server von uns. In den Einstellungen kannst du die sofortige Meldung ausschalten; dann prüft die App alle
+  15 Minuten. Die Vorschau der Mail in einer Benachrichtigung kannst du auf dem Sperrbildschirm ausblenden.
+- **Start nach dem Neustart und Aufwecken des Geräts:** damit die Prüfung auf neue Mails nach einem Neustart weiterläuft
+  und während einer Synchronisation das Gerät nicht einschläft.
+
+### 7. Google Play
+
+Du bekommst die App über Google Play. Google verarbeitet dabei Daten nach seinen eigenen Bedingungen (zum Beispiel für
+den Download und für Statistiken über Installationen). Darauf haben wir keinen Einfluss. Wenn du in Android das Teilen
+von Nutzungs- und Diagnosedaten erlaubt hast, kann Google uns in der Play Console Berichte über Abstürze und Hänger
+(ANR) zeigen, mit Stacktrace, App-Version, Android-Version und Gerätemodell. Das sind Berichte von Google, nicht von
+WhyMail: Wir filtern sie nicht und haben keinen Einfluss darauf, was Google hineinschreibt. Sie sind etwas anderes als
+die Berichte, die du selbst über WhyMail sendest (Abschnitt 5).
+
+### 8. Rechtsgrundlagen
+
+- Die Verarbeitung, die zum Lesen und Senden deiner Mails nötig ist (Verbindung zu deinem Anbieter, Suche nach den
+  Servereinstellungen), geschieht, um die App so zu erbringen, wie du sie nutzt (Art. 6 Abs. 1 lit. b DSGVO).
+- Berichte an das Team beruhen auf deiner Einwilligung, die du mit dem Senden gibst und für die Zukunft widerrufen
+  kannst (Art. 6 Abs. 1 lit. a DSGVO).
+- Bei den Abfragen nach den Servereinstellungen und beim DNS kann deine IP-Adresse an Server außerhalb der EU gelangen
+  (Google, Mozilla). Wir haben keinen Einfluss darauf, wie diese sie verarbeiten.
+
+### 9. Deine Rechte
+
+Du hast das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der
+Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch (Art. 21) und kannst eine erteilte Einwilligung
+jederzeit widerrufen. Da die Mails nur auf deinem Gerät und bei deinem Mailanbieter liegen, kannst du sie dort selbst
+einsehen und löschen. Für Daten, die wir erhalten haben (Berichte), schreib an <ContactEmail />.
+Du kannst dich außerdem bei einer Datenschutz-Aufsichtsbehörde beschweren, zum Beispiel bei der Datenschutzaufsichtsbehörde des Bundeslandes, in dem der Herausgeber seinen Wohnsitz hat.
+
+### 10. Änderungen
+
+Ändert sich die App so, dass sie andere Daten sendet oder speichert, ändern wir diese Erklärung und das Datum oben.
+
+</section>

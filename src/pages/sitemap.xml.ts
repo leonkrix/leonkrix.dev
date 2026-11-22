@@ -6,7 +6,7 @@ import { notePath } from '@/lib/notes';
 import { siteConfig } from '@/lib/site';
 
 // Pages that must not appear in the sitemap (they are noindex or not real content pages)
-const excluded = new Set(['404', 'legal-notice', 'privacy-policy']);
+const excluded = new Set(['404', 'legal-notice', 'privacy-policy', 'whymail/datenschutz']);
 
 const pages = import.meta.glob('./**/*.astro');
 

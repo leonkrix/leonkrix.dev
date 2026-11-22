@@ -7,3 +7,5 @@ playwright-report
 test-results
 pnpm-lock.yaml
 .env*
+# The privacy policy of WhyMail: the copy must stay byte for byte what the app repository says, and the page is made by a script
+src/texts

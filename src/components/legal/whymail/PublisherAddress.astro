@@ -1,0 +1,8 @@
+---
+import ObfuscatedText from '@/components/ObfuscatedText.astro';
+import { address } from '@/lib/legal-address';
+---
+
+<ObfuscatedText text={address.street} />
+<br />
+<ObfuscatedText text={`${address.zip} ${address.city}`} />

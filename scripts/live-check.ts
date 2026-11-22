@@ -22,6 +22,7 @@ import { pathToFileURL } from 'node:url';
 
 import { ADDRESS_PLACEHOLDERS } from '../src/lib/legal.ts';
 import { siteConfig } from '../src/lib/site.ts';
+import { whymail } from '../src/lib/whymail.ts';
 
 export type Status = 'pass' | 'warn' | 'fail';
 
@@ -330,13 +331,15 @@ export async function runLiveChecks(options: LiveCheckOptions): Promise<CheckRes
     for (const [old, current] of [
       ['/impressum', '/legal-notice'],
       ['/datenschutz', '/privacy-policy'],
+      // The English addresses of the privacy policy of the WhyMail app lead to its page
+      ...whymail.policyAliases.map((alias) => [alias, whymail.policyPath.slice(0, -1)] as const),
     ] as const) {
       expectRedirect(old, await get(old), new URL(old, contentBase), { path: current });
     }
     return verdict(
       'redirects',
       problems,
-      'http, www and the old German legal addresses redirect permanently',
+      'http, www, the old German legal addresses and the aliases of the WhyMail policy redirect permanently',
     );
   });
 
@@ -368,6 +371,44 @@ export async function runLiveChecks(options: LiveCheckOptions): Promise<CheckRes
       'legal pages',
       problems,
       'both pages, both languages, no placeholders, address and email obfuscated',
+    );
+  });
+
+  // The privacy policy of the WhyMail app is entered in the Google Play Console: its address must
+  // keep answering, in both languages, without placeholders and without a readable address or email
+  await run('whymail privacy policy', async () => {
+    const problems: string[] = [];
+    const path = whymail.policyPath;
+    const policy = await get(path);
+    if (policy.status !== 200) {
+      problems.push(`${path}: HTTP ${String(policy.status)}`);
+    } else {
+      if (!policy.body.includes('<meta name="robots" content="noindex">')) {
+        problems.push('noindex is missing');
+      }
+      if (!policy.body.includes('lang="en"') || !policy.body.includes('lang="de"')) {
+        problems.push('one of the two language versions is missing');
+      }
+      if (!policy.body.includes('href="/legal-notice/"')) {
+        problems.push('the link to the legal notice is missing');
+      }
+      for (const placeholder of Object.values(ADDRESS_PLACEHOLDERS)) {
+        if (policy.body.includes(placeholder)) {
+          problems.push(`contains the placeholder ${placeholder}`);
+        }
+      }
+      const left = /\[[A-ZÄÖÜ][A-ZÄÖÜ ]+\]/.exec(policy.body);
+      if (left !== null) {
+        problems.push(`contains the placeholder ${left[0]}`);
+      }
+      if (policy.body.includes(whymail.email) || policy.body.includes('href="mailto:')) {
+        problems.push('the email address is readable in the HTML');
+      }
+    }
+    return verdict(
+      'whymail privacy policy',
+      problems,
+      'the page answers, both languages, no placeholders, email obfuscated',
     );
   });
 
