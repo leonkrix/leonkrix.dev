@@ -24,9 +24,10 @@ const sectionHtml = (language: 'en' | 'de'): string => {
   const end = html().indexOf('</section>', start);
   return start < 0 ? '' : html().slice(start, end);
 };
+// The text of a piece of the page, to look for words in it. The page has no inline script (its
+// scripts are files), so there is no script text to filter out.
 const textOf = (fragment: string): string =>
   fragment
-    .replace(/<script[\s\S]*?<\/script>/g, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&[a-z]+;/g, ' ')
     .replace(/\s+/g, ' ');
