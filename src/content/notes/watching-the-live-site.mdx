@@ -1,11 +1,11 @@
 ---
 title: 'Watching the live site: a check that had to survive Cloudflare'
-summary: 'CI checks the code before it ships, a live check looks at what is really running, every six hours. Nineteen checks, a test for the checker, and the day Cloudflare’s own bot protection locked it out.'
+summary: 'CI checks the code before it ships, a live check looks at what is really running, every six hours. Twenty checks, a test for the checker, and the day Cloudflare’s own bot protection locked it out.'
 tag: 'Site · Monitoring'
 code: scripts
 group: site
 order: 4
-updated: '2026-10-17'
+updated: '2026-11-22'
 ---
 
 import Code from '@/components/notes/Code.astro';
@@ -18,9 +18,9 @@ So there is a second check, and it looks at the published site from the outside,
 
 <Stats
   items={[
-    { value: '19', label: 'live-site checks' },
+    { value: '20', label: 'live-site checks' },
     { value: '6 h', label: 'between runs' },
-    { value: '46', label: 'tests of the checker' },
+    { value: '50', label: 'tests of the checker' },
     { value: '0', label: 'dependencies' },
   ]}
 />
@@ -34,8 +34,8 @@ Each check ends in pass, warn or fail, and only a fail fails the run.
 | The page                 | The home page answers and has its sections. The custom 404 page is shown for an unknown address. The pages of the games and the notes that the sitemap lists answer too, and so does the Uses page, which the home page must link to. `security.txt` must not have run out, and the data behind the command palette must be there. The preview picture of every note and game must be served too. |
 | What the browser is told | The security headers must equal the list in the repository, and the content security policy is read from the page.                                                                                                                                                                                                                                                                                |
 | Assets                   | The stylesheet and the script are served, with the long cache time that fingerprinted files should have.                                                                                                                                                                                                                                                                                          |
-| Redirects                | `http` to `https`, `www` to the main domain, and the old German addresses of the legal pages to the new ones.                                                                                                                                                                                                                                                                                     |
-| Legal pages              | Both languages are there, they are not indexed, no placeholder is left where the address should be, and the email and the address are not readable as plain text.                                                                                                                                                                                                                                 |
+| Redirects                | `http` to `https`, `www` to the main domain, the old German addresses of the legal pages to the new ones, and the English addresses of the privacy policy of an Android app to its page.                                                                                                                                                                                                          |
+| Legal pages              | Both languages are there, they are not indexed, no placeholder is left where the address should be, and the email and the address are not readable as plain text. The same goes for the privacy policy of that app, whose address is entered in the Play Console and must never stop answering.                                                                                                   |
 | The contact form         | The token endpoint, no cross-origin access, and a probe that proves the form is configured.                                                                                                                                                                                                                                                                                                       |
 | Time                     | The certificate fails below 14 days, the domain registration below 30 days (warning below 60).                                                                                                                                                                                                                                                                                                    |
 | My mail                  | The MX, SPF and DMARC records must still point to the mailbox provider.                                                                                                                                                                                                                                                                                                                           |

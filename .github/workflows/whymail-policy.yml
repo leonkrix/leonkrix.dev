@@ -1,0 +1,109 @@
+name: WhyMail policy
+
+# Once a day: the privacy policy of the WhyMail app is written in a private repository and published
+# on this site (src/texts/whymail). This compares the published part of the text there with the copy
+# here and opens an issue when it changed. Nothing is published automatically: the maintainer reads
+# the change, updates the copy (`pnpm whymail-policy sync <file>`) and merges it.
+#
+# The private repository is read with a read-only deploy key, which is stored as the secret
+# WHYMAIL_DEPLOY_KEY of the environment "whymail-policy" (only the branch main may use it). The key
+# is used by the one checkout step. There is no pull_request trigger on purpose: no pull request, and
+# no branch other than main, can reach the secret. This repository is public, so the issue contains
+# no text of the policy, only two hashes.
+on:
+  schedule:
+    # Every day, early morning
+    - cron: '41 5 * * *'
+  workflow_dispatch:
+    inputs:
+      test-issue:
+        description: 'Open a test issue even if nothing changed, to check that issues can be created'
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: whymail-policy
+  cancel-in-progress: false
+
+jobs:
+  compare:
+    name: Compare with the app repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: whymail-policy
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The script has no dependencies, Node runs the TypeScript file directly
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      # Only this one file of the private repository is written to the runner
+      - name: Fetch the policy of the app
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: WhyMailOrg/whymail
+          ssh-key: ${{ secrets.WHYMAIL_DEPLOY_KEY }}
+          path: whymail-app
+          sparse-checkout: docs/legal/privacy-policy.md
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      # Fails (and so sends an email) when the file or its structure is gone: a failed run must never
+      # look like "nothing changed". It writes changed, recorded and upstream to the outputs.
+      - name: Compare
+        id: compare
+        run: node scripts/whymail-policy.ts check whymail-app/docs/legal/privacy-policy.md
+      - name: Report a change as an issue
+        if: steps.compare.outputs.changed == 'true' || inputs.test-issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RECORDED: ${{ steps.compare.outputs.recorded }}
+          UPSTREAM: ${{ steps.compare.outputs.upstream }}
+          TEST_ISSUE: ${{ inputs.test-issue }}
+        run: |
+          set -euo pipefail
+          label='whymail-policy'
+          title='The WhyMail privacy policy changed'
+          if [ "$TEST_ISSUE" = 'true' ]; then
+            title="TEST: $title"
+          fi
+          gh label create "$label" --color FBCA04 \
+            --description 'The privacy policy of the WhyMail app changed' || true
+
+          # One issue at a time. If it is open already, a new version of the text only adds a comment.
+          open=$(gh issue list --state open --label "$label" --json number --jq '.[0].number // empty')
+          if [ -n "$open" ]; then
+            seen=$(gh issue view "$open" --json body,comments --jq '[.body, (.comments[].body)] | join("\n")')
+            # A here-string, not a pipe: with pipefail, grep -q that stops early would make a pipe fail
+            if grep -q "$UPSTREAM" <<<"$seen"; then
+              echo "Issue #$open reports this version already."
+            else
+              gh issue comment "$open" --body "The text changed again. Now in the app repository: sha256 \`$UPSTREAM\`"
+              echo "Added a comment to issue #$open."
+            fi
+            exit 0
+          fi
+
+          body=$(cat <<EOF
+          The published part of the privacy policy of the WhyMail app (\`docs/legal/privacy-policy.md\` in the app repository) is not the text that this site publishes.
+
+          - On this site (src/texts/whymail): sha256 \`$RECORDED\`
+          - In the app repository: sha256 \`$UPSTREAM\`
+
+          What to do:
+
+          1. Update your clone of the app repository.
+          2. Run \`pnpm whymail-policy sync <path to docs/legal/privacy-policy.md>\` here and read \`git diff\`.
+          3. Check the new text against the build that the testers get (the notes for the team in the file say what to check). What is not built yet is removed in the file of the app, then run \`sync\` again.
+          4. Commit, open a pull request that says \`Closes #<this issue>\`, merge it.
+
+          This issue has no text of the policy on purpose: this repository is public and the change is not approved yet.
+          EOF
+          )
+          gh issue create --title "$title" --label "$label" --body "$body"
